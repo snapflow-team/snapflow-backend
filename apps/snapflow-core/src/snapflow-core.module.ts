@@ -4,10 +4,11 @@ import { SnapflowCoreService } from './snapflow-core.service';
 import { snapFlowConfigDynamicModule } from './snapflow-config-dynamic-module';
 import { SnapflowCoreConfig } from './snapflow-core.config';
 import { CoreModule } from './core/core.module';
+import { UsersModule } from './users/users.module';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
-  imports: [CoreModule, snapFlowConfigDynamicModule],
+  imports: [CoreModule, snapFlowConfigDynamicModule, UsersModule],
   controllers: [SnapflowCoreController],
   providers: [SnapflowCoreService],
 })
