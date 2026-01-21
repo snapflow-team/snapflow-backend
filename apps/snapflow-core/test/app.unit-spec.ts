@@ -1,14 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { CoreModule } from './../src/core.module';
+import { SnapflowCoreModule } from '../src/snapflow-core.module';
 
-describe('CoreController (e2e)', () => {
+//todo: delete mock unit test
+describe('SnapflowCoreController (unit)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [CoreModule],
+      imports: [SnapflowCoreModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();

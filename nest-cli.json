@@ -19,13 +19,13 @@
         "tsConfigPath": "libs/common/tsconfig.lib.json"
       }
     },
-    "core": {
+    "snapflow-core": {
       "type": "application",
-      "root": "apps/core",
+      "root": "apps/snapflow-core",
       "entryFile": "main",
-      "sourceRoot": "apps/core/src",
+      "sourceRoot": "apps/snapflow-core/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/core/tsconfig.app.json"
+        "tsConfigPath": "apps/snapflow-core/tsconfig.app.json"
       }
     }
   }

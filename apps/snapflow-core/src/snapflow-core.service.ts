@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class CoreService {
+export class SnapflowCoreService {
   getHello(): string {
-    return 'Hello World!';
+    return 'Hello SnapFlow Backend team!';
   }
 }

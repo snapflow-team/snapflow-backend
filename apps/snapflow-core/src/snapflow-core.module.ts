@@ -1,0 +1,37 @@
+import { DynamicModule, Module } from '@nestjs/common';
+import { SnapflowCoreController } from './snapflow-core.controller';
+import { SnapflowCoreService } from './snapflow-core.service';
+import { snapFlowConfigDynamicModule } from './snapflow-config-dynamic-module';
+import { SnapflowCoreConfig } from './snapflow-core.config';
+import { CoreModule } from './core/core.module';
+
+/* Основной модуль Snapflow Core (Users, Auth, Posts) */
+@Module({
+  imports: [CoreModule, snapFlowConfigDynamicModule],
+  controllers: [SnapflowCoreController],
+  providers: [SnapflowCoreService],
+})
+export class SnapflowCoreModule {
+  /**
+   * Динамическая конфигурация модуля
+   *
+   * @example
+   * ```typescript
+   * @Module({
+   *   imports: [
+   *     SnapflowCoreModule.forRoot({
+   *       apiKey: 'your-api-key',
+   *       // ... другие параметры
+   *     })
+   *   ]
+   * })
+   * export class AppModule {}
+   */
+  static async forRoot(snapFlowCoreConfig: SnapflowCoreConfig): Promise<DynamicModule> {
+    //todo: добавить динамический TestingModule
+    return {
+      module: SnapflowCoreModule,
+      imports: [],
+    };
+  }
+}
