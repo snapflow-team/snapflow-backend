@@ -2,12 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { initSnapFlowCoreAppModule } from './init-snap-flow-core-app-module';
 import { SnapflowCoreConfig } from './snapflow-core.config';
 import cookieParser from 'cookie-parser';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 //todo: Добавить Swagger
 async function bootstrap() {
   const DynamicAppModule = await initSnapFlowCoreAppModule();
 
-  const app = await NestFactory.create(DynamicAppModule);
+  const app = await NestFactory.create<NestExpressApplication>(DynamicAppModule);
 
   // Настройка trust proxy для NestJS
   const server = app.getHttpAdapter().getInstance();
