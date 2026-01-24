@@ -3,7 +3,16 @@ generator client {
   output   = "../generated/prisma"
 }
 
+//todo: разобраться почему подсвечивает ошибку если удаляешь свойство "url"!!!
+
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+
+  @@map("users")
 }
