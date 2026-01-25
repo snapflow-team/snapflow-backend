@@ -23,8 +23,9 @@
     "snapflow-core:test:watch": "cross-env NODE_ENV=testing jest --watch",
     "snapflow-core:test:cov": "cross-env NODE_ENV=testing jest --coverage",
     "snapflow-core:test:debug": "cross-env NODE_ENV=testing node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "snapflow-core:test:e2e": "cross-env NODE_ENV=testing jest --config ./apps/snapflow-core/test/jest-e2e.json",
-    "snapflow-core:test:unit": "cross-env NODE_ENV=testing jest --config ./apps/snapflow-core/test/jest-unit.json",
+    "snapflow-core:test:e2e": "cross-env NODE_ENV=testing jest --config ./apps/snapflow-core/test/jest-e2e.json --runInBand --detectOpenHandles",
+    "snapflow-core:int": "cross-env NODE_ENV=testing jest --config ./apps/snapflow-core/test/jest-int.json --runInBand --detectOpenHandles",
+    "snapflow-core:test:unit": "cross-env NODE_ENV=testing jest --config ./apps/snapflow-core/test/jest-unit.json --runInBand --detectOpenHandles",
     "prisma:core:gen": "NODE_ENV=development npx prisma generate --schema=./apps/snapflow-core/prisma/schema.prisma",
     "prisma:core:mig": "cross-env NODE_ENV=development npx prisma migrate dev --config=./apps/snapflow-core/prisma.config.ts"
   },
