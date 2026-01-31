@@ -8,10 +8,10 @@ ENV PORT=${port}
 ENV NODE_ENV=production
 ENV HOME=/home/node
 
-# 1️⃣ Устанавливаем pnpm КАК root
+# 1️⃣ pnpm
 RUN npm install -g pnpm@10
 
-# 2️⃣ Готовим рабочую директорию
+# 2️⃣ директории
 RUN mkdir -p /home/node/app \
  && chown -R node:node /home/node
 
@@ -22,10 +22,13 @@ WORKDIR /home/node/app
 COPY --chown=node package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-# 4️⃣ исходники
+# 4️⃣ код
 COPY --chown=node . .
 
-# 5️⃣ билд
+# 🔥 5️⃣ prisma generate — ОБЯЗАТЕЛЬНО
+RUN pnpm run prisma:generate:prod:${SERVICE}
+
+# 6️⃣ build
 RUN pnpm run build:${SERVICE}
 
 EXPOSE ${PORT}
