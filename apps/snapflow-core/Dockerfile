@@ -19,8 +19,8 @@ COPY --chown=node pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 # копируем prisma‑каталог и генерируем клиента
-COPY --chown=node apps/$SERVICE/prisma ./apps/$SERVICE/prisma
-RUN npx prisma generate --schema apps/snapflow-core/prisma/schema.prisma
+#COPY --chown=node apps/$SERVICE/prisma ./apps/$SERVICE/prisma
+#RUN npx prisma generate --schema apps/snapflow-core/prisma/schema.prisma
 
 COPY --chown=node . .
 
