@@ -1,8 +1,8 @@
 FROM node:24.6-alpine
 ARG port
 ARG service
-ENV SERVICE=$service
-ENV PORT=$port
+ENV SERVICE=snapflow-core
+ENV PORT=4171
 
 RUN corepack enable pnpm
 
