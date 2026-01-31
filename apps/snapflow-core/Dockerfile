@@ -27,4 +27,4 @@ COPY --chown=node . .
 EXPOSE ${PORT}
 
 # запускаем продакшен‑скрипт
-CMD ["pnpm", "run", "start:prod:snapflow-core"]
+CMD ["sh", "-c", "pnpm", "run", "prisma:generate:prod:snapflow-core && start:prod:snapflow-core"]
