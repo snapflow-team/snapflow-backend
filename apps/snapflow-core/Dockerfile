@@ -5,8 +5,6 @@ ARG port
 
 ENV SERVICE=${service}
 ENV PORT=${port}
-ENV NODE_ENV=production
-ENV HOME=/home/node
 
 # 1️⃣ pnpm
 RUN npm install -g pnpm@10
