@@ -8,8 +8,7 @@
   "scripts": {
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "build:snapflow-core": "nest build",
-    "start:snapflow-core": "nest start snapflow-core",
+    "build:snapflow-core": "nest build snapflow-core",
     "start:dev:snapflow-core": "cross-env NODE_ENV=development nest start snapflow-core --watch",
     "start:prod:snapflow-core": "cross-env NODE_ENV=production node dist/apps/snapflow-core/main.js",
     "start:debug:snapflow-core": "cross-env NODE_ENV=development nest start snapflow-core --debug --watch",
