@@ -13,6 +13,8 @@ WORKDIR /home/node/dist/${SERVICE}
 # копируем package.json и pnpm‑lock, чтобы слои кэшировались
 COPY --chown=node package*.json ./
 COPY --chown=node pnpm-lock.yaml ./
+
+RUN npm install -g pnpm
 RUN pnpm install --frozen-lockfile
 
 # копируем prisma‑каталог и генерируем клиента
