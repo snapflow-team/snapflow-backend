@@ -1,4 +1,4 @@
-FROM node:24.6-alpine
+FROM node:22.22.0-alpine
 ARG port
 ARG service
 ENV SERVICE=$service
