@@ -1,31 +1,33 @@
 FROM node:22.22.0-alpine
-ARG port
+
 ARG service
-ENV SERVICE=$service
-ENV PORT=$port
+ARG port
+
+ENV SERVICE=${service}
+ENV PORT=${port}
+ENV NODE_ENV=production
 
 RUN corepack enable pnpm
 
 USER node
 
-RUN mkdir -p /home/node/dist/${SERVICE}
+WORKDIR /home/node/app
 
-WORKDIR /home/node/dist/${SERVICE}
-
-# копируем package.json и pnpm‑lock, чтобы слои кэшировались
-COPY --chown=node package*.json ./
-COPY --chown=node pnpm-lock.yaml ./
-
+# 1️⃣ package manager
+COPY --chown=node package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-# копируем prisma‑каталог и генерируем клиента
-COPY --chown=node apps/$SERVICE/prisma ./apps/$SERVICE/prisma
-#RUN npx prisma generate --schema apps/snapflow-core/prisma/schema.prisma
-
+# 2️⃣ весь проект
 COPY --chown=node . .
+
+# 3️⃣ билд конкретного сервиса
+RUN pnpm run build:${SERVICE}
+
+# 4️⃣ prisma (если нужно)
+RUN pnpm run prisma:generate:prod:${SERVICE} \
+ && pnpm run prisma:deploy:${SERVICE}
 
 EXPOSE ${PORT}
 
-# запускаем продакшен‑скрипт
-CMD ["sh", "-c", "pnpm run start:prod:snapflow-core"]
-#CMD ["sh", "-c", "pnpm run prisma:generate:prod:snapflow-core && pnpm run prisma:deploy:snapflow-core && pnpm run start:prod:snapflow-core"]
+# 5️⃣ запуск
+CMD ["pnpm", "run", "start:prod:snapflow-core"]
