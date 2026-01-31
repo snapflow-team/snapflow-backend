@@ -9,25 +9,20 @@ ENV NODE_ENV=production
 
 RUN corepack enable pnpm
 
-USER node
+# ⬇️ ВАЖНО: создаём и меняем владельца КАК root
+RUN mkdir -p /home/node/app \
+ && chown -R node:node /home/node/app
 
+USER node
 WORKDIR /home/node/app
 
-# 1️⃣ package manager
 COPY --chown=node package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
-# 2️⃣ весь проект
 COPY --chown=node . .
 
-# 3️⃣ билд конкретного сервиса
 RUN pnpm run build:${SERVICE}
-
-# 4️⃣ prisma (если нужно)
-RUN pnpm run prisma:generate:prod:${SERVICE} \
- && pnpm run prisma:deploy:${SERVICE}
 
 EXPOSE ${PORT}
 
-# 5️⃣ запуск
 CMD ["pnpm", "run", "start:prod:snapflow-core"]
