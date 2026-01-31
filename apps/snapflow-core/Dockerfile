@@ -4,6 +4,8 @@ ARG service
 ENV SERVICE=$service
 ENV PORT=$port
 
+RUN corepack enable
+
 USER node
 
 RUN mkdir -p /home/node/dist/${SERVICE}
@@ -14,7 +16,6 @@ WORKDIR /home/node/dist/${SERVICE}
 COPY --chown=node package*.json ./
 COPY --chown=node pnpm-lock.yaml ./
 
-RUN npm install -g pnpm
 RUN pnpm install --frozen-lockfile
 
 # копируем prisma‑каталог и генерируем клиента
