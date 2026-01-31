@@ -4,7 +4,7 @@ ARG service
 ENV SERVICE=$service
 ENV PORT=$port
 
-RUN corepack enable
+RUN corepack enable pnpm
 
 USER node
 
