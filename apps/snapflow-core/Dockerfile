@@ -1,8 +1,8 @@
 FROM node:24.6-alpine
 ARG port
 ARG service
-ENV SERVICE=snapflow-core
-ENV PORT=4171
+ENV SERVICE=$service
+ENV PORT=$port
 
 RUN corepack enable pnpm
 
@@ -20,11 +20,11 @@ RUN pnpm install --frozen-lockfile
 
 # копируем prisma‑каталог и генерируем клиента
 COPY --chown=node apps/$SERVICE/prisma ./apps/$SERVICE/prisma
-RUN npx prisma generate --schema apps/${SERVICE}/prisma/schema.prisma
+RUN npx prisma generate --schema apps/snapflow-core/prisma/schema.prisma
 
 COPY --chown=node . .
 
 EXPOSE ${PORT}
 
 # запускаем продакшен‑скрипт
-CMD ["pnpm", "run", "start:prod:$SERVICE"]
+CMD ["pnpm", "run", "start:prod:snapflow-core"]
