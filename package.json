@@ -20,6 +20,7 @@
     "test:cov:snapflow-core": "cross-env NODE_ENV=testing jest --coverage",
     "test:debug:snapflow-core": "cross-env NODE_ENV=testing node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test": "jest",
+    "prisma:create-migrate:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate dev --create-only --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:migrate:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate dev --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:generate:snapflow-core": "cross-env NODE_ENV=development npx prisma generate --schema=./apps/snapflow-core/prisma/schema.prisma",
     "prisma:generate:prod:snapflow-core": "cross-env NODE_ENV=production npx prisma generate --schema=./apps/snapflow-core/prisma/schema.prisma",
