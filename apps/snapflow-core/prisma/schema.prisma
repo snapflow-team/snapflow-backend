@@ -3,16 +3,43 @@ generator client {
   output   = "../generated/prisma"
 }
 
-//todo: разобраться почему подсвечивает ошибку если удаляешь свойство "url"!!!
-
 datasource db {
   provider = "postgresql"
 }
 
+enum ConfirmationStatus {
+  Confirmed
+  NotConfirmed
+}
+
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
+  id Int @id @default(autoincrement())
+
+  username  String @db.VarChar(30)
+  email     String @db.VarChar(255)
+  passsword String @db.VarChar(255)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  emailConfirmationCode EmailConfirmationCode?
 
   @@map("users")
+}
+
+model EmailConfirmationCode {
+  id Int @id @default(autoincrement())
+
+  confirmationCode   String?            @unique @map("confirmation_code") @db.VarChar(255)
+  expirationDate     DateTime?          @map("expiration_date")
+  confirmationStatus ConfirmationStatus @default(NotConfirmed) @map("confirmation_status")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @unique
+
+  @@map("email_confirmation_codes")
 }
