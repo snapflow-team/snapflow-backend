@@ -12,6 +12,7 @@ export function pipesSetup(app: INestApplication) {
     new ValidationPipe({
       transform: true,
       whitelist: true,
+      stopAtFirstError: true,
       exceptionFactory: (errors: ValidationError[]) => {
         return new BadRequestException({
           code: ErrorCodes.VALIDATION_ERROR,
