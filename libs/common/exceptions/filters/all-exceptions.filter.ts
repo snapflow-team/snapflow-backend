@@ -1,8 +1,8 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
 import { SnapflowCoreConfig } from '../../../../apps/snapflow-core/src/snapflow-core.config';
 import { Request, Response } from 'express';
-import { ErrorResponse } from '../../interfaces/error-response.interface';
-import { IBaseResponse } from '../../interfaces/base-response.interface';
+import { ErrorResponse } from '../interfaces/error-response.interface';
+import { IBaseResponse } from '../interfaces/base-response.interface';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {

@@ -5,6 +5,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { formatValidationErrors } from '../../../../libs/common/exceptions/utils/error-formatter.util';
+import { ErrorCodes } from '../../../../libs/common/exceptions/error-codes.enum';
 
 export function pipesSetup(app: INestApplication) {
   app.useGlobalPipes(
@@ -13,7 +14,7 @@ export function pipesSetup(app: INestApplication) {
       whitelist: true,
       exceptionFactory: (errors: ValidationError[]) => {
         return new BadRequestException({
-          code: 'VALIDATION_ERROR',
+          code: ErrorCodes.VALIDATION_ERROR,
           message: 'Data validation error',
           errors: formatValidationErrors(errors),
         });
