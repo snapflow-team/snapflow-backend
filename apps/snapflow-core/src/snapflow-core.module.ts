@@ -4,12 +4,12 @@ import { SnapflowCoreService } from './snapflow-core.service';
 import { snapFlowConfigDynamicModule } from './snapflow-config-dynamic-module';
 import { SnapflowCoreConfig } from './snapflow-core.config';
 import { CoreModule } from './core/core.module';
-import { UsersModule } from './users/users.module';
+import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
 import { PrismaModule } from './database/prisma.module';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
-  imports: [CoreModule, PrismaModule, snapFlowConfigDynamicModule, UsersModule],
+  imports: [CoreModule, PrismaModule, snapFlowConfigDynamicModule, UserAccountsModule],
   controllers: [SnapflowCoreController],
   providers: [SnapflowCoreService],
 })
