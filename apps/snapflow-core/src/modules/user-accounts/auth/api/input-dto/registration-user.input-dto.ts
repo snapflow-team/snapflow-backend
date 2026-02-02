@@ -1,6 +1,6 @@
 import { IsEmail, IsString, Matches } from 'class-validator';
-import { IsStringWithTrim } from '../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
-import { Trim } from '../../../../../../libs/common/decorators/transform/trim.decorator';
+import { IsStringWithTrim } from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
+import { Trim } from '../../../../../../../../libs/common/decorators/transform/trim.decorator';
 
 export const usernameConstraints = {
   minLength: 6,
@@ -18,7 +18,7 @@ export const passwordConstraints = {
   match: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]{6,20}$/,
 };
 
-export class RegistrationInputDto {
+export class RegistrationUserInputDto {
   @Matches(usernameConstraints.match, {
     message:
       'Username must be 6–30 characters long and contain only letters (a–z, A–Z), digits (0–9), underscore (_) and hyphen (-).',
