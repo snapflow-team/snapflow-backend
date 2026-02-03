@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../infrastructure/users.repository';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
-import { ValidationErrorDetail } from '../../../../../../../../libs/common/exceptions/interfaces/validation-error-detail.interface';
+import {
+  ValidationErrorDetail
+} from '../../../../../../../../libs/common/exceptions/interfaces/validation-error-detail.interface';
 import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation.exception';
 
 @Injectable()
@@ -22,14 +24,14 @@ export class UserValidationService {
     if (byUsername) {
       errors.push({
         field: 'username',
-        message: 'User with the same username already exists',
+        message: 'User with this username is already registered',
       });
     }
 
     if (byEmail) {
       errors.push({
         field: 'email',
-        message: 'User with the same email already exists',
+        message: 'User with this email is already registered',
       });
     }
 
