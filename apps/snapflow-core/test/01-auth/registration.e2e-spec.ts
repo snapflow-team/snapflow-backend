@@ -1,4 +1,4 @@
-import request from 'supertest';
+import request, { Response } from 'supertest';
 import { AppTestManager } from '../managers/app.test-manager';
 import { Server } from 'http';
 import { EmailTemplate } from '../../src/modules/notifications/templates/types';
@@ -9,6 +9,8 @@ import { TestDtoFactory } from '../helpers/test.dto-factory';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { User } from '../../generated/prisma';
+import { ErrorCodes } from '../../../../libs/common/exceptions/error-codes.enum';
+import { TestUtils } from '../helpers/test.utils';
 
 describe('AuthController - registration() (POST: /auth/registration)', () => {
   let appTestManager: AppTestManager;
@@ -21,7 +23,8 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     await appTestManager.init();
 
     server = appTestManager.getServer();
-    authTestManager = appTestManager.app.get<AuthTestManager>(AuthTestManager);
+
+    authTestManager = new AuthTestManager(appTestManager.prisma, server);
 
     sendEmailMock = jest
       .spyOn(EmailService.prototype, 'sendEmail')
@@ -73,7 +76,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     expect(sendEmailMock).toHaveBeenCalledTimes(1);
   });
 
-  // it('should not register the user in the system if the user has sent more than 5 requests from one IP to "/registration" in the last 10 seconds.', async () => {
+  // it.only('не должен регистрировать пользователя в системе, если пользователь отправил более 5 запросов с одного IP на "/регистрация" за последние 10 секунд', async () => {
   //   // 🔻 Создаем 6 наборов тестовых данных для регистрации
   //   const dtos: UserInputDto[] = TestDtoFactory.generateUserInputDto(6);
   //
@@ -109,325 +112,297 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
   //     );
   //   }
   // });
-  //
-  // it('should not be registered if a user with such data already exists (login).', async () => {
-  //   // 🔻 Создаем пользователя через менеджер
-  //   const [user]: UserViewDto[] = await usersTestManager.createUser(1);
-  //
-  //   // 🔻 Пытаемся зарегистрировать нового пользователя с тем же логином
-  //   const resRegistration: Response = await request(server)
-  //     .post(`/${GLOBAL_PREFIX}/auth/registration`)
-  //     .send({
-  //       login: user.login,
-  //       email: 'newUser@example.com',
-  //       password: 'qwerty',
-  //     })
-  //     .expect(HttpStatus.BAD_REQUEST);
-  //
-  //   // 🔸 Проверяем корректность возвращаемой ошибки
-  //   expect(resRegistration.body).toEqual({
-  //     errorsMessages: [
-  //       {
-  //         message: 'User with the same login already exists.',
-  //         field: 'login',
-  //       },
-  //     ],
-  //   });
-  //
-  //   // 🔻 Проверяем, что в базе данных изменений не произошло
-  //   const { items }: PaginatedViewDto<UserViewDto> = await usersTestManager.getAll();
-  //   expect(items).toHaveLength(1);
-  //
-  //   // 🔸 Проверяем, что email не был отправлен
-  //   expect(sendEmailMock).not.toHaveBeenCalled();
-  //   expect(sendEmailMock).toHaveBeenCalledTimes(0);
-  //
-  //   if (testLoggingEnabled) {
-  //     TestLoggers.logE2E(
-  //       resRegistration.body,
-  //       resRegistration.statusCode,
-  //       'Test №3: AuthController - registration() (POST: /auth/registration)',
-  //     );
-  //   }
-  // });
-  //
-  // it('should not be registered if a user with such data already exists (email).', async () => {
-  //   // 🔻 Создаем пользователя через менеджер
-  //   const [user]: UserViewDto[] = await usersTestManager.createUser(1);
-  //
-  //   // 🔻 Пытаемся зарегистрировать нового пользователя с тем же email
-  //   const resRegistration: Response = await request(server)
-  //     .post(`/${GLOBAL_PREFIX}/auth/registration`)
-  //     .send({
-  //       login: 'newUser',
-  //       email: user.email,
-  //       password: 'qwerty',
-  //     })
-  //     .expect(HttpStatus.BAD_REQUEST);
-  //
-  //   // 🔸 Проверяем корректность возвращаемой ошибки
-  //   expect(resRegistration.body).toEqual({
-  //     errorsMessages: [
-  //       {
-  //         message: 'User with the same email already exists.',
-  //         field: 'email',
-  //       },
-  //     ],
-  //   });
-  //
-  //   // 🔻 Проверяем, что в базе данных изменений не произошло
-  //   const { items }: PaginatedViewDto<UserViewDto> = await usersTestManager.getAll();
-  //   expect(items).toHaveLength(1);
-  //
-  //   // 🔸 Проверяем, что email не был отправлен
-  //   expect(sendEmailMock).not.toHaveBeenCalled();
-  //   expect(sendEmailMock).toHaveBeenCalledTimes(0);
-  //
-  //   if (testLoggingEnabled) {
-  //     TestLoggers.logE2E(
-  //       resRegistration.body,
-  //       resRegistration.statusCode,
-  //       'Test №4: AuthController - registration() (POST: /auth/registration)',
-  //     );
-  //   }
-  // });
-  //
-  // it('should not be registered a user if the data in the request body is incorrect (an empty object is passed).', async () => {
-  //   // 🔻 Пытаемся зарегистрировать пользователя без каких-либо данных
-  //   const resRegistration: Response = await request(server)
-  //     .post(`/${GLOBAL_PREFIX}/auth/registration`)
-  //     .send({})
-  //     .expect(HttpStatus.BAD_REQUEST);
-  //
-  //   // 🔸 Проверяем корректность возвращаемых ошибок валидации
-  //   expect(resRegistration.body).toEqual({
-  //     errorsMessages: [
-  //       {
-  //         field: 'password',
-  //         message: 'password must be a string; Received value: undefined',
-  //       },
-  //       {
-  //         field: 'email',
-  //         message:
-  //           'email must match /^[\\w.-]+@([\\w-]+\\.)+[\\w-]{2,4}$/ regular expression; Received value: undefined',
-  //       },
-  //       {
-  //         field: 'login',
-  //         message: 'login must be a string; Received value: undefined',
-  //       },
-  //     ],
-  //   });
-  //
-  //   // 🔻 Проверяем, что в базе данных нет созданных пользователей
-  //   const { items }: PaginatedViewDto<UserViewDto> = await usersTestManager.getAll();
-  //   expect(items).toHaveLength(0);
-  //
-  //   // 🔸 Проверяем, что email не был отправлен
-  //   expect(sendEmailMock).not.toHaveBeenCalled();
-  //   expect(sendEmailMock).toHaveBeenCalledTimes(0);
-  //
-  //   if (testLoggingEnabled) {
-  //     TestLoggers.logE2E(
-  //       resRegistration.body,
-  //       resRegistration.statusCode,
-  //       'Test №5: AuthController - registration() (POST: /auth/registration)',
-  //     );
-  //   }
-  // });
-  //
-  // it('should not be registered a user if the data in the request body is incorrect (login: empty line, email: empty line, password: empty line).', async () => {
-  //   // 🔻 Пытаемся зарегистрировать пользователя с пустыми (пробельными) значениями полей
-  //   const resRegistration: Response = await request(server)
-  //     .post(`/${GLOBAL_PREFIX}/auth/registration`)
-  //     .send({
-  //       login: '   ',
-  //       email: '   ',
-  //       password: '   ',
-  //     })
-  //     .expect(HttpStatus.BAD_REQUEST);
-  //
-  //   // 🔸 Проверяем корректность возвращаемых ошибок валидации для пустых значений
-  //   expect(resRegistration.body).toEqual({
-  //     errorsMessages: [
-  //       {
-  //         field: 'password',
-  //         message: 'password must be longer than or equal to 6 characters; Received value: ',
-  //       },
-  //       {
-  //         field: 'email',
-  //         message:
-  //           'email must match /^[\\w.-]+@([\\w-]+\\.)+[\\w-]{2,4}$/ regular expression; Received value: ',
-  //       },
-  //       {
-  //         field: 'login',
-  //         message: 'login must be longer than or equal to 3 characters; Received value: ',
-  //       },
-  //     ],
-  //   });
-  //
-  //   // 🔻 Проверяем, что в базе данных нет созданных пользователей
-  //   const { items }: PaginatedViewDto<UserViewDto> = await usersTestManager.getAll();
-  //   expect(items).toHaveLength(0);
-  //
-  //   // 🔸 Проверяем, что email не был отправлен
-  //   expect(sendEmailMock).not.toHaveBeenCalled();
-  //   expect(sendEmailMock).toHaveBeenCalledTimes(0);
-  //
-  //   if (testLoggingEnabled) {
-  //     TestLoggers.logE2E(
-  //       resRegistration.body,
-  //       resRegistration.statusCode,
-  //       'Test №6: AuthController - registration() (POST: /auth/registration)',
-  //     );
-  //   }
-  // });
-  //
-  // it('should not be registered a user if the data in the request body is incorrect (login: less than the minimum length, email: incorrect, password: less than the minimum length).', async () => {
-  //   // 🔻 Генерируем случайные значения для полей регистрации, которые не соответствуют требованиям
-  //   const login: string = TestUtils.generateRandomString(2);
-  //   const email: string = TestUtils.generateRandomString(10);
-  //   const password: string = TestUtils.generateRandomString(5);
-  //
-  //   // 🔻 Пытаемся зарегистрировать пользователя с некорректными данными
-  //   const resRegistration: Response = await request(server)
-  //     .post(`/${GLOBAL_PREFIX}/auth/registration`)
-  //     .send({
-  //       login,
-  //       email,
-  //       password,
-  //     })
-  //     .expect(HttpStatus.BAD_REQUEST);
-  //
-  //   // 🔸 Проверяем корректность возвращаемых ошибок валидации с конкретными значениями
-  //   expect(resRegistration.body).toEqual({
-  //     errorsMessages: [
-  //       {
-  //         field: 'password',
-  //         message: `password must be longer than or equal to 6 characters; Received value: ${password}`,
-  //       },
-  //       {
-  //         field: 'email',
-  //         message: `email must match /^[\\w.-]+@([\\w-]+\\.)+[\\w-]{2,4}$/ regular expression; Received value: ${email}`,
-  //       },
-  //       {
-  //         field: 'login',
-  //         message: `login must be longer than or equal to 3 characters; Received value: ${login}`,
-  //       },
-  //     ],
-  //   });
-  //
-  //   // 🔻 Проверяем, что в базе данных нет созданных пользователей
-  //   const { items }: PaginatedViewDto<UserViewDto> = await usersTestManager.getAll();
-  //   expect(items).toHaveLength(0);
-  //
-  //   // 🔸 Проверяем, что email не был отправлен
-  //   expect(sendEmailMock).not.toHaveBeenCalled();
-  //   expect(sendEmailMock).toHaveBeenCalledTimes(0);
-  //
-  //   if (testLoggingEnabled) {
-  //     TestLoggers.logE2E(
-  //       resRegistration.body,
-  //       resRegistration.statusCode,
-  //       'Test №7: AuthController - registration() (POST: /auth/registration)',
-  //     );
-  //   }
-  // });
-  //
-  // it('should not be registered a user if the data in the request body is incorrect (login: exceeds max length,  email: incorrect, password: exceeds max length).', async () => {
-  //   // 🔻 Генерируем случайные значения для полей регистрации, которые превышают максимально допустимую длину
-  //   const login: string = TestUtils.generateRandomString(11);
-  //   const email: string = TestUtils.generateRandomString(10);
-  //   const password: string = TestUtils.generateRandomString(21);
-  //
-  //   // 🔻 Пытаемся зарегистрировать пользователя с некорректными данными
-  //   const resRegistration: Response = await request(server)
-  //     .post(`/${GLOBAL_PREFIX}/auth/registration`)
-  //     .send({
-  //       login,
-  //       email,
-  //       password,
-  //     })
-  //     .expect(HttpStatus.BAD_REQUEST);
-  //
-  //   // 🔸 Проверяем корректность возвращаемых ошибок валидации с конкретными значениями
-  //   expect(resRegistration.body).toEqual({
-  //     errorsMessages: [
-  //       {
-  //         field: 'password',
-  //         message: `password must be shorter than or equal to 20 characters; Received value: ${password}`,
-  //       },
-  //       {
-  //         field: 'email',
-  //         message: `email must match /^[\\w.-]+@([\\w-]+\\.)+[\\w-]{2,4}$/ regular expression; Received value: ${email}`,
-  //       },
-  //       {
-  //         field: 'login',
-  //         message: `login must be shorter than or equal to 10 characters; Received value: ${login}`,
-  //       },
-  //     ],
-  //   });
-  //
-  //   // 🔻 Проверяем, что в базе данных нет созданных пользователей
-  //   const { items }: PaginatedViewDto<UserViewDto> = await usersTestManager.getAll();
-  //   expect(items).toHaveLength(0);
-  //
-  //   // 🔸 Проверяем, что email не был отправлен
-  //   expect(sendEmailMock).not.toHaveBeenCalled();
-  //   expect(sendEmailMock).toHaveBeenCalledTimes(0);
-  //
-  //   if (testLoggingEnabled) {
-  //     TestLoggers.logE2E(
-  //       resRegistration.body,
-  //       resRegistration.statusCode,
-  //       'Test №8: AuthController - registration() (POST: /auth/registration)',
-  //     );
-  //   }
-  // });
-  //
-  // it('should not be registered a user if the data in the request body is incorrect (login: type number,  email: type number, password: type number).', async () => {
-  //   // 🔻 Пытаемся зарегистрировать пользователя, передавая числовые значения вместо строк
-  //   const resRegistration: Response = await request(server)
-  //     .post(`/${GLOBAL_PREFIX}/auth/registration`)
-  //     .send({
-  //       login: 123,
-  //       email: 123,
-  //       password: 123,
-  //     })
-  //     .expect(HttpStatus.BAD_REQUEST);
-  //
-  //   // 🔸 Проверяем корректность возвращаемых ошибок валидации типов данных
-  //   expect(resRegistration.body).toEqual({
-  //     errorsMessages: [
-  //       {
-  //         field: 'password',
-  //         message: 'password must be a string; Received value: 123',
-  //       },
-  //       {
-  //         field: 'email',
-  //         message:
-  //           'email must match /^[\\w.-]+@([\\w-]+\\.)+[\\w-]{2,4}$/ regular expression; Received value: 123',
-  //       },
-  //       {
-  //         field: 'login',
-  //         message: 'login must be a string; Received value: 123',
-  //       },
-  //     ],
-  //   });
-  //
-  //   // 🔻 Проверяем, что в базе данных нет созданных пользователей
-  //   const { items }: PaginatedViewDto<UserViewDto> = await usersTestManager.getAll();
-  //   expect(items).toHaveLength(0);
-  //
-  //   // 🔸 Проверяем, что email не был отправлен
-  //   expect(sendEmailMock).not.toHaveBeenCalled();
-  //   expect(sendEmailMock).toHaveBeenCalledTimes(0);
-  //
-  //   if (testLoggingEnabled) {
-  //     TestLoggers.logE2E(
-  //       resRegistration.body,
-  //       resRegistration.statusCode,
-  //       'Test №9: AuthController - registration() (POST: /auth/registration)',
-  //     );
-  //   }
-  // });
+
+  it('не следует регистрировать, если пользователь с такими данными уже существует (username)', async () => {
+    // 🔻 Регистрируем пользователя через менеджер
+    const dtos: RegistrationUserInputDto[] = TestDtoFactory.generateRegistrationUserInputDto(1);
+
+    await authTestManager.registration(dtos);
+
+    const [dto] = dtos;
+
+    // 🔻 Пытаемся зарегистрировать нового пользователя с тем же username
+    const resRegistration: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send({
+        username: dto.username,
+        email: 'newUser@example.com',
+        password: 'Qwerty1',
+      })
+      .expect(HttpStatus.BAD_REQUEST);
+
+    // 🔸 Проверяем корректность возвращаемой ошибки
+    expect(resRegistration.body).toEqual({
+      code: ErrorCodes.VALIDATION_ERROR,
+      errors: [
+        {
+          message: 'User with this username is already registered',
+          field: 'username',
+        },
+      ],
+      message: 'Data validation error',
+    });
+
+    // 🔻 Проверяем, что в базе данных изменений не произошло
+    const users: User[] = await authTestManager.getAll();
+    expect(users).toHaveLength(1);
+
+    // 🔸 Проверяем, что email не был отправлен во втором запросе
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('не следует регистрировать, если пользователь с такими данными уже существует (email)', async () => {
+    // 🔻 Регистрируем пользователя через менеджер
+    const dtos: RegistrationUserInputDto[] = TestDtoFactory.generateRegistrationUserInputDto(1);
+
+    await authTestManager.registration(dtos);
+
+    const [dto] = dtos;
+
+    // 🔻 Пытаемся зарегистрировать нового пользователя с тем же email
+    const resRegistration: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send({
+        username: 'new_user',
+        email: dto.email,
+        password: 'Qwerty1',
+      })
+      .expect(HttpStatus.BAD_REQUEST);
+
+    // 🔸 Проверяем корректность возвращаемой ошибки
+    expect(resRegistration.body).toEqual({
+      code: ErrorCodes.VALIDATION_ERROR,
+      errors: [
+        {
+          message: 'User with this email is already registered',
+          field: 'email',
+        },
+      ],
+      message: 'Data validation error',
+    });
+
+    // 🔻 Проверяем, что в базе данных изменений не произошло
+    const users: User[] = await authTestManager.getAll();
+    expect(users).toHaveLength(1);
+
+    // 🔸 Проверяем, что email не был отправлен во втором запросе
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('не следует регистрировать пользователя, если данные в теле запроса неверны (передается пустой объект)', async () => {
+    // 🔻 Пытаемся зарегистрировать пользователя без каких-либо данных
+    const resRegistration: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send({})
+      .expect(HttpStatus.BAD_REQUEST);
+
+    // 🔸 Проверяем корректность возвращаемых ошибок валидации
+    expect(resRegistration.body).toEqual({
+      code: ErrorCodes.VALIDATION_ERROR,
+      errors: [
+        {
+          message: 'Must be a string',
+          field: 'username',
+        },
+        {
+          message:
+            'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
+          field: 'email',
+        },
+        {
+          message: 'Must be a string',
+          field: 'password',
+        },
+      ],
+      message: 'Data validation error',
+    });
+
+    // 🔻 Проверяем, что в базе данных нет созданных пользователей
+    const users: User[] = await authTestManager.getAll();
+    expect(users).toHaveLength(0);
+
+    // 🔸 Проверяем, что email не был отправлен
+    expect(sendEmailMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(0);
+  });
+
+  it('не следует регистрировать пользователя, если данные в теле запроса неверны (username: пустая строка, email: пустая строка, password: пустая строка)', async () => {
+    // 🔻 Пытаемся зарегистрировать пользователя с пустыми (пробельными) значениями полей
+    const resRegistration: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send({
+        username: '   ',
+        email: '   ',
+        password: '   ',
+      })
+      .expect(HttpStatus.BAD_REQUEST);
+
+    // 🔸 Проверяем корректность возвращаемых ошибок валидации для пустых значений
+    expect(resRegistration.body).toEqual({
+      code: ErrorCodes.VALIDATION_ERROR,
+      errors: [
+        {
+          message: 'Length must be between 6 and 30 characters',
+          field: 'username',
+          value: '',
+        },
+        {
+          message:
+            'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
+          field: 'email',
+          value: '',
+        },
+        {
+          message: 'Length must be between 6 and 20 characters',
+          field: 'password',
+          value: '',
+        },
+      ],
+      message: 'Data validation error',
+    });
+
+    // 🔻 Проверяем, что в базе данных нет созданных пользователей
+    const users: User[] = await authTestManager.getAll();
+    expect(users).toHaveLength(0);
+
+    // 🔸 Проверяем, что email не был отправлен
+    expect(sendEmailMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(0);
+  });
+
+  it('не следует регистрировать пользователя, если данные в теле запроса неверны (username: меньше минимальной длины, email: некорректный, password: меньше минимальной длины)', async () => {
+    // 🔻 Генерируем случайные значения для полей регистрации, которые не соответствуют требованиям
+    const username: string = TestUtils.generateRandomString(5);
+    const email: string = TestUtils.generateRandomString(10);
+    const password: string = TestUtils.generateRandomString(5);
+
+    // 🔻 Пытаемся зарегистрировать пользователя с некорректными данными
+    const resRegistration: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send({
+        username,
+        email,
+        password,
+      })
+      .expect(HttpStatus.BAD_REQUEST);
+
+    // 🔸 Проверяем корректность возвращаемых ошибок валидации с конкретными значениями
+    expect(resRegistration.body).toEqual({
+      code: ErrorCodes.VALIDATION_ERROR,
+      errors: [
+        {
+          message: 'Length must be between 6 and 30 characters',
+          field: 'username',
+          value: username,
+        },
+        {
+          message:
+            'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
+          field: 'email',
+          value: email,
+        },
+        {
+          message: 'Length must be between 6 and 20 characters',
+          field: 'password',
+          value: password,
+        },
+      ],
+      message: 'Data validation error',
+    });
+
+    // 🔻 Проверяем, что в базе данных нет созданных пользователей
+    const users: User[] = await authTestManager.getAll();
+    expect(users).toHaveLength(0);
+
+    // 🔸 Проверяем, что email не был отправлен
+    expect(sendEmailMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(0);
+  });
+
+  it('не следует регистрировать пользователя, если данные в теле запроса неверны (username: превышает максимальную длину, адрес email: некорректный, password: превышает максимальную длину)', async () => {
+    // 🔻 Генерируем случайные значения для полей регистрации, которые превышают максимально допустимую длину
+    const username: string = TestUtils.generateRandomString(31);
+    const email: string = TestUtils.generateRandomString(10);
+    const password: string = TestUtils.generateRandomString(21);
+
+    // 🔻 Пытаемся зарегистрировать пользователя с некорректными данными
+    const resRegistration: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send({
+        username,
+        email,
+        password,
+      })
+      .expect(HttpStatus.BAD_REQUEST);
+
+    // 🔸 Проверяем корректность возвращаемых ошибок валидации с конкретными значениями
+    expect(resRegistration.body).toEqual({
+      code: ErrorCodes.VALIDATION_ERROR,
+      errors: [
+        {
+          message: 'Length must be between 6 and 30 characters',
+          field: 'username',
+          value: username,
+        },
+        {
+          message:
+            'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
+          field: 'email',
+          value: email,
+        },
+        {
+          message: 'Length must be between 6 and 20 characters',
+          field: 'password',
+          value: password,
+        },
+      ],
+      message: 'Data validation error',
+    });
+
+    // 🔻 Проверяем, что в базе данных нет созданных пользователей
+    const users: User[] = await authTestManager.getAll();
+    expect(users).toHaveLength(0);
+
+    // 🔸 Проверяем, что email не был отправлен
+    expect(sendEmailMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(0);
+  });
+
+  it('не следует регистрировать пользователя, если данные в теле запроса неверны (username: type number,  email: type number)', async () => {
+    // 🔻 Пытаемся зарегистрировать пользователя, передавая числовые значения вместо строк
+    const resRegistration: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send({
+        login: 123,
+        email: 123,
+        password: 'Qwerty1',
+      })
+      .expect(HttpStatus.BAD_REQUEST);
+
+    // 🔸 Проверяем корректность возвращаемых ошибок валидации типов данных
+    expect(resRegistration.body).toEqual({
+      code: ErrorCodes.VALIDATION_ERROR,
+      errors: [
+        {
+          message: 'Must be a string',
+          field: 'username',
+        },
+        {
+          message:
+            'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
+          field: 'email',
+          value: 123,
+        },
+      ],
+      message: 'Data validation error',
+    });
+
+    // 🔻 Проверяем, что в базе данных нет созданных пользователей
+    const users: User[] = await authTestManager.getAll();
+    expect(users).toHaveLength(0);
+
+    // 🔸 Проверяем, что email не был отправлен
+    expect(sendEmailMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(0);
+  });
 });
