@@ -6,8 +6,10 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginUserInputDto {
   @ApiProperty({
-    example: 'user@example.com',
-    description: 'User login or email',
+    description:
+      'Email должен быть корректным адресом в формате local-part@domain.tld. Допустимы буквы, цифры, подчеркивание, точка и дефис в локальной части и домене.',
+    pattern: emailConstraints.match.source,
+    example: 'ivan@example.com',
   })
   @IsString()
   @IsEmail()
@@ -18,7 +20,14 @@ export class LoginUserInputDto {
   @Trim()
   email: string;
 
-  @ApiProperty({ example: 'password', description: 'User password' })
+  @ApiProperty({
+    description:
+      'Пароль должен быть от 6 до 20 символов, содержать хотя бы одну строчную букву, одну заглавную букву, одну цифру и только разрешённые спецсимволы: !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~.',
+    minLength: passwordConstraints.minLength,
+    maxLength: passwordConstraints.maxLength,
+    pattern: passwordConstraints.match.source,
+    example: 'Qwerty1!',
+  })
   @Matches(passwordConstraints.match, {
     message:
       'Password must be 6–20 characters long and contain at least one lowercase letter, one uppercase letter, one digit, and only the following special characters: !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~.',
