@@ -6,6 +6,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { ApiRegistration } from './swagger/registration.swagger';
 import { ConfirmationEmailCodeInputDto } from './input-dto/confirmation-email-code.input-dto';
 import { ConfirmationEmailCommand } from '../application/usecases/confirmation-email.usecase';
+import { ConfirmRegistrationSwagger } from './swagger/confirm-registration.swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -20,6 +21,7 @@ export class AuthController {
 
   @Post('registration-confirmation')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ConfirmRegistrationSwagger()
   async confirmRegistration(@Body() body: ConfirmationEmailCodeInputDto): Promise<void> {
     await this.commandBus.execute(new ConfirmationEmailCommand(body.code));
   }
