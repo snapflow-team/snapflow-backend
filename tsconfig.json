@@ -22,6 +22,9 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
+      "@generated/prisma": [
+        "apps/snapflow-core/generated/prisma"
+      ],
       "@libs/common": [
         "libs/common/src"
       ],
