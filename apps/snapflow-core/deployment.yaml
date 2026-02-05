@@ -81,11 +81,6 @@ spec:
                 secretKeyRef:
                   name: snapflow-backend-production-config-secret
                   key: MAX_AGE
-            - name: PATH
-              valueFrom:
-                secretKeyRef:
-                  name: snapflow-backend-production-config-secret
-                  key: PATH
             - name: ALLOWED_ORIGINS
               valueFrom:
                 secretKeyRef:

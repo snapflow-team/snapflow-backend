@@ -61,10 +61,10 @@ export class UserAccountsConfig {
   )
   maxAge: number;
 
-  @IsNotEmpty({
-    message: 'Set Env variable PATH to define cookie path. Example: "/"',
-  })
-  path: string;
+  // @IsNotEmpty({
+  //   message: 'Set Env variable PATH to define cookie path. Example: "/"',
+  // })
+  // path: string;
 
   constructor(private configService: ConfigService<any, true>) {
     this.accessTokenExpireIn = this.configService.get('JWT_EXPIRATION_AT');
@@ -87,7 +87,7 @@ export class UserAccountsConfig {
 
     this.maxAge = Number(this.configService.get('MAX_AGE'));
 
-    this.path = this.configService.get('PATH');
+    // this.path = this.configService.get('PATH');
 
     configValidationUtility.validateConfig(this);
   }
@@ -98,7 +98,7 @@ export class UserAccountsConfig {
       secure: this.secure,
       sameSite: this.sameSite,
       maxAge: this.maxAge,
-      path: this.path,
+      // path: this.path,
     };
   }
 }
