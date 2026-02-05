@@ -31,4 +31,5 @@ RUN pnpm run build:${SERVICE}
 
 EXPOSE ${PORT}
 
-CMD ["pnpm", "run", "start:prod:snapflow-core"]
+CMD ["sh", "-c", "pnpm run prisma:deploy:snapflow-core && pnpm run start:prod:snapflow-core"]
+#CMD ["pnpm", "run", "start:prod:snapflow-core"]
