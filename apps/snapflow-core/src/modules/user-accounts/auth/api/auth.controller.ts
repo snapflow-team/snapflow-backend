@@ -1,9 +1,12 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { RegistrationUserInputDto } from './input-dto/registration-user.input-dto';
 import { CommandBus } from '@nestjs/cqrs';
+import { RegistrationUserInputDto } from './input-dto/registration-user.input-dto';
 import { RegisterUserCommand } from '../application/usecases/register-user.useсase';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiRegistration } from './swagger/registration.swagger';
+import { ConfirmationEmailCodeInputDto } from './input-dto/confirmation-email-code.input-dto';
+import { ConfirmationEmailCommand } from '../application/usecases/confirmation-email.usecase';
+import { ConfirmRegistrationSwagger } from './swagger/confirm-registration.swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -14,5 +17,12 @@ export class AuthController {
   @ApiRegistration()
   async registration(@Body() body: RegistrationUserInputDto): Promise<void> {
     await this.commandBus.execute(new RegisterUserCommand(body));
+  }
+
+  @Post('registration-confirmation')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ConfirmRegistrationSwagger()
+  async confirmRegistration(@Body() body: ConfirmationEmailCodeInputDto): Promise<void> {
+    await this.commandBus.execute(new ConfirmationEmailCommand(body.code));
   }
 }

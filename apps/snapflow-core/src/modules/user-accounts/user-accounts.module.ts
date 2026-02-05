@@ -6,9 +6,10 @@ import { DateService } from '../../../../../libs/common/services/date.service';
 import { CryptoService } from '../../../../../libs/common/services/crypto.service';
 import { UserValidationService } from './users/application/services/user-validation.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ConfirmationEmailUseCase } from './auth/application/usecases/confirmation-email.usecase';
 
 const controllers = [AuthController];
-const useCases = [RegisterUserUseCase];
+const useCases = [RegisterUserUseCase, ConfirmationEmailUseCase];
 const services = [DateService, CryptoService, UserValidationService];
 const repositories = [UsersRepository];
 
