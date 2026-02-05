@@ -25,7 +25,12 @@ export function ConfirmRegistrationSwagger(): MethodDecorator {
               value: {
                 code: 'VALIDATION_ERROR',
                 message: 'Data validation error',
-                errors: [],
+                errors: [
+                  {
+                    field: 'code',
+                    message: 'Invalid confirmation code',
+                  },
+                ],
               },
             },
           },
