@@ -24,7 +24,7 @@ export class ConfirmationEmailUseCase implements ICommandHandler<ConfirmationEma
 
     if (!user)
       throw new DomainException(
-        ErrorCodes.USER_NOT_FOUND,
+        ErrorCodes.CONFIRMATION_CODE_NOT_FOUND,
         'User with this confirmation code was not found',
         HttpStatus.NOT_FOUND,
       );
