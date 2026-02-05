@@ -6,6 +6,7 @@ import { DateService } from '../../../../../libs/common/services/date.service';
 import { CryptoService } from '../../../../../libs/common/services/crypto.service';
 import { UserValidationService } from './users/application/services/user-validation.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ConfirmationEmailUseCase } from './auth/application/usecases/confirmation-email.usecase';
 import { LocalStrategy } from './auth/domain/guards/local/local.strategy';
 import { LoginUserUseCase } from './auth/application/usecases/login-user.usecase';
 import { CreateSessionUseCase } from './auth/sessions/application/usecases/create-session.usecase';
@@ -15,7 +16,7 @@ import { AccessTokenProvider } from './auth/providers/access-token.provider';
 import { RefreshTokenProvider } from './auth/providers/refresh-token.provider';
 
 const controllers = [AuthController];
-const useCases = [RegisterUserUseCase, LoginUserUseCase, CreateSessionUseCase];
+const useCases = [RegisterUserUseCase, ConfirmationEmailUseCase, LoginUserUseCase, CreateSessionUseCase];
 const services = [DateService, CryptoService, UserValidationService];
 const repositories = [UsersRepository, SessionsRepository];
 const strategies = [LocalStrategy];

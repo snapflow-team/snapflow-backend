@@ -13,6 +13,9 @@ import { LoginViewDto } from './view-dto/login.view-dto';
 import { AuthTokens } from '../domain/types/auth-tokens.type';
 import { LoginUserCommand } from '../application/usecases/login-user.usecase';
 import type { Response } from 'express';
+import { ConfirmationEmailCodeInputDto } from './input-dto/confirmation-email-code.input-dto';
+import { ConfirmationEmailCommand } from '../application/usecases/confirmation-email.usecase';
+import { ConfirmRegistrationSwagger } from './swagger/confirm-registration.swagger';
 import { UserAccountsConfig } from '../../config/user-accounts.config';
 
 @ApiTags('Auth')
@@ -48,5 +51,12 @@ export class AuthController {
     res.cookie('refreshToken', refreshToken, this.userAccountsConfig.getCookieConfig());
 
     return { accessToken };
+  }
+
+  @Post('registration-confirmation')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ConfirmRegistrationSwagger()
+  async confirmRegistration(@Body() body: ConfirmationEmailCodeInputDto): Promise<void> {
+    await this.commandBus.execute(new ConfirmationEmailCommand(body.code));
   }
 }

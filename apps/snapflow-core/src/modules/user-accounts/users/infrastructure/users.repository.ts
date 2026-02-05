@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, User } from '../../../../../generated/prisma';
+import { ConfirmationStatus, Prisma, User } from '@generated/prisma';
 import { PrismaService } from '../../../../database/prisma.service';
+import { UserWithEmailConfirmation } from '../types/user-with-confirmation.type';
 
 @Injectable()
 export class UsersRepository {
@@ -29,6 +30,33 @@ export class UsersRepository {
       data,
       include: {
         emailConfirmationCode: true,
+      },
+    });
+  }
+
+  async findUserByConfirmationCode(
+    confirmationCode: string,
+  ): Promise<UserWithEmailConfirmation | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        deletedAt: null,
+        emailConfirmationCode: {
+          confirmationCode: confirmationCode,
+        },
+      },
+      include: {
+        emailConfirmationCode: true,
+      },
+    });
+  }
+
+  async confirmEmail(code: string): Promise<void> {
+    await this.prisma.emailConfirmationCode.update({
+      where: { confirmationCode: code },
+      data: {
+        confirmationStatus: ConfirmationStatus.Confirmed,
+        expirationDate: null,
+        confirmationCode: null,
       },
     });
   }
