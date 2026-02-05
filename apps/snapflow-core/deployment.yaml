@@ -81,6 +81,16 @@ spec:
                 secretKeyRef:
                   name: snapflow-backend-production-config-secret
                   key: MAX_AGE
+            - name: EMAIL_APP
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: EMAIL_APP
+            - name: EMAIL_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: EMAIL_APP_PASSWORD
             - name: ALLOWED_ORIGINS
               valueFrom:
                 secretKeyRef:
