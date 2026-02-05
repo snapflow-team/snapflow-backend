@@ -16,7 +16,12 @@ import { AccessTokenProvider } from './auth/providers/access-token.provider';
 import { RefreshTokenProvider } from './auth/providers/refresh-token.provider';
 
 const controllers = [AuthController];
-const useCases = [RegisterUserUseCase, ConfirmationEmailUseCase, LoginUserUseCase, CreateSessionUseCase];
+const useCases = [
+  RegisterUserUseCase,
+  ConfirmationEmailUseCase,
+  LoginUserUseCase,
+  CreateSessionUseCase,
+];
 const services = [DateService, CryptoService, UserValidationService];
 const repositories = [UsersRepository, SessionsRepository];
 const strategies = [LocalStrategy];
