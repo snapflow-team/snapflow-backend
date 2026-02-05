@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../infrastructure/users.repository';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
-import {
-  ValidationErrorDetail
-} from '../../../../../../../../libs/common/exceptions/interfaces/validation-error-detail.interface';
+import { ValidationErrorDetail } from '../../../../../../../../libs/common/exceptions/interfaces/validation-error-detail.interface';
 import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation.exception';
+import { User } from '../../../../../../generated/prisma';
+import { UserContextDto } from '../../../auth/domain/guards/dto/user-context.dto';
+import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
+import { ErrorCodes } from '../../../../../../../../libs/common/exceptions/error-codes.enum';
 
 @Injectable()
 export class UserValidationService {
@@ -40,32 +42,30 @@ export class UserValidationService {
     }
   }
 
-  // async authenticateUser(loginOrEmail: string, password: string): Promise<UserContextDto> {
-  //   let user: User | null = await this.usersRepository.getByEmail(loginOrEmail);
-  //
-  //   if (!user) {
-  //     user = await this.usersRepository.getByLogin(loginOrEmail);
-  //   }
-  //
-  //   if (!user) {
-  //     throw new DomainException({
-  //       code: DomainExceptionCode.Unauthorized,
-  //       message: 'Invalid username or password',
-  //     });
-  //   }
-  //
-  //   const isPasswordValid: boolean = await this.cryptoService.comparePassword({
-  //     password,
-  //     hash: user.passwordHash,
-  //   });
-  //
-  //   if (!isPasswordValid) {
-  //     throw new DomainException({
-  //       code: DomainExceptionCode.Unauthorized,
-  //       message: 'Invalid username or password',
-  //     });
-  //   }
-  //
-  //   return { id: user.id };
-  // }
+  async authenticateUser(email: string, password: string): Promise<UserContextDto> {
+    const user: User | null = await this.usersRepository.findByEmail(email);
+
+    if (!user) {
+      throw new DomainException(
+        ErrorCodes.UNAUTHORIZED,
+        'Invalid email or password',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const isPasswordValid: boolean = await this.cryptoService.comparePassword({
+      password,
+      hash: user.password,
+    });
+
+    if (!isPasswordValid) {
+      throw new DomainException(
+        ErrorCodes.UNAUTHORIZED,
+        'Invalid email or password',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    return { id: user.id };
+  }
 }
