@@ -4,7 +4,9 @@ import { NotificationsConfigModule } from './config/notifications-config.module'
 import { NotificationsConfig } from './config/notifications.config';
 import { EmailService } from './services/email.service';
 import { EmailTemplates } from './templates/email.templates';
-import { SendConfirmationEmailWhenUserRegisteredEventHandler } from './event-handlers/send-confirmation-email-when-user-registered.event-handler';
+import {
+  SendConfirmationEmailWhenUserRegisteredEventHandler
+} from './event-handlers/send-confirmation-email-when-user-registered.event-handler';
 
 @Module({
   imports: [
@@ -22,7 +24,7 @@ import { SendConfirmationEmailWhenUserRegisteredEventHandler } from './event-han
 
         return {
           transport: `smtps://${encodeURIComponent(email)}:${encodeURIComponent(password)}@smtp.gmail.com`,
-          defaults: { from: `Blogger Platform <${email}>` },
+          defaults: { from: `SnapFlow <${email}>` },
         };
       },
     }),

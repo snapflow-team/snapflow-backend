@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { SnapflowCoreConfig } from '../snapflow-core.config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 
 export function swaggerSetup(app: INestApplication, config: SnapflowCoreConfig) {
   //todo: нужно ли скрывать сваггер в проде??
@@ -39,7 +40,7 @@ export function swaggerSetup(app: INestApplication, config: SnapflowCoreConfig) 
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);
 
-  SwaggerModule.setup('docs', app, document, {
+  SwaggerModule.setup(`${GLOBAL_PREFIX}/docs`, app, document, {
     swaggerOptions: {
       persistAuthorization: true,
       filter: true,

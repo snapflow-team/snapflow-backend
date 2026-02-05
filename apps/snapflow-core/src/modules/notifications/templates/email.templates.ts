@@ -8,7 +8,7 @@ export class EmailTemplates {
       subject: 'Confirmation of registration',
       html: ` <h1>Thanks for your registration</h1>
                <p>To finish registration please follow the link below:<br>
-                  <a href='https://some-front.com/confirm-registration?code=${code}'>complete registration</a>
+                  <a href='https://snapflow.cc/sign-up/confirm-email?code=${code}'>complete registration</a>
               </p>`,
     };
   }
