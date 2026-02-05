@@ -32,10 +32,13 @@ RUN pnpm run build:${SERVICE}
 EXPOSE ${PORT}
 
 # Выполнить миграции Prisma
-pnpm run prisma:deploy:snapflow-core
+#pnpm run prisma:deploy:snapflow-core
 
 # Запустить продакшн-сервер
-pnpm run start:prod:snapflow-core
+#pnpm run start:prod:snapflow-core
 
 #CMD ["sh", "-c", "pnpm run prisma:deploy:snapflow-core && pnpm run start:prod:snapflow-core"]
 #CMD ["pnpm", "run", "start:prod:snapflow-core"]
+
+CMD ["pnpm", "run", "prisma:deploy:snapflow-core"]
+CMD ["pnpm", "run", "start:prod:snapflow-core"]
