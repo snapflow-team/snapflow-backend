@@ -5,9 +5,9 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 
 export function swaggerSetup(app: INestApplication, config: SnapflowCoreConfig) {
   //todo: нужно ли скрывать сваггер в проде??
-  if (config.env === 'production') {
-    return;
-  }
+  // if (config.env === 'production') {
+  //   return;
+  // }
 
   const swaggerConfig = new DocumentBuilder()
     .setVersion('1.0')
