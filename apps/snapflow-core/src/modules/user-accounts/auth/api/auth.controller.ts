@@ -17,6 +17,7 @@ import { ConfirmationEmailCodeInputDto } from './input-dto/confirmation-email-co
 import { ConfirmationEmailCommand } from '../application/usecases/confirmation-email.usecase';
 import { ConfirmRegistrationSwagger } from './swagger/confirm-registration.swagger';
 import { UserAccountsConfig } from '../../config/user-accounts.config';
+import { LoginSwagger } from './swagger/login.swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -33,8 +34,9 @@ export class AuthController {
   }
 
   @Post('login')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
+  @LoginSwagger()
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
     @ExtractClientInfo() clientInfo: ClientInfoDto,
