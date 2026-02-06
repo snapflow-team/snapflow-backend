@@ -1,11 +1,9 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
-import { HttpStatus } from '@nestjs/common';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
-import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { ErrorCodes } from '../../../../../../../../libs/common/exceptions/error-codes.enum';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
 import { ConfirmationStatus } from '@generated/prisma';
+import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation.exception';
 
 export class ConfirmationEmailCommand {
   constructor(public readonly confirmationCode: string) {}
@@ -22,45 +20,26 @@ export class ConfirmationEmailUseCase implements ICommandHandler<ConfirmationEma
     const user: UserWithEmailConfirmation | null =
       await this.userRepository.findUserByConfirmationCode(command.confirmationCode);
 
-    if (!user)
-      throw new DomainException(
-        ErrorCodes.USER_NOT_FOUND,
-        'User with this confirmation code was not found',
-        HttpStatus.NOT_FOUND,
-      );
+    if (!user) {
+      throw new ValidationException([{ field: 'code', message: 'Confirmation code is invalid' }]);
+    }
 
     if (!user.emailConfirmationCode) {
-      throw new DomainException(
-        ErrorCodes.EMAIL_NOT_CONFIRMED,
-        'Email confirmation data is missing. Please request a new confirmation code.',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new ValidationException([{ field: 'code', message: 'Confirmation data not found' }]);
     }
 
     const { emailConfirmationCode } = user;
 
     if (emailConfirmationCode.confirmationStatus === ConfirmationStatus.Confirmed) {
-      throw new DomainException(
-        ErrorCodes.EMAIL_ALREADY_CONFIRMED,
-        'This email address has already been confirmed.',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new ValidationException([{ field: 'code', message: 'Email is already confirmed' }]);
     }
 
     if (!emailConfirmationCode.expirationDate) {
-      throw new DomainException(
-        ErrorCodes.INVALID_CONFIRMATION_CODE,
-        'Confirmation code is invalid',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new ValidationException([{ field: 'code', message: 'Confirmation code is invalid' }]);
     }
 
     if (this.dateService.isExpired(emailConfirmationCode.expirationDate)) {
-      throw new DomainException(
-        ErrorCodes.EXPIRED_CONFIRMATION_CODE,
-        'Confirmation code has expired',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new ValidationException([{ field: 'code', message: 'Confirmation code has expired' }]);
     }
 
     await this.userRepository.confirmEmail(command.confirmationCode);

@@ -1,5 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBody, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiOkResponse,
+  ApiOperation,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { LoginUserInputDto } from '../input-dto/login-user.input-dto';
 
 export function LoginSwagger() {
@@ -24,6 +30,27 @@ export function LoginSwagger() {
               value: {
                 code: 'VALIDATION_ERROR',
                 message: 'Data validation error',
+                errors: [
+                  {
+                    field: 'email',
+                    message: 'email must be an email',
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    }),
+    ApiUnauthorizedResponse({
+      content: {
+        'application/json': {
+          examples: {
+            authorizationError: {
+              summary: 'Пример ошибки авторизации',
+              value: {
+                code: 'UNAUTHORIZED',
+                message: 'Invalid credentials',
                 errors: [],
               },
             },
