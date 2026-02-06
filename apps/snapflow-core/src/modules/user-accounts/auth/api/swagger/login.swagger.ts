@@ -42,16 +42,15 @@ export function LoginSwagger() {
         },
       },
     }),
-
     ApiUnauthorizedResponse({
       content: {
         'application/json': {
           examples: {
-            validationError: {
-              summary: 'Пример ошибки валидации',
+            authorizationError: {
+              summary: 'Пример ошибки авторизации',
               value: {
                 code: 'UNAUTHORIZED',
-                message: 'Data validation error',
+                message: 'Invalid credentials',
                 errors: [],
               },
             },
