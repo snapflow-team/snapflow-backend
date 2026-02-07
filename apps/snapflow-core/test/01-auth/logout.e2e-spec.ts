@@ -7,6 +7,14 @@ import { EmailService } from '../../src/modules/notifications/services/email.ser
 import { EmailTemplate } from '../../src/modules/notifications/templates/types';
 import { HttpStatus } from '@nestjs/common';
 import { Session } from '@generated/prisma';
+import { ErrorCodes } from '../../../../libs/common/exceptions/error-codes.enum';
+import {
+  REFRESH_TOKEN_STRATEGY_INJECT_TOKEN
+} from '../../src/modules/user-accounts/auth/constants/auth-tokens.inject-constants';
+import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-accounts.config';
+import { JwtService } from '@nestjs/jwt';
+import { TestUtils } from '../helpers/test.utils';
+import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
 
 describe('AuthController - logout() (POST: /auth/logout)', () => {
   let appTestManager: AppTestManager;
@@ -16,7 +24,17 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
 
   beforeAll(async () => {
     appTestManager = new AppTestManager();
-    await appTestManager.init();
+    await appTestManager.init((moduleBuilder) =>
+      moduleBuilder.overrideProvider(REFRESH_TOKEN_STRATEGY_INJECT_TOKEN).useFactory({
+        factory: (userAccountsConfig: UserAccountsConfig) => {
+          return new JwtService({
+            secret: userAccountsConfig.refreshTokenSecret,
+            signOptions: { expiresIn: '3s' },
+          });
+        },
+        inject: [UserAccountsConfig],
+      }),
+    );
 
     server = appTestManager.getServer();
 
@@ -62,5 +80,213 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
 
     expect(sessions.length).toBe(1);
     expect(sessions[0].deviceId).toBeDefined();
+  });
+
+  it('не должен разлогинить пользователя, если refreshToken отсутствует в cookies', async () => {
+    await authTestManager.loginAndGetRefreshCookie();
+
+    const resLogout: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/logout`)
+      .expect(HttpStatus.UNAUTHORIZED);
+
+    expect(resLogout.body).toEqual({
+      code: ErrorCodes.UNAUTHORIZED,
+      message: 'User is not authenticated',
+      errors: [],
+    });
+
+    // проверяем, что сессия осталась живой
+    const sessions: Session[] = await appTestManager.prisma.session.findMany({
+      where: { deletedAt: null },
+    });
+
+    expect(sessions.length).toBe(1);
+  });
+
+  it('не должен разлогинить пользователя, если refreshToken невалиден (битый токен)', async () => {
+    await authTestManager.loginAndGetRefreshCookie();
+
+    const resLogout: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/logout`)
+      .set('Cookie', `refreshToken=invalid.token.here`)
+      .expect(HttpStatus.UNAUTHORIZED);
+
+    expect(resLogout.body).toEqual({
+      code: ErrorCodes.UNAUTHORIZED,
+      message: 'User is not authenticated',
+      errors: [],
+    });
+
+    // проверяем, что сессия осталась живой
+    const sessions: Session[] = await appTestManager.prisma.session.findMany({
+      where: { deletedAt: null },
+    });
+
+    expect(sessions.length).toBe(1);
+  });
+
+  it('не должен разлогинить пользователя, если refreshToken просрочен', async () => {
+    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+
+    // 🔻 Ждём 3 секунды — предполагаем, что Refresh токен за это время успеет истечь
+    await TestUtils.delay(3000);
+
+    const resLogout: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/logout`)
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(HttpStatus.UNAUTHORIZED);
+
+    expect(resLogout.body).toEqual({
+      code: ErrorCodes.UNAUTHORIZED,
+      message: 'User is not authenticated',
+      errors: [],
+    });
+
+    // проверяем, что сессия осталась живой
+    const sessions: Session[] = await appTestManager.prisma.session.findMany({
+      where: { deletedAt: null },
+    });
+
+    expect(sessions.length).toBe(1);
+  });
+
+  it('не должен разлогинить пользователя, если в БД нет активной сессии с таким deviceId', async () => {
+    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+
+    // эмулируем отсутствие сессии в БД
+    jest.spyOn(appTestManager.prisma.session, 'findFirst').mockResolvedValueOnce(null);
+
+    const resLogout: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/logout`)
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(HttpStatus.UNAUTHORIZED);
+
+    expect(resLogout.body).toEqual({
+      code: ErrorCodes.UNAUTHORIZED,
+      message: 'User is not authenticated',
+      errors: [],
+    });
+
+    // проверяем, что сессия осталась живой
+    const deletedSessions: Session[] = await appTestManager.prisma.session.findMany({
+      where: { deletedAt: { not: null } },
+    });
+
+    expect(deletedSessions.length).toBe(0);
+  });
+
+  it('не должен разлогинить пользователя, если refreshToken передан в заголовке вместо cookie', async () => {
+    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+
+    const resLogout: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/logout`)
+      .set('Authorization', `Bearer ${refreshToken}`)
+      .expect(HttpStatus.UNAUTHORIZED);
+
+    expect(resLogout.body).toEqual({
+      code: ErrorCodes.UNAUTHORIZED,
+      message: 'User is not authenticated',
+      errors: [],
+    });
+
+    // проверяем, что сессия осталась живой
+    const sessions: Session[] = await appTestManager.prisma.session.findMany({
+      where: { deletedAt: null },
+    });
+
+    expect(sessions.length).toBe(1);
+  });
+
+  it('не должен разлогинить пользователя, если refreshToken передан в query‑параметре', async () => {
+    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+
+    const resLogout: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/logout?refreshToken=${refreshToken}`)
+      .expect(HttpStatus.UNAUTHORIZED);
+
+    expect(resLogout.body).toEqual({
+      code: ErrorCodes.UNAUTHORIZED,
+      message: 'User is not authenticated',
+      errors: [],
+    });
+
+    // проверяем, что сессия осталась живой
+    const sessions: Session[] = await appTestManager.prisma.session.findMany({
+      where: { deletedAt: null },
+    });
+
+    expect(sessions.length).toBe(1);
+  });
+
+  it('не должен разлогинить пользователя, если refreshToken был уже однажды использован и сессия уже удалена', async () => {
+    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+
+    // первый logout
+    await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/logout`)
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(HttpStatus.NO_CONTENT);
+
+    // проверяем, что сессия уже помечена как удалённая
+    const deletedSessions: Session[] = await appTestManager.prisma.session.findMany({
+      where: { deletedAt: { not: null } },
+    });
+
+    expect(deletedSessions.length).toBe(1);
+
+    // второй logout с тем же refreshToken
+    const resLogout: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/logout`)
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(HttpStatus.UNAUTHORIZED);
+
+    expect(resLogout.body).toEqual({
+      code: ErrorCodes.UNAUTHORIZED,
+      message: 'User is not authenticated',
+      errors: [],
+    });
+  });
+
+  it('должен корректно обработать ситуацию, когда в БД несколько сессий, но logout удаляет только текущую по deviceId', async () => {
+    const [user]: UserWithEmailConfirmation[] =
+      await authTestManager.registrationWithConfirmation();
+
+    await appTestManager.prisma.session.create({
+      data: {
+        userId: user.id,
+        deviceId: 'device-2',
+        deviceName: 'test-device-2',
+        ip: '127.0.0.1',
+        exp: new Date(Date.now() + 3600_000).toISOString(),
+        iat: new Date().toISOString(),
+        deletedAt: null,
+      },
+    });
+
+    // логинимся с device-1, получаем refreshToken для неё
+    const resLogin: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .send({
+        email: user.email,
+        password: 'Qwerty_1',
+      })
+      .expect(HttpStatus.OK);
+
+    const cookie: string = resLogin.headers['set-cookie'][0];
+    const refreshToken: string | undefined = cookie.match(/refreshToken=([^;]+)/)?.[1];
+
+    // делаем logout с этим refreshToken (device-1)
+    await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/logout`)
+      .set('Cookie', `refreshToken=${refreshToken}`)
+      .expect(HttpStatus.NO_CONTENT);
+
+    // проверяем: сессия device-1 удалена, device-2 — нет
+    const activeSessions: Session[] = await appTestManager.prisma.session.findMany({
+      where: { deletedAt: null },
+    });
+
+    expect(activeSessions.length).toBe(1);
+    expect(activeSessions[0].deviceId).toBe('device-2');
   });
 });
