@@ -143,6 +143,24 @@ export class AuthTestManager {
     return usersWithCodes;
   }
 
+  async loginAndGetRefreshCookie(): Promise<{ res: Response; refreshToken: string }> {
+    const [user]: UserWithEmailConfirmation[] = await this.registrationWithConfirmation();
+
+    const resLogin: Response = await request(this.server)
+      .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .send({
+        email: user.email,
+        password: 'Qwerty_1',
+      })
+      .expect(HttpStatus.OK);
+
+    //todo: избавиться от "!"
+    const cookie: string = resLogin.headers['set-cookie'][0];
+    const refreshToken = cookie.match(/refreshToken=([^;]+)/)?.[1]!;
+
+    return { res: resLogin, refreshToken };
+  }
+
   /**
    * 📦 Получить всех пользователей из БД
    *
