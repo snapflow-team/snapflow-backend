@@ -22,6 +22,7 @@ import { JwtRefreshAuthGuard } from '../domain/guards/bearer/jwt-refresh-auth.gu
 import { ExtractSessionFromRequest } from '../domain/guards/decorators/extract-session-from-request.decorator';
 import { SessionContextDto } from '../domain/guards/dto/session-context.dto';
 import { LogoutCommand } from '../application/usecases/logout.usecase';
+import { LogoutSwagger } from './swagger/logout.swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -62,6 +63,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtRefreshAuthGuard)
+  @LogoutSwagger()
   async logout(
     @ExtractSessionFromRequest() session: SessionContextDto,
     @Res({ passthrough: true }) res: Response,
