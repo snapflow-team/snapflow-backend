@@ -14,17 +14,20 @@ import { SessionsRepository } from './auth/sessions/infrastructure/sessions.repo
 import { UserAccountsConfig } from './config/user-accounts.config';
 import { AccessTokenProvider } from './auth/providers/access-token.provider';
 import { RefreshTokenProvider } from './auth/providers/refresh-token.provider';
+import { JwtRefreshStrategy } from './auth/domain/guards/bearer/jwt-refresh.strategy';
+import { LogoutUseCase } from './auth/application/usecases/logout.usecase';
 
 const controllers = [AuthController];
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
   LoginUserUseCase,
+  LogoutUseCase,
   CreateSessionUseCase,
 ];
 const services = [DateService, CryptoService, UserValidationService];
 const repositories = [UsersRepository, SessionsRepository];
-const strategies = [LocalStrategy];
+const strategies = [LocalStrategy, JwtRefreshStrategy];
 const configs = [UserAccountsConfig];
 
 @Module({
