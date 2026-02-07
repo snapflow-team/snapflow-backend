@@ -25,6 +25,7 @@ model User {
 
   emailConfirmationCode EmailConfirmationCode?
   sessions              Session[]
+  passwordRecoveryCode  PasswordRecoveryCode?
 
   @@map("users")
 }
@@ -62,4 +63,18 @@ model Session {
   userId Int
 
   @@map("sessions")
+}
+
+model PasswordRecoveryCode {
+  id             Int       @id @default(autoincrement())
+  recoveryCode   String?   @unique @map("recovery_code") @db.VarChar(255)
+  expirationDate DateTime? @map("expiration_date")
+
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int  @unique
+
+  @@map("password_recovery_codes")
 }
