@@ -18,6 +18,10 @@ import { ConfirmationEmailCommand } from '../application/usecases/confirmation-e
 import { ConfirmRegistrationSwagger } from './swagger/confirm-registration.swagger';
 import { UserAccountsConfig } from '../../config/user-accounts.config';
 import { LoginSwagger } from './swagger/login.swagger';
+import { JwtRefreshAuthGuard } from '../domain/guards/bearer/jwt-refresh-auth.guard';
+import { ExtractSessionFromRequest } from '../domain/guards/decorators/extract-session-from-request.decorator';
+import { SessionContextDto } from '../domain/guards/dto/session-context.dto';
+import { LogoutCommand } from '../application/usecases/logout.usecase';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -53,6 +57,24 @@ export class AuthController {
     res.cookie('refreshToken', refreshToken, this.userAccountsConfig.getCookieConfig());
 
     return { accessToken };
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtRefreshAuthGuard)
+  async logout(
+    @ExtractSessionFromRequest() session: SessionContextDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    await this.commandBus.execute(new LogoutCommand(session));
+
+    const { httpOnly, secure, sameSite } = this.userAccountsConfig.getCookieConfig();
+
+    res.clearCookie('refreshToken', {
+      httpOnly,
+      secure,
+      sameSite,
+    });
   }
 
   @Post('registration-confirmation')
