@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfirmationStatus, Prisma, User } from '@generated/prisma';
 import { PrismaService } from '../../../../database/prisma.service';
 import { UserWithEmailConfirmation } from '../types/user-with-confirmation.type';
+import { UserWithPasswordRecoveryCode } from '../types/user-with-password-recovery.type';
 
 @Injectable()
 export class UsersRepository {
@@ -51,12 +52,69 @@ export class UsersRepository {
   }
 
   async confirmEmail(code: string): Promise<void> {
+    // TODO Можно ли обращаться к другой сущности
     await this.prisma.emailConfirmationCode.update({
       where: { confirmationCode: code },
       data: {
         confirmationStatus: ConfirmationStatus.Confirmed,
         expirationDate: null,
         confirmationCode: null,
+      },
+    });
+  }
+
+  async findByEmailWithPasswordRecoveryCode(
+    email: string,
+  ): Promise<UserWithPasswordRecoveryCode | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        deletedAt: null,
+        email,
+      },
+      include: { passwordRecoveryCode: true },
+    });
+  }
+
+  async updatePasswordRecovery(
+    passwordRecoveryCodeId: number,
+    expirationDate: Date,
+    recoveryCode: string,
+  ): Promise<void> {
+    await this.prisma.passwordRecoveryCode.update({
+      where: {
+        id: passwordRecoveryCodeId,
+      },
+      data: {
+        expirationDate,
+        recoveryCode,
+      },
+    });
+  }
+
+  async findUserWithEmailConfirmationByEmail(
+    email: string,
+  ): Promise<UserWithEmailConfirmation | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        deletedAt: null,
+        email,
+      },
+      include: { emailConfirmationCode: true },
+    });
+  }
+
+  async updateEmailConfirmationCode(
+    emailConfirmationCodeId: number,
+    expirationDate: Date,
+    confirmationCode: string,
+  ) {
+    await this.prisma.emailConfirmationCode.update({
+      where: {
+        id: emailConfirmationCodeId,
+      },
+      data: {
+        expirationDate,
+        confirmationCode,
       },
     });
   }
