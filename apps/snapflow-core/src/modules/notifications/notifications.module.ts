@@ -4,9 +4,8 @@ import { NotificationsConfigModule } from './config/notifications-config.module'
 import { NotificationsConfig } from './config/notifications.config';
 import { EmailService } from './services/email.service';
 import { EmailTemplates } from './templates/email.templates';
-import {
-  SendConfirmationEmailWhenUserRegisteredEventHandler
-} from './event-handlers/send-confirmation-email-when-user-registered.event-handler';
+import { SendConfirmationEmailWhenUserRegisteredEventHandler } from './event-handlers/send-confirmation-email-when-user-registered.event-handler';
+import { SendPasswordRecoveryEmailEventHandler } from './event-handlers/send-password-recovery-email.event-handler';
 
 @Module({
   imports: [
@@ -34,6 +33,7 @@ import {
     EmailTemplates,
     NotificationsConfig,
     SendConfirmationEmailWhenUserRegisteredEventHandler,
+    SendPasswordRecoveryEmailEventHandler,
   ],
   exports: [EmailService],
 })
