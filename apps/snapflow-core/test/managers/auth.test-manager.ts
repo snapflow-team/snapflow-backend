@@ -5,9 +5,7 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { HttpStatus } from '@nestjs/common';
 import { Server } from 'http';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
-import {
-  RegistrationUserInputDto
-} from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
 
 /**
@@ -155,5 +153,17 @@ export class AuthTestManager {
   //todo: временное решение пока не появится роут для выборки списка пользователей!
   async getAll(): Promise<User[]> {
     return this.prisma.user.findMany();
+  }
+
+  async findUserWithEmailConfirmationByEmail(
+    email: string,
+  ): Promise<UserWithEmailConfirmation | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        deletedAt: null,
+        email,
+      },
+      include: { emailConfirmationCode: true },
+    });
   }
 }
