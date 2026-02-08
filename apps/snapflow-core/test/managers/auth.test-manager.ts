@@ -142,6 +142,48 @@ export class AuthTestManager {
   }
 
   /**
+   * 🔐 Выполнить логин пользователя и получить refreshToken из cookie
+   *
+   * Используется в e2e-тестах для:
+   *  - аутентификации пользователя через реальный HTTP-запрос
+   *  - проверки корректной установки refreshToken в http-only cookie
+   *  - последующих запросов (refresh, logout, protected routes)
+   *
+   * Метод:
+   *  - регистрирует нового пользователя и подтверждает email
+   *  - выполняет POST /auth/login
+   *  - извлекает refreshToken из заголовка Set-Cookie
+   *
+   * ❗ Если refreshToken отсутствует в cookie — тест падает с явной ошибкой.
+   */
+  async loginAndGetRefreshCookie(): Promise<{ res: Response; refreshToken: string }> {
+    const [user]: UserWithEmailConfirmation[] = await this.registrationWithConfirmation();
+
+    const resLogin: Response = await request(this.server)
+      .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .send({
+        email: user.email,
+        password: 'Qwerty_1',
+      })
+      .expect(HttpStatus.OK);
+
+    const cookie: string = resLogin.headers['set-cookie'][0];
+    const refreshTokenMatch = cookie.match(/refreshToken=([^;]+)/);
+
+    if (!refreshTokenMatch || !refreshTokenMatch[1]) {
+      throw new Error(
+        `AuthTestManager.loginAndGetRefreshCookie(): ` +
+          `refreshToken not found in Set-Cookie header. ` +
+          `Cookie value: "${cookie}".`,
+      );
+    }
+
+    const refreshToken: string = refreshTokenMatch[1];
+
+    return { res: resLogin, refreshToken };
+  }
+
+  /**
    * 📦 Получить всех пользователей из БД
    *
    * Используется в e2e-тестах для:

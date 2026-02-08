@@ -14,6 +14,8 @@ import { SessionsRepository } from './auth/sessions/infrastructure/sessions.repo
 import { UserAccountsConfig } from './config/user-accounts.config';
 import { AccessTokenProvider } from './auth/providers/access-token.provider';
 import { RefreshTokenProvider } from './auth/providers/refresh-token.provider';
+import { JwtRefreshStrategy } from './auth/domain/guards/bearer/jwt-refresh.strategy';
+import { LogoutUseCase } from './auth/application/usecases/logout.usecase';
 import { PasswordRecoveryUseCase } from './auth/application/usecases/password-recovery.usecase';
 import { RegistrationEmailResendingUseCase } from './auth/application/usecases/registration-email-resending.usecase';
 import { NewPasswordUseCase } from './auth/application/usecases/new-password.usecase';
@@ -23,6 +25,7 @@ const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
   LoginUserUseCase,
+  LogoutUseCase,
   CreateSessionUseCase,
   RegistrationEmailResendingUseCase,
   PasswordRecoveryUseCase,
@@ -30,7 +33,7 @@ const useCases = [
 ];
 const services = [DateService, CryptoService, UserValidationService];
 const repositories = [UsersRepository, SessionsRepository];
-const strategies = [LocalStrategy];
+const strategies = [LocalStrategy, JwtRefreshStrategy];
 const configs = [UserAccountsConfig];
 
 @Module({
