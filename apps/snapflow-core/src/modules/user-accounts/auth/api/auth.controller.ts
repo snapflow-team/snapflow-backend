@@ -1,6 +1,6 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Res, UseGuards } from '@nestjs/common';
 import { RegistrationUserInputDto } from './input-dto/registration-user.input-dto';
-import { CommandBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { RegisterUserCommand } from '../application/usecases/register-user.useсase';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiRegistration } from './swagger/registration.swagger';
@@ -31,6 +31,10 @@ import { ApiPasswordRecovery } from './swagger/password-recovery.swagger';
 import { ApiRegisterEmailResendingCommand } from './swagger/registration-email-resending.swagger';
 import { NewPasswordInputDto } from './input-dto/new-password.input-dto';
 import { NewPasswordCommand } from '../application/usecases/new-password.usecase';
+import { JwtAuthGuard } from '../domain/guards/bearer/jwt-auth.guard';
+import { MeViewDto } from './view-dto/me.view-dto';
+import { GetMeQuery } from '../application/queries/get-me.query-handler';
+import { ApiMe } from './swagger/me.swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -38,6 +42,7 @@ export class AuthController {
   constructor(
     private readonly userAccountsConfig: UserAccountsConfig,
     private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {}
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -112,5 +117,12 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async newPassword(@Body() body: NewPasswordInputDto) {
     await this.commandBus.execute(new NewPasswordCommand(body.newPassword, body.recoveryCode));
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiMe()
+  async me(@ExtractUserFromRequest() user: UserContextDto): Promise<MeViewDto> {
+    return this.queryBus.execute(new GetMeQuery(user.id));
   }
 }
