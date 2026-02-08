@@ -75,18 +75,25 @@ export class UsersRepository {
     });
   }
 
-  async updatePasswordRecovery(
-    passwordRecoveryCodeId: number,
-    expirationDate: Date,
+  async upsertPasswordRecoveryCode(
+    userId: number,
     recoveryCode: string,
+    expirationDate: Date,
   ): Promise<void> {
-    await this.prisma.passwordRecoveryCode.update({
+    await this.prisma.passwordRecoveryCode.upsert({
       where: {
-        id: passwordRecoveryCodeId,
+        userId,
       },
-      data: {
-        expirationDate,
+      create: {
         recoveryCode,
+        expirationDate,
+        user: {
+          connect: { id: userId },
+        },
+      },
+      update: {
+        recoveryCode,
+        expirationDate,
       },
     });
   }
