@@ -51,6 +51,22 @@ export class UsersRepository {
     });
   }
 
+  async findUserByPasswordRecoveryCode(
+    recoveryCode: string,
+  ): Promise<UserWithPasswordRecoveryCode | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        deletedAt: null,
+        passwordRecoveryCode: {
+          recoveryCode,
+        },
+      },
+      include: {
+        passwordRecoveryCode: true,
+      },
+    });
+  }
+
   async confirmEmail(code: string): Promise<void> {
     // TODO Можно ли обращаться к другой сущности
     await this.prisma.emailConfirmationCode.update({
@@ -122,6 +138,21 @@ export class UsersRepository {
       data: {
         expirationDate,
         confirmationCode,
+      },
+    });
+  }
+
+  async updatePasswordAndResetRecoveryCode(userId: number, newPasswordHash: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: newPasswordHash,
+        passwordRecoveryCode: {
+          update: {
+            recoveryCode: null,
+            expirationDate: null,
+          },
+        },
       },
     });
   }
