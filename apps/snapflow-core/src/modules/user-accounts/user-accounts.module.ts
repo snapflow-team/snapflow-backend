@@ -16,6 +16,9 @@ import { AccessTokenProvider } from './auth/providers/access-token.provider';
 import { RefreshTokenProvider } from './auth/providers/refresh-token.provider';
 import { JwtRefreshStrategy } from './auth/domain/guards/bearer/jwt-refresh.strategy';
 import { LogoutUseCase } from './auth/application/usecases/logout.usecase';
+import { PasswordRecoveryUseCase } from './auth/application/usecases/password-recovery.usecase';
+import { RegistrationEmailResendingUseCase } from './auth/application/usecases/registration-email-resending.usecase';
+import { NewPasswordUseCase } from './auth/application/usecases/new-password.usecase';
 
 const controllers = [AuthController];
 const useCases = [
@@ -24,6 +27,9 @@ const useCases = [
   LoginUserUseCase,
   LogoutUseCase,
   CreateSessionUseCase,
+  RegistrationEmailResendingUseCase,
+  PasswordRecoveryUseCase,
+  NewPasswordUseCase,
 ];
 const services = [DateService, CryptoService, UserValidationService];
 const repositories = [UsersRepository, SessionsRepository];

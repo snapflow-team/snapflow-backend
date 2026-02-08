@@ -23,6 +23,14 @@ import { ExtractSessionFromRequest } from '../domain/guards/decorators/extract-s
 import { SessionContextDto } from '../domain/guards/dto/session-context.dto';
 import { LogoutCommand } from '../application/usecases/logout.usecase';
 import { LogoutSwagger } from './swagger/logout.swagger';
+import { RegistrationEmailResendingInputDto } from './input-dto/registration-email-resending.input-dto';
+import { RegistrationEmailResendingCommand } from '../application/usecases/registration-email-resending.usecase';
+import { PasswordRecoveryCommand } from '../application/usecases/password-recovery.usecase';
+import { PasswordRecoveryInputDto } from './input-dto/password-recovery.input-dto';
+import { ApiPasswordRecovery } from './swagger/password-recovery.swagger';
+import { ApiRegisterEmailResendingCommand } from './swagger/registration-email-resending.swagger';
+import { NewPasswordInputDto } from './input-dto/new-password.input-dto';
+import { NewPasswordCommand } from '../application/usecases/new-password.usecase';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -84,5 +92,25 @@ export class AuthController {
   @ConfirmRegistrationSwagger()
   async confirmRegistration(@Body() body: ConfirmationEmailCodeInputDto): Promise<void> {
     await this.commandBus.execute(new ConfirmationEmailCommand(body.code));
+  }
+
+  @Post('registration-email-resending')
+  @ApiRegisterEmailResendingCommand()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resendingEmail(@Body() body: RegistrationEmailResendingInputDto): Promise<void> {
+    await this.commandBus.execute(new RegistrationEmailResendingCommand(body.email));
+  }
+
+  @Post('password-recovery')
+  @ApiPasswordRecovery()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
+    await this.commandBus.execute(new PasswordRecoveryCommand(body.email));
+  }
+
+  @Post('new-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async newPassword(@Body() body: NewPasswordInputDto) {
+    await this.commandBus.execute(new NewPasswordCommand(body.newPassword, body.recoveryCode));
   }
 }
