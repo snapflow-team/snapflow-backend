@@ -1,10 +1,5 @@
 import { ValidationError } from '@nestjs/common';
-
-export interface ValidationErrorDetail {
-  field: string;
-  message: string;
-  value?: unknown;
-}
+import { ValidationErrorDetail } from '../interfaces/validation-error-detail.interface';
 
 /**
  * Рекурсивно преобразует иерархическую структуру ошибок NestJS (ValidationError[])
