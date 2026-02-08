@@ -1,4 +1,4 @@
-import { RawUserForMe } from '../../../users/infrastructure/raw-user-for-me';
+import { RawUserForMe } from '../../../users/infrastructure/types/raw-user-for-me';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class MeViewDto {
