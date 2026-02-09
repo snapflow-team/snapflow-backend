@@ -1,12 +1,11 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../infrastructure/users.repository';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
-import { ValidationErrorDetail } from '../../../../../../../../libs/common/exceptions/interfaces/validation-error-detail.interface';
-import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation.exception';
-import { User } from '../../../../../../generated/prisma';
 import { UserContextDto } from '../../../auth/domain/guards/dto/user-context.dto';
-import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { ErrorCodes } from '../../../../../../../../libs/common/exceptions/error-codes.enum';
+import { DomainException, Extension, } from '../../../../../../../../libs/common/exceptions/damain.exception';
+import { User } from '@generated/prisma';
+import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation-exception';
+import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 
 @Injectable()
 export class UserValidationService {
@@ -16,7 +15,7 @@ export class UserValidationService {
   ) {}
 
   async validateUniqueUser(username: string, email: string): Promise<void> {
-    const errors: ValidationErrorDetail[] = [];
+    const errors: Extension[] = [];
 
     const [byUsername, byEmail] = await Promise.all([
       this.usersRepository.findByUsername(username),
@@ -46,11 +45,10 @@ export class UserValidationService {
     const user: User | null = await this.usersRepository.findByEmail(email);
 
     if (!user) {
-      throw new DomainException(
-        ErrorCodes.UNAUTHORIZED,
-        'Invalid email or password',
-        HttpStatus.UNAUTHORIZED,
-      );
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'Invalid email or password',
+      });
     }
 
     const isPasswordValid: boolean = await this.cryptoService.comparePassword({
@@ -59,11 +57,10 @@ export class UserValidationService {
     });
 
     if (!isPasswordValid) {
-      throw new DomainException(
-        ErrorCodes.UNAUTHORIZED,
-        'Invalid email or password',
-        HttpStatus.UNAUTHORIZED,
-      );
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'Invalid email or password',
+      });
     }
 
     return { id: user.id };
