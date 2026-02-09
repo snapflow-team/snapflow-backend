@@ -6,6 +6,7 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import { ConfirmationEmailCodeInputDto } from '../input-dto/confirmation-email-code.input-dto';
+import { ErrorResponseDto } from '../../../../../../../../libs/common/exceptions/dto/error-response-body.dto';
 
 export function ConfirmRegistrationSwagger(): MethodDecorator {
   return applyDecorators(
@@ -14,29 +15,10 @@ export function ConfirmRegistrationSwagger(): MethodDecorator {
     }),
     ApiBody({ type: ConfirmationEmailCodeInputDto }),
     ApiNoContentResponse({
-      description: 'Email подтверждён. Аккаунт успешно активирован!',
+      description: 'Если код подтверждения неверен, просрочен или уже применён',
     }),
     ApiBadRequestResponse({
-      content: {
-        'application/json': {
-          examples: {
-            validationError: {
-              summary: 'Пример ошибки валидации',
-              value: {
-                code: 'VALIDATION_ERROR',
-                message: 'Data validation error',
-                errors: [
-                  {
-                    field: 'code',
-                    message: 'Invalid confirmation code',
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
-      description: 'Код подтверждения неверен, просрочен или уже был использован.',
+      type: ErrorResponseDto,
     }),
   );
 }

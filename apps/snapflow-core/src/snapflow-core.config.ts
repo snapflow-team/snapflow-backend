@@ -33,6 +33,12 @@ export class SnapflowCoreConfig {
   })
   allowedOriginsRaw: string;
 
+  @IsBoolean({
+    message:
+      'Set Env variable SEND_INTERNAL_SERVER_ERROR_DETAILS to enable/disable Dangerous for production internal server error details (message, etc), example: true, available values: true, false, 0, 1',
+  })
+  sendInternalServerErrorDetails: boolean;
+
   constructor(private configService: ConfigService<any, true>) {
     this.env = this.configService.get('NODE_ENV');
     this.port = Number(this.configService.get('PORT'));
@@ -40,6 +46,9 @@ export class SnapflowCoreConfig {
       this.configService.get('IS_SWAGGER_ENABLED'),
     ) as boolean;
     this.allowedOriginsRaw = this.configService.get('ALLOWED_ORIGINS');
+    this.sendInternalServerErrorDetails = configValidationUtility.convertToBoolean(
+      this.configService.get('SEND_INTERNAL_SERVER_ERROR_DETAILS'),
+    ) as boolean;
 
     configValidationUtility.validateConfig(this);
   }

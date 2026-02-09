@@ -1,6 +1,6 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { SessionContextDto } from '../dto/session-context.dto';
 import { UserAccountsConfig } from '../../../../config/user-accounts.config';
 import { SessionsRepository } from '../../../sessions/infrastructure/sessions.repository';
@@ -8,9 +8,8 @@ import { ICookieRequest } from '../interfaces/cookie-request.interface';
 import { PayloadRefreshToken } from '../../../application/types/payload-refresh-token.type';
 import { Session } from '@generated/prisma';
 import { DomainException } from '../../../../../../../../../libs/common/exceptions/damain.exception';
-import { ErrorCodes } from '../../../../../../../../../libs/common/exceptions/error-codes.enum';
+import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 
-//todo: переписать exceptions на транспортный слой
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(
@@ -39,11 +38,10 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     const session: Session | null = await this.sessionsRepository.findByDeviceId(deviceId);
 
     if (!session || new Date(session.iat).getTime() !== tokenIssuedDate.getTime()) {
-      throw new DomainException(
-        ErrorCodes.UNAUTHORIZED,
-        'User is not authenticated',
-        HttpStatus.UNAUTHORIZED,
-      );
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'User is not authenticated',
+      });
     }
 
     return {

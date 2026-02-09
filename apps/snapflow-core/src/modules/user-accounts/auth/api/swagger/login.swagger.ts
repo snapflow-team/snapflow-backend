@@ -7,6 +7,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { LoginUserInputDto } from '../input-dto/login-user.input-dto';
+import { LoginViewDto } from '../view-dto/login.view-dto';
+import { ErrorResponseDto } from '../../../../../../../../libs/common/exceptions/dto/error-response-body.dto';
 
 export function LoginSwagger() {
   return applyDecorators(
@@ -19,44 +21,14 @@ export function LoginSwagger() {
     ApiOkResponse({
       description:
         'Возвращает JWT accessToken в теле ответа и JWT refreshToken в http-only secure cookie.',
-      content: { 'application/json': { example: { accessToken: 'string' } } },
+      type: LoginViewDto,
     }),
     ApiBadRequestResponse({
-      content: {
-        'application/json': {
-          examples: {
-            validationError: {
-              summary: 'Пример ошибки валидации',
-              value: {
-                code: 'VALIDATION_ERROR',
-                message: 'Data validation error',
-                errors: [
-                  {
-                    field: 'email',
-                    message: 'email must be an email',
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
+      description: 'Если inputModel имеет неправильные значения',
+      type: ErrorResponseDto,
     }),
     ApiUnauthorizedResponse({
-      content: {
-        'application/json': {
-          examples: {
-            authorizationError: {
-              summary: 'Пример ошибки авторизации',
-              value: {
-                code: 'UNAUTHORIZED',
-                message: 'Invalid credentials',
-                errors: [],
-              },
-            },
-          },
-        },
-      },
+      description: 'Если password или email неверны',
     }),
   );
 }

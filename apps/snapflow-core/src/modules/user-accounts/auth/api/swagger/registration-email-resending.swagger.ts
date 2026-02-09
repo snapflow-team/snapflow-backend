@@ -6,6 +6,7 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 import { RegistrationEmailResendingInputDto } from '../input-dto/registration-email-resending.input-dto';
+import { ErrorResponseDto } from '../../../../../../../../libs/common/exceptions/dto/error-response-body.dto';
 
 export function ApiRegisterEmailResendingCommand() {
   return applyDecorators(
@@ -15,36 +16,14 @@ export function ApiRegisterEmailResendingCommand() {
     ApiBody({
       description: 'Данные для повторного подтверждения регистрации',
       type: RegistrationEmailResendingInputDto,
-      examples: {
-        default: {
-          summary: 'Пример запроса',
-          value: {
-            email: 'ivan_01@example.com',
-          },
-        },
-      },
     }),
     ApiNoContentResponse({
       description:
-        'Входные данные приняты. Электронное письмо с кодом подтверждения будет отправлено на указанный адрес электронной почты. Код подтверждения должен находиться внутри ссылки в качестве параметра запроса, например',
+        'Входные данные приняты. Электронное письмо с кодом подтверждения будет отправлено на указанный адрес электронной почты. Код подтверждения должен находиться внутри ссылки в качестве параметра запроса',
     }),
     ApiBadRequestResponse({
-      description:
-        'Если в inputModel неверные значения (в частности, если пользователь с указанным email или username уже существует)',
-      content: {
-        'application/json': {
-          examples: {
-            validationError: {
-              summary: 'Пример ошибки валидации',
-              value: {
-                code: 'VALIDATION_ERROR',
-                message: 'Data validation error',
-                errors: [{ field: 'username', message: 'Must be a string' }],
-              },
-            },
-          },
-        },
-      },
+      description: 'Если в inputModel неверные значения',
+      type: ErrorResponseDto,
     }),
   );
 }

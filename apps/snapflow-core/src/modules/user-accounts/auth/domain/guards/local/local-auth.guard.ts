@@ -4,11 +4,11 @@ import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { AuthGuard } from '@nestjs/passport';
 import { LoginUserInputDto } from '../../../api/input-dto/login-user.input-dto';
-import { formatValidationErrors } from '../../../../../../../../../libs/common/exceptions/utils/error-formatter.util';
 import {
-  ValidationErrorDetail
-} from '../../../../../../../../../libs/common/exceptions/interfaces/validation-error-detail.interface';
-import { ValidationException } from '../../../../../../../../../libs/common/exceptions/validation.exception';
+  formatValidationErrors
+} from '../../../../../../../../../libs/common/exceptions/utils/format-validation-errors';
+import { Extension } from '../../../../../../../../../libs/common/exceptions/damain.exception';
+import { ValidationException } from '../../../../../../../../../libs/common/exceptions/validation-exception';
 
 @Injectable()
 export class LocalAuthGuard extends AuthGuard('local') {
@@ -24,9 +24,9 @@ export class LocalAuthGuard extends AuthGuard('local') {
     });
 
     if (errors.length > 0) {
-      const errorsForResponse: ValidationErrorDetail[] = formatValidationErrors(errors);
+      const extensions: Extension[] = formatValidationErrors(errors);
 
-      throw new ValidationException(errorsForResponse);
+      throw new ValidationException(extensions);
     }
 
     return super.canActivate(context) as boolean;

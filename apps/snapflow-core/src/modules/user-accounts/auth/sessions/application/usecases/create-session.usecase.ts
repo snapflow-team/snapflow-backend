@@ -1,8 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateSessionDto } from '../../dto/create-session.dto';
 import { SessionsRepository } from '../../infrastructure/sessions.repository';
-import { Prisma } from '../../../../../../../generated/prisma';
 import { parseUserAgent } from '../../../../../../../../../libs/common/utils/user-agent.parser';
+import { Prisma } from '@generated/prisma';
 
 export class CreateSessionCommand {
   constructor(public readonly dto: CreateSessionDto) {}

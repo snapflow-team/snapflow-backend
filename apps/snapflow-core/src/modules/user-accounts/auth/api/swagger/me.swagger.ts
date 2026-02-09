@@ -20,20 +20,6 @@ export function ApiMe() {
     }),
     ApiUnauthorizedResponse({
       description: 'Если пользователь не авторизован или access-токен недействителен',
-      content: {
-        'application/json': {
-          examples: {
-            unauthorized: {
-              summary: 'Пример ошибки Unauthorized',
-              value: {
-                code: 'UNAUTHORIZED',
-                message: 'User is not authenticated',
-                statusCode: 401,
-              },
-            },
-          },
-        },
-      },
     }),
   );
 }

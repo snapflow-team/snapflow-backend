@@ -35,6 +35,7 @@ import { JwtAuthGuard } from '../domain/guards/bearer/jwt-auth.guard';
 import { MeViewDto } from './view-dto/me.view-dto';
 import { GetMeQuery } from '../application/queries/get-me.query-handler';
 import { ApiMe } from './swagger/me.swagger';
+import { ApiNewPassword } from './swagger/new-password.swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -49,6 +50,20 @@ export class AuthController {
   @ApiRegistration()
   async registration(@Body() body: RegistrationUserInputDto): Promise<void> {
     await this.commandBus.execute(new RegisterUserCommand(body));
+  }
+
+  @Post('registration-confirmation')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ConfirmRegistrationSwagger()
+  async confirmRegistration(@Body() body: ConfirmationEmailCodeInputDto): Promise<void> {
+    await this.commandBus.execute(new ConfirmationEmailCommand(body.code));
+  }
+
+  @Post('registration-email-resending')
+  @ApiRegisterEmailResendingCommand()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resendingEmail(@Body() body: RegistrationEmailResendingInputDto): Promise<void> {
+    await this.commandBus.execute(new RegistrationEmailResendingCommand(body.email));
   }
 
   @Post('login')
@@ -92,20 +107,6 @@ export class AuthController {
     });
   }
 
-  @Post('registration-confirmation')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ConfirmRegistrationSwagger()
-  async confirmRegistration(@Body() body: ConfirmationEmailCodeInputDto): Promise<void> {
-    await this.commandBus.execute(new ConfirmationEmailCommand(body.code));
-  }
-
-  @Post('registration-email-resending')
-  @ApiRegisterEmailResendingCommand()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async resendingEmail(@Body() body: RegistrationEmailResendingInputDto): Promise<void> {
-    await this.commandBus.execute(new RegistrationEmailResendingCommand(body.email));
-  }
-
   @Post('password-recovery')
   @ApiPasswordRecovery()
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -115,6 +116,7 @@ export class AuthController {
 
   @Post('new-password')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNewPassword()
   async newPassword(@Body() body: NewPasswordInputDto) {
     await this.commandBus.execute(new NewPasswordCommand(body.newPassword, body.recoveryCode));
   }

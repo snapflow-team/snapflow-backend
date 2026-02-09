@@ -3,9 +3,8 @@ import { UsersRepository } from '../../../users/infrastructure/users.repository'
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { UserWithPasswordRecoveryCode } from '../../../users/types/user-with-password-recovery.type';
 import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { ErrorCodes } from '../../../../../../../../libs/common/exceptions/error-codes.enum';
-import { HttpStatus } from '@nestjs/common';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
+import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 
 export class NewPasswordCommand {
   constructor(
@@ -27,22 +26,20 @@ export class NewPasswordUseCase implements ICommandHandler<NewPasswordCommand> {
       await this.usersRepository.findUserByPasswordRecoveryCode(recoveryCode);
 
     if (!user || !user.passwordRecoveryCode) {
-      throw new DomainException(
-        ErrorCodes.BAD_REQUEST,
-        'Recovery code is invalid or expired',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new DomainException({
+        code: DomainExceptionCode.BadRequest,
+        message: 'Recovery code incorrect',
+      });
     }
 
     if (
       user.passwordRecoveryCode.expirationDate &&
       this.dateService.isExpired(user.passwordRecoveryCode.expirationDate)
     ) {
-      throw new DomainException(
-        ErrorCodes.BAD_REQUEST,
-        'Recovery code has expired',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new DomainException({
+        code: DomainExceptionCode.BadRequest,
+        message: 'Recovery code has expired',
+      });
     }
 
     const passwordHash: string = await this.cryptoService.createPasswordHash(newPassword);

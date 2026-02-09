@@ -41,15 +41,14 @@ model EmailConfirmationCode {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int  @unique
+  userId Int  @unique @map("user_id")
 
   @@map("email_confirmation_codes")
 }
 
-//todo: сделать partial_index дл поля deviceId
 model Session {
   id         Int      @id @default(autoincrement())
-  deviceId   String   @unique
+  deviceId   String   @map("device_id")
   deviceName String   @map("device_name") @db.VarChar(255)
   ip         String   @db.VarChar(255)
   iat        DateTime
@@ -60,7 +59,7 @@ model Session {
   deletedAt DateTime? @map("deleted_at")
 
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int
+  userId Int  @map("user_id")
 
   @@map("sessions")
 }
@@ -70,11 +69,11 @@ model PasswordRecoveryCode {
   recoveryCode   String?   @unique @map("recovery_code") @db.VarChar(255)
   expirationDate DateTime? @map("expiration_date")
 
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId         Int  @unique
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @unique @map("user_id")
 
   @@map("password_recovery_codes")
 }
