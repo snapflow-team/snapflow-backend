@@ -1,11 +1,7 @@
-import {
-  BadRequestException,
-  INestApplication,
-  ValidationError,
-  ValidationPipe,
-} from '@nestjs/common';
-import { formatValidationErrors } from '../../../../libs/common/exceptions/utils/error-formatter.util';
-import { ErrorCodes } from '../../../../libs/common/exceptions/error-codes.enum';
+import { INestApplication, ValidationError, ValidationPipe } from '@nestjs/common';
+import { formatValidationErrors } from '../../../../libs/common/exceptions/utils/format-validation-errors';
+import { Extension } from '../../../../libs/common/exceptions/damain.exception';
+import { ValidationException } from '../../../../libs/common/exceptions/validation-exception';
 
 export function pipesSetup(app: INestApplication) {
   app.useGlobalPipes(
@@ -14,11 +10,8 @@ export function pipesSetup(app: INestApplication) {
       whitelist: true,
       stopAtFirstError: true,
       exceptionFactory: (errors: ValidationError[]) => {
-        return new BadRequestException({
-          code: ErrorCodes.VALIDATION_ERROR,
-          message: 'Data validation error',
-          errors: formatValidationErrors(errors),
-        });
+        const extensions: Extension[] = formatValidationErrors(errors);
+        return new ValidationException(extensions);
       },
     }),
   );
