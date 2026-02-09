@@ -3,7 +3,7 @@ import { DateService } from '../../../../../../../../libs/common/services/date.s
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
 import { ConfirmationStatus } from '@generated/prisma';
-import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation.exception';
+import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation-exception';
 
 export class ConfirmationEmailCommand {
   constructor(public readonly confirmationCode: string) {}
@@ -16,32 +16,32 @@ export class ConfirmationEmailUseCase implements ICommandHandler<ConfirmationEma
     private readonly dateService: DateService,
   ) {}
 
-  async execute(command: ConfirmationEmailCommand) {
+  async execute({ confirmationCode }: ConfirmationEmailCommand) {
     const user: UserWithEmailConfirmation | null =
-      await this.userRepository.findUserByConfirmationCode(command.confirmationCode);
+      await this.userRepository.findUserByConfirmationCode(confirmationCode);
 
     if (!user) {
       throw new ValidationException([{ field: 'code', message: 'Confirmation code is invalid' }]);
     }
 
-    if (!user.emailConfirmationCode) {
-      throw new ValidationException([{ field: 'code', message: 'Confirmation data not found' }]);
-    }
-
     const { emailConfirmationCode } = user;
 
-    if (emailConfirmationCode.confirmationStatus === ConfirmationStatus.Confirmed) {
-      throw new ValidationException([{ field: 'code', message: 'Email is already confirmed' }]);
+    if (!emailConfirmationCode) {
+      throw new ValidationException([{ field: 'code', message: 'Confirmation code is invalid' }]);
     }
 
     if (!emailConfirmationCode.expirationDate) {
       throw new ValidationException([{ field: 'code', message: 'Confirmation code is invalid' }]);
     }
 
+    if (emailConfirmationCode.confirmationStatus === ConfirmationStatus.Confirmed) {
+      throw new ValidationException([{ field: 'code', message: 'Email is already confirmed' }]);
+    }
+
     if (this.dateService.isExpired(emailConfirmationCode.expirationDate)) {
       throw new ValidationException([{ field: 'code', message: 'Confirmation code has expired' }]);
     }
 
-    await this.userRepository.confirmEmail(command.confirmationCode);
+    await this.userRepository.confirmEmail(confirmationCode);
   }
 }
