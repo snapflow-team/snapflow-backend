@@ -27,7 +27,7 @@
     "prisma:generate:snapflow-core": "cross-env NODE_ENV=development npx prisma generate --schema=./apps/snapflow-core/prisma/schema.prisma",
     "prisma:generate:prod:snapflow-core": "cross-env NODE_ENV=production npx prisma generate --schema=./apps/snapflow-core/prisma/schema.prisma",
     "prisma:studio:snapflow-core": "cross-env NODE_ENV=development npx prisma studio --schema=./apps/snapflow-core/prisma/schema.prisma",
-    "prisma:reset:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate reset --schema=./apps/snapflow-core/prisma/schema.prisma",
+    "prisma:reset:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate reset --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:deploy:snapflow-core": "cross-env NODE_ENV=production npx prisma migrate deploy --schema=./apps/snapflow-core/prisma/schema.prisma"
   },
   "dependencies": {
