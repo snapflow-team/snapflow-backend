@@ -41,14 +41,14 @@ model EmailConfirmationCode {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int  @unique
+  userId Int  @unique @map("user_id")
 
   @@map("email_confirmation_codes")
 }
 
 model Session {
   id         Int      @id @default(autoincrement())
-  deviceId   String
+  deviceId   String   @map("device_id")
   deviceName String   @map("device_name") @db.VarChar(255)
   ip         String   @db.VarChar(255)
   iat        DateTime
@@ -59,7 +59,7 @@ model Session {
   deletedAt DateTime? @map("deleted_at")
 
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int
+  userId Int  @map("user_id")
 
   @@map("sessions")
 }
@@ -73,7 +73,7 @@ model PasswordRecoveryCode {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int  @unique
+  userId Int  @unique @map("user_id")
 
   @@map("password_recovery_codes")
 }
