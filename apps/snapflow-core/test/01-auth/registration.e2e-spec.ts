@@ -9,8 +9,9 @@ import { TestDtoFactory } from '../helpers/test.dto-factory';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { User } from '../../generated/prisma';
-import { ErrorCodes } from '../../../../libs/common/exceptions/error-codes.enum';
 import { TestUtils } from '../helpers/test.utils';
+import { ErrorResponseDto } from '../../../../libs/common/exceptions/dto/error-response-body.dto';
+import { DomainExceptionCode } from '../../../../libs/common/exceptions/types/domain-exception-codes';
 
 describe('AuthController - registration() (POST: /auth/registration)', () => {
   let appTestManager: AppTestManager;
@@ -132,15 +133,18 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       .expect(HttpStatus.BAD_REQUEST);
 
     // 🔸 Проверяем корректность возвращаемой ошибки
-    expect(resRegistration.body).toEqual({
-      code: ErrorCodes.VALIDATION_ERROR,
-      errors: [
+    expect(resRegistration.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/registration`,
+      method: 'POST',
+      message: 'Validation failed',
+      code: DomainExceptionCode.ValidationError,
+      extensions: [
         {
-          message: 'User with this username is already registered',
           field: 'username',
+          message: 'User with this username is already registered',
         },
       ],
-      message: 'Data validation error',
     });
 
     // 🔻 Проверяем, что в базе данных изменений не произошло
@@ -170,15 +174,18 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       .expect(HttpStatus.BAD_REQUEST);
 
     // 🔸 Проверяем корректность возвращаемой ошибки
-    expect(resRegistration.body).toEqual({
-      code: ErrorCodes.VALIDATION_ERROR,
-      errors: [
+    expect(resRegistration.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/registration`,
+      method: 'POST',
+      message: 'Validation failed',
+      code: DomainExceptionCode.ValidationError,
+      extensions: [
         {
-          message: 'User with this email is already registered',
           field: 'email',
+          message: 'User with this email is already registered',
         },
       ],
-      message: 'Data validation error',
     });
 
     // 🔻 Проверяем, что в базе данных изменений не произошло
@@ -197,24 +204,27 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       .expect(HttpStatus.BAD_REQUEST);
 
     // 🔸 Проверяем корректность возвращаемых ошибок валидации
-    expect(resRegistration.body).toEqual({
-      code: ErrorCodes.VALIDATION_ERROR,
-      errors: [
+    expect(resRegistration.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/registration`,
+      method: 'POST',
+      message: 'Validation failed',
+      code: DomainExceptionCode.ValidationError,
+      extensions: [
         {
-          message: 'Must be a string',
           field: 'username',
+          message: 'Must be a string',
         },
         {
+          field: 'email',
           message:
             'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
-          field: 'email',
         },
         {
-          message: 'Must be a string',
           field: 'password',
+          message: 'Must be a string',
         },
       ],
-      message: 'Data validation error',
     });
 
     // 🔻 Проверяем, что в базе данных нет созданных пользователей
@@ -238,27 +248,27 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       .expect(HttpStatus.BAD_REQUEST);
 
     // 🔸 Проверяем корректность возвращаемых ошибок валидации для пустых значений
-    expect(resRegistration.body).toEqual({
-      code: ErrorCodes.VALIDATION_ERROR,
-      errors: [
+    expect(resRegistration.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/registration`,
+      method: 'POST',
+      message: 'Validation failed',
+      code: DomainExceptionCode.ValidationError,
+      extensions: [
         {
-          message: 'Length must be between 6 and 30 characters',
           field: 'username',
-          value: '',
+          message: 'Length must be between 6 and 30 characters',
         },
         {
+          field: 'email',
           message:
             'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
-          field: 'email',
-          value: '',
         },
         {
-          message: 'Length must be between 6 and 20 characters',
           field: 'password',
-          value: '',
+          message: 'Length must be between 6 and 20 characters',
         },
       ],
-      message: 'Data validation error',
     });
 
     // 🔻 Проверяем, что в базе данных нет созданных пользователей
@@ -287,27 +297,27 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       .expect(HttpStatus.BAD_REQUEST);
 
     // 🔸 Проверяем корректность возвращаемых ошибок валидации с конкретными значениями
-    expect(resRegistration.body).toEqual({
-      code: ErrorCodes.VALIDATION_ERROR,
-      errors: [
+    expect(resRegistration.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/registration`,
+      method: 'POST',
+      message: 'Validation failed',
+      code: DomainExceptionCode.ValidationError,
+      extensions: [
         {
-          message: 'Length must be between 6 and 30 characters',
           field: 'username',
-          value: username,
+          message: 'Length must be between 6 and 30 characters',
         },
         {
+          field: 'email',
           message:
             'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
-          field: 'email',
-          value: email,
         },
         {
-          message: 'Length must be between 6 and 20 characters',
           field: 'password',
-          value: password,
+          message: 'Length must be between 6 and 20 characters',
         },
       ],
-      message: 'Data validation error',
     });
 
     // 🔻 Проверяем, что в базе данных нет созданных пользователей
@@ -336,27 +346,27 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       .expect(HttpStatus.BAD_REQUEST);
 
     // 🔸 Проверяем корректность возвращаемых ошибок валидации с конкретными значениями
-    expect(resRegistration.body).toEqual({
-      code: ErrorCodes.VALIDATION_ERROR,
-      errors: [
+    expect(resRegistration.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/registration`,
+      method: 'POST',
+      message: 'Validation failed',
+      code: DomainExceptionCode.ValidationError,
+      extensions: [
         {
-          message: 'Length must be between 6 and 30 characters',
           field: 'username',
-          value: username,
+          message: 'Length must be between 6 and 30 characters',
         },
         {
+          field: 'email',
           message:
             'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
-          field: 'email',
-          value: email,
         },
         {
-          message: 'Length must be between 6 and 20 characters',
           field: 'password',
-          value: password,
+          message: 'Length must be between 6 and 20 characters',
         },
       ],
-      message: 'Data validation error',
     });
 
     // 🔻 Проверяем, что в базе данных нет созданных пользователей
@@ -380,21 +390,23 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       .expect(HttpStatus.BAD_REQUEST);
 
     // 🔸 Проверяем корректность возвращаемых ошибок валидации типов данных
-    expect(resRegistration.body).toEqual({
-      code: ErrorCodes.VALIDATION_ERROR,
-      errors: [
+    expect(resRegistration.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/registration`,
+      method: 'POST',
+      message: 'Validation failed',
+      code: DomainExceptionCode.ValidationError,
+      extensions: [
         {
-          message: 'Must be a string',
           field: 'username',
+          message: 'Must be a string',
         },
         {
+          field: 'email',
           message:
             'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
-          field: 'email',
-          value: 123,
         },
       ],
-      message: 'Data validation error',
     });
 
     // 🔻 Проверяем, что в базе данных нет созданных пользователей

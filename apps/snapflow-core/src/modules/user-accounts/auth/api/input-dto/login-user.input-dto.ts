@@ -1,7 +1,9 @@
 import { IsEmail, IsString, Matches } from 'class-validator';
 import { Trim } from '../../../../../../../../libs/common/decorators/transform/trim.decorator';
 import { emailConstraints, passwordConstraints } from './registration-user.input-dto';
-import { IsStringWithTrim } from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
+import {
+  IsStringWithTrim
+} from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginUserInputDto {
@@ -9,7 +11,7 @@ export class LoginUserInputDto {
     description:
       'Email должен быть корректным адресом в формате local-part@domain.tld. Допустимы буквы, цифры, подчеркивание, точка и дефис в локальной части и домене.',
     pattern: emailConstraints.match.source,
-    example: 'ivan@example.com',
+    example: 'exemple@example.com',
   })
   @IsString()
   @IsEmail()

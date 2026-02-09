@@ -9,8 +9,7 @@ import request from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
 import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
-import { ConfirmationStatus, User } from '@generated/prisma';
-import { PrismaService } from '../../src/database/prisma.service';
+import { ConfirmationStatus } from '@generated/prisma';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
 
 describe('AuthController registratinEmailResending POST: /auth/registration-email-resending', () => {
@@ -18,7 +17,6 @@ describe('AuthController registratinEmailResending POST: /auth/registration-emai
   let authTestManager: AuthTestManager;
   let server: Server;
   let sendEmailMock: jest.Mock;
-  let prisma: PrismaService;
 
   beforeEach(async () => {
     appTestManager = new AppTestManager();

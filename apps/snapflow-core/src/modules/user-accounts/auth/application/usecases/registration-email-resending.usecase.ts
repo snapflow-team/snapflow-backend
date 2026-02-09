@@ -1,14 +1,13 @@
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
-import { ConfirmationStatus, EmailConfirmationCode } from '@generated/prisma';
-import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation.exception';
+import { ConfirmationStatus } from '@generated/prisma';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
 import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { ErrorCodes } from '../../../../../../../../libs/common/exceptions/error-codes.enum';
-import { HttpStatus } from '@nestjs/common';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
+import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation-exception';
+import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 
 export class RegistrationEmailResendingCommand {
   constructor(public readonly email: string) {}
@@ -27,42 +26,42 @@ export class RegistrationEmailResendingUseCase
 
   async execute(command: RegistrationEmailResendingCommand): Promise<void> {
     const user: UserWithEmailConfirmation | null =
-      await this.userRepository.findUserWithEmailConfirmationByEmail(command.email);
+      await this.userRepository.findUserByEmailWithEmailConfirmation(command.email);
+
     if (!user) {
-      // TODO Выкинуть 404
-      // TODO Или же 204 как чтобы не раскрывать email
       throw new ValidationException([
-        { field: 'email', message: 'User with this email not found' },
+        {
+          field: 'email',
+          message: 'It is impossible to send the code — the specified email is not registered',
+        },
       ]);
     }
 
-    const emailConfirmationCode: EmailConfirmationCode | null = user.emailConfirmationCode;
+    const { emailConfirmationCode } = user;
 
     if (!emailConfirmationCode) {
-      // TODO Выкинуть 500
-      throw new DomainException(
-        ErrorCodes.INTERNAL_SERVER_ERROR,
-        'Email confirmation code missing',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      // TODO какой статус выкидывать в данном случае?
+      throw new DomainException({
+        code: DomainExceptionCode.InternalServerError,
+        message: 'Email confirmation request does not exist',
+      });
     }
 
     if (emailConfirmationCode.confirmationStatus === ConfirmationStatus.Confirmed) {
-      // TODO Выкинуть DomainExceptions 409
-      // TODO Или же 204 как чтобы не раскрывать email
       throw new ValidationException([
         { field: 'email', message: 'User with this email already confirmed' },
       ]);
     }
 
     const confirmationCode: string = this.cryptoService.generateUUID();
-    //
     const expirationDate: Date = this.dateService.generateExpirationDate({ hours: 1 });
+
     await this.userRepository.updateEmailConfirmationCode(
       emailConfirmationCode.id,
       expirationDate,
       confirmationCode,
     );
+
     this.eventBus.publish(new UserRegisteredEvent(command.email, confirmationCode));
   }
 }

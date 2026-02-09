@@ -7,7 +7,6 @@ import { EmailService } from '../../src/modules/notifications/services/email.ser
 import { EmailTemplate } from '../../src/modules/notifications/templates/types';
 import { HttpStatus } from '@nestjs/common';
 import { Session } from '@generated/prisma';
-import { ErrorCodes } from '../../../../libs/common/exceptions/error-codes.enum';
 import {
   REFRESH_TOKEN_STRATEGY_INJECT_TOKEN
 } from '../../src/modules/user-accounts/auth/constants/auth-tokens.inject-constants';
@@ -15,6 +14,8 @@ import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-
 import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
+import { DomainExceptionCode } from '../../../../libs/common/exceptions/types/domain-exception-codes';
+import { ErrorResponseDto } from '../../../../libs/common/exceptions/dto/error-response-body.dto';
 
 describe('AuthController - logout() (POST: /auth/logout)', () => {
   let appTestManager: AppTestManager;
@@ -56,7 +57,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
   });
 
   it('должен успешно разлогинить пользователя и очистить refreshToken cookie при валидном JWT refresh и сессии в БД', async () => {
-    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+    const { refreshToken } = await authTestManager.loginAndGetAuthTokens();
 
     const resLogout: Response = await request(server)
       .post(`/${GLOBAL_PREFIX}/auth/logout`)
@@ -83,16 +84,19 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
   });
 
   it('не должен разлогинить пользователя, если refreshToken отсутствует в cookies', async () => {
-    await authTestManager.loginAndGetRefreshCookie();
+    await authTestManager.loginAndGetAuthTokens();
 
     const resLogout: Response = await request(server)
       .post(`/${GLOBAL_PREFIX}/auth/logout`)
       .expect(HttpStatus.UNAUTHORIZED);
 
-    expect(resLogout.body).toEqual({
-      code: ErrorCodes.UNAUTHORIZED,
+    expect(resLogout.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/logout`,
+      method: 'POST',
       message: 'User is not authenticated',
-      errors: [],
+      code: DomainExceptionCode.Unauthorized,
+      extensions: [],
     });
 
     // проверяем, что сессия осталась живой
@@ -104,17 +108,20 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
   });
 
   it('не должен разлогинить пользователя, если refreshToken невалиден (битый токен)', async () => {
-    await authTestManager.loginAndGetRefreshCookie();
+    await authTestManager.loginAndGetAuthTokens();
 
     const resLogout: Response = await request(server)
       .post(`/${GLOBAL_PREFIX}/auth/logout`)
       .set('Cookie', `refreshToken=invalid.token.here`)
       .expect(HttpStatus.UNAUTHORIZED);
 
-    expect(resLogout.body).toEqual({
-      code: ErrorCodes.UNAUTHORIZED,
+    expect(resLogout.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/logout`,
+      method: 'POST',
       message: 'User is not authenticated',
-      errors: [],
+      code: DomainExceptionCode.Unauthorized,
+      extensions: [],
     });
 
     // проверяем, что сессия осталась живой
@@ -126,7 +133,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
   });
 
   it('не должен разлогинить пользователя, если refreshToken просрочен', async () => {
-    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+    const { refreshToken } = await authTestManager.loginAndGetAuthTokens();
 
     // 🔻 Ждём 3 секунды — предполагаем, что Refresh токен за это время успеет истечь
     await TestUtils.delay(3000);
@@ -136,10 +143,13 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
       .set('Cookie', `refreshToken=${refreshToken}`)
       .expect(HttpStatus.UNAUTHORIZED);
 
-    expect(resLogout.body).toEqual({
-      code: ErrorCodes.UNAUTHORIZED,
+    expect(resLogout.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/logout`,
+      method: 'POST',
       message: 'User is not authenticated',
-      errors: [],
+      code: DomainExceptionCode.Unauthorized,
+      extensions: [],
     });
 
     // проверяем, что сессия осталась живой
@@ -151,7 +161,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
   });
 
   it('не должен разлогинить пользователя, если в БД нет активной сессии с таким deviceId', async () => {
-    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+    const { refreshToken } = await authTestManager.loginAndGetAuthTokens();
 
     // эмулируем отсутствие сессии в БД
     jest.spyOn(appTestManager.prisma.session, 'findFirst').mockResolvedValueOnce(null);
@@ -161,10 +171,13 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
       .set('Cookie', `refreshToken=${refreshToken}`)
       .expect(HttpStatus.UNAUTHORIZED);
 
-    expect(resLogout.body).toEqual({
-      code: ErrorCodes.UNAUTHORIZED,
+    expect(resLogout.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/logout`,
+      method: 'POST',
       message: 'User is not authenticated',
-      errors: [],
+      code: DomainExceptionCode.Unauthorized,
+      extensions: [],
     });
 
     // проверяем, что сессия осталась живой
@@ -176,17 +189,20 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
   });
 
   it('не должен разлогинить пользователя, если refreshToken передан в заголовке вместо cookie', async () => {
-    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+    const { refreshToken } = await authTestManager.loginAndGetAuthTokens();
 
     const resLogout: Response = await request(server)
       .post(`/${GLOBAL_PREFIX}/auth/logout`)
       .set('Authorization', `Bearer ${refreshToken}`)
       .expect(HttpStatus.UNAUTHORIZED);
 
-    expect(resLogout.body).toEqual({
-      code: ErrorCodes.UNAUTHORIZED,
+    expect(resLogout.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/logout`,
+      method: 'POST',
       message: 'User is not authenticated',
-      errors: [],
+      code: DomainExceptionCode.Unauthorized,
+      extensions: [],
     });
 
     // проверяем, что сессия осталась живой
@@ -198,16 +214,19 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
   });
 
   it('не должен разлогинить пользователя, если refreshToken передан в query‑параметре', async () => {
-    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+    const { refreshToken } = await authTestManager.loginAndGetAuthTokens();
 
     const resLogout: Response = await request(server)
       .post(`/${GLOBAL_PREFIX}/auth/logout?refreshToken=${refreshToken}`)
       .expect(HttpStatus.UNAUTHORIZED);
 
-    expect(resLogout.body).toEqual({
-      code: ErrorCodes.UNAUTHORIZED,
+    expect(resLogout.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/logout?refreshToken=${refreshToken}`,
+      method: 'POST',
       message: 'User is not authenticated',
-      errors: [],
+      code: DomainExceptionCode.Unauthorized,
+      extensions: [],
     });
 
     // проверяем, что сессия осталась живой
@@ -219,7 +238,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
   });
 
   it('не должен разлогинить пользователя, если refreshToken был уже однажды использован и сессия уже удалена', async () => {
-    const { refreshToken } = await authTestManager.loginAndGetRefreshCookie();
+    const { refreshToken } = await authTestManager.loginAndGetAuthTokens();
 
     // первый logout
     await request(server)
@@ -240,10 +259,13 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
       .set('Cookie', `refreshToken=${refreshToken}`)
       .expect(HttpStatus.UNAUTHORIZED);
 
-    expect(resLogout.body).toEqual({
-      code: ErrorCodes.UNAUTHORIZED,
+    expect(resLogout.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/logout`,
+      method: 'POST',
       message: 'User is not authenticated',
-      errors: [],
+      code: DomainExceptionCode.Unauthorized,
+      extensions: [],
     });
   });
 
