@@ -51,6 +51,20 @@ export class AuthController {
     await this.commandBus.execute(new RegisterUserCommand(body));
   }
 
+  @Post('registration-confirmation')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ConfirmRegistrationSwagger()
+  async confirmRegistration(@Body() body: ConfirmationEmailCodeInputDto): Promise<void> {
+    await this.commandBus.execute(new ConfirmationEmailCommand(body.code));
+  }
+
+  @Post('registration-email-resending')
+  @ApiRegisterEmailResendingCommand()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resendingEmail(@Body() body: RegistrationEmailResendingInputDto): Promise<void> {
+    await this.commandBus.execute(new RegistrationEmailResendingCommand(body.email));
+  }
+
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
@@ -90,20 +104,6 @@ export class AuthController {
       secure,
       sameSite,
     });
-  }
-
-  @Post('registration-confirmation')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ConfirmRegistrationSwagger()
-  async confirmRegistration(@Body() body: ConfirmationEmailCodeInputDto): Promise<void> {
-    await this.commandBus.execute(new ConfirmationEmailCommand(body.code));
-  }
-
-  @Post('registration-email-resending')
-  @ApiRegisterEmailResendingCommand()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async resendingEmail(@Body() body: RegistrationEmailResendingInputDto): Promise<void> {
-    await this.commandBus.execute(new RegistrationEmailResendingCommand(body.email));
   }
 
   @Post('password-recovery')
