@@ -1,10 +1,9 @@
-import { createParamDecorator, ExecutionContext, HttpStatus } from '@nestjs/common';
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { SessionContextDto } from '../dto/session-context.dto';
 import { Request } from 'express';
 import { DomainException } from '../../../../../../../../../libs/common/exceptions/damain.exception';
-import { ErrorCodes } from '../../../../../../../../../libs/common/exceptions/error-codes.enum';
+import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 
-//todo: переписать exceptions на транспортный слой
 export const ExtractSessionFromRequest = createParamDecorator(
   (data: unknown, context: ExecutionContext): SessionContextDto => {
     const request: Request = context.switchToHttp().getRequest<Request>();
@@ -12,11 +11,10 @@ export const ExtractSessionFromRequest = createParamDecorator(
     const session = request.user;
 
     if (!session) {
-      throw new DomainException(
-        ErrorCodes.UNAUTHORIZED,
-        'User is not authenticated',
-        HttpStatus.UNAUTHORIZED,
-      );
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'User is not authenticated',
+      });
     }
 
     return session as SessionContextDto;
