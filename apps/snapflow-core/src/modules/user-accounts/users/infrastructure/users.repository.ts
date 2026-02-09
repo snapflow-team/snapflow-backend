@@ -8,7 +8,9 @@ import { UserWithPasswordRecoveryCode } from '../types/user-with-password-recove
 export class UsersRepository {
   constructor(public readonly prisma: PrismaService) {}
 
-  async findByEmail(email: string): Promise<User | null> {
+  // User ---------------------------------------------------------
+
+  async findUserByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findFirst({
       where: {
         email,
@@ -17,20 +19,11 @@ export class UsersRepository {
     });
   }
 
-  async findByUsername(username: string): Promise<User | null> {
+  async findUserByUsername(username: string): Promise<User | null> {
     return this.prisma.user.findFirst({
       where: {
         username,
         deletedAt: null,
-      },
-    });
-  }
-
-  async create(data: Prisma.UserCreateInput): Promise<User> {
-    return this.prisma.user.create({
-      data,
-      include: {
-        emailConfirmationCode: true,
       },
     });
   }
@@ -67,6 +60,41 @@ export class UsersRepository {
     });
   }
 
+  async findUserByEmailWithEmailConfirmation(
+    email: string,
+  ): Promise<UserWithEmailConfirmation | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        deletedAt: null,
+        email,
+      },
+      include: { emailConfirmationCode: true },
+    });
+  }
+
+  async findUserByEmailWithPasswordRecoveryCode(
+    email: string,
+  ): Promise<UserWithPasswordRecoveryCode | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        deletedAt: null,
+        email,
+      },
+      include: { passwordRecoveryCode: true },
+    });
+  }
+
+  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+    return this.prisma.user.create({
+      data,
+      include: {
+        emailConfirmationCode: true,
+      },
+    });
+  }
+
+  // Email confirmation ---------------------------------------------------------
+
   async confirmEmail(code: string): Promise<void> {
     // TODO Можно ли обращаться к другой сущности
     await this.prisma.emailConfirmationCode.update({
@@ -79,17 +107,23 @@ export class UsersRepository {
     });
   }
 
-  async findByEmailWithPasswordRecoveryCode(
-    email: string,
-  ): Promise<UserWithPasswordRecoveryCode | null> {
-    return this.prisma.user.findFirst({
+  async updateEmailConfirmationCode(
+    emailConfirmationCodeId: number,
+    expirationDate: Date,
+    confirmationCode: string,
+  ) {
+    await this.prisma.emailConfirmationCode.update({
       where: {
-        deletedAt: null,
-        email,
+        id: emailConfirmationCodeId,
       },
-      include: { passwordRecoveryCode: true },
+      data: {
+        expirationDate,
+        confirmationCode,
+      },
     });
   }
+
+  // Password recovery ---------------------------------------------------------
 
   async upsertPasswordRecoveryCode(
     userId: number,
@@ -110,34 +144,6 @@ export class UsersRepository {
       update: {
         recoveryCode,
         expirationDate,
-      },
-    });
-  }
-
-  async findUserWithEmailConfirmationByEmail(
-    email: string,
-  ): Promise<UserWithEmailConfirmation | null> {
-    return this.prisma.user.findFirst({
-      where: {
-        deletedAt: null,
-        email,
-      },
-      include: { emailConfirmationCode: true },
-    });
-  }
-
-  async updateEmailConfirmationCode(
-    emailConfirmationCodeId: number,
-    expirationDate: Date,
-    confirmationCode: string,
-  ) {
-    await this.prisma.emailConfirmationCode.update({
-      where: {
-        id: emailConfirmationCodeId,
-      },
-      data: {
-        expirationDate,
-        confirmationCode,
       },
     });
   }

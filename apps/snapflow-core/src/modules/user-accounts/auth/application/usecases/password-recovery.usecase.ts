@@ -20,7 +20,7 @@ export class PasswordRecoveryUseCase implements ICommandHandler<PasswordRecovery
 
   async execute(command: PasswordRecoveryCommand): Promise<void> {
     const user: UserWithPasswordRecoveryCode | null =
-      await this.userRepository.findByEmailWithPasswordRecoveryCode(command.email);
+      await this.userRepository.findUserByEmailWithPasswordRecoveryCode(command.email);
 
     if (!user) {
       return;

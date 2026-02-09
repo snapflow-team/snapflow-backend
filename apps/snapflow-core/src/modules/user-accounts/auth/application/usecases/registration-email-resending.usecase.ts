@@ -26,7 +26,7 @@ export class RegistrationEmailResendingUseCase
 
   async execute(command: RegistrationEmailResendingCommand): Promise<void> {
     const user: UserWithEmailConfirmation | null =
-      await this.userRepository.findUserWithEmailConfirmationByEmail(command.email);
+      await this.userRepository.findUserByEmailWithEmailConfirmation(command.email);
 
     if (!user) {
       throw new ValidationException([
