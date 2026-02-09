@@ -35,6 +35,7 @@ import { JwtAuthGuard } from '../domain/guards/bearer/jwt-auth.guard';
 import { MeViewDto } from './view-dto/me.view-dto';
 import { GetMeQuery } from '../application/queries/get-me.query-handler';
 import { ApiMe } from './swagger/me.swagger';
+import { ApiNewPassword } from './swagger/new-password.swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -115,6 +116,7 @@ export class AuthController {
 
   @Post('new-password')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNewPassword()
   async newPassword(@Body() body: NewPasswordInputDto) {
     await this.commandBus.execute(new NewPasswordCommand(body.newPassword, body.recoveryCode));
   }

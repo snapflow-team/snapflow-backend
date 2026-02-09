@@ -15,11 +15,10 @@ export function ConfirmRegistrationSwagger(): MethodDecorator {
     }),
     ApiBody({ type: ConfirmationEmailCodeInputDto }),
     ApiNoContentResponse({
-      description: 'Email подтверждён. Аккаунт успешно активирован!',
+      description: 'Если код подтверждения неверен, просрочен или уже применён',
     }),
     ApiBadRequestResponse({
       type: ErrorResponseDto,
     }),
   );
 }
-1;

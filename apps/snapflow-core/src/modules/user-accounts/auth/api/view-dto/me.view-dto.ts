@@ -5,10 +5,10 @@ export class MeViewDto {
   @ApiProperty({ example: '1', description: 'ID пользователя' })
   userId: string;
 
-  @ApiProperty({ example: 'ivan@example.dev', description: 'Email пользователя' })
+  @ApiProperty({ example: 'example@example.dev', description: 'Email пользователя' })
   email: string;
 
-  @ApiProperty({ example: 'ivan', description: 'Имя пользователя' })
+  @ApiProperty({ example: 'string', description: 'Имя пользователя' })
   username: string;
 
   static mapToView(user: RawUserForMe): MeViewDto {
