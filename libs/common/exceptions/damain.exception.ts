@@ -1,13 +1,30 @@
-import { HttpException, HttpStatus } from '@nestjs/common';
-import { ErrorCodes } from './error-codes.enum';
+import { DomainExceptionCode } from './types/domain-exception-codes';
+import { ApiProperty } from '@nestjs/swagger';
 
-export class DomainException extends HttpException {
-  constructor(
-    public readonly code: ErrorCodes,
-    public readonly message: string,
-    status: HttpStatus,
-    public readonly errors: unknown[] = [],
-  ) {
-    super({ code, message, errors }, status);
+export class Extension {
+  @ApiProperty({ example: 'email' })
+  public readonly field: string;
+
+  @ApiProperty({ example: 'Invalid email format' })
+  public readonly message: string;
+
+  constructor(props: { field: string; message: string }) {
+    this.field = props.field;
+    this.message = props.message;
+  }
+}
+
+export class DomainException extends Error {
+  message: string;
+  code: DomainExceptionCode;
+  extensions: Extension[];
+
+  constructor(errorInfo: { code: DomainExceptionCode; message: string; extensions?: Extension[] }) {
+    super(errorInfo.message);
+
+    this.code = errorInfo.code;
+    this.extensions = errorInfo.extensions ?? [];
+
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
