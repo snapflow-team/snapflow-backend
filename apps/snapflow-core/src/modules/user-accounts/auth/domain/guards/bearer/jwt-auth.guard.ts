@@ -1,10 +1,10 @@
-import { ExecutionContext, HttpStatus, Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UserContextDto } from '../dto/user-context.dto';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../../../../decorators/public.decorator';
 import { DomainException } from '../../../../../../../../../libs/common/exceptions/damain.exception';
-import { ErrorCodes } from '../../../../../../../../../libs/common/exceptions/error-codes.enum';
+import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -27,7 +27,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   handleRequest<TUser = UserContextDto>(err: any, user: any): TUser {
     if (err || !user) {
-      throw new DomainException(ErrorCodes.UNAUTHORIZED, 'Unauthorized', HttpStatus.UNAUTHORIZED);
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'Unauthorized',
+      });
     }
 
     return user as TUser;
