@@ -1,14 +1,14 @@
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { UserValidationService } from '../../../users/application/services/user-validation.service';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
-import { CreateUserApplicationDto } from '../../../users/application/dto/create-user.application-dto';
+import { RegistrationUserApplicationDto } from '../../../users/application/dto/registration-user.application-dto';
 import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
 import { ConfirmationStatus } from '../../../../../../generated/prisma';
 
 export class RegisterUserCommand {
-  constructor(public readonly dto: CreateUserApplicationDto) {}
+  constructor(public readonly dto: RegistrationUserApplicationDto) {}
 }
 
 @CommandHandler(RegisterUserCommand)
