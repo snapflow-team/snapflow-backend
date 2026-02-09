@@ -19,6 +19,9 @@ import { LogoutUseCase } from './auth/application/usecases/logout.usecase';
 import { PasswordRecoveryUseCase } from './auth/application/usecases/password-recovery.usecase';
 import { RegistrationEmailResendingUseCase } from './auth/application/usecases/registration-email-resending.usecase';
 import { NewPasswordUseCase } from './auth/application/usecases/new-password.usecase';
+import { GetMeQueryHandler } from './auth/application/queries/get-me.query-handler';
+import { JwtStrategy } from './auth/domain/guards/bearer/jwt.strategy';
+import { UsersQueryRepository } from './users/infrastructure/users.query-repository';
 
 const controllers = [AuthController];
 const useCases = [
@@ -31,9 +34,10 @@ const useCases = [
   PasswordRecoveryUseCase,
   NewPasswordUseCase,
 ];
+const queries = [GetMeQueryHandler];
 const services = [DateService, CryptoService, UserValidationService];
-const repositories = [UsersRepository, SessionsRepository];
-const strategies = [LocalStrategy, JwtRefreshStrategy];
+const repositories = [UsersRepository, UsersQueryRepository, SessionsRepository];
+const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy];
 const configs = [UserAccountsConfig];
 
 @Module({
@@ -43,6 +47,7 @@ const configs = [UserAccountsConfig];
     AccessTokenProvider,
     RefreshTokenProvider,
     ...useCases,
+    ...queries,
     ...services,
     ...repositories,
     ...strategies,

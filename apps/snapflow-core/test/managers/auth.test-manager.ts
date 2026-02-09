@@ -5,7 +5,9 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { HttpStatus } from '@nestjs/common';
 import { Server } from 'http';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
-import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import {
+  RegistrationUserInputDto
+} from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
 
 /**
@@ -142,21 +144,44 @@ export class AuthTestManager {
   }
 
   /**
-   * 🔐 Выполнить логин пользователя и получить refreshToken из cookie
+   * 🔑 Выполняет полный e2e-флоу авторизации пользователя и возвращает токены
+   *
+   * Метод последовательно выполняет следующие действия:
+   *  1. Регистрирует нового пользователя через `registrationWithConfirmation()`
+   *     - выполняется массовая регистрация (по умолчанию 1 пользователь)
+   *     - автоматически подтверждается email через код подтверждения
+   *  2. Логинится с помощью HTTP-запроса на `/auth/login` с email и паролем зарегистрированного пользователя
+   *  3. Извлекает `accessToken` из тела ответа (`res.body.accessToken`) — для использования в `Authorization` header
+   *  4. Извлекает `refreshToken` из Set-Cookie (`res.headers['set-cookie']`) — для refresh / logout сценариев
+   *  5. Возвращает HTTP-ответ и все полученные данные
    *
    * Используется в e2e-тестах для:
-   *  - аутентификации пользователя через реальный HTTP-запрос
-   *  - проверки корректной установки refreshToken в http-only cookie
-   *  - последующих запросов (refresh, logout, protected routes)
+   *  - тестирования защищённых эндпоинтов с действительным access token
+   *  - проверки refresh и logout сценариев
+   *  - подготовки авторизованной сессии для последующих запросов
    *
-   * Метод:
-   *  - регистрирует нового пользователя и подтверждает email
-   *  - выполняет POST /auth/login
-   *  - извлекает refreshToken из заголовка Set-Cookie
+   * @returns Promise<{
+   *   res: Response;                       // полный HTTP-ответ на POST /auth/login
+   *   refreshToken: string;                // refreshToken для использования в cookie
+   *   accessToken: string;                 // accessToken для Authorization header
+   *   createdUser: UserWithEmailConfirmation; // объект зарегистрированного и подтверждённого пользователя с emailConfirmationCode
+   * }>
    *
-   * ❗ Если refreshToken отсутствует в cookie — тест падает с явной ошибкой.
+   * @throws {Error} если:
+   *   - accessToken не найден в теле ответа
+   *   - refreshToken не найден в Set-Cookie
+   *
+   * @example
+   * const { res, accessToken, refreshToken, createdUser } =
+   *   await authTestManager.loginAndGetAuthTokens();
+   *
    */
-  async loginAndGetRefreshCookie(): Promise<{ res: Response; refreshToken: string }> {
+  async loginAndGetAuthTokens(): Promise<{
+    res: Response;
+    refreshToken: string;
+    accessToken: string;
+    createdUser: UserWithEmailConfirmation;
+  }> {
     const [user]: UserWithEmailConfirmation[] = await this.registrationWithConfirmation();
 
     const resLogin: Response = await request(this.server)
@@ -167,8 +192,24 @@ export class AuthTestManager {
       })
       .expect(HttpStatus.OK);
 
-    const cookie: string = resLogin.headers['set-cookie'][0];
-    const refreshTokenMatch = cookie.match(/refreshToken=([^;]+)/);
+    // 🔹 accessToken берём из body
+    const body = resLogin.body as unknown as {
+      accessToken: string;
+    };
+
+    const accessToken: string = body.accessToken;
+
+    if (!accessToken) {
+      throw new Error(
+        `AuthTestManager.loginAndGetRefreshCookie(): ` +
+          `accessToken not found in response body. ` +
+          `Body: ${JSON.stringify(resLogin.body)}`,
+      );
+    }
+
+    // 🔹 refreshToken берём из cookie
+    const cookie: string | undefined = resLogin.headers['set-cookie']?.[0];
+    const refreshTokenMatch = cookie?.match(/refreshToken=([^;]+)/);
 
     if (!refreshTokenMatch || !refreshTokenMatch[1]) {
       throw new Error(
@@ -180,7 +221,7 @@ export class AuthTestManager {
 
     const refreshToken: string = refreshTokenMatch[1];
 
-    return { res: resLogin, refreshToken };
+    return { res: resLogin, refreshToken, accessToken, createdUser: user };
   }
 
   /**
