@@ -91,6 +91,11 @@ spec:
                 secretKeyRef:
                   name: snapflow-backend-production-config-secret
                   key: EMAIL_APP_PASSWORD
+            - name: SEND_INTERNAL_SERVER_ERROR_DETAILS
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: SEND_INTERNAL_SERVER_ERROR_DETAILS
             - name: ALLOWED_ORIGINS
               valueFrom:
                 secretKeyRef:
