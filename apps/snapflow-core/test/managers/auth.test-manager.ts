@@ -224,6 +224,13 @@ export class AuthTestManager {
     return { res: resLogin, refreshToken, accessToken, createdUser: user };
   }
 
+  async passwordRecovery(email: string): Promise<void> {
+    await request(this.server)
+      .post(`/${GLOBAL_PREFIX}/auth/password-recovery`)
+      .send({ email })
+      .expect(HttpStatus.NO_CONTENT);
+  }
+
   /**
    * 📦 Получить всех пользователей из БД
    *
