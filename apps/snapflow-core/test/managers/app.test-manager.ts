@@ -92,7 +92,7 @@ export class AppTestManager {
    * @example
    * await appTestManager.cleanupDb(['migrations']);
    */
-  async cleanupDb(excludedTables: string[] = ['_prisma_migrations']) {
+  async cleanupDb(excludedTables: string[]) {
     const tables: { tablename: string }[] = await this.prisma.$queryRawUnsafe(`
       SELECT tablename
       FROM pg_tables
