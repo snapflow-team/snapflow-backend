@@ -52,7 +52,6 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiRegistration()
   async registration(@Body() body: RegistrationUserInputDto): Promise<void> {
-    console.log('Test');
     await this.commandBus.execute(new RegisterUserCommand(body));
   }
 
