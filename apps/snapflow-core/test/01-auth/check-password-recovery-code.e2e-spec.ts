@@ -74,7 +74,7 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
     expect(sendEmailMock).toHaveBeenCalledTimes(2);
   });
 
-  it.only('должен вернуть 400, если код восстановления не валидный', async () => {
+  it('должен вернуть 400, если код восстановления не валидный', async () => {
     // 🔻 Попытка проверки несуществующего UUID
     const invalidCode = '00000000-0000-0000-0000-000000000000';
 
@@ -96,6 +96,55 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
           message: 'Invalid recovery code',
         },
       ],
+    });
+  });
+
+  it('должен вернуть ошибку, если recoveryCode имеет неверный формат (не UUID)', async () => {
+    // 🔻 Отправляем строку, которая не является UUID
+    const invalidFormat = 'invalid-code-123';
+
+    const res: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/check-password-recovery-code`)
+      .send({ recoveryCode: invalidFormat })
+      .expect(HttpStatus.BAD_REQUEST);
+
+    // 🔸 Проверяем корректность возвращаемых ошибок валидации
+    expect(res.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/check-password-recovery-code`,
+      method: 'POST',
+      message: 'Validation failed',
+      code: DomainExceptionCode.ValidationError,
+      extensions: [
+        {
+          field: 'recoveryCode',
+          message: 'Invalid recovery code',
+        },
+      ],
+    });
+  });
+
+  it('должен вернуть ошибку, если код восстановления истёк', async () => {
+    // 🔻 Создаем пользователя с просроченным recoveryCode напрямую через репозиторий
+    const [dto] = TestDtoFactory.generateRegistrationUserInputDto(1);
+    await authTestManager.registration([dto]);
+
+    const expiredRecoveryCode: string = await authTestManager.createExpiredRecoveryCode(dto.email);
+
+    // 🔻 Проверяем просроченный код
+    const res: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/check-password-recovery-code`)
+      .send({ recoveryCode: expiredRecoveryCode })
+      .expect(HttpStatus.BAD_REQUEST);
+
+    /// 🔸 Проверяем корректность возвращаемых ошибок валидации
+    expect(res.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/check-password-recovery-code`,
+      method: 'POST',
+      message: 'Recovery code has expired',
+      code: DomainExceptionCode.BadRequest,
+      extensions: [],
     });
   });
 });

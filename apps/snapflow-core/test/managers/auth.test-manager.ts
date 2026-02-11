@@ -224,6 +224,58 @@ export class AuthTestManager {
     return { res: resLogin, refreshToken, accessToken, createdUser: user };
   }
 
+  /**
+   * 🔥 Создаёт просроченный recoveryCode напрямую в БД
+   *
+   * Используется в e2e-тестах для проверки сценариев,
+   * когда код восстановления уже истёк.
+   *
+   * Метод:
+   *  1. Находит пользователя по email
+   *  2. Генерирует UUID для recoveryCode
+   *  3. Устанавливает expirationDate в прошлом
+   *  4. Сохраняет данные в БД
+   *
+   * ❗ Работает напрямую с Prisma, минуя HTTP-слой.
+   *
+   * @param email - email пользователя
+   * @returns string - созданный просроченный recoveryCode
+   */
+  async createExpiredRecoveryCode(email: string): Promise<string> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        email,
+        deletedAt: null,
+      },
+    });
+
+    if (!user) {
+      throw new Error(
+        `AuthTestManager.createExpiredRecoveryCode(): User with email "${email}" not found`,
+      );
+    }
+
+    const expiredRecoveryCode = crypto.randomUUID();
+
+    // дата в прошлом (например, 1 час назад)
+    const expirationDate = new Date(Date.now() - 1000 * 60 * 60);
+
+    await this.prisma.passwordRecoveryCode.upsert({
+      where: { userId: user.id },
+      update: {
+        recoveryCode: expiredRecoveryCode,
+        expirationDate,
+      },
+      create: {
+        userId: user.id,
+        recoveryCode: expiredRecoveryCode,
+        expirationDate,
+      },
+    });
+
+    return expiredRecoveryCode;
+  }
+
   async passwordRecovery(email: string): Promise<void> {
     await request(this.server)
       .post(`/${GLOBAL_PREFIX}/auth/password-recovery`)
