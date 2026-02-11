@@ -7,9 +7,7 @@ import { EmailTemplate } from '../../src/modules/notifications/templates/types';
 import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
-import {
-  RegistrationUserInputDto
-} from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
 import { ErrorResponseDto } from '../../../../libs/common/exceptions/dto/error-response-body.dto';
 import { DomainExceptionCode } from '../../../../libs/common/exceptions/types/domain-exception-codes';
@@ -37,7 +35,7 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
   });
 
   beforeEach(async () => {
-    await appTestManager.cleanupDb(['migrations']);
+    await appTestManager.cleanupDb(['_prisma_migrations']);
 
     sendEmailMock.mockClear();
   });
