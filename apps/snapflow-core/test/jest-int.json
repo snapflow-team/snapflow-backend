@@ -1,5 +1,9 @@
 {
-  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
   "rootDir": "../",
   "testEnvironment": "node",
   "testRegex": ".int-spec.ts$",
@@ -7,7 +11,7 @@
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "moduleNameMapper": {
-    "@/dbModule/(.*)$": "<rootDir>/modules/database/$1"
-
+    "@/dbModule/(.*)$": "<rootDir>/modules/database/$1",
+    "^@generated/prisma$": "<rootDir>/generated/prisma"
   }
 }

@@ -36,6 +36,9 @@ import { MeViewDto } from './view-dto/me.view-dto';
 import { GetMeQuery } from '../application/queries/get-me.query-handler';
 import { ApiMe } from './swagger/me.swagger';
 import { ApiNewPassword } from './swagger/new-password.swagger';
+import { PasswordRecoveryCodeInputDto } from './input-dto/password-recovery-code.input-dto';
+import { CheckPasswordRecoveryCodeCommand } from '../application/usecases/check-password-recovery-code.usecase';
+import { ApiCheckPasswordRecoveryCode } from './swagger/check-password-recovery-code.swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -112,6 +115,13 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
     await this.commandBus.execute(new PasswordRecoveryCommand(body.email));
+  }
+
+  @Post('check-password-recovery-code')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiCheckPasswordRecoveryCode()
+  async checkPasswordRecoveryCode(@Body() body: PasswordRecoveryCodeInputDto) {
+    await this.commandBus.execute(new CheckPasswordRecoveryCodeCommand(body));
   }
 
   @Post('new-password')

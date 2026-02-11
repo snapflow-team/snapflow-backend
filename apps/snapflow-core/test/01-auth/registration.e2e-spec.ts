@@ -33,7 +33,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
   });
 
   beforeEach(async () => {
-    await appTestManager.cleanupDb(['migrations']);
+    await appTestManager.cleanupDb(['_prisma_migrations']);
 
     sendEmailMock.mockClear();
   });

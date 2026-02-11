@@ -22,6 +22,7 @@ import { NewPasswordUseCase } from './auth/application/usecases/new-password.use
 import { GetMeQueryHandler } from './auth/application/queries/get-me.query-handler';
 import { JwtStrategy } from './auth/domain/guards/bearer/jwt.strategy';
 import { UsersQueryRepository } from './users/infrastructure/users.query-repository';
+import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 
 const controllers = [AuthController];
 const useCases = [
@@ -32,6 +33,7 @@ const useCases = [
   CreateSessionUseCase,
   RegistrationEmailResendingUseCase,
   PasswordRecoveryUseCase,
+  CheckPasswordRecoveryCodeUseCase,
   NewPasswordUseCase,
 ];
 const queries = [GetMeQueryHandler];
