@@ -31,4 +31,13 @@ export class SessionsRepository {
       },
     });
   }
+
+  async updateSession(id: number, dto: Prisma.SessionUpdateInput): Promise<void> {
+    await this.prisma.session.update({
+      where: {
+        id,
+      },
+      data: dto,
+    });
+  }
 }
