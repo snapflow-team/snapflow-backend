@@ -47,7 +47,7 @@ export class UserValidationService {
   async authenticateUser(email: string, password: string): Promise<UserContextDto> {
     const user: User | null = await this.usersRepository.findUserByEmail(email);
 
-    if (!user) {
+    if (!user || !user.password) {
       throw new DomainException({
         code: DomainExceptionCode.Unauthorized,
         message: 'Invalid email or password',
