@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsUrl } from 'class-validator';
 import { CookieOptions } from 'express';
 import { configValidationUtility } from '../../../../../../libs/common/config/config-validation.utility';
 import { Environments } from '../../../../../../libs/common/enums/enviroments.enum';
@@ -61,6 +61,18 @@ export class UserAccountsConfig {
   )
   maxAge: number;
 
+  @IsNotEmpty({ message: 'GOOGLE_CLIENT_ID is required' })
+  googleClientId: string;
+
+  @IsNotEmpty({ message: 'GOOGLE_CLIENT_SECRET is required' })
+  googleClientSecret: string;
+
+  @IsUrl(
+    { require_tld: false, protocols: ['http', 'https'] },
+    { message: 'GOOGLE_CALLBACK_URL must be a valid URL' },
+  )
+  googleCallbackUrl: string;
+
   // @IsNotEmpty({
   //   message: 'Set Env variable PATH to define cookie path. Example: "/"',
   // })
@@ -88,6 +100,10 @@ export class UserAccountsConfig {
     this.maxAge = Number(this.configService.get('MAX_AGE'));
 
     // this.path = this.configService.get('PATH');
+
+    this.googleClientId = this.configService.get('GOOGLE_CLIENT_ID');
+    this.googleClientSecret = this.configService.get('GOOGLE_CLIENT_SECRET');
+    this.googleCallbackUrl = this.configService.get('GOOGLE_CALLBACK_URL');
 
     configValidationUtility.validateConfig(this);
   }
