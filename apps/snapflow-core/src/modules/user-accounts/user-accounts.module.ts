@@ -26,6 +26,7 @@ import { GoogleStrategy } from './auth/domain/guards/google/google.strategy';
 import { AuthGoogleCommandUseCase } from './auth/application/usecases/auth-google.usecase';
 import { AuthTokenService } from '../../../../../libs/common/services/auth-token.service';
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
+import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 
 const controllers = [AuthController];
 const useCases = [
@@ -36,6 +37,7 @@ const useCases = [
   CreateSessionUseCase,
   RegistrationEmailResendingUseCase,
   PasswordRecoveryUseCase,
+  CheckPasswordRecoveryCodeUseCase,
   NewPasswordUseCase,
   AuthGoogleCommandUseCase,
   RefreshTokenUseCase,

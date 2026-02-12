@@ -5,9 +5,7 @@ import { TestUtils } from '../helpers/test.utils';
 import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-accounts.config';
 import { JwtService } from '@nestjs/jwt';
 import { HttpStatus } from '@nestjs/common';
-import {
-  ACCESS_TOKEN_STRATEGY_INJECT_TOKEN
-} from '../../src/modules/user-accounts/auth/constants/auth-tokens.inject-constants';
+import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth-tokens.inject-constants';
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { EmailService } from '../../src/modules/notifications/services/email.service';
 import { EmailTemplate } from '../../src/modules/notifications/templates/types';
@@ -42,7 +40,7 @@ describe('AuthController - me() (POST: /auth/me)', () => {
   });
 
   beforeEach(async () => {
-    await appTestManager.cleanupDb();
+    await appTestManager.cleanupDb(['_prisma_migrations']);
 
     sendEmailMock.mockClear();
   });
