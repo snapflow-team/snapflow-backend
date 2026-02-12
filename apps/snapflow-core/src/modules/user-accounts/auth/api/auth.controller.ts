@@ -36,6 +36,14 @@ import { MeViewDto } from './view-dto/me.view-dto';
 import { GetMeQuery } from '../application/queries/get-me.query-handler';
 import { ApiMe } from './swagger/me.swagger';
 import { ApiNewPassword } from './swagger/new-password.swagger';
+import { GoogleAuthGuard } from '../domain/guards/google/google-auth.guard';
+import { GoogleContextDto } from '../../../../../../../libs/common/dto/google-context.dto';
+import { AuthGoogleCommand } from '../application/usecases/auth-google.usecase';
+import { RefreshTokenCommand } from '../application/usecases/refresh-token.usecase';
+import { BASE_URL } from '../constants/auth-tokens.inject-constants';
+import { RefreshTokenSwagger } from './swagger/refresh-token.swagger';
+import { GoogleCallbackSwagger } from './swagger/google-callback.swagger';
+import { GoogleSwagger } from './swagger/google.swagger';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -126,5 +134,44 @@ export class AuthController {
   @ApiMe()
   async me(@ExtractUserFromRequest() user: UserContextDto): Promise<MeViewDto> {
     return this.queryBus.execute(new GetMeQuery(user.id));
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  @GoogleSwagger()
+  async googleAuth() {}
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @GoogleCallbackSwagger()
+  async googleCallback(
+    @ExtractUserFromRequest() user: GoogleContextDto,
+    @ExtractClientInfo() clientInfo: ClientInfoDto,
+    @Res() res: Response,
+  ) {
+    const { refreshToken } = await this.commandBus.execute(
+      new AuthGoogleCommand(user, clientInfo.ip, clientInfo.userAgent),
+    );
+
+    res.cookie('refreshToken', refreshToken, this.userAccountsConfig.getCookieConfig());
+
+    res.redirect(`${BASE_URL}`);
+  }
+
+  @Post('refresh-token')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtRefreshAuthGuard)
+  @RefreshTokenSwagger()
+  async refreshToken(
+    @ExtractSessionFromRequest() session: SessionContextDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<LoginViewDto> {
+    const { accessToken, refreshToken }: AuthTokens = await this.commandBus.execute(
+      new RefreshTokenCommand(session),
+    );
+
+    res.cookie('refreshToken', refreshToken, this.userAccountsConfig.getCookieConfig());
+
+    return { accessToken };
   }
 }
