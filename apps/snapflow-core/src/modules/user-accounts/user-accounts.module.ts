@@ -22,6 +22,10 @@ import { NewPasswordUseCase } from './auth/application/usecases/new-password.use
 import { GetMeQueryHandler } from './auth/application/queries/get-me.query-handler';
 import { JwtStrategy } from './auth/domain/guards/bearer/jwt.strategy';
 import { UsersQueryRepository } from './users/infrastructure/users.query-repository';
+import { GoogleStrategy } from './auth/domain/guards/google/google.strategy';
+import { AuthGoogleCommandUseCase } from './auth/application/usecases/auth-google.usecase';
+import { AuthTokenService } from '../../../../../libs/common/services/auth-token.service';
+import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 
 const controllers = [AuthController];
 const useCases = [
@@ -33,11 +37,13 @@ const useCases = [
   RegistrationEmailResendingUseCase,
   PasswordRecoveryUseCase,
   NewPasswordUseCase,
+  AuthGoogleCommandUseCase,
+  RefreshTokenUseCase,
 ];
 const queries = [GetMeQueryHandler];
-const services = [DateService, CryptoService, UserValidationService];
+const services = [DateService, CryptoService, UserValidationService, AuthTokenService];
 const repositories = [UsersRepository, UsersQueryRepository, SessionsRepository];
-const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy];
+const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy];
 const configs = [UserAccountsConfig];
 
 @Module({
