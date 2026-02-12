@@ -12,12 +12,17 @@ enum ConfirmationStatus {
   NotConfirmed
 }
 
+enum OAuthProvider {
+  GOOGLE
+  GITHUB
+}
+
 model User {
   id Int @id @default(autoincrement())
 
-  username String @db.VarChar(30)
-  email    String @db.VarChar(255)
-  password String @db.VarChar(255)
+  username String @db.VarChar(30) @unique
+  email    String @db.VarChar(255) @unique
+  password String? @db.VarChar(255)
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -26,8 +31,21 @@ model User {
   emailConfirmationCode EmailConfirmationCode?
   sessions              Session[]
   passwordRecoveryCode  PasswordRecoveryCode?
+  authAcconts           AuthAccount[]
 
   @@map("users")
+}
+
+model AuthAccount { id Int @id @default(autoincrement())
+  userId      Int @map("user_id")
+  provider    OAuthProvider
+  providerId  String@map("provider_id")
+  email       String @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("crated_at")
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, provider])
 }
 
 model EmailConfirmationCode {
