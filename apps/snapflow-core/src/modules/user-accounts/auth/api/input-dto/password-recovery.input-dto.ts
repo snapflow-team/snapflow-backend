@@ -15,7 +15,7 @@ export class PasswordRecoveryInputDto {
     description:
       'Email должен быть корректным адресом в формате local-part@domain.tld. Допустимы буквы, цифры, подчеркивание, точка и дефис в локальной части и домене.',
     pattern: emailConstraints.match.source,
-    example: 'ivan@example.com',
+    example: 'example@example.com',
   })
   email: string;
 }

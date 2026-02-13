@@ -4,6 +4,8 @@ import { DateService } from '../../../../../../../../libs/common/services/date.s
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { UserPasswordRecoveryEvent } from '../../domain/events/user-password-recovery.event';
 import { UserWithPasswordRecoveryCode } from '../../../users/types/user-with-password-recovery.type';
+import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 
 export class PasswordRecoveryCommand {
   constructor(public readonly email: string) {}
@@ -23,7 +25,10 @@ export class PasswordRecoveryUseCase implements ICommandHandler<PasswordRecovery
       await this.userRepository.findUserByEmailWithPasswordRecoveryCode(command.email);
 
     if (!user) {
-      return;
+      throw new DomainException({
+        code: DomainExceptionCode.Forbidden,
+        message: "User with this email doesn't exist",
+      });
     }
 
     const recoveryCode: string = this.cryptoService.generateUUID();
