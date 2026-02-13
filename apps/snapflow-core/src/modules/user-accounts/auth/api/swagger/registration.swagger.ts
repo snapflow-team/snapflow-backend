@@ -1,5 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBody, ApiNoContentResponse, ApiOperation, } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiTooManyRequestsResponse,
+} from '@nestjs/swagger';
 import { RegistrationUserInputDto } from '../input-dto/registration-user.input-dto';
 import { ErrorResponseDto } from '../../../../../../../../libs/common/exceptions/dto/error-response-body.dto';
 
@@ -21,6 +27,9 @@ export function ApiRegistration() {
     ApiBadRequestResponse({
       description: 'Если в inputModel неверные значения',
       type: ErrorResponseDto,
+    }),
+    ApiTooManyRequestsResponse({
+      description: 'Более 5 попыток с одного IP-адреса за 10 секунд',
     }),
   );
 }

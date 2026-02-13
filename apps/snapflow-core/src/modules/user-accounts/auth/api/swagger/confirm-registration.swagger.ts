@@ -4,6 +4,7 @@ import {
   ApiBody,
   ApiNoContentResponse,
   ApiOperation,
+  ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { ConfirmationEmailCodeInputDto } from '../input-dto/confirmation-email-code.input-dto';
 import { ErrorResponseDto } from '../../../../../../../../libs/common/exceptions/dto/error-response-body.dto';
@@ -19,6 +20,9 @@ export function ConfirmRegistrationSwagger(): MethodDecorator {
     }),
     ApiBadRequestResponse({
       type: ErrorResponseDto,
+    }),
+    ApiTooManyRequestsResponse({
+      description: 'Более 5 попыток с одного IP-адреса за 10 секунд',
     }),
   );
 }
