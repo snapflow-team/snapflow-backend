@@ -47,6 +47,7 @@ import { BASE_URL } from '../constants/auth-tokens.inject-constants';
 import { RefreshTokenSwagger } from './swagger/refresh-token.swagger';
 import { GoogleCallbackSwagger } from './swagger/google-callback.swagger';
 import { GoogleSwagger } from './swagger/google.swagger';
+import { Recaptcha } from '@nestlab/google-recaptcha';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -121,6 +122,7 @@ export class AuthController {
   @Post('password-recovery')
   @ApiPasswordRecovery()
   @HttpCode(HttpStatus.NO_CONTENT)
+  @Recaptcha()
   async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
     await this.commandBus.execute(new PasswordRecoveryCommand(body.email));
   }
