@@ -18,4 +18,14 @@ export class PasswordRecoveryInputDto {
     example: 'example@example.com',
   })
   email: string;
+
+  @ApiProperty({
+    description:
+      'Recaptcha token должен быть строкой, полученной от Google reCAPTCHA после успешного прохождения проверки пользователем.',
+    example: '6LfsdsdSSEsAAAAALfsdfDmlRycmKgdsfgAlcxKEp2w1Vm',
+    required: true,
+    nullable: false,
+  })
+  @IsString({ message: 'Recaptcha token must be a string' })
+  recaptchaToken: string;
 }
