@@ -73,6 +73,11 @@ export class UserAccountsConfig {
   )
   googleCallbackUrl: string;
 
+  @IsNotEmpty({
+    message: 'Set Env variable GOOGLE_RECAPTCHA_SECRET_KEY',
+  })
+  googleRecaptchaSecretKey: string;
+
   // @IsNotEmpty({
   //   message: 'Set Env variable PATH to define cookie path. Example: "/"',
   // })
@@ -104,6 +109,8 @@ export class UserAccountsConfig {
     this.googleClientId = this.configService.get('GOOGLE_CLIENT_ID');
     this.googleClientSecret = this.configService.get('GOOGLE_CLIENT_SECRET');
     this.googleCallbackUrl = this.configService.get('GOOGLE_CALLBACK_URL');
+
+    this.googleRecaptchaSecretKey = this.configService.get('GOOGLE_RECAPTCHA_SECRET_KEY');
 
     configValidationUtility.validateConfig(this);
   }
