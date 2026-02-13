@@ -61,7 +61,7 @@ const configs = [UserAccountsConfig];
       useFactory: (config: UserAccountsConfig) => ({
         secretKey: config.googleRecaptchaSecretKey,
         response: (req: Request<unknown, unknown, RecaptchaBody>) =>
-          req.body['g-recaptcha-response'] ?? '',
+          req.body['recaptchaToken'] ?? '',
         skipMissing: false,
       }),
     }),
