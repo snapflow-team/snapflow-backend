@@ -7,6 +7,7 @@ import { CoreModule } from './core/core.module';
 import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
 import { PrismaModule } from './database/prisma.module';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
@@ -15,6 +16,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     PrismaModule,
     snapFlowConfigDynamicModule,
     UserAccountsModule,
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [SnapflowCoreConfig],
       useFactory: (coreConfig: SnapflowCoreConfig) => [

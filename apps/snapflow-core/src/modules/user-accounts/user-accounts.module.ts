@@ -31,6 +31,7 @@ import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/ch
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
 import { RecaptchaBody } from '../../types/recaptcha.types';
 import { UserAccountsConfigModule } from './config/user-accounts.config-module';
+import { SessionsCleanupService } from './auth/sessions/application/services/sessions-cleanup.service';
 
 const controllers = [AuthController];
 const useCases = [
@@ -47,7 +48,13 @@ const useCases = [
   RefreshTokenUseCase,
 ];
 const queries = [GetMeQueryHandler];
-const services = [DateService, CryptoService, UserValidationService, AuthTokenService];
+const services = [
+  DateService,
+  CryptoService,
+  UserValidationService,
+  AuthTokenService,
+  SessionsCleanupService,
+];
 const repositories = [UsersRepository, UsersQueryRepository, SessionsRepository];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy];
 const configs = [UserAccountsConfig];
