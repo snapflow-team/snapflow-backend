@@ -4,7 +4,9 @@ import { Server } from 'http';
 import { EmailTemplate } from '../../src/modules/notifications/templates/types';
 import { HttpStatus } from '@nestjs/common';
 import { EmailService } from '../../src/modules/notifications/services/email.service';
-import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import {
+  RegistrationUserInputDto
+} from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { AuthTestManager } from '../managers/auth.test-manager';
@@ -77,42 +79,34 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     expect(sendEmailMock).toHaveBeenCalledTimes(1);
   });
 
-  // it.only('не должен регистрировать пользователя в системе, если пользователь отправил более 5 запросов с одного IP на "/регистрация" за последние 10 секунд', async () => {
-  //   // 🔻 Создаем 6 наборов тестовых данных для регистрации
-  //   const dtos: UserInputDto[] = TestDtoFactory.generateUserInputDto(6);
-  //
-  //   // 🔻 Успешно регистрируем первых 5 пользователей
-  //   for (let i = 0; i < 5; i++) {
-  //     await request(server)
-  //       .post(`/${GLOBAL_PREFIX}/auth/registration`)
-  //       .send(dtos[i])
-  //       .expect(HttpStatus.NO_CONTENT);
-  //   }
-  //
-  //   // 🔻 Пытаемся зарегистрировать 6-го пользователя и получаем ошибку ограничения
-  //   const resRegistration: Response = await request(server)
-  //     .post(`/${GLOBAL_PREFIX}/auth/registration`)
-  //     .send(dtos[5])
-  //     .expect(HttpStatus.TOO_MANY_REQUESTS);
-  //
-  //   // 🔻 Проверяем состояние базы данных после регистрации
-  //   const { items }: PaginatedViewDto<UserViewDto> = await usersTestManager.getAll();
-  //
-  //   // 🔸 Проверяем, что в базе данных ровно 5 пользователей
-  //   expect(items).toHaveLength(5);
-  //
-  //   // 🔸 Проверяем корректность вызовов отправки email
-  //   expect(sendEmailMock).toHaveBeenCalled();
-  //   expect(sendEmailMock).toHaveBeenCalledTimes(5);
-  //
-  //   if (testLoggingEnabled) {
-  //     TestLoggers.logE2E(
-  //       resRegistration.body,
-  //       resRegistration.statusCode,
-  //       'Test №2: AuthController - registration() (POST: /auth/registration)',
-  //     );
-  //   }
-  // });
+  it('не должен регистрировать пользователя в системе, если пользователь отправил более 5 запросов с одного IP на "/регистрация" за последние 10 секунд', async () => {
+    // 🔻 Создаем 6 наборов тестовых данных для регистрации
+    const dtos: RegistrationUserInputDto[] = TestDtoFactory.generateRegistrationUserInputDto(6);
+
+    // 🔻 Успешно регистрируем первых 5 пользователей
+    for (let i = 0; i < 5; i++) {
+      await request(server)
+        .post(`/${GLOBAL_PREFIX}/auth/registration`)
+        .send(dtos[i])
+        .expect(HttpStatus.NO_CONTENT);
+    }
+
+    // 🔻 Пытаемся зарегистрировать 6-го пользователя и получаем ошибку ограничения
+    await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send(dtos[5])
+      .expect(HttpStatus.TOO_MANY_REQUESTS);
+
+    // 🔻 Проверяем состояние базы данных после регистрации
+    const users: User[] = await authTestManager.getAll();
+
+    // 🔸 Проверяем, что в базе данных ровно 5 пользователей
+    expect(users).toHaveLength(5);
+
+    // 🔸 Проверяем корректность вызовов отправки email
+    expect(sendEmailMock).toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(5);
+  });
 
   it('не следует регистрировать, если пользователь с такими данными уже существует (username)', async () => {
     // 🔻 Регистрируем пользователя через менеджер
