@@ -73,6 +73,20 @@ export class UserAccountsConfig {
   )
   googleCallbackUrl: string;
 
+  @IsNotEmpty({
+    message: 'Set Env variable GOOGLE_RECAPTCHA_SECRET_KEY',
+  })
+  googleRecaptchaSecretKey: string;
+
+  @IsNumber(
+    {},
+    {
+      message:
+        'SESSION_CLEANUP_RETENTION_DAYS must be a number. Set the environment variable to specify the retention period in days. Example: SESSION_CLEANUP_RETENTION_DAYS=90 (soft-deleted sessions older than 90 days will be permanently deleted)',
+    },
+  )
+  sessionCleanupRetentionDays: number;
+
   // @IsNotEmpty({
   //   message: 'Set Env variable PATH to define cookie path. Example: "/"',
   // })
@@ -104,6 +118,12 @@ export class UserAccountsConfig {
     this.googleClientId = this.configService.get('GOOGLE_CLIENT_ID');
     this.googleClientSecret = this.configService.get('GOOGLE_CLIENT_SECRET');
     this.googleCallbackUrl = this.configService.get('GOOGLE_CALLBACK_URL');
+
+    this.googleRecaptchaSecretKey = this.configService.get('GOOGLE_RECAPTCHA_SECRET_KEY');
+
+    this.sessionCleanupRetentionDays = Number(
+      this.configService.get('SESSION_CLEANUP_RETENTION_DAYS'),
+    );
 
     configValidationUtility.validateConfig(this);
   }

@@ -4,6 +4,7 @@ import {
   ApiBody,
   ApiOkResponse,
   ApiOperation,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { LoginUserInputDto } from '../input-dto/login-user.input-dto';
@@ -29,6 +30,9 @@ export function LoginSwagger() {
     }),
     ApiUnauthorizedResponse({
       description: 'Если password или email неверны',
+    }),
+    ApiTooManyRequestsResponse({
+      description: 'Более 5 попыток с одного IP-адреса за 10 секунд',
     }),
   );
 }

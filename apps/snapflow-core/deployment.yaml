@@ -16,103 +16,123 @@ spec:
         project: PROJECT
     spec:
       containers:
-         - name: PROJECT
-           image: REGISTRY_HOSTNAME/PROJECT:TAG_VERSION
-           ports:
-             - containerPort: PORT_CONTAINER
-           env:
-             - name: NODE_ENV
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: NODE_ENV
-             - name: IS_SWAGGER_ENABLED
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: IS_SWAGGER_ENABLED
-             - name: DATABASE_URL
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: DATABASE_URL
-             - name: PRISMA_LOG_QUERIES
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: PRISMA_LOG_QUERIES
-             - name: JWT_SECRET_AT
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: JWT_SECRET_AT
-             - name: JWT_SECRET_RT
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: JWT_SECRET_RT
-             - name: JWT_EXPIRATION_AT
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: JWT_EXPIRATION_AT
-             - name: JWT_EXPIRATION_RT
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: JWT_EXPIRATION_RT
-             - name: HTTP_ONLY
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: HTTP_ONLY
-             - name: SECURE
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: SECURE
-             - name: SAME_SITE
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: SAME_SITE
-             - name: MAX_AGE
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: MAX_AGE
-             - name: EMAIL_APP
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: EMAIL_APP
-             - name: EMAIL_APP_PASSWORD
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: EMAIL_APP_PASSWORD
-             - name: SEND_INTERNAL_SERVER_ERROR_DETAILS
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: SEND_INTERNAL_SERVER_ERROR_DETAILS
-             - name: GOOGLE_CLIENT_ID
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: GOOGLE_CLIENT_ID
-             - name: GOOGLE_CLIENT_SECRET
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: GOOGLE_CLIENT_SECRET
-             - name: GOOGLE_CALLBACK_URL
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: GOOGLE_CALLBACK_URL
-             - name: ALLOWED_ORIGINS
-               valueFrom:
-                 secretKeyRef:
-                   name: snapflow-backend-production-config-secret
-                   key: ALLOWED_ORIGINS
+        - name: PROJECT
+          image: REGISTRY_HOSTNAME/PROJECT:TAG_VERSION
+          ports:
+            - containerPort: PORT_CONTAINER
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: NODE_ENV
+            - name: IS_SWAGGER_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: IS_SWAGGER_ENABLED
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: DATABASE_URL
+            - name: PRISMA_LOG_QUERIES
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: PRISMA_LOG_QUERIES
+            - name: JWT_SECRET_AT
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: JWT_SECRET_AT
+            - name: JWT_SECRET_RT
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: JWT_SECRET_RT
+            - name: JWT_EXPIRATION_AT
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: JWT_EXPIRATION_AT
+            - name: JWT_EXPIRATION_RT
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: JWT_EXPIRATION_RT
+            - name: HTTP_ONLY
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: HTTP_ONLY
+            - name: SECURE
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: SECURE
+            - name: SAME_SITE
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: SAME_SITE
+            - name: MAX_AGE
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: MAX_AGE
+            - name: EMAIL_APP
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: EMAIL_APP
+            - name: EMAIL_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: EMAIL_APP_PASSWORD
+            - name: SEND_INTERNAL_SERVER_ERROR_DETAILS
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: SEND_INTERNAL_SERVER_ERROR_DETAILS
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: GOOGLE_CLIENT_ID
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: GOOGLE_CLIENT_SECRET
+            - name: GOOGLE_CALLBACK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: GOOGLE_CALLBACK_URL
+            - name: GOOGLE_RECAPTCHA_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: GOOGLE_RECAPTCHA_SECRET_KEY
+            - name: THROTTLE_TTL
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: THROTTLE_TTL
+            - name: THROTTLE_LIMIT
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: THROTTLE_LIMIT
+            - name: SESSION_CLEANUP_RETENTION_DAYS
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: SESSION_CLEANUP_RETENTION_DAYS
+            - name: ALLOWED_ORIGINS
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: ALLOWED_ORIGINS

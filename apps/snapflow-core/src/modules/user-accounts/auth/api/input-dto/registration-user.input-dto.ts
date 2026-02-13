@@ -1,5 +1,7 @@
 import { IsEmail, IsString, Matches } from 'class-validator';
-import { IsStringWithTrim } from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
+import {
+  IsStringWithTrim
+} from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
 import { Trim } from '../../../../../../../../libs/common/decorators/transform/trim.decorator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -31,7 +33,7 @@ export class RegistrationUserInputDto {
     minLength: usernameConstraints.minLength,
     maxLength: usernameConstraints.maxLength,
     pattern: usernameConstraints.match.source,
-    example: 'ivan_01',
+    example: 'username_01',
   })
   username: string;
 
@@ -46,7 +48,7 @@ export class RegistrationUserInputDto {
     description:
       'Email должен быть корректным адресом в формате local-part@domain.tld. Допустимы буквы, цифры, подчеркивание, точка и дефис в локальной части и домене.',
     pattern: emailConstraints.match.source,
-    example: 'ivan@example.com',
+    example: 'username_01@example.com',
   })
   email: string;
 

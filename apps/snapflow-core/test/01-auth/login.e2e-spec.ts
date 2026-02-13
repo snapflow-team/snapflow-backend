@@ -68,38 +68,31 @@ describe('AuthController - login() (POST: /auth/login)', () => {
     expect(sendEmailMock).toHaveBeenCalledTimes(1);
   });
 
-  // it.only('should not log in if the user has sent more than 5 requests from one IP to "/login" in the last 10 seconds.', async () => {
-  //   // 🔻 Создаём пользователя
-  //   const [createdUser]: UserViewDto[] = await usersTestManager.createUser(1);
-  //
-  //   // 🔸 Отправляем 5 корректных запросов на вход — все они должны пройти успешно
-  //   for (let i = 0; i < 5; i++) {
-  //     await request(server)
-  //       .post(`/${GLOBAL_PREFIX}/auth/login`)
-  //       .send({
-  //         loginOrEmail: createdUser.login,
-  //         password: 'qwerty',
-  //       })
-  //       .expect(HttpStatus.OK);
-  //   }
-  //
-  //   // 🔸 6-й запрос должен быть заблокирован из-за превышения лимита
-  //   const resLogin: Response = await request(server)
-  //     .post(`/${GLOBAL_PREFIX}/auth/login`)
-  //     .send({
-  //       loginOrEmail: createdUser.login,
-  //       password: 'qwerty',
-  //     })
-  //     .expect(HttpStatus.TOO_MANY_REQUESTS);
-  //
-  //   if (testLoggingEnabled) {
-  //     TestLoggers.logE2E(
-  //       resLogin.body,
-  //       resLogin.statusCode,
-  //       'Test №2: AuthController - login() (POST: /auth/login)',
-  //     );
-  //   }
-  // });
+  it('не следует авторизовывать пользователя, если пользователь отправил более 5 запросов с одного IP на "/login" за последние 10 секунд', async () => {
+    // 🔻 Создаём пользователя
+    const [user]: UserWithEmailConfirmation[] =
+      await authTestManager.registrationWithConfirmation();
+
+    // 🔸 Отправляем 5 корректных запросов на вход — все они должны пройти успешно
+    for (let i = 0; i < 5; i++) {
+      await request(server)
+        .post(`/${GLOBAL_PREFIX}/auth/login`)
+        .send({
+          email: user.email,
+          password: 'Qwerty_1',
+        })
+        .expect(HttpStatus.OK);
+    }
+
+    // 🔸 6-й запрос должен быть заблокирован из-за превышения лимита
+    const resLogin: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .send({
+        email: user.email,
+        password: 'Qwerty_1',
+      })
+      .expect(HttpStatus.TOO_MANY_REQUESTS);
+  });
 
   it('не следует выполнять вход, если пользователь отправил неверные данные (username: "undefined", password: "undefined")', async () => {
     // 🔻 Выполняем POST-запрос на /auth/login с пустым телом

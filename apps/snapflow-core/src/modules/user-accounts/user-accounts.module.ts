@@ -1,3 +1,4 @@
+import { Request } from 'express';
 import { Module } from '@nestjs/common';
 import { UsersRepository } from './users/infrastructure/users.repository';
 import { AuthController } from './auth/api/auth.controller';
@@ -27,6 +28,10 @@ import { AuthGoogleCommandUseCase } from './auth/application/usecases/auth-googl
 import { AuthTokenService } from '../../../../../libs/common/services/auth-token.service';
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
+import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
+import { RecaptchaBody } from '../../types/recaptcha.types';
+import { UserAccountsConfigModule } from './config/user-accounts.config-module';
+import { SessionsCleanupService } from './auth/sessions/application/services/sessions-cleanup.service';
 
 const controllers = [AuthController];
 const useCases = [
@@ -43,13 +48,31 @@ const useCases = [
   RefreshTokenUseCase,
 ];
 const queries = [GetMeQueryHandler];
-const services = [DateService, CryptoService, UserValidationService, AuthTokenService];
+const services = [
+  DateService,
+  CryptoService,
+  UserValidationService,
+  AuthTokenService,
+  SessionsCleanupService,
+];
 const repositories = [UsersRepository, UsersQueryRepository, SessionsRepository];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy];
 const configs = [UserAccountsConfig];
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [
+    NotificationsModule,
+    GoogleRecaptchaModule.forRootAsync({
+      imports: [UserAccountsConfigModule],
+      inject: [UserAccountsConfig],
+      useFactory: (config: UserAccountsConfig) => ({
+        secretKey: config.googleRecaptchaSecretKey,
+        response: (req: Request<unknown, unknown, RecaptchaBody>) =>
+          req.body['recaptchaToken'] ?? '',
+        skipMissing: false,
+      }),
+    }),
+  ],
   controllers: [...controllers],
   providers: [
     AccessTokenProvider,

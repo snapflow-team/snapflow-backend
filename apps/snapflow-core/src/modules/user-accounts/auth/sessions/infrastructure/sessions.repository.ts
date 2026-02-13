@@ -32,6 +32,33 @@ export class SessionsRepository {
     });
   }
 
+  async softDeleteAllSessionForUser(userId: number): Promise<void> {
+    await this.prisma.session.updateMany({
+      where: {
+        userId,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
+
+  async hardDeleteOldSoftDeletedSessions(daysOld: number = 90): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+
+    const result: Prisma.BatchPayload = await this.prisma.session.deleteMany({
+      where: {
+        deletedAt: {
+          not: null,
+          lte: cutoffDate,
+        },
+      },
+    });
+
+    return result.count;
+  }
+
   async updateSession(id: number, dto: Prisma.SessionUpdateInput): Promise<void> {
     await this.prisma.session.update({
       where: {
