@@ -32,6 +32,17 @@ export class SessionsRepository {
     });
   }
 
+  async softDeleteAllSessionForUser(userId: number): Promise<void> {
+    await this.prisma.session.updateMany({
+      where: {
+        userId,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
+
   async updateSession(id: number, dto: Prisma.SessionUpdateInput): Promise<void> {
     await this.prisma.session.update({
       where: {
