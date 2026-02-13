@@ -2,8 +2,10 @@ import { applyDecorators } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiOperation,
+  ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { PasswordRecoveryInputDto } from '../input-dto/password-recovery.input-dto';
 
@@ -23,6 +25,13 @@ export function ApiPasswordRecovery() {
     }),
     ApiBadRequestResponse({
       description: 'Если в inputModel неверные значения',
+    }),
+    ApiForbiddenResponse({
+      description:
+        'Пользователь с указанным email не найден или восстановление пароля недоступно для данного аккаунта',
+    }),
+    ApiTooManyRequestsResponse({
+      description: 'Более 5 попыток с одного IP-адреса за 10 секунд',
     }),
   );
 }

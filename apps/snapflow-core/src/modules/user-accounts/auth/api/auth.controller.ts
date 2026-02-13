@@ -48,6 +48,7 @@ import { RefreshTokenSwagger } from './swagger/refresh-token.swagger';
 import { GoogleCallbackSwagger } from './swagger/google-callback.swagger';
 import { GoogleSwagger } from './swagger/google.swagger';
 import { Recaptcha } from '@nestlab/google-recaptcha';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -60,6 +61,7 @@ export class AuthController {
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiRegistration()
+  @UseGuards(ThrottlerGuard)
   async registration(@Body() body: RegistrationUserInputDto): Promise<void> {
     await this.commandBus.execute(new RegisterUserCommand(body));
   }
@@ -67,6 +69,7 @@ export class AuthController {
   @Post('registration-confirmation')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ConfirmRegistrationSwagger()
+  @UseGuards(ThrottlerGuard)
   async confirmRegistration(@Body() body: ConfirmationEmailCodeInputDto): Promise<void> {
     await this.commandBus.execute(new ConfirmationEmailCommand(body.code));
   }
@@ -74,6 +77,7 @@ export class AuthController {
   @Post('registration-email-resending')
   @ApiRegisterEmailResendingCommand()
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(ThrottlerGuard)
   async resendingEmail(@Body() body: RegistrationEmailResendingInputDto): Promise<void> {
     await this.commandBus.execute(new RegistrationEmailResendingCommand(body.email));
   }
@@ -82,6 +86,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   @LoginSwagger()
+  @UseGuards(ThrottlerGuard)
   async login(
     @ExtractUserFromRequest() user: UserContextDto,
     @ExtractClientInfo() clientInfo: ClientInfoDto,
@@ -123,6 +128,7 @@ export class AuthController {
   @ApiPasswordRecovery()
   @HttpCode(HttpStatus.NO_CONTENT)
   @Recaptcha()
+  @UseGuards(ThrottlerGuard)
   async passwordRecovery(@Body() body: PasswordRecoveryInputDto) {
     await this.commandBus.execute(new PasswordRecoveryCommand(body.email));
   }
@@ -130,6 +136,7 @@ export class AuthController {
   @Post('check-password-recovery-code')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiCheckPasswordRecoveryCode()
+  @UseGuards(ThrottlerGuard)
   async checkPasswordRecoveryCode(@Body() body: PasswordRecoveryCodeInputDto) {
     await this.commandBus.execute(new CheckPasswordRecoveryCodeCommand(body));
   }
@@ -137,6 +144,7 @@ export class AuthController {
   @Post('new-password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNewPassword()
+  @UseGuards(ThrottlerGuard)
   async newPassword(@Body() body: NewPasswordInputDto) {
     await this.commandBus.execute(new NewPasswordCommand(body.newPassword, body.recoveryCode));
   }

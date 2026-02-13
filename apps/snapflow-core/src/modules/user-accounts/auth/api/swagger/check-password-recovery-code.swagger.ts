@@ -4,6 +4,7 @@ import {
   ApiBody,
   ApiNoContentResponse,
   ApiOperation,
+  ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { PasswordRecoveryCodeInputDto } from '../input-dto/password-recovery-code.input-dto';
 
@@ -24,6 +25,9 @@ export function ApiCheckPasswordRecoveryCode() {
     }),
     ApiBadRequestResponse({
       description: 'Некорректный или просроченный код восстановления',
+    }),
+    ApiTooManyRequestsResponse({
+      description: 'Более 5 попыток с одного IP-адреса за 10 секунд',
     }),
   );
 }
