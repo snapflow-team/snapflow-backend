@@ -15,7 +15,17 @@ export class PasswordRecoveryInputDto {
     description:
       'Email должен быть корректным адресом в формате local-part@domain.tld. Допустимы буквы, цифры, подчеркивание, точка и дефис в локальной части и домене.',
     pattern: emailConstraints.match.source,
-    example: 'ivan@example.com',
+    example: 'example@example.com',
   })
   email: string;
+
+  @ApiProperty({
+    description:
+      'Recaptcha token должен быть строкой, полученной от Google reCAPTCHA после успешного прохождения проверки пользователем.',
+    example: '6LfsdsdSSEsAAAAALfsdfDmlRycmKgdsfgAlcxKEp2w1Vm',
+    required: true,
+    nullable: false,
+  })
+  @IsString({ message: 'Recaptcha token must be a string' })
+  recaptchaToken: string;
 }
