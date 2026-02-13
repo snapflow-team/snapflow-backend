@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ConfirmationStatus, Prisma, User } from '@generated/prisma';
+import { ConfirmationStatus, Prisma, User, OAuthProvider, AuthAccount } from '@generated/prisma';
 import { PrismaService } from '../../../../database/prisma.service';
 import { UserWithEmailConfirmation } from '../types/user-with-confirmation.type';
 import { UserWithPasswordRecoveryCode } from '../types/user-with-password-recovery.type';
@@ -161,5 +161,23 @@ export class UsersRepository {
         },
       },
     });
+  }
+
+  async findAccountByProvider(
+    providerId: string,
+    provider: OAuthProvider,
+  ): Promise<AuthAccount | null> {
+    return this.prisma.authAccount.findFirst({
+      where: { providerId, provider },
+    });
+  }
+
+  async createAccount(data: {
+    userId: number;
+    provider: OAuthProvider;
+    providerId: string;
+    email: string;
+  }) {
+    return this.prisma.authAccount.create({ data });
   }
 }
