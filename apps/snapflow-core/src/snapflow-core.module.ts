@@ -6,10 +6,25 @@ import { SnapflowCoreConfig } from './snapflow-core.config';
 import { CoreModule } from './core/core.module';
 import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
 import { PrismaModule } from './database/prisma.module';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
-  imports: [CoreModule, PrismaModule, snapFlowConfigDynamicModule, UserAccountsModule],
+  imports: [
+    CoreModule,
+    PrismaModule,
+    snapFlowConfigDynamicModule,
+    UserAccountsModule,
+    ThrottlerModule.forRootAsync({
+      inject: [SnapflowCoreConfig],
+      useFactory: (coreConfig: SnapflowCoreConfig) => [
+        {
+          ttl: coreConfig.throttleTtl,
+          limit: coreConfig.throttleLimit,
+        },
+      ],
+    }),
+  ],
   controllers: [SnapflowCoreController],
   providers: [SnapflowCoreService],
 })
