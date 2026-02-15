@@ -32,11 +32,11 @@ import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
 import { RecaptchaBody } from '../../types/recaptcha.types';
 import { UserAccountsConfigModule } from './config/user-accounts.config-module';
 import { SessionsCleanupService } from './auth/sessions/application/services/sessions-cleanup.service';
-import { SessionsController } from './auth/api/sessions.controller';
 import { DeleteSessionByDeviceUseCase } from './auth/sessions/application/usecases/delete-session-by-device-id.usecase';
 import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/get-all-sessions.query';
 import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
 import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
+import { SessionsController } from './auth/sessions/api/sessions.controller';
 
 const controllers = [AuthController, SessionsController];
 const useCases = [
