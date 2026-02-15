@@ -1,20 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../../database/prisma.service';
-import { SessionView } from '../../api/view-dto/sessions.view-dto';
+import { SessionsViewDto } from '../../api/view-dto/sessions.view-dto';
 import { Session } from '@generated/prisma';
-import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class SessionQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAllSessions(userId: number): Promise<SessionView[]> {
+  async getAllSessions(userId: number): Promise<SessionsViewDto[]> {
     const sessions: Session[] = await this.prisma.session.findMany({
       where: {
         userId,
         deletedAt: null,
       },
     });
-    return plainToInstance(SessionView, sessions, { excludeExtraneousValues: true });
+    return sessions.map((session: Session): SessionsViewDto => SessionsViewDto.mapToView(session));
   }
 }
