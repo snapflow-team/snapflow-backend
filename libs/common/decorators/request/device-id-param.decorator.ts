@@ -1,4 +1,16 @@
-import { Param } from '@nestjs/common';
-import { ParseUuidOrNotFoundPipe } from '../../pipes/parse-uuid-or-not-found.pipe';
+import { Param, ParseUUIDPipe } from '@nestjs/common';
+import { DomainException } from '../../exceptions/damain.exception';
+import { DomainExceptionCode } from '../../exceptions/types/domain-exception-codes';
 
-export const DeviceIdParam = () => Param('deviceId', ParseUuidOrNotFoundPipe);
+export function ValidatedDeviceId(paramName = 'deviceId'): ParameterDecorator {
+  return Param(
+    paramName,
+    new ParseUUIDPipe({
+      exceptionFactory: () =>
+        new DomainException({
+          code: DomainExceptionCode.NotFound,
+          message: 'Session not found',
+        }),
+    }),
+  );
+}
