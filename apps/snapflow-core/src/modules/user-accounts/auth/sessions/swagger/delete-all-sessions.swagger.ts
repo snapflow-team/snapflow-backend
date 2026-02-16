@@ -1,4 +1,9 @@
-import { ApiNoContentResponse, ApiOperation, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { applyDecorators } from '@nestjs/common';
 
 export function DeleteAllSessionsSwagger(): MethodDecorator {
@@ -11,6 +16,9 @@ export function DeleteAllSessionsSwagger(): MethodDecorator {
     }),
     ApiUnauthorizedResponse({
       description: 'Unauthorized',
+    }),
+    ApiTooManyRequestsResponse({
+      description: 'Более 5 попыток с одного IP-адреса за 10 секунд',
     }),
   );
 }

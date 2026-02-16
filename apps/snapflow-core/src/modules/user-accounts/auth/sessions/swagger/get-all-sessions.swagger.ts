@@ -1,4 +1,4 @@
-import { ApiOperation, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiTooManyRequestsResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { applyDecorators } from '@nestjs/common';
 
 export function GetAllSessionsSwagger(): MethodDecorator {
@@ -8,6 +8,9 @@ export function GetAllSessionsSwagger(): MethodDecorator {
     }),
     ApiUnauthorizedResponse({
       description: 'Unauthorized',
+    }),
+    ApiTooManyRequestsResponse({
+      description: 'Более 5 попыток с одного IP-адреса за 10 секунд',
     }),
   );
 }

@@ -1,4 +1,11 @@
-import { ApiNoContentResponse, ApiOperation, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiForbiddenResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { applyDecorators } from '@nestjs/common';
 
 export function DeleteSessionByIdSwagger(): MethodDecorator {
@@ -11,6 +18,15 @@ export function DeleteSessionByIdSwagger(): MethodDecorator {
     }),
     ApiUnauthorizedResponse({
       description: 'Unauthorized',
+    }),
+    ApiForbiddenResponse({
+      description: 'Доступ запрещен. Вы можете управлять только своими активными устройствами',
+    }),
+    ApiNotFoundResponse({
+      description: 'Сессия не найдена',
+    }),
+    ApiTooManyRequestsResponse({
+      description: 'Более 5 попыток с одного IP-адреса за 10 секунд',
     }),
   );
 }
