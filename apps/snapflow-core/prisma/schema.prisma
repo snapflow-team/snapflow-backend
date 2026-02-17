@@ -20,8 +20,8 @@ enum OAuthProvider {
 model User {
   id Int @id @default(autoincrement())
 
-  username String @db.VarChar(30) @unique
-  email    String @db.VarChar(255) @unique
+  username String  @unique @db.VarChar(30)
+  email    String  @unique @db.VarChar(255)
   password String? @db.VarChar(255)
 
   createdAt DateTime  @default(now()) @map("created_at")
@@ -36,16 +36,22 @@ model User {
   @@map("users")
 }
 
-model AuthAccount { id Int @id @default(autoincrement())
-  userId      Int @map("user_id")
-  provider    OAuthProvider
-  providerId  String@map("provider_id")
-  email       String @db.VarChar(255)
-  createdAt   DateTime @default(now()) @map("crated_at")
+model AuthAccount {
+  id Int @id @default(autoincrement())
 
-  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerAccountId String        @map("provider_account_id")
+  provider          OAuthProvider
+  email             String        @db.VarChar(255)
 
-  @@unique([providerId, provider])
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @map("user_id")
+
+  @@unique([providerAccountId, provider])
+  @@map("auth_accounts")
 }
 
 model EmailConfirmationCode {
