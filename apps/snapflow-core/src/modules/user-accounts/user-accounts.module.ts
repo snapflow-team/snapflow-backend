@@ -23,8 +23,6 @@ import { NewPasswordUseCase } from './auth/application/usecases/new-password.use
 import { GetMeQueryHandler } from './auth/application/queries/get-me.query-handler';
 import { JwtStrategy } from './auth/domain/guards/bearer/jwt.strategy';
 import { UsersQueryRepository } from './users/infrastructure/users.query-repository';
-import { GoogleStrategy } from './auth/domain/guards/google/google.strategy';
-import { AuthGoogleCommandUseCase } from './auth/application/usecases/auth-google.usecase';
 import { AuthTokenService } from '../../../../../libs/common/services/auth-token.service';
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
@@ -32,11 +30,17 @@ import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
 import { RecaptchaBody } from '../../types/recaptcha.types';
 import { UserAccountsConfigModule } from './config/user-accounts.config-module';
 import { SessionsCleanupService } from './auth/sessions/application/services/sessions-cleanup.service';
+import { GithubStrategy } from './auth/domain/guards/github/github.strategy';
+import { UserUtilsService } from './users/application/services/user-utils.service';
+import { OAuthController } from './auth/api/oauth.controller';
+import { OAuthUseCase } from './auth/application/usecases/oauth.usecase';
+import { GoogleStrategy } from './auth/domain/guards/google/google.strategy';
 
-const controllers = [AuthController];
+const controllers = [AuthController, OAuthController];
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
+  OAuthUseCase,
   LoginUserUseCase,
   LogoutUseCase,
   CreateSessionUseCase,
@@ -44,19 +48,19 @@ const useCases = [
   PasswordRecoveryUseCase,
   CheckPasswordRecoveryCodeUseCase,
   NewPasswordUseCase,
-  AuthGoogleCommandUseCase,
   RefreshTokenUseCase,
 ];
 const queries = [GetMeQueryHandler];
 const services = [
   DateService,
   CryptoService,
+  UserUtilsService,
   UserValidationService,
   AuthTokenService,
   SessionsCleanupService,
 ];
 const repositories = [UsersRepository, UsersQueryRepository, SessionsRepository];
-const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy];
+const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
 const configs = [UserAccountsConfig];
 
 @Module({
