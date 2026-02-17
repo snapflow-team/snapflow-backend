@@ -23,14 +23,14 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     done: (err: any, user: any, info?: any) => void,
   ): Promise<void> {
     try {
-      const githubContextDto: OAuthContextDto = {
+      const oauthContextDto: OAuthContextDto = {
         provider: OAuthProvider.GITHUB,
         id: profile.id,
         email: profile.emails?.[0]?.value || null,
         username: profile.username || null,
       };
 
-      done(null, githubContextDto);
+      done(null, oauthContextDto);
     } catch (err) {
       done(err, null);
     }
