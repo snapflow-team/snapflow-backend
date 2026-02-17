@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import * as argon2 from 'argon2';
 
 @Injectable()
@@ -19,5 +19,13 @@ export class CryptoService {
 
   generateUUID(): string {
     return randomUUID();
+  }
+
+  generateRandomString(sizeBytes: number = 16, encoding: 'hex' | 'base64' = 'hex'): string {
+    return randomBytes(sizeBytes).toString(encoding);
+  }
+
+  generateShortId(): string {
+    return randomBytes(3).toString('hex');
   }
 }
