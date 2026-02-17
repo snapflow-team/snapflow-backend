@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-github2';
 import { UserAccountsConfig } from '../../../../config/user-accounts.config';
 import { OAuthProvider } from '@generated/prisma';
-import { GithubContextDto } from '../dto/github-context.dto';
+import { OAuthContextDto } from '../dto/oauth-context.dto';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
@@ -23,7 +23,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     done: (err: any, user: any, info?: any) => void,
   ): Promise<void> {
     try {
-      const githubContextDto: GithubContextDto = {
+      const githubContextDto: OAuthContextDto = {
         provider: OAuthProvider.GITHUB,
         id: profile.id,
         email: profile.emails?.[0]?.value || null,
