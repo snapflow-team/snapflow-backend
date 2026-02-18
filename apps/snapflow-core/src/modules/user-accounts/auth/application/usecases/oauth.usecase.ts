@@ -49,7 +49,7 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
         if (!email) {
           throw new DomainException({
             code: DomainExceptionCode.BadRequest,
-            message: 'GitHub user has no email',
+            message: `${provider} user has no email`,
           });
         }
 
