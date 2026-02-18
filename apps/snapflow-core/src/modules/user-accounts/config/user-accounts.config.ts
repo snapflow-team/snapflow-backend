@@ -78,6 +78,18 @@ export class UserAccountsConfig {
   })
   googleRecaptchaSecretKey: string;
 
+  @IsNotEmpty({ message: 'GITHUB_OAUTH_CLIENT_ID is required' })
+  githubOauthClientId: string;
+
+  @IsNotEmpty({ message: 'GITHUB_OAUTH_CLIENT_SECRET is required' })
+  githubOauthClientSecret: string;
+
+  @IsUrl(
+    { require_tld: false, protocols: ['http', 'https'] },
+    { message: 'GITHUB_OAUTH_CALLBACK_URL must be a valid URL' },
+  )
+  githubOauthCallbackUrl: string;
+
   @IsNumber(
     {},
     {
@@ -118,6 +130,10 @@ export class UserAccountsConfig {
     this.googleClientId = this.configService.get('GOOGLE_CLIENT_ID');
     this.googleClientSecret = this.configService.get('GOOGLE_CLIENT_SECRET');
     this.googleCallbackUrl = this.configService.get('GOOGLE_CALLBACK_URL');
+
+    this.githubOauthClientId = this.configService.get('GITHUB_OAUTH_CLIENT_ID');
+    this.githubOauthClientSecret = this.configService.get('GITHUB_OAUTH_CLIENT_SECRET');
+    this.githubOauthCallbackUrl = this.configService.get('GITHUB_OAUTH_CALLBACK_URL');
 
     this.googleRecaptchaSecretKey = this.configService.get('GOOGLE_RECAPTCHA_SECRET_KEY');
 
