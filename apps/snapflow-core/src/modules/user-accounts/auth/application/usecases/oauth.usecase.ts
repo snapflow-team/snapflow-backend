@@ -45,6 +45,7 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
       if (existingAuthAccount) {
         userId = existingAuthAccount.userId;
       } else {
+        // todo: что делать если нет email?
         if (!email) {
           throw new DomainException({
             code: DomainExceptionCode.BadRequest,
