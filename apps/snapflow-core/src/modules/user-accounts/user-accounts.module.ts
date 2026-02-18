@@ -41,8 +41,7 @@ import { SessionQueryRepository } from './auth/sessions/infrastructure/session.q
 import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
 import { SessionsController } from './auth/sessions/api/sessions.controller';
 
-const controllers = [AuthController, SessionsController];
-const controllers = [AuthController, OAuthController];
+const controllers = [AuthController, SessionsController, OAuthController];
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
@@ -73,8 +72,6 @@ const repositories = [
   SessionsRepository,
   SessionQueryRepository,
 ];
-const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy];
-const repositories = [UsersRepository, UsersQueryRepository, SessionsRepository];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
 const configs = [UserAccountsConfig];
 

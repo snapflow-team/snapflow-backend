@@ -27,9 +27,7 @@ export class SessionsRepository {
     });
   }
 
-  async softDeleteSessionById(id: number): Promise<void> {
-    await this.prisma.session.update({
-  async softDeleteCurrentSession(
+  async softDeleteSessionById(
     id: number,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<void> {
