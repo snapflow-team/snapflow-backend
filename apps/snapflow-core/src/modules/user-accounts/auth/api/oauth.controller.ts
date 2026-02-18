@@ -12,8 +12,10 @@ import { AuthTokens } from '../domain/types/auth-tokens.type';
 import { OAuthCommand } from '../application/usecases/oauth.usecase';
 import { OAuthContextDto } from '../domain/guards/dto/oauth-context.dto';
 import { GoogleAuthGuard } from '../domain/guards/google/google-auth.guard';
-import { GoogleSwagger } from './swagger/google.swagger';
+import { GoogleAuthSwagger } from './swagger/google-auth.swagger';
 import { GoogleCallbackSwagger } from './swagger/google-callback.swagger';
+import { GithubAuthSwagger } from './swagger/github-auth.swagger';
+import { GithubCallbackSwagger } from './swagger/github-callback.swagger';
 
 @ApiTags('OAuth')
 @Controller('oauth')
@@ -25,7 +27,7 @@ export class OAuthController {
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
-  @GoogleSwagger()
+  @GoogleAuthSwagger()
   async googleAuth() {}
 
   @Get('google/callback')
@@ -53,10 +55,12 @@ export class OAuthController {
 
   @Get('github')
   @UseGuards(GithubAuthGuard)
+  @GithubAuthSwagger()
   async githubAuth() {}
 
   @Get('github/callback')
   @UseGuards(GithubAuthGuard)
+  @GithubCallbackSwagger()
   async githubCallback(
     @ExtractUserFromRequest() profile: OAuthContextDto,
     @ExtractClientInfo() clientInfo: ClientInfoDto,
