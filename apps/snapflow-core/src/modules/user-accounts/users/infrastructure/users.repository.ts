@@ -72,6 +72,18 @@ export class UsersRepository {
     });
   }
 
+  async findUserByNameWithEmailConfirmation(
+    email: string,
+  ): Promise<UserWithEmailConfirmation | null> {
+    return this.prisma.user.findFirst({
+      where: {
+        deletedAt: null,
+        email,
+      },
+      include: { emailConfirmationCode: true },
+    });
+  }
+
   async findUserByEmailWithPasswordRecoveryCode(
     email: string,
   ): Promise<UserWithPasswordRecoveryCode | null> {
@@ -89,6 +101,30 @@ export class UsersRepository {
       data,
       include: {
         emailConfirmationCode: true,
+      },
+    });
+  }
+
+  async updateUnconfirmedUser(
+    userId: number,
+    data: {
+      username: string;
+      passwordHash: string;
+      confirmationCode: string;
+      expirationDate: Date;
+    },
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        username: data.username,
+        password: data.passwordHash,
+        emailConfirmationCode: {
+          update: {
+            confirmationCode: data.confirmationCode,
+            expirationDate: data.expirationDate,
+          },
+        },
       },
     });
   }
