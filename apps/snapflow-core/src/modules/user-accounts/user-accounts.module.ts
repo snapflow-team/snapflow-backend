@@ -23,8 +23,6 @@ import { NewPasswordUseCase } from './auth/application/usecases/new-password.use
 import { GetMeQueryHandler } from './auth/application/queries/get-me.query-handler';
 import { JwtStrategy } from './auth/domain/guards/bearer/jwt.strategy';
 import { UsersQueryRepository } from './users/infrastructure/users.query-repository';
-import { GoogleStrategy } from './auth/domain/guards/google/google.strategy';
-import { AuthGoogleCommandUseCase } from './auth/application/usecases/auth-google.usecase';
 import { AuthTokenService } from '../../../../../libs/common/services/auth-token.service';
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
@@ -32,6 +30,11 @@ import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
 import { RecaptchaBody } from '../../types/recaptcha.types';
 import { UserAccountsConfigModule } from './config/user-accounts.config-module';
 import { SessionsCleanupService } from './auth/sessions/application/services/sessions-cleanup.service';
+import { GithubStrategy } from './auth/domain/guards/github/github.strategy';
+import { UserUtilsService } from './users/application/services/user-utils.service';
+import { OAuthController } from './auth/api/oauth.controller';
+import { OAuthUseCase } from './auth/application/usecases/oauth.usecase';
+import { GoogleStrategy } from './auth/domain/guards/google/google.strategy';
 import { DeleteSessionByDeviceUseCase } from './auth/sessions/application/usecases/delete-session-by-device-id.usecase';
 import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/get-all-sessions.query';
 import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
@@ -39,9 +42,11 @@ import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecase
 import { SessionsController } from './auth/sessions/api/sessions.controller';
 
 const controllers = [AuthController, SessionsController];
+const controllers = [AuthController, OAuthController];
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
+  OAuthUseCase,
   LoginUserUseCase,
   LogoutUseCase,
   CreateSessionUseCase,
@@ -49,7 +54,6 @@ const useCases = [
   PasswordRecoveryUseCase,
   CheckPasswordRecoveryCodeUseCase,
   NewPasswordUseCase,
-  AuthGoogleCommandUseCase,
   RefreshTokenUseCase,
   DeleteSessionByDeviceUseCase,
   DeleteActiveSessionsUseCase,
@@ -58,6 +62,7 @@ const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler];
 const services = [
   DateService,
   CryptoService,
+  UserUtilsService,
   UserValidationService,
   AuthTokenService,
   SessionsCleanupService,
@@ -69,6 +74,8 @@ const repositories = [
   SessionQueryRepository,
 ];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy];
+const repositories = [UsersRepository, UsersQueryRepository, SessionsRepository];
+const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
 const configs = [UserAccountsConfig];
 
 @Module({

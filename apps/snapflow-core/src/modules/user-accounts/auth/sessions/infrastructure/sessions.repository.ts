@@ -6,8 +6,11 @@ import { PrismaService } from '../../../../../database/prisma.service';
 export class SessionsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByDeviceId(deviceId: string): Promise<Session | null> {
-    return this.prisma.session.findFirst({
+  async findByDeviceId(
+    deviceId: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Session | null> {
+    return tx.session.findFirst({
       where: {
         deviceId,
         deletedAt: null,
@@ -15,14 +18,22 @@ export class SessionsRepository {
     });
   }
 
-  async create(data: Prisma.SessionCreateInput): Promise<Session> {
-    return this.prisma.session.create({
+  async create(
+    data: Prisma.SessionCreateInput,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Session> {
+    return tx.session.create({
       data,
     });
   }
 
   async softDeleteSessionById(id: number): Promise<void> {
     await this.prisma.session.update({
+  async softDeleteCurrentSession(
+    id: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.session.update({
       where: {
         id,
       },
@@ -32,8 +43,11 @@ export class SessionsRepository {
     });
   }
 
-  async softDeleteAllSessionForUser(userId: number): Promise<void> {
-    await this.prisma.session.updateMany({
+  async softDeleteAllSessionForUser(
+    userId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.session.updateMany({
       where: {
         userId,
       },
@@ -43,11 +57,14 @@ export class SessionsRepository {
     });
   }
 
-  async hardDeleteOldSoftDeletedSessions(daysOld: number = 90): Promise<number> {
+  async hardDeleteOldSoftDeletedSessions(
+    daysOld: number = 90,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<number> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
-    const result: Prisma.BatchPayload = await this.prisma.session.deleteMany({
+    const result: Prisma.BatchPayload = await tx.session.deleteMany({
       where: {
         deletedAt: {
           not: null,
@@ -59,8 +76,12 @@ export class SessionsRepository {
     return result.count;
   }
 
-  async updateSession(id: number, dto: Prisma.SessionUpdateInput): Promise<void> {
-    await this.prisma.session.update({
+  async updateSession(
+    id: number,
+    dto: Prisma.SessionUpdateInput,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.session.update({
       where: {
         id,
         deletedAt: null,

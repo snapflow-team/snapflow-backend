@@ -1,17 +1,12 @@
-import {
-  ApiBadRequestResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiBadRequestResponse, ApiOperation, ApiResponse, ApiUnauthorizedResponse, } from '@nestjs/swagger';
 import { applyDecorators } from '@nestjs/common';
 
-export function GoogleCallbackSwagger() {
+export function GithubCallbackSwagger() {
   return applyDecorators(
     ApiOperation({
-      summary: 'Обработка callback от Google OAuth',
+      summary: 'Обработка callback от GitHub OAuth',
       description:
-        'Обрабатывает callback от Google, создает или связывает аккаунт, генерирует токены, устанавливает refreshToken в cookie и перенаправляет на базовый URL.',
+        'Обрабатывает callback от GitHub, создает или связывает аккаунт, генерирует токены, устанавливает refreshToken в cookie и перенаправляет на базовый URL.',
     }),
     ApiResponse({
       status: 302,
