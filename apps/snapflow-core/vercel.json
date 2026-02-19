@@ -3,14 +3,14 @@
   "name": "snapflow-staging",
   "builds": [
     {
-      "src": "dist/apps/snapflow-core/main.js",
+      "src": "dist/apps/snapflow-core/vercel.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "(.*)",
-      "dest": "dist/apps/snapflow-core/main.js",
+      "dest": "dist/apps/snapflow-core/vercel.js",
       "methods": [
         "GET",
         "POST",
