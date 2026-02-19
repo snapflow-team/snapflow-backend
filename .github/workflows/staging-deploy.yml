@@ -59,11 +59,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma Client
+        run: prisma:generate:prod:snapflow-core
+
       - name: Build snapflow-core
         run: pnpm build:snapflow-core
-
-      - name: Generate Prisma Client
-        run: pnpm prisma:generate:prod:snapflow-core
 
       - name: Deploy to Vercel
         run: pnpm dlx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
