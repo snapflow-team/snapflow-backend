@@ -65,6 +65,9 @@ jobs:
       - name: Build snapflow-core
         run: pnpm build:snapflow-core
 
+      - name: Build Vercel output
+        run: pnpm dlx vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
       - name: Deploy to Vercel
         run: pnpm dlx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
 
