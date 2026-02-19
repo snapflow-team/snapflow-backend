@@ -6,7 +6,7 @@ import { Session } from '@generated/prisma';
 @Injectable()
 export class SessionQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
-
+  // todo: добавить пагинацию
   async getAllSessions(userId: number): Promise<SessionsViewDto[]> {
     const sessions: Session[] = await this.prisma.session.findMany({
       where: {
