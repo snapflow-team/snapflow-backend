@@ -1,18 +1,18 @@
-import { PassportStrategy } from '@nestjs/passport';
-import { Profile, Strategy } from 'passport-google-oauth20';
-import { UserAccountsConfig } from '../../../../config/user-accounts.config';
 import { Injectable } from '@nestjs/common';
-import { OAuthContextDto } from '../dto/oauth-context.dto';
+import { PassportStrategy } from '@nestjs/passport';
+import { Profile, Strategy } from 'passport-github2';
+import { UserAccountsConfig } from '../../../../config/user-accounts.config';
 import { OAuthProvider } from '@generated/prisma';
+import { OAuthContextDto } from '../dto/oauth-context.dto';
 
 @Injectable()
-export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor(private readonly userAccountConfig: UserAccountsConfig) {
+export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
+  constructor(private readonly userAccountsConfig: UserAccountsConfig) {
     super({
-      clientID: userAccountConfig.googleClientId,
-      clientSecret: userAccountConfig.googleClientSecret,
-      callbackURL: userAccountConfig.googleCallbackUrl,
-      scope: ['email', 'profile'],
+      clientID: userAccountsConfig.githubOauthClientId,
+      clientSecret: userAccountsConfig.googleClientSecret,
+      callbackURL: userAccountsConfig.githubOauthCallbackUrl,
+      scope: ['user:email'],
     });
   }
 
