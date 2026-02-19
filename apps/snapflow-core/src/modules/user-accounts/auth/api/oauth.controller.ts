@@ -6,7 +6,7 @@ import { ClientInfoDto } from '../../../../../../../libs/common/dto/client-info.
 import type { Response } from 'express';
 import { UserAccountsConfig } from '../../config/user-accounts.config';
 import { CommandBus } from '@nestjs/cqrs';
-import { BASE_URL } from '../constants/auth-tokens.inject-constants';
+import { BASE_FRONT_URL } from '../constants/auth.constants';
 import { GithubAuthGuard } from '../domain/guards/github/github-auth.guard';
 import { AuthTokens } from '../domain/types/auth-tokens.type';
 import { OAuthCommand } from '../application/usecases/oauth.usecase';
@@ -50,7 +50,7 @@ export class OAuthController {
     );
 
     res.cookie('refreshToken', refreshToken, this.userAccountsConfig.getCookieConfig());
-    res.redirect(`${BASE_URL}`);
+    res.redirect(`${BASE_FRONT_URL}`);
   }
 
   @Get('github')
@@ -78,6 +78,6 @@ export class OAuthController {
     );
 
     res.cookie('refreshToken', refreshToken, this.userAccountsConfig.getCookieConfig());
-    res.redirect(`${BASE_URL}`);
+    res.redirect(`${BASE_FRONT_URL}`);
   }
 }
