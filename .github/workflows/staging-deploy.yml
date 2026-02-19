@@ -1,0 +1,70 @@
+name: Vercel Staging Deploy
+
+env:
+  VERCEL_ORG_ID: team_qWdYhTs1iH31Ndi9dYSUagYA
+  VERCEL_PROJECT_ID: prj_dDFlv24Y1ALzMkOYwYfrzmCcqXOe
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/snapflow-core
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run tests
+        run: pnpm test
+
+  deploy-preview:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: tests
+
+    defaults:
+      run:
+        working-directory: apps/snapflow-core
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel
+
+      - name: Pull Vercel env
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
