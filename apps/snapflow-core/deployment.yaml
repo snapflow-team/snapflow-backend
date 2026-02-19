@@ -131,6 +131,21 @@ spec:
                 secretKeyRef:
                   name: snapflow-backend-production-config-secret
                   key: SESSION_CLEANUP_RETENTION_DAYS
+            - name: GITHUB_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: GITHUB_OAUTH_CLIENT_ID
+            - name: GITHUB_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: GITHUB_OAUTH_CLIENT_SECRET
+            - name: GITHUB_OAUTH_CALLBACK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: GITHUB_OAUTH_CALLBACK_URL
             - name: ALLOWED_ORIGINS
               valueFrom:
                 secretKeyRef:

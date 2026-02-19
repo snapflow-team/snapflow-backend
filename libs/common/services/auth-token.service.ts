@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   ACCESS_TOKEN_STRATEGY_INJECT_TOKEN,
   REFRESH_TOKEN_STRATEGY_INJECT_TOKEN,
-} from '../../../apps/snapflow-core/src/modules/user-accounts/auth/constants/auth-tokens.inject-constants';
+} from '../../../apps/snapflow-core/src/modules/user-accounts/auth/constants/auth.constants';
 import { JwtService } from '@nestjs/jwt';
 import { PayloadRefreshToken } from '../../../apps/snapflow-core/src/modules/user-accounts/auth/application/types/payload-refresh-token.type';
 
