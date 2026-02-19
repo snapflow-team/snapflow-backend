@@ -1,15 +1,23 @@
 {
   "version": 2,
+  "name": "snapflow-staging",
   "builds": [
     {
-      "src": "../../dist/apps/snapflow-core/main.js",
+      "src": "dist/apps/snapflow-core/main.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "../../dist/apps/snapflow-core/main.js"
+      "src": "(.*)",
+      "dest": "dist/apps/snapflow-core/main.js",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "PATCH"
+      ]
     }
   ]
 }
