@@ -20,6 +20,8 @@ export class LoginUserUseCase implements ICommandHandler<LoginUserCommand> {
   ) {}
 
   async execute({ dto: { userId, ip, userAgent } }: LoginUserCommand): Promise<AuthTokens> {
+    // todo: перенести проверку кредов сюда!!!
+
     const accessToken: string = this.authTokenService.generateAccessToken(userId);
 
     const deviceId: string = this.cryptoService.generateUUID();
