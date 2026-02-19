@@ -40,31 +40,31 @@ jobs:
         run: pnpm test
 
   deploy-preview:
-    name: Deploy to Vercel
+    name: Deploy to Vercel Preview
     runs-on: ubuntu-latest
     needs: tests
-
-    defaults:
-      run:
-        working-directory: apps/snapflow-core
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          version: 9
+          node-version: 20
 
-      - name: Install Vercel CLI
-        run: pnpm add -g vercel
+      - name: Install pnpm
+        run: npm install -g pnpm
 
-      - name: Pull Vercel env
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build snapflow-core
+        run: pnpm build:snapflow-core
 
-      - name: Deploy
-        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Generate Prisma Client
+        run: pnpm prisma:generate:prod:snapflow-core
+
+      - name: Deploy to Vercel
+        run: pnpm dlx vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+
