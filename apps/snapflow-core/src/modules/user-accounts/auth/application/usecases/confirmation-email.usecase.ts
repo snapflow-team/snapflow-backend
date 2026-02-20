@@ -42,6 +42,6 @@ export class ConfirmationEmailUseCase implements ICommandHandler<ConfirmationEma
       throw new ValidationException([{ field: 'code', message: 'Confirmation code has expired' }]);
     }
 
-    await this.userRepository.confirmEmail(confirmationCode);
+    await this.userRepository.confirmEmail({ code: confirmationCode });
   }
 }

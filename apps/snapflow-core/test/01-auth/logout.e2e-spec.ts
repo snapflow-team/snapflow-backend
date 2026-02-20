@@ -7,9 +7,7 @@ import { EmailService } from '../../src/modules/notifications/services/email.ser
 import { EmailTemplate } from '../../src/modules/notifications/templates/types';
 import { HttpStatus } from '@nestjs/common';
 import { Session } from '@generated/prisma';
-import {
-  REFRESH_TOKEN_STRATEGY_INJECT_TOKEN
-} from '../../src/modules/user-accounts/auth/constants/auth-tokens.inject-constants';
+import { REFRESH_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
 import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-accounts.config';
 import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';

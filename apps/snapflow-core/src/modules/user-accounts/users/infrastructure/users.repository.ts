@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ConfirmationStatus, Prisma, User, OAuthProvider, AuthAccount } from '@generated/prisma';
+import { AuthAccount, ConfirmationStatus, OAuthProvider, Prisma, User } from '@generated/prisma';
 import { PrismaService } from '../../../../database/prisma.service';
 import { UserWithEmailConfirmation } from '../types/user-with-confirmation.type';
 import { UserWithPasswordRecoveryCode } from '../types/user-with-password-recovery.type';
@@ -10,8 +10,11 @@ export class UsersRepository {
 
   // User ---------------------------------------------------------
 
-  async findUserByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findFirst({
+  async findUserByEmail(
+    email: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<User | null> {
+    return tx.user.findFirst({
       where: {
         email,
         deletedAt: null,
@@ -19,8 +22,11 @@ export class UsersRepository {
     });
   }
 
-  async findUserByUsername(username: string): Promise<User | null> {
-    return this.prisma.user.findFirst({
+  async findUserByUsername(
+    username: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<User | null> {
+    return tx.user.findFirst({
       where: {
         username,
         deletedAt: null,
@@ -30,8 +36,9 @@ export class UsersRepository {
 
   async findUserByConfirmationCode(
     confirmationCode: string,
+    tx: Prisma.TransactionClient = this.prisma,
   ): Promise<UserWithEmailConfirmation | null> {
-    return this.prisma.user.findFirst({
+    return tx.user.findFirst({
       where: {
         deletedAt: null,
         emailConfirmationCode: {
@@ -46,8 +53,9 @@ export class UsersRepository {
 
   async findUserByPasswordRecoveryCode(
     recoveryCode: string,
+    tx: Prisma.TransactionClient = this.prisma,
   ): Promise<UserWithPasswordRecoveryCode | null> {
-    return this.prisma.user.findFirst({
+    return tx.user.findFirst({
       where: {
         deletedAt: null,
         passwordRecoveryCode: {
@@ -62,8 +70,9 @@ export class UsersRepository {
 
   async findUserByEmailWithEmailConfirmation(
     email: string,
+    tx: Prisma.TransactionClient = this.prisma,
   ): Promise<UserWithEmailConfirmation | null> {
-    return this.prisma.user.findFirst({
+    return tx.user.findFirst({
       where: {
         deletedAt: null,
         email,
@@ -74,8 +83,9 @@ export class UsersRepository {
 
   async findUserByEmailWithPasswordRecoveryCode(
     email: string,
+    tx: Prisma.TransactionClient = this.prisma,
   ): Promise<UserWithPasswordRecoveryCode | null> {
-    return this.prisma.user.findFirst({
+    return tx.user.findFirst({
       where: {
         deletedAt: null,
         email,
@@ -84,8 +94,11 @@ export class UsersRepository {
     });
   }
 
-  async createUser(data: Prisma.UserCreateInput): Promise<User> {
-    return this.prisma.user.create({
+  async createUser(
+    data: Prisma.UserCreateInput,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<User> {
+    return tx.user.create({
       data,
       include: {
         emailConfirmationCode: true,
@@ -95,14 +108,38 @@ export class UsersRepository {
 
   // Email confirmation ---------------------------------------------------------
 
-  async confirmEmail(code: string): Promise<void> {
-    // TODO Можно ли обращаться к другой сущности
-    await this.prisma.emailConfirmationCode.update({
-      where: { confirmationCode: code },
+  async createEmailConfirmationCodeWithConfirmedStatus(
+    userId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.emailConfirmationCode.create({
       data: {
         confirmationStatus: ConfirmationStatus.Confirmed,
-        expirationDate: null,
+        user: {
+          connect: { id: userId },
+        },
+      },
+    });
+  }
+
+  async confirmEmail(
+    params: { code?: string; userId?: number },
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    const { code, userId } = params;
+
+    if (!code && !userId) {
+      throw new Error('confirmEmail requires code or userId');
+    }
+
+    const where = code !== undefined ? { confirmationCode: code } : { userId };
+
+    await tx.emailConfirmationCode.update({
+      where,
+      data: {
+        confirmationStatus: ConfirmationStatus.Confirmed,
         confirmationCode: null,
+        expirationDate: null,
       },
     });
   }
@@ -111,8 +148,9 @@ export class UsersRepository {
     emailConfirmationCodeId: number,
     expirationDate: Date,
     confirmationCode: string,
+    tx: Prisma.TransactionClient = this.prisma,
   ) {
-    await this.prisma.emailConfirmationCode.update({
+    await tx.emailConfirmationCode.update({
       where: {
         id: emailConfirmationCodeId,
       },
@@ -129,8 +167,9 @@ export class UsersRepository {
     userId: number,
     recoveryCode: string,
     expirationDate: Date,
+    tx: Prisma.TransactionClient = this.prisma,
   ): Promise<void> {
-    await this.prisma.passwordRecoveryCode.upsert({
+    await tx.passwordRecoveryCode.upsert({
       where: {
         userId,
       },
@@ -148,8 +187,12 @@ export class UsersRepository {
     });
   }
 
-  async updatePasswordAndResetRecoveryCode(userId: number, newPasswordHash: string): Promise<void> {
-    await this.prisma.user.update({
+  async updatePasswordAndResetRecoveryCode(
+    userId: number,
+    newPasswordHash: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.user.update({
       where: { id: userId },
       data: {
         password: newPasswordHash,
@@ -163,21 +206,25 @@ export class UsersRepository {
     });
   }
 
-  async findAccountByProvider(
-    providerId: string,
+  async findAccountByProviderAccountIdAndProvider(
+    providerAccountId: string,
     provider: OAuthProvider,
+    tx: Prisma.TransactionClient = this.prisma,
   ): Promise<AuthAccount | null> {
-    return this.prisma.authAccount.findFirst({
-      where: { providerId, provider },
+    return tx.authAccount.findFirst({
+      where: { providerAccountId, provider, deletedAt: null },
     });
   }
 
-  async createAccount(data: {
-    userId: number;
-    provider: OAuthProvider;
-    providerId: string;
-    email: string;
-  }) {
-    return this.prisma.authAccount.create({ data });
+  async createAccount(
+    data: {
+      userId: number;
+      provider: OAuthProvider;
+      providerAccountId: string;
+      email: string;
+    },
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<AuthAccount> {
+    return tx.authAccount.create({ data });
   }
 }
