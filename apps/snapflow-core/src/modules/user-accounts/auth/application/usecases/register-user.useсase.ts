@@ -26,6 +26,7 @@ export class RegisterUserUseCase implements ICommandHandler<RegisterUserCommand>
 
     const passwordHash: string = await this.cryptoService.createPasswordHash(password);
     const confirmationCode: string = this.cryptoService.generateUUID();
+    // todo: вынести в enum { hours: 1 }
     const expirationDate: Date = this.dateService.generateExpirationDate({ hours: 1 });
 
     await this.usersRepository.createUser({
