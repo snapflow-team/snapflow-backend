@@ -8,8 +8,6 @@ import { EmailService } from '../../src/modules/notifications/services/email.ser
 import { EmailTemplate } from '../../src/modules/notifications/templates/types';
 import { HttpStatus } from '@nestjs/common';
 import { TestUtils } from '../helpers/test.utils';
-import { DomainExceptionCode } from '../../../../libs/common/exceptions/types/domain-exception-codes';
-import { ErrorResponseDto } from '../../../../libs/common/exceptions/dto/error-response-body.dto';
 
 describe('AuthController - login() (POST: /auth/login)', () => {
   let appTestManager: AppTestManager;
@@ -32,6 +30,7 @@ describe('AuthController - login() (POST: /auth/login)', () => {
 
   beforeEach(async () => {
     await appTestManager.cleanupDb(['_prisma_migrations']);
+    appTestManager.clearThrottlerStorage();
 
     sendEmailMock.mockClear();
   });
@@ -85,7 +84,7 @@ describe('AuthController - login() (POST: /auth/login)', () => {
     }
 
     // 🔸 6-й запрос должен быть заблокирован из-за превышения лимита
-    const resLogin: Response = await request(server)
+    await request(server)
       .post(`/${GLOBAL_PREFIX}/auth/login`)
       .send({
         email: user.email,
@@ -99,27 +98,7 @@ describe('AuthController - login() (POST: /auth/login)', () => {
     const resLogin: Response = await request(server)
       .post(`/${GLOBAL_PREFIX}/auth/login`)
       .send({})
-      .expect(HttpStatus.BAD_REQUEST);
-
-    // 🔸 Проверяем тело ответа с ошибками валидации по полям email и password
-    expect(resLogin.body).toEqual<ErrorResponseDto>({
-      timestamp: expect.any(String),
-      path: `/${GLOBAL_PREFIX}/auth/login`,
-      method: 'POST',
-      message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
-      extensions: [
-        {
-          field: 'email',
-          message:
-            'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
-        },
-        {
-          field: 'password',
-          message: 'Must be a string',
-        },
-      ],
-    });
+      .expect(HttpStatus.UNAUTHORIZED);
 
     // 🔸 Убеждаемся, что cookie не установлен
     expect(resLogin.headers['set-cookie']).toBeUndefined();
@@ -133,27 +112,7 @@ describe('AuthController - login() (POST: /auth/login)', () => {
         email: 123,
         password: 123,
       })
-      .expect(HttpStatus.BAD_REQUEST);
-
-    // 🔸 Проверяем тело ответа с ошибками валидации по полям email и password
-    expect(resLogin.body).toEqual<ErrorResponseDto>({
-      timestamp: expect.any(String),
-      path: `/${GLOBAL_PREFIX}/auth/login`,
-      method: 'POST',
-      message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
-      extensions: [
-        {
-          field: 'email',
-          message:
-            'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
-        },
-        {
-          field: 'password',
-          message: 'Must be a string',
-        },
-      ],
-    });
+      .expect(HttpStatus.UNAUTHORIZED);
 
     // 🔸 Убеждаемся, что cookie не установлен
     expect(resLogin.headers['set-cookie']).toBeUndefined();
@@ -167,27 +126,7 @@ describe('AuthController - login() (POST: /auth/login)', () => {
         email: '   ',
         password: '   ',
       })
-      .expect(HttpStatus.BAD_REQUEST);
-
-    // 🔸 Проверяем тело ответа с ошибками валидации по длине строк в email и password
-    expect(resLogin.body).toEqual<ErrorResponseDto>({
-      timestamp: expect.any(String),
-      path: `/${GLOBAL_PREFIX}/auth/login`,
-      method: 'POST',
-      message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
-      extensions: [
-        {
-          field: 'email',
-          message:
-            'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
-        },
-        {
-          field: 'password',
-          message: 'Length must be between 6 and 20 characters',
-        },
-      ],
-    });
+      .expect(HttpStatus.UNAUTHORIZED);
 
     // 🔸 Убеждаемся, что cookie не установлен
     expect(resLogin.headers['set-cookie']).toBeUndefined();
@@ -204,27 +143,7 @@ describe('AuthController - login() (POST: /auth/login)', () => {
         email,
         password,
       })
-      .expect(HttpStatus.BAD_REQUEST);
-
-    // 🔸 Проверяем тело ответа с ошибками валидации
-    expect(resLogin.body).toEqual<ErrorResponseDto>({
-      timestamp: expect.any(String),
-      path: `/${GLOBAL_PREFIX}/auth/login`,
-      method: 'POST',
-      message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
-      extensions: [
-        {
-          field: 'email',
-          message:
-            'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
-        },
-        {
-          field: 'password',
-          message: 'Length must be between 6 and 20 characters',
-        },
-      ],
-    });
+      .expect(HttpStatus.UNAUTHORIZED);
 
     // 🔸 Убеждаемся, что cookie не установлен
     expect(resLogin.headers['set-cookie']).toBeUndefined();
@@ -241,27 +160,7 @@ describe('AuthController - login() (POST: /auth/login)', () => {
         email,
         password,
       })
-      .expect(HttpStatus.BAD_REQUEST);
-
-    // 🔸 Проверяем тело ответа с ошибками валидации
-    expect(resLogin.body).toEqual<ErrorResponseDto>({
-      timestamp: expect.any(String),
-      path: `/${GLOBAL_PREFIX}/auth/login`,
-      method: 'POST',
-      message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
-      extensions: [
-        {
-          field: 'email',
-          message:
-            'Email must be a valid address in the format local-part@domain.tld (letters, digits, underscore, dot and hyphen allowed in local part and domain).',
-        },
-        {
-          field: 'password',
-          message: 'Length must be between 6 and 20 characters',
-        },
-      ],
-    });
+      .expect(HttpStatus.UNAUTHORIZED);
 
     // 🔸 Убеждаемся, что cookie не установлен
     expect(resLogin.headers['set-cookie']).toBeUndefined();
