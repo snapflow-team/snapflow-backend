@@ -1,11 +1,12 @@
 import { TestingModule } from '@nestjs/testing';
-import { ConfirmationStatus, Session, User } from '@generated/prisma';
+import { Session, User } from '@generated/prisma';
 import { PrismaService } from '../../../../../../database/prisma.service';
 import { SessionsRepository } from '../../infrastructure/sessions.repository';
 import { parseUserAgent } from '../../../../../../../../../libs/common/utils/user-agent.parser';
 import { CreateSessionCommand, CreateSessionUseCase } from './create-session.usecase';
 import { CreateSessionDto } from '../../dto/create-session.dto';
 import { IntegrationTestModuleHelper } from '../../../../../../../test/helpers/integration-test-module.helper';
+import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
 
 describe('CreateSessionUseCase (Integration)', () => {
   let module: TestingModule;
@@ -30,25 +31,10 @@ describe('CreateSessionUseCase (Integration)', () => {
     await IntegrationTestModuleHelper.clearAuthSessionsData(prisma);
   });
 
-  const createTestUser = async (): Promise<User> => {
-    return prisma.user.create({
-      data: {
-        username: 'create_session_user',
-        email: 'create_session_user@example.com',
-        password: 'Qwerty_1',
-        emailConfirmationCode: {
-          create: {
-            confirmationCode: null,
-            expirationDate: null,
-            confirmationStatus: ConfirmationStatus.Confirmed,
-          },
-        },
-      },
-    });
-  };
-
   it('should persist new session for user with parsed device data', async () => {
-    const user: User = await createTestUser();
+    const user: User = await TestEntityFactory.createTestUser(prisma, {
+      suffix: 'create_session',
+    });
 
     const dto: CreateSessionDto = {
       userId: user.id,

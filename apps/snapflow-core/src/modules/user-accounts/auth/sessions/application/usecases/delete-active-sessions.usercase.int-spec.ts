@@ -5,8 +5,9 @@ import {
 } from './delete-active-sessions.usercase';
 import { PrismaService } from '../../../../../../database/prisma.service';
 import { SessionsRepository } from '../../infrastructure/sessions.repository';
-import { ConfirmationStatus, Session, User } from '@generated/prisma';
+import { Session } from '@generated/prisma';
 import { IntegrationTestModuleHelper } from '../../../../../../../test/helpers/integration-test-module.helper';
+import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
 
 describe('DeleteActiveSessionsUseCase (Интеграция)', () => {
   let module: TestingModule;
@@ -31,23 +32,6 @@ describe('DeleteActiveSessionsUseCase (Интеграция)', () => {
     await IntegrationTestModuleHelper.clearAuthSessionsData(prisma);
   });
 
-  const createTestUser = async (suffix: string): Promise<User> => {
-    return prisma.user.create({
-      data: {
-        username: `user_${suffix}`,
-        email: `user_${suffix}@example.com`,
-        password: 'Qwerty_1',
-        emailConfirmationCode: {
-          create: {
-            confirmationCode: null,
-            expirationDate: null,
-            confirmationStatus: ConfirmationStatus.Confirmed,
-          },
-        },
-      },
-    });
-  };
-
   const createSession = async (params: {
     userId: number;
     deviceId: string;
@@ -67,8 +51,8 @@ describe('DeleteActiveSessionsUseCase (Интеграция)', () => {
   };
 
   it('должен soft-delete всех активных сессий пользователя, кроме текущего устройства', async () => {
-    const user = await createTestUser('main');
-    const anotherUser = await createTestUser('another');
+    const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'main' });
+    const anotherUser = await TestEntityFactory.createTestUser(prisma, { suffix: 'another' });
 
     const currentSession = await createSession({ userId: user.id, deviceId: 'current-device' });
     const activeSession1 = await createSession({ userId: user.id, deviceId: 'device-1' });
@@ -115,7 +99,7 @@ describe('DeleteActiveSessionsUseCase (Интеграция)', () => {
   });
 
   it('не должен удалять ничего, если у пользователя только текущая активная сессия', async () => {
-    const user = await createTestUser('single');
+    const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'single' });
     const currentSession = await createSession({ userId: user.id, deviceId: 'current-only' });
 
     await useCase.execute(
