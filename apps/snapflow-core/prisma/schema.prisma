@@ -17,6 +17,11 @@ enum OAuthProvider {
   GITHUB
 }
 
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model User {
   id Int @id @default(autoincrement())
 
@@ -32,6 +37,7 @@ model User {
   sessions              Session[]
   passwordRecoveryCode  PasswordRecoveryCode?
   authAcconts           AuthAccount[]
+  posts                 Post[]
 
   @@map("users")
 }
@@ -100,4 +106,38 @@ model PasswordRecoveryCode {
   userId Int  @unique @map("user_id")
 
   @@map("password_recovery_codes")
+}
+
+model Post {
+  id          Int        @id @default(autoincrement())
+  description String?    @db.VarChar(500)
+  status      PostStatus @default(DRAFT)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int         @map("user_id")
+  postMedias PostMedia[]
+
+  @@index([userId, createdAt])
+  @@map("posts")
+}
+
+model PostMedia {
+  id       Int    @id @default(autoincrement())
+  url      String
+  mimeType String @map("mime_type")
+  size     Int
+  position Int
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int  @map("post_id")
+
+  @@map("post_medias")
 }
