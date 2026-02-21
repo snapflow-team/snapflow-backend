@@ -22,7 +22,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: ./apps/snapflow-core
+          context: .
           file: ./apps/snapflow-core/Dockerfile
           push: true
           tags: snapflow365/snapflow-backend:stage
