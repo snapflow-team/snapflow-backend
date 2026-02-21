@@ -35,8 +35,13 @@ import { UserUtilsService } from './users/application/services/user-utils.servic
 import { OAuthController } from './auth/api/oauth.controller';
 import { OAuthUseCase } from './auth/application/usecases/oauth.usecase';
 import { GoogleStrategy } from './auth/domain/guards/google/google.strategy';
+import { DeleteSessionByDeviceUseCase } from './auth/sessions/application/usecases/delete-session-by-device-id.usecase';
+import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/get-all-sessions.query';
+import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
+import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
+import { SessionsController } from './auth/sessions/api/sessions.controller';
 
-const controllers = [AuthController, OAuthController];
+const controllers = [AuthController, SessionsController, OAuthController];
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
@@ -49,8 +54,10 @@ const useCases = [
   CheckPasswordRecoveryCodeUseCase,
   NewPasswordUseCase,
   RefreshTokenUseCase,
+  DeleteSessionByDeviceUseCase,
+  DeleteActiveSessionsUseCase,
 ];
-const queries = [GetMeQueryHandler];
+const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler];
 const services = [
   DateService,
   CryptoService,
@@ -59,7 +66,12 @@ const services = [
   AuthTokenService,
   SessionsCleanupService,
 ];
-const repositories = [UsersRepository, UsersQueryRepository, SessionsRepository];
+const repositories = [
+  UsersRepository,
+  UsersQueryRepository,
+  SessionsRepository,
+  SessionQueryRepository,
+];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
 const configs = [UserAccountsConfig];
 
