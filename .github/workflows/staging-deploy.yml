@@ -26,3 +26,5 @@ jobs:
           file: ./apps/snapflow-core/Dockerfile
           push: true
           tags: snapflow365/snapflow-backend:stage
+          build-args: |
+            SERVICE=snapflow-core
