@@ -27,4 +27,4 @@ jobs:
           push: true
           tags: snapflow365/snapflow-backend:stage
           build-args: |
-            SERVICE=snapflow-core
+            service=snapflow-core
