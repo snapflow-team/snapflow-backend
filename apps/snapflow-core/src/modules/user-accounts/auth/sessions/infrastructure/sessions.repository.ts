@@ -27,7 +27,7 @@ export class SessionsRepository {
     });
   }
 
-  async softDeleteCurrentSession(
+  async softDeleteSessionById(
     id: number,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<void> {
@@ -82,8 +82,22 @@ export class SessionsRepository {
     await tx.session.update({
       where: {
         id,
+        deletedAt: null,
       },
       data: dto,
+    });
+  }
+
+  async softDeleteAllActiveSessions(userId: number, deviceId: string): Promise<void> {
+    await this.prisma.session.updateMany({
+      where: {
+        userId,
+        deviceId: { not: deviceId },
+        deletedAt: null,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
     });
   }
 }
