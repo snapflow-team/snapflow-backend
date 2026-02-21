@@ -1,4 +1,4 @@
 export const ACCESS_TOKEN_STRATEGY_INJECT_TOKEN = Symbol('ACCESS_TOKEN_STRATEGY_INJECT_TOKEN');
 export const REFRESH_TOKEN_STRATEGY_INJECT_TOKEN = Symbol('REFRESH_TOKEN_STRATEGY_INJECT_TOKEN');
 
-export const BASE_FRONT_URL = 'https://snapflow.cc';
+export const BASE_FRONT_URL = 'https://snapflow.cc/oauth/success';
