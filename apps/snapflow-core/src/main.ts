@@ -4,7 +4,7 @@ import { SnapflowCoreConfig } from './snapflow-core.config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { appSetup } from './setup/app.setup';
 
-export async function createApp(): Promise<NestExpressApplication> {
+async function bootstrap() {
   const DynamicAppModule = await initSnapFlowCoreAppModule();
 
   const app = await NestFactory.create<NestExpressApplication>(DynamicAppModule);
@@ -16,5 +16,13 @@ export async function createApp(): Promise<NestExpressApplication> {
 
   appSetup(app, coreConfig);
 
-  return app;
+  const port: number = coreConfig.port;
+  const env: string = coreConfig.env;
+
+  await app.listen(port, () => {
+    console.log('App starting listen port: ', port);
+    console.log('NODE_ENV: ', env);
+  });
 }
+
+void bootstrap();
