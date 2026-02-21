@@ -4,11 +4,8 @@ import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { AuthGuard } from '@nestjs/passport';
 import { LoginUserInputDto } from '../../../api/input-dto/login-user.input-dto';
-import {
-  formatValidationErrors
-} from '../../../../../../../../../libs/common/exceptions/utils/format-validation-errors';
-import { Extension } from '../../../../../../../../../libs/common/exceptions/damain.exception';
-import { ValidationException } from '../../../../../../../../../libs/common/exceptions/validation-exception';
+import { DomainException } from '../../../../../../../../../libs/common/exceptions/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 
 @Injectable()
 export class LocalAuthGuard extends AuthGuard('local') {
@@ -24,9 +21,10 @@ export class LocalAuthGuard extends AuthGuard('local') {
     });
 
     if (errors.length > 0) {
-      const extensions: Extension[] = formatValidationErrors(errors);
-
-      throw new ValidationException(extensions);
+      throw new DomainException({
+        code: DomainExceptionCode.Unauthorized,
+        message: 'Invalid email or password',
+      });
     }
 
     return super.canActivate(context) as boolean;
