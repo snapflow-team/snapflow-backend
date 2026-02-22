@@ -5,6 +5,7 @@ import { PrismaService } from '../../src/database/prisma.service';
 import { SnapflowCoreConfig } from '../../src/snapflow-core.config';
 import { initSnapFlowCoreAppModule } from '../../src/init-snap-flow-core-app-module';
 import { appSetup } from '../../src/setup/app.setup';
+import { ThrottlerStorage } from '@nestjs/throttler';
 
 /**
  * 🧪 AppTestManager
@@ -112,6 +113,33 @@ export class AppTestManager {
     }
   }
 
+  /**
+   * 🚦 Очистить in-memory хранилище throttler
+   *
+   * Используется в e2e-тестах для:
+   *  - сброса лимитов rate limiting между тестами
+   *  - предотвращения ложных 429 Too Many Requests
+   *  - обеспечения изоляции тестовых сценариев
+   *
+   * Метод:
+   *  - получает ThrottlerStorage из Nest-контейнера
+   *  - приводит его к in-memory реализации
+   *  - очищает внутренний Map со счётчиками запросов
+   *
+   * ❗ Работает только с in-memory storage (Map).
+   * Если используется внешнее хранилище (Redis и т.п.),
+   * очистка выполняться не будет.
+   */
+  clearThrottlerStorage() {
+    const throttlerStorage: ThrottlerStorage = this.app.get<ThrottlerStorage>(ThrottlerStorage);
+
+    const memoryStorage = throttlerStorage as MemoryThrottlerStorageLike;
+
+    if (memoryStorage.storage instanceof Map) {
+      memoryStorage.storage.clear();
+    }
+  }
+
   async close() {
     await this.prisma.$disconnect();
     await this.app.close();
@@ -120,4 +148,8 @@ export class AppTestManager {
   getServer() {
     return this.app.getHttpServer() as Server;
   }
+}
+
+export interface MemoryThrottlerStorageLike extends ThrottlerStorage {
+  storage: Map<string, unknown>;
 }

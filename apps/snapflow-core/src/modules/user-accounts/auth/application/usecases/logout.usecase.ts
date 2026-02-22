@@ -23,6 +23,6 @@ export class LogoutUseCase implements ICommandHandler<LogoutCommand> {
       });
     }
 
-    await this.sessionsRepository.softDeleteCurrentSession(session.id);
+    await this.sessionsRepository.softDeleteSessionById(session.id);
   }
 }

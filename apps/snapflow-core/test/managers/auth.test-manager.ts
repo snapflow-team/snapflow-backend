@@ -107,6 +107,7 @@ export class AuthTestManager {
       inputDtos.length > 0 ? inputDtos : TestDtoFactory.generateRegistrationUserInputDto(count);
 
     const registrationPromises: Promise<Response>[] = [];
+    const confirmationPromises: Promise<Response>[] = [];
 
     for (let i = 0; i < dtos.length; i++) {
       registrationPromises.push(
@@ -132,13 +133,15 @@ export class AuthTestManager {
     for (let i = 0; i < dtos.length; i++) {
       const code: string = usersWithCodes[i].emailConfirmationCode!.confirmationCode!;
 
-      registrationPromises.push(
+      confirmationPromises.push(
         request(this.server)
           .post(`/${GLOBAL_PREFIX}/auth/registration-confirmation`)
           .send({ code })
           .expect(HttpStatus.NO_CONTENT),
       );
     }
+
+    await Promise.all(confirmationPromises);
 
     return usersWithCodes;
   }

@@ -46,6 +46,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
 
   beforeEach(async () => {
     await appTestManager.cleanupDb(['_prisma_migrations']);
+    appTestManager.clearThrottlerStorage();
 
     sendEmailMock.mockClear();
   });

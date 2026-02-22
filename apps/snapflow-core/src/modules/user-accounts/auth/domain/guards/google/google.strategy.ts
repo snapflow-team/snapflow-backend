@@ -24,7 +24,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ): Promise<void> {
     try {
       const oauthContextDto: OAuthContextDto = {
-        provider: OAuthProvider.GITHUB,
+        provider: OAuthProvider.GOOGLE,
         id: profile.id,
         email: profile.emails?.[0]?.value || null,
         username: profile.username || null,
