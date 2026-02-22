@@ -36,6 +36,7 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
 
   beforeEach(async () => {
     await appTestManager.cleanupDb(['_prisma_migrations']);
+    appTestManager.clearThrottlerStorage();
 
     sendEmailMock.mockClear();
   });
@@ -46,6 +47,7 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
     spyGenerateUUID.mockRestore();
   });
 
+  // todo: падает этот тест!
   it('должен вернуть 204, если код восстановления пароля валиден', async () => {
     // 🔻 Генерируем данные для регистрации одного пользователя
     const dtos: RegistrationUserInputDto[] = TestDtoFactory.generateRegistrationUserInputDto(1);

@@ -36,6 +36,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
 
   beforeEach(async () => {
     await appTestManager.cleanupDb(['_prisma_migrations']);
+    appTestManager.clearThrottlerStorage();
 
     sendEmailMock.mockClear();
   });
