@@ -23,7 +23,8 @@ export function LoginSwagger() {
       type: LoginViewDto,
     }),
     ApiUnauthorizedResponse({
-      description: 'Если password или email неверны',
+      description:
+        'Если password или email неверны, а так же если пользователь не подтвердил свой email до попытки авторизоваться',
     }),
     ApiTooManyRequestsResponse({
       description: 'Более 5 попыток с одного IP-адреса за 10 секунд',

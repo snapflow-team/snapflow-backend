@@ -8,6 +8,8 @@ import { EmailService } from '../../src/modules/notifications/services/email.ser
 import { EmailTemplate } from '../../src/modules/notifications/templates/types';
 import { HttpStatus } from '@nestjs/common';
 import { TestUtils } from '../helpers/test.utils';
+import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import { TestDtoFactory } from '../helpers/test.dto-factory';
 
 describe('AuthController - login() (POST: /auth/login)', () => {
   let appTestManager: AppTestManager;
@@ -39,7 +41,7 @@ describe('AuthController - login() (POST: /auth/login)', () => {
     await appTestManager.close();
   });
 
-  it('должен быть авторизован, если пользователь отправил правильные данные (email и password)', async () => {
+  it('должен быть авторизован, если пользователь отправил правильные данные (email и password) и подтвердил свой email', async () => {
     // 🔻 Создаём нового пользователя с подтверждённым email
     const [user]: UserWithEmailConfirmation[] =
       await authTestManager.registrationWithConfirmation();
@@ -91,6 +93,32 @@ describe('AuthController - login() (POST: /auth/login)', () => {
         password: 'Qwerty_1',
       })
       .expect(HttpStatus.TOO_MANY_REQUESTS);
+
+    // 🔸 Проверяем, что мок функция отправки email была вызвана корректно
+    expect(sendEmailMock).toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('не следует авторизовывать пользователя, если пользователь не подтвердил свой email', async () => {
+    // 🔻 Создаём пользователя
+    const dtos: RegistrationUserInputDto[] = TestDtoFactory.generateRegistrationUserInputDto(1);
+    await authTestManager.registration(dtos);
+
+    // 🔸 Отправляем запрос на вход — должен быть отклонен из-за неподтвержденного email
+    const resLogin: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .send({
+        email: dtos[0].email,
+        password: dtos[0].password,
+      })
+      .expect(HttpStatus.UNAUTHORIZED);
+
+    // 🔸 Убеждаемся, что cookie не установлен
+    expect(resLogin.headers['set-cookie']).toBeUndefined();
+
+    // 🔸 Проверяем, что мок функция отправки email была вызвана корректно
+    expect(sendEmailMock).toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
   });
 
   it('не следует выполнять вход, если пользователь отправил неверные данные (username: "undefined", password: "undefined")', async () => {
