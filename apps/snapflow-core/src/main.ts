@@ -20,7 +20,6 @@ async function bootstrap() {
   const env: string = coreConfig.env;
 
   await app.listen(port, () => {
-    console.log('TEST');
     console.log('App starting listen port: ', port);
     console.log('NODE_ENV: ', env);
   });
