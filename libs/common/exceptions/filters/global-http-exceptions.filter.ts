@@ -24,8 +24,29 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
       isExposeDetails ? (exception.message ?? 'Unknown exception occurred') : 'Some error occurred',
     );
 
-    console.error(exception.stack);
+    this.logException(exception, request, status);
 
     response.status(status).json(responseBody);
+  }
+
+  private logException(exception: unknown, request: Request, status: number): void {
+    const logPayload = {
+      level: status >= 500 ? 'error' : 'warn',
+      timestamp: new Date().toISOString(),
+      type: exception?.constructor?.name,
+      message: (exception as any)?.message,
+      request: {
+        method: request.method,
+        url: request.originalUrl,
+        ip: request.ip,
+        userAgent: request.headers['user-agent'],
+      },
+    };
+
+    // 🔥 Реальная серверная ошибка
+    console.error({
+      ...logPayload,
+      stack: (exception as any)?.stack,
+    });
   }
 }
