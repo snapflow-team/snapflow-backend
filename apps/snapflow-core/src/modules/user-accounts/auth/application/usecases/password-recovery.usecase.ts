@@ -6,6 +6,7 @@ import { UserPasswordRecoveryEvent } from '../../domain/events/user-password-rec
 import { UserWithPasswordRecoveryCode } from '../../../users/types/user-with-password-recovery.type';
 import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
 import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
+import { ExpirationTime } from '../../enums/expiration-time.enum';
 
 export class PasswordRecoveryCommand {
   constructor(public readonly email: string) {}
@@ -32,7 +33,9 @@ export class PasswordRecoveryUseCase implements ICommandHandler<PasswordRecovery
     }
 
     const recoveryCode: string = this.cryptoService.generateUUID();
-    const expirationDate: Date = this.dateService.generateExpirationDate({ hours: 1 });
+    const expirationDate: Date = this.dateService.generateExpirationDate({
+      hours: ExpirationTime.PasswordRecoveryCode,
+    });
 
     await this.userRepository.upsertPasswordRecoveryCode(user.id, recoveryCode, expirationDate);
 
