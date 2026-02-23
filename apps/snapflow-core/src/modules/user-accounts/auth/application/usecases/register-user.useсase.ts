@@ -6,6 +6,7 @@ import { CryptoService } from '../../../../../../../../libs/common/services/cryp
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
 import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation-exception';
 import { ConfirmationStatus, User } from '@generated/prisma';
+import { ExpirationTime } from '../../enums/expiration-time.enum';
 
 export class RegisterUserCommand {
   constructor(public readonly dto: RegistrationUserApplicationDto) {}
@@ -37,8 +38,9 @@ export class RegisterUserUseCase implements ICommandHandler<RegisterUserCommand>
 
     const passwordHash: string = await this.cryptoService.createPasswordHash(password);
     const confirmationCode: string = this.cryptoService.generateUUID();
-    // todo: вынести в enum { hours: 1 }
-    const expirationDate: Date = this.dateService.generateExpirationDate({ hours: 1 });
+    const expirationDate: Date = this.dateService.generateExpirationDate({
+      hours: ExpirationTime.EmailConfirmationCode,
+    });
 
     await this.usersRepository.createUser({
       username,
