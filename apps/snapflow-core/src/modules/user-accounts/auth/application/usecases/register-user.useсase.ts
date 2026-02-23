@@ -1,11 +1,11 @@
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
-import { UserValidationService } from '../../../users/application/services/user-validation.service';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
 import { RegistrationUserApplicationDto } from '../../../users/application/dto/registration-user.application-dto';
 import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
-import { ConfirmationStatus } from '../../../../../../generated/prisma';
+import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation-exception';
+import { ConfirmationStatus, User } from '@generated/prisma';
 
 export class RegisterUserCommand {
   constructor(public readonly dto: RegistrationUserApplicationDto) {}
@@ -14,7 +14,6 @@ export class RegisterUserCommand {
 @CommandHandler(RegisterUserCommand)
 export class RegisterUserUseCase implements ICommandHandler<RegisterUserCommand> {
   constructor(
-    private readonly userValidation: UserValidationService,
     private readonly usersRepository: UsersRepository,
     private readonly cryptoService: CryptoService,
     private readonly dateService: DateService,
@@ -22,7 +21,19 @@ export class RegisterUserUseCase implements ICommandHandler<RegisterUserCommand>
   ) {}
 
   async execute({ dto: { username, email, password } }: RegisterUserCommand): Promise<void> {
-    await this.userValidation.validateUniqueUser(username, email);
+    const check = await this.isUsernameOrEmailTaken(username, email);
+
+    if (check.isTaken) {
+      throw new ValidationException([
+        {
+          field: check.field!,
+          message:
+            check.field === 'username'
+              ? 'User with this username is already registered'
+              : 'User with this email is already registered',
+        },
+      ]);
+    }
 
     const passwordHash: string = await this.cryptoService.createPasswordHash(password);
     const confirmationCode: string = this.cryptoService.generateUUID();
@@ -45,5 +56,22 @@ export class RegisterUserUseCase implements ICommandHandler<RegisterUserCommand>
     });
 
     this.eventBus.publish(new UserRegisteredEvent(email, confirmationCode));
+  }
+
+  private async isUsernameOrEmailTaken(
+    username: string,
+    email: string,
+  ): Promise<{ isTaken: boolean; field?: 'username' | 'email' }> {
+    const userByUsername: User | null = await this.usersRepository.findUserByUsername(username);
+    if (userByUsername) {
+      return { isTaken: true, field: 'username' };
+    }
+
+    const userByEmail: User | null = await this.usersRepository.findUserByEmail(email);
+    if (userByEmail) {
+      return { isTaken: true, field: 'email' };
+    }
+
+    return { isTaken: false };
   }
 }
