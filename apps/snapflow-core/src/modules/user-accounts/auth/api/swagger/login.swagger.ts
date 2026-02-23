@@ -1,6 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
   ApiBody,
   ApiOkResponse,
   ApiOperation,
@@ -9,7 +8,6 @@ import {
 } from '@nestjs/swagger';
 import { LoginUserInputDto } from '../input-dto/login-user.input-dto';
 import { LoginViewDto } from '../view-dto/login.view-dto';
-import { ErrorResponseDto } from '../../../../../../../../libs/common/exceptions/dto/error-response-body.dto';
 
 export function LoginSwagger() {
   return applyDecorators(
@@ -24,12 +22,9 @@ export function LoginSwagger() {
         'Возвращает JWT accessToken в теле ответа и JWT refreshToken в http-only secure cookie.',
       type: LoginViewDto,
     }),
-    ApiBadRequestResponse({
-      description: 'Если inputModel имеет неправильные значения',
-      type: ErrorResponseDto,
-    }),
     ApiUnauthorizedResponse({
-      description: 'Если password или email неверны',
+      description:
+        'Если password или email неверны, а так же если пользователь не подтвердил свой email до попытки авторизоваться',
     }),
     ApiTooManyRequestsResponse({
       description: 'Более 5 попыток с одного IP-адреса за 10 секунд',

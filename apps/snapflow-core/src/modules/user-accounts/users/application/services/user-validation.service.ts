@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../infrastructure/users.repository';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
-import { UserContextDto } from '../../../auth/domain/guards/dto/user-context.dto';
 import {
   DomainException,
   Extension,
 } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { User } from '@generated/prisma';
 import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation-exception';
 import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 import { UserWithPasswordRecoveryCode } from '../../types/user-with-password-recovery.type';
@@ -45,31 +43,6 @@ export class UserValidationService {
     if (errors.length) {
       throw new ValidationException(errors);
     }
-  }
-
-  async authenticateUser(email: string, password: string): Promise<UserContextDto> {
-    const user: User | null = await this.usersRepository.findUserByEmail(email);
-
-    if (!user || !user.password) {
-      throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
-        message: 'Invalid email or password',
-      });
-    }
-
-    const isPasswordValid: boolean = await this.cryptoService.comparePassword({
-      password,
-      hash: user.password,
-    });
-
-    if (!isPasswordValid) {
-      throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
-        message: 'Invalid email or password',
-      });
-    }
-
-    return { id: user.id };
   }
 
   async validatePasswordRecoveryCode(recoveryCode: string): Promise<UserWithPasswordRecoveryCode> {
