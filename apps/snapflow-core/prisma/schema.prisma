@@ -62,7 +62,6 @@ model UserProfile {
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int  @map("user_id")
 
-  @@index([userId, deletedAt])
   @@map("user_profiles")
 }
 
