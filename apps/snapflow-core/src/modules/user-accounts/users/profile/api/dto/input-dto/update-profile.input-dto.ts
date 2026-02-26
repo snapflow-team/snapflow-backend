@@ -1,9 +1,7 @@
 import { IsDateString, IsOptional, Matches, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsStringWithTrim
-} from '../../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
-import { usernameConstraints } from '../../../../auth/api/input-dto/registration-user.input-dto';
+import { IsStringWithTrim } from '../../../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
+import { usernameConstraints } from '../../../../../auth/api/input-dto/registration-user.input-dto';
 
 export const firstNameConstraints = {
   minLength: 1,
@@ -59,18 +57,19 @@ export class UpdateProfileInputDto {
   @ApiPropertyOptional({
     example: '2000-01-01',
     description: 'ISO date string',
+    nullable: true,
   })
-  dateOfBirth?: string;
+  dateOfBirth?: string | null;
 
   @IsOptional()
   @IsStringWithTrim(1, 50)
-  @ApiPropertyOptional({ example: 'Russia' })
-  country?: string;
+  @ApiPropertyOptional({ example: 'Russia', nullable: true })
+  country?: string | null;
 
   @IsOptional()
   @IsStringWithTrim(1, 50)
-  @ApiPropertyOptional({ example: 'Moscow' })
-  city?: string;
+  @ApiPropertyOptional({ example: 'Moscow', nullable: true })
+  city?: string | null;
 
   @IsOptional()
   @IsStringWithTrim(0, 200)
@@ -78,6 +77,7 @@ export class UpdateProfileInputDto {
   @ApiPropertyOptional({
     maxLength: 200,
     example: 'Backend developer',
+    nullable: true,
   })
-  aboutMe?: string;
+  aboutMe?: string | null;
 }
