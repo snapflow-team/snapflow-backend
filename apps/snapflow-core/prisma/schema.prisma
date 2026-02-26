@@ -49,7 +49,7 @@ model UserProfile {
   city    String? @db.VarChar(100)
   country String? @db.VarChar(100)
 
-  dateOfBirth DateTime? @map("date_of_birth")
+  dateOfBirth DateTime? @map("date_of_birth") @db.Date
 
   aboutMe String? @map("about_me") @db.VarChar(200)
 
