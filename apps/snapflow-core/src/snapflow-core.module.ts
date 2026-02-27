@@ -8,6 +8,7 @@ import { UserAccountsModule } from './modules/user-accounts/user-accounts.module
 import { PrismaModule } from './database/prisma.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
@@ -26,6 +27,16 @@ import { ScheduleModule } from '@nestjs/schedule';
         },
       ],
     }),
+    ClientsModule.register([
+      {
+        name: 'FILES_SERVICE',
+        transport: Transport.TCP,
+        options: {
+          host: '0.0.0.0',
+          port: 3002,
+        },
+      },
+    ]),
   ],
   controllers: [SnapflowCoreController],
   providers: [SnapflowCoreService],
