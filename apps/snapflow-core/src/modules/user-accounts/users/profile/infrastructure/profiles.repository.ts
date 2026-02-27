@@ -17,6 +17,15 @@ export class ProfilesRepository {
     });
   }
 
+  async createProfile(
+    dto: Prisma.UserProfileUncheckedCreateInput,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<UserProfile> {
+    return tx.userProfile.create({
+      data: dto,
+    });
+  }
+
   async updateProfile(
     dto: UpdateProfileInfrastructureDto,
     tx: Prisma.TransactionClient = this.prisma,
