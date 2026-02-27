@@ -1,5 +1,6 @@
 import { Request } from 'express';
 import { Module } from '@nestjs/common';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { UsersRepository } from './users/infrastructure/users.repository';
 import { AuthController } from './auth/api/auth.controller';
 import { RegisterUserUseCase } from './auth/application/usecases/register-user.useсase';
@@ -40,8 +41,13 @@ import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/
 import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
 import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
 import { SessionsController } from './auth/sessions/api/sessions.controller';
+import { CreatePostUseCase } from '../posts/application/usecases/create-post.usecase';
+import { PostsRepository } from '../posts/infrastructure/posts-repository';
+import { PostsController } from '../posts/api/posts.controller';
+import { PostsQueryRepository } from '../posts/infrastructure/posts.query-repository';
+import { GetPostQueryHandler } from '../posts/application/queries/get-post.query-handler';
 
-const controllers = [AuthController, SessionsController, OAuthController];
+const controllers = [AuthController, SessionsController, OAuthController, PostsController];
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
@@ -56,8 +62,9 @@ const useCases = [
   RefreshTokenUseCase,
   DeleteSessionByDeviceUseCase,
   DeleteActiveSessionsUseCase,
+  CreatePostUseCase,
 ];
-const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler];
+const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler, GetPostQueryHandler];
 const services = [
   DateService,
   CryptoService,
@@ -71,6 +78,8 @@ const repositories = [
   UsersQueryRepository,
   SessionsRepository,
   SessionQueryRepository,
+  PostsRepository,
+  PostsQueryRepository,
 ];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
 const configs = [UserAccountsConfig];
@@ -78,6 +87,16 @@ const configs = [UserAccountsConfig];
 @Module({
   imports: [
     NotificationsModule,
+    ClientsModule.register([
+      {
+        name: 'FILES_SERVICE',
+        transport: Transport.TCP,
+        options: {
+          host: '127.0.0.1',
+          port: 3002,
+        },
+      },
+    ]),
     GoogleRecaptchaModule.forRootAsync({
       imports: [UserAccountsConfigModule],
       inject: [UserAccountsConfig],
