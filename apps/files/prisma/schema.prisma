@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum FileStatus {
+  PENDING
+  UPLOADED
+}
+model File {
+  id     String @id @default(uuid())
+  userId Int    @map("user_id") // Владелец файла (ID пользователя из core). нельзя прикрепить чужой файл к посту.
+  key    String @unique
+
+  mimeType String     @map("mime_type") // image/jpeg, image/png, video/mp4
+  size     Int
+  status   FileStatus @default(PENDING)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("files")
+}
