@@ -1,15 +1,30 @@
-import { Body, Controller, HttpCode, HttpStatus, Put, UseGuards } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { JwtAuthGuard } from '../../../auth/domain/guards/bearer/jwt-auth.guard';
 import { ExtractUserFromRequest } from '../../../auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../../auth/domain/guards/dto/user-context.dto';
 import { UpdateProfileInputDto } from './dto/input-dto/update-profile.input-dto';
 import { UpdateProfileCommand } from '../application/usecases/update-profile.usecase';
+import { ProfileViewDto } from './dto/view-dto/profile.view-dto';
+import { GetProfileQuery } from '../application/queries/get-profile.query-handler';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users/profile')
 export class ProfileController {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
 
   @Put()
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -23,5 +38,10 @@ export class ProfileController {
         ...body,
       }),
     );
+  }
+
+  @Get(':userId')
+  async getProfile(@Param('userId', ParseIntPipe) userId: number): Promise<ProfileViewDto> {
+    return await this.queryBus.execute(new GetProfileQuery(userId));
   }
 }
