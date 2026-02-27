@@ -1,11 +1,14 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { SnapflowCoreConfig } from '../../../../apps/snapflow-core/src/snapflow-core.config';
 import { ErrorResponseDto } from '../dto/error-response-body.dto';
+
+type ExceptionFilterConfig = {
+  sendInternalServerErrorDetails: boolean;
+};
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly snapflowCoreConfig: SnapflowCoreConfig) {}
+  constructor(private readonly config: ExceptionFilterConfig) {}
 
   catch(exception: Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -16,7 +19,7 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) status = exception.getStatus();
 
-    const isExposeDetails: boolean = this.snapflowCoreConfig.sendInternalServerErrorDetails;
+    const isExposeDetails: boolean = this.config.sendInternalServerErrorDetails;
 
     const responseBody: ErrorResponseDto = ErrorResponseDto.fromInternalError(
       isExposeDetails ? request.url : null,
