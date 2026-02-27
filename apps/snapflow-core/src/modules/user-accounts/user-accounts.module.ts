@@ -43,6 +43,7 @@ import { SessionsController } from './auth/sessions/api/sessions.controller';
 import { UpdateProfileUseCase } from './users/profile/application/usecases/update-profile.usecase';
 import { ProfileController } from './users/profile/api/profile.controller';
 import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
+import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
 
 const controllers = [AuthController, SessionsController, OAuthController, ProfileController];
 const useCases = [
@@ -61,7 +62,7 @@ const useCases = [
   DeleteActiveSessionsUseCase,
   UpdateProfileUseCase,
 ];
-const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler];
+const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler, GetProfileQueryHandler];
 const services = [
   DateService,
   CryptoService,
