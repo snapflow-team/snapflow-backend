@@ -13,7 +13,7 @@ export class ProfileController {
 
   @Put()
   @HttpCode(HttpStatus.NO_CONTENT)
-  async fillProfile(
+  async updateProfile(
     @Body() body: UpdateProfileInputDto,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
