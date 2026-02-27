@@ -136,8 +136,9 @@ model PostMedia {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId Int  @map("post_id")
+  fileId String @map("file_id")
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int    @map("post_id")
 
   @@map("post_medias")
 }
