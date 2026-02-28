@@ -1,5 +1,5 @@
 import { UpdateProfileApplicationDto } from '../dto/update-profile.application-dto';
-import { ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UserProfile } from '@generated/prisma';
 import { ProfilesRepository } from '../../infrastructure/profiles.repository';
 import { DomainException } from '../../../../../../../../../libs/common/exceptions/damain.exception';
@@ -10,6 +10,7 @@ export class UpdateProfileCommand {
   constructor(public readonly dto: UpdateProfileApplicationDto) {}
 }
 
+@CommandHandler(UpdateProfileCommand)
 export class UpdateProfileUseCase implements ICommandHandler<UpdateProfileCommand> {
   constructor(
     private readonly profilesRepository: ProfilesRepository,
