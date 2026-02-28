@@ -4,6 +4,7 @@ import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/ap
 import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
+import { UpdateProfileInputDto } from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
 
 export class ProfileTestManager {
   constructor(
@@ -17,5 +18,27 @@ export class ProfileTestManager {
       .expect(HttpStatus.OK);
 
     return res.body as ProfileViewDto;
+  }
+
+  async updateProfile(
+    accessToken: string,
+    updateData?: Partial<UpdateProfileInputDto>,
+  ): Promise<void> {
+    const dto: UpdateProfileInputDto = {
+      username: 'john_123',
+      firstName: 'John',
+      lastName: 'Doe',
+      dateOfBirth: '2000-01-01',
+      country: 'Germany',
+      city: 'Berlin',
+      aboutMe: 'Backend developer',
+      ...updateData,
+    };
+
+    await request(this.server)
+      .put(`/${GLOBAL_PREFIX}/users/profile`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send(dto)
+      .expect(HttpStatus.NO_CONTENT);
   }
 }
