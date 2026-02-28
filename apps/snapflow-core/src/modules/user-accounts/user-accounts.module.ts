@@ -44,6 +44,7 @@ import { UpdateProfileUseCase } from './users/profile/application/usecases/updat
 import { ProfileController } from './users/profile/api/profile.controller';
 import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
 import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
+import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
 
 const controllers = [AuthController, SessionsController, OAuthController, ProfileController];
 const useCases = [
@@ -77,6 +78,7 @@ const repositories = [
   SessionsRepository,
   SessionQueryRepository,
   ProfilesRepository,
+  ProfilesQueryRepository,
 ];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
 const configs = [UserAccountsConfig];
