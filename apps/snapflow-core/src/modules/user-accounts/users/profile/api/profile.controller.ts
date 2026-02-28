@@ -17,6 +17,7 @@ import { UpdateProfileInputDto } from './dto/input-dto/update-profile.input-dto'
 import { UpdateProfileCommand } from '../application/usecases/update-profile.usecase';
 import { ProfileViewDto } from './dto/view-dto/profile.view-dto';
 import { GetProfileQuery } from '../application/queries/get-profile.query-handler';
+import { Public } from '../../../decorators/public.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users/profile')
@@ -41,6 +42,7 @@ export class ProfileController {
   }
 
   @Get(':userId')
+  @Public()
   async getProfile(@Param('userId', ParseIntPipe) userId: number): Promise<ProfileViewDto> {
     return await this.queryBus.execute(new GetProfileQuery(userId));
   }
