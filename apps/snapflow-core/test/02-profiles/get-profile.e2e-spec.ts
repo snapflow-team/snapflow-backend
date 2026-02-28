@@ -9,6 +9,7 @@ import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
 import { User } from '@generated/prisma';
+import { DomainExceptionCode } from '../../../../libs/common/exceptions/types/domain-exception-codes';
 
 describe('ProfileController - getProfile() (GET: /users/profile/:userId)', () => {
   let appTestManager: AppTestManager;
@@ -82,13 +83,49 @@ describe('ProfileController - getProfile() (GET: /users/profile/:userId)', () =>
     });
   });
 
-  it('должен вернуть 404 если профиль не существует', async () => {
+  it('должен вернуть 404 если пользователь не существует', async () => {
     // 🔻 Используем несуществующий userId
     const nonExistingUserId = 999999;
 
-    await request(server)
+    const res: Response = await request(server)
       .get(`/${GLOBAL_PREFIX}/users/profile/${nonExistingUserId}`)
       .expect(HttpStatus.NOT_FOUND);
+
+    // 🔸 Проверяем структуру ошибки
+    expect(res.body).toEqual({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/users/profile/999999`,
+      method: 'GET',
+      extensions: [],
+      message: `The user with ID (${nonExistingUserId}) does not exist`,
+      code: DomainExceptionCode.NotFound,
+    });
+  });
+
+  it('должен вернуть 404 если профиль soft-deleted', async () => {
+    // 🔻 Регистрируем пользователя
+    await authTestManager.registration();
+
+    const [user]: User[] = await authTestManager.getAll();
+
+    // 🔻 Получаем профиль по userId
+    const profile = await appTestManager.prisma.userProfile.findFirst({
+      where: { userId: user.id },
+    });
+
+    // 🔻 Мягко удаляем профиль
+    await appTestManager.prisma.userProfile.update({
+      where: { id: profile!.id },
+      data: { deletedAt: new Date() },
+    });
+
+    // 🔻 Запрашиваем профиль
+    const res: Response = await request(server)
+      .get(`/${GLOBAL_PREFIX}/users/profile/${user.id}`)
+      .expect(HttpStatus.NOT_FOUND);
+
+    // 🔸 Проверяем сообщение
+    expect(res.body.code).toBe(DomainExceptionCode.NotFound);
   });
 
   it('должен вернуть 400 если userId не число (ParseIntPipe)', async () => {
