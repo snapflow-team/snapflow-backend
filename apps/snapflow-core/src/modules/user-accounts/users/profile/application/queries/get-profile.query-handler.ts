@@ -1,4 +1,4 @@
-import { IQueryHandler } from '@nestjs/cqrs';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { ProfileViewDto } from '../../api/dto/view-dto/profile.view-dto';
 import { ProfilesQueryRepository } from '../../infrastructure/query/profiles.query-repository';
 
@@ -6,6 +6,7 @@ export class GetProfileQuery {
   constructor(public readonly userId: number) {}
 }
 
+@QueryHandler(GetProfileQuery)
 export class GetProfileQueryHandler implements IQueryHandler<GetProfileQuery, ProfileViewDto> {
   constructor(private readonly profilesQueryRepository: ProfilesQueryRepository) {}
 
