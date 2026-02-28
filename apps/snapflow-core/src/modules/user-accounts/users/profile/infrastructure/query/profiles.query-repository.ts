@@ -3,7 +3,9 @@ import { UserProfile } from '@generated/prisma';
 import { DomainException } from '../../../../../../../../../libs/common/exceptions/damain.exception';
 import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 import { ProfileViewDto } from '../../api/dto/view-dto/profile.view-dto';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class ProfilesQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
   async findProfileByUserId(userId: number) {
