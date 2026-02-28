@@ -21,7 +21,7 @@ export class ProfileViewDto {
     dto.username = profile.username;
     dto.firstName = profile.firstName;
     dto.lastName = profile.lastName;
-    dto.dateOfBirth = profile.dateOfBirth ? profile.dateOfBirth.toISOString() : null;
+    dto.dateOfBirth = profile.dateOfBirth ? profile.dateOfBirth.toISOString().split('T')[0] : null;
     dto.country = profile.country;
     dto.city = profile.city;
     dto.avatarUrl = profile.avatarUrl;
