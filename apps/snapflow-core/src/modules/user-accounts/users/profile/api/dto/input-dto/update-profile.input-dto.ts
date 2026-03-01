@@ -1,4 +1,4 @@
-import { IsDateString, IsOptional, Matches, MaxLength } from 'class-validator';
+import { IsDateString, IsOptional, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsStringWithTrim } from '../../../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
 import { usernameConstraints } from '../../../../../auth/api/input-dto/registration-user.input-dto';
@@ -73,7 +73,6 @@ export class UpdateProfileInputDto {
 
   @IsOptional()
   @IsStringWithTrim(0, 200)
-  @MaxLength(200)
   @ApiPropertyOptional({
     maxLength: 200,
     example: 'Backend developer',
