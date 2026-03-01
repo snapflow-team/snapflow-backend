@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DomainException } from '../../../../../libs/common/exceptions/damain.exception';
 import { DomainExceptionCode } from '../../../../../libs/common/exceptions/types/domain-exception-codes';
@@ -13,6 +13,7 @@ export class FilesService {
   ) {}
 
   async generatePresignedUrl(userId: number, mimeType: string, size: number) {
+    // TODO use cryptos-ervice
     const fileId = randomUUID();
     const ext = mimeType.split('/')[1] || 'bin';
     const key = `users/${userId}/${fileId}.${ext}`;
@@ -35,9 +36,10 @@ export class FilesService {
     const file = await this.filesRepository.findByIdAndUser(fileId, userId);
 
     if (!file || file.status !== 'PENDING') {
+      // TODO разделить ошибки
       throw new DomainException({
         code: DomainExceptionCode.BadRequest,
-        message: 'Файл не найден или уже подтвержден',
+        message: 'Файл не найден или уже подтвержден', // TODO ошибки на англ
       });
       // throw new BadRequestException('Файл не найден или уже подтвержден');
     }
@@ -47,12 +49,11 @@ export class FilesService {
     if (!exist) {
       throw new DomainException({
         code: DomainExceptionCode.BadRequest,
-        message: 'Файл не был загружен в хранилище',
+        message: 'Файл не был загружен в хранилище', // TODO ошибки на англ
       });
       // throw new BadRequestException('файл не был загружен');
     }
     await this.filesRepository.confirmUpload(fileId);
-    return { ok: true };
   }
 
   async validateFilesForPost(userId: number, fileIds: string[]) {

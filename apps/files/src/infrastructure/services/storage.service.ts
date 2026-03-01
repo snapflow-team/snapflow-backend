@@ -32,7 +32,7 @@ export class StorageService {
       ContentLength: size,
     });
 
-    return getSignedUrl(this.s3, command, { expiresIn: 600 }); // 10 минут
+    return getSignedUrl(this.s3, command, { expiresIn: 600 }); // 10 минут //TODO вынести экспирейщен в конфиг
   }
 
   async objectExists(key: string): Promise<boolean> {
@@ -44,6 +44,7 @@ export class StorageService {
       return false;
     }
   }
+
   getPublicUrl(key: string): string {
     const baseUrl = process.env.S3_PUBLIC_BASE_URL;
 

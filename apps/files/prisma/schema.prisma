@@ -11,6 +11,7 @@ enum FileStatus {
   PENDING
   UPLOADED
 }
+
 model File {
   id     String @id @default(uuid())
   userId Int    @map("user_id") // Владелец файла (ID пользователя из core). нельзя прикрепить чужой файл к посту.

@@ -1,6 +1,6 @@
 import { IsUUID } from 'class-validator';
 
 export class ConfirmUploadInput {
-  @IsUUID()
+  @IsUUID() //TODO написать сваггер
   fileId: string;
 }

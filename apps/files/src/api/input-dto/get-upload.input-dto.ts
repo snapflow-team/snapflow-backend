@@ -1,6 +1,7 @@
 import { IsIn, IsMimeType, IsNumber, IsString, Max, Min } from 'class-validator';
 
 export class GetUploadInputDto {
+  //TODO написать сваггер
   @IsString()
   // @IsMimeType()
   @IsIn(['image/jpeg', 'image/png'])

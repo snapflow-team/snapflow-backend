@@ -25,6 +25,7 @@ export class FilesRepository {
     });
   }
 
+  // TODO переименовать
   async findByIdAndUser(fileId: string, userId: number) {
     return this.prisma.file.findFirst({
       where: { id: fileId, userId, deletedAt: null },

@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { FilesService } from '../infrastructure/services/files.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { GetUploadInputDto } from './input-dto/get-upload.input-dto';
@@ -14,19 +14,21 @@ export class FilesController {
   @Post('upload-url')
   @UseGuards(JwtAuthGuard) // TODO написать guard свой в сервисе
   async getUploadUrl(
-    @Body() dto: GetUploadInputDto,
-    @ExtractUserFromRequest() user: UserContextDto,
+    @Body() { mimeType, size }: GetUploadInputDto,
+    @ExtractUserFromRequest() { id }: UserContextDto,
   ) {
-    return this.filesService.generatePresignedUrl(user.id, dto.mimeType, dto.size);
+    // TODO вынести в dto
+    return this.filesService.generatePresignedUrl(id, mimeType, size);
   }
 
   @Post('confirm-upload')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard) // TODO написать guard свой в сервисе
   async confirmUploadUrl(
     @Body() dto: ConfirmUploadInput,
-    @ExtractUserFromRequest() user: UserContextDto,
+    @ExtractUserFromRequest() { id }: UserContextDto,
   ) {
-    return this.filesService.confirmUpload(dto.fileId, user.id);
+    await this.filesService.confirmUpload(dto.fileId, id);
   }
 
   @MessagePattern({ cmd: 'validate_files' })
