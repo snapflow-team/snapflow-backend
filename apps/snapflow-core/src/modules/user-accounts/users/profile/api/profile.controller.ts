@@ -18,7 +18,11 @@ import { UpdateProfileCommand } from '../application/usecases/update-profile.use
 import { ProfileViewDto } from './dto/view-dto/profile.view-dto';
 import { GetProfileQuery } from '../application/queries/get-profile.query-handler';
 import { Public } from '../../../decorators/public.decorator';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiUpdateProfile } from './swagger/update-profile.swagger';
+import { ApiGetProfile } from './swagger/get-profile.swagger';
 
+@ApiTags('Profile')
 @UseGuards(JwtAuthGuard)
 @Controller('users/profile')
 export class ProfileController {
@@ -29,6 +33,7 @@ export class ProfileController {
 
   @Put()
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiUpdateProfile()
   async updateProfile(
     @Body() body: UpdateProfileInputDto,
     @ExtractUserFromRequest() user: UserContextDto,
@@ -43,6 +48,7 @@ export class ProfileController {
 
   @Get(':userId')
   @Public()
+  @ApiGetProfile()
   async getProfile(@Param('userId', ParseIntPipe) userId: number): Promise<ProfileViewDto> {
     return await this.queryBus.execute(new GetProfileQuery(userId));
   }

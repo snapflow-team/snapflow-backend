@@ -55,6 +55,7 @@ export class UpdateProfileInputDto {
   @IsOptional()
   @IsDateString()
   @ApiPropertyOptional({
+    type: String,
     example: '2000-01-01',
     description: 'ISO date string',
     nullable: true,
@@ -63,17 +64,31 @@ export class UpdateProfileInputDto {
 
   @IsOptional()
   @IsStringWithTrim(1, 50)
-  @ApiPropertyOptional({ example: 'Russia', nullable: true })
+  @ApiPropertyOptional({
+    type: String,
+    minLength: 1,
+    maxLength: 50,
+    example: 'Russia',
+    nullable: true,
+  })
   country?: string | null;
 
   @IsOptional()
   @IsStringWithTrim(1, 50)
-  @ApiPropertyOptional({ example: 'Moscow', nullable: true })
+  @ApiPropertyOptional({
+    type: String,
+    minLength: 1,
+    maxLength: 50,
+    example: 'Moscow',
+    nullable: true,
+  })
   city?: string | null;
 
   @IsOptional()
   @IsStringWithTrim(0, 200)
   @ApiPropertyOptional({
+    type: String,
+    minLength: 0,
     maxLength: 200,
     example: 'Backend developer',
     nullable: true,
