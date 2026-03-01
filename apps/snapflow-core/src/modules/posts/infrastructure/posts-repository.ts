@@ -1,6 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { PostStatus } from '@generated/prisma';
+import { PostStatus, Prisma } from '@generated/prisma';
 import { PrismaService } from '../../../database/prisma.service';
+import BatchPayload = Prisma.BatchPayload;
+
+export type CreateMediaInput = {
+  fileId: string;
+  url: string;
+  mimeType: string;
+  size: number;
+  position: number;
+};
+
+export type PostWithMedia = Prisma.PostGetPayload<{ include: { postMedias: true } }>;
 
 @Injectable()
 export class PostsRepository {
@@ -9,21 +20,16 @@ export class PostsRepository {
   async createPostWithMedia(params: {
     userId: number;
     description?: string;
-    medias: Array<{
-      fileId: string;
-      url: string;
-      mimeType: string;
-      size: number;
-      position: number;
-    }>;
-  }) {
-    return this.prisma.post.create({
+    status: PostStatus;
+    medias: CreateMediaInput[];
+  }): Promise<number> {
+    const post: { id: number } = await this.prisma.post.create({
       data: {
         userId: params.userId,
         description: params.description,
-        status: PostStatus.PUBLISHED,
+        status: params.status,
         postMedias: {
-          create: params.medias.map((media) => ({
+          create: params.medias.map((media: CreateMediaInput) => ({
             fileId: media.fileId,
             url: media.url,
             mimeType: media.mimeType,
@@ -32,7 +38,33 @@ export class PostsRepository {
           })),
         },
       },
-      include: { postMedias: true },
+      select: { id: true },
     });
+    return post.id;
+  }
+
+  async findByIdAndUser(postId: number, userId: number): Promise<PostWithMedia | null> {
+    return this.prisma.post.findFirst({
+      where: { id: postId, userId, deletedAt: null },
+      include: { postMedias: { where: { deletedAt: null }, orderBy: { position: 'asc' } } },
+    });
+  }
+
+  async publishDraft(postId: number, userId: number): Promise<boolean> {
+    const result: BatchPayload = await this.prisma.post.updateMany({
+      where: {
+        id: postId,
+        userId,
+        status: PostStatus.DRAFT,
+        deletedAt: null,
+        postMedias: {
+          some: { deletedAt: null },
+        },
+      },
+      data: {
+        status: PostStatus.PUBLISHED,
+      },
+    });
+    return result.count === 1;
   }
 }

@@ -41,11 +41,12 @@ import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/
 import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
 import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
 import { SessionsController } from './auth/sessions/api/sessions.controller';
-import { CreatePostUseCase } from '../posts/application/usecases/create-post.usecase';
+import { PublishPostUseCase } from '../posts/application/usecases/publish-post.use.case';
 import { PostsRepository } from '../posts/infrastructure/posts-repository';
 import { PostsController } from '../posts/api/posts.controller';
 import { PostsQueryRepository } from '../posts/infrastructure/posts.query-repository';
 import { GetPostQueryHandler } from '../posts/application/queries/get-post.query-handler';
+import { CreatePostUseCase } from '../posts/application/usecases/create-post-use.case';
 
 const controllers = [AuthController, SessionsController, OAuthController, PostsController];
 const useCases = [
@@ -63,6 +64,7 @@ const useCases = [
   DeleteSessionByDeviceUseCase,
   DeleteActiveSessionsUseCase,
   CreatePostUseCase,
+  PublishPostUseCase,
 ];
 const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler, GetPostQueryHandler];
 const services = [

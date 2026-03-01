@@ -5,7 +5,8 @@ import { lastValueFrom, timeout } from 'rxjs';
 import { DomainException } from '../../../../../../../libs/common/exceptions/damain.exception';
 import { DomainExceptionCode } from '../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 import { PostsRepository } from '../../infrastructure/posts-repository';
-import { CreatePostInputDto } from '../../api/create-post.input-dto';
+import { PostStatus } from '@generated/prisma';
+import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';
 
 export type ValidatedFile = {
   fileId: string;
@@ -14,12 +15,15 @@ export type ValidatedFile = {
   size: number;
 };
 
-type ValidateFilesResponse = { valid: true; files: ValidatedFile[] } | { valid: false; files: [] };
+export type ValidateFilesResponse =
+  | { valid: true; files: ValidatedFile[] }
+  | { valid: false; files: [] };
 
 export class CreatePostCommand {
   constructor(
     public readonly dto: CreatePostInputDto,
     public readonly userId: number,
+    public readonly status: PostStatus,
   ) {}
 }
 
@@ -30,17 +34,15 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
     private readonly postsRepository: PostsRepository,
   ) {}
 
-  async execute({ dto, userId }: CreatePostCommand) {
+  async execute({ dto, userId, status }: CreatePostCommand): Promise<number> {
     let validatedFiles: ValidatedFile[] = [];
-    console.log('dto.fileIds:', dto.fileIds, 'length:', dto.fileIds?.length);
 
-    if (dto.fileIds?.length) {
-      const response = await lastValueFrom(
+    if (dto.fileIds?.length > 0) {
+      const response: ValidateFilesResponse = await lastValueFrom(
         this.filesClient
           .send<ValidateFilesResponse>({ cmd: 'validate_files' }, { userId, fileIds: dto.fileIds })
-          .pipe(timeout(3000)), // увеличил до 3 сек
+          .pipe(timeout(3000)),
       );
-      console.log('validate_files response:', response);
 
       if (!response.valid) {
         throw new DomainException({
@@ -52,19 +54,24 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
       validatedFiles = response.files;
     }
 
-    // ← ИСПРАВЛЕНИЕ ЗДЕСЬ
-    const post = await this.postsRepository.createPostWithMedia({
+    if (validatedFiles.length === 0) {
+      throw new DomainException({
+        code: DomainExceptionCode.BadRequest,
+        message: 'Нельзя опубликовать пост без медиа',
+      });
+    }
+
+    return await this.postsRepository.createPostWithMedia({
       userId,
       description: dto.description,
+      status: status,
       medias: validatedFiles.map((file, index) => ({
-        fileId: file.fileId, // ← ОБЯЗАТЕЛЬНО!
+        fileId: file.fileId,
         url: file.url,
         mimeType: file.mimeType,
         size: file.size,
         position: index,
       })),
     });
-
-    return post;
   }
 }
