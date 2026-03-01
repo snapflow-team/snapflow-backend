@@ -41,7 +41,13 @@ export class UpdateProfileUseCase implements ICommandHandler<UpdateProfileComman
     await this.profilesRepository.updateProfile({
       profileId: profile.id,
       ...data,
-      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+      dateOfBirth: this.mapOptionalDate(data.dateOfBirth),
     });
+  }
+
+  private mapOptionalDate(value: string | null | undefined): Date | null | undefined {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    return new Date(value);
   }
 }
