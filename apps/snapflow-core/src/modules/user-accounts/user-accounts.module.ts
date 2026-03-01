@@ -40,8 +40,13 @@ import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/
 import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
 import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
 import { SessionsController } from './auth/sessions/api/sessions.controller';
+import { UpdateProfileUseCase } from './users/profile/application/usecases/update-profile.usecase';
+import { ProfileController } from './users/profile/api/profile.controller';
+import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
+import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
+import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
 
-const controllers = [AuthController, SessionsController, OAuthController];
+const controllers = [AuthController, SessionsController, OAuthController, ProfileController];
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
@@ -56,8 +61,9 @@ const useCases = [
   RefreshTokenUseCase,
   DeleteSessionByDeviceUseCase,
   DeleteActiveSessionsUseCase,
+  UpdateProfileUseCase,
 ];
-const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler];
+const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler, GetProfileQueryHandler];
 const services = [
   DateService,
   CryptoService,
@@ -71,6 +77,8 @@ const repositories = [
   UsersQueryRepository,
   SessionsRepository,
   SessionQueryRepository,
+  ProfilesRepository,
+  ProfilesQueryRepository,
 ];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
 const configs = [UserAccountsConfig];
