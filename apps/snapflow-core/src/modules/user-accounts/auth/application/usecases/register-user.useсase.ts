@@ -7,6 +7,8 @@ import { DateService } from '../../../../../../../../libs/common/services/date.s
 import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation-exception';
 import { ConfirmationStatus, User } from '@generated/prisma';
 import { ExpirationTime } from '../../enums/expiration-time.enum';
+import { ProfilesRepository } from '../../../users/profile/infrastructure/profiles.repository';
+import { PrismaService } from '../../../../../database/prisma.service';
 
 export class RegisterUserCommand {
   constructor(public readonly dto: RegistrationUserApplicationDto) {}
@@ -15,7 +17,9 @@ export class RegisterUserCommand {
 @CommandHandler(RegisterUserCommand)
 export class RegisterUserUseCase implements ICommandHandler<RegisterUserCommand> {
   constructor(
+    private readonly profilesRepository: ProfilesRepository,
     private readonly usersRepository: UsersRepository,
+    private readonly prismaService: PrismaService,
     private readonly cryptoService: CryptoService,
     private readonly dateService: DateService,
     private readonly eventBus: EventBus,
@@ -42,22 +46,34 @@ export class RegisterUserUseCase implements ICommandHandler<RegisterUserCommand>
       hours: ExpirationTime.EmailConfirmationCode,
     });
 
-    await this.usersRepository.createUser({
-      username,
-      email,
-      password: passwordHash,
-      createdAt: new Date(),
+    await this.prismaService.$transaction(async (tx) => {
+      const { id }: User = await this.usersRepository.createUser(
+        {
+          username,
+          email,
+          password: passwordHash,
 
-      emailConfirmationCode: {
-        create: {
-          confirmationStatus: ConfirmationStatus.NotConfirmed,
-          confirmationCode,
-          expirationDate,
+          emailConfirmationCode: {
+            create: {
+              confirmationStatus: ConfirmationStatus.NotConfirmed,
+              confirmationCode,
+              expirationDate,
+            },
+          },
         },
-      },
+        tx,
+      );
+
+      await this.profilesRepository.createProfile(
+        {
+          userId: id,
+          username,
+        },
+        tx,
+      );
     });
 
-    this.eventBus.publish(new UserRegisteredEvent(email, confirmationCode));
+    await this.eventBus.publish(new UserRegisteredEvent(email, confirmationCode));
   }
 
   private async isUsernameOrEmailTaken(

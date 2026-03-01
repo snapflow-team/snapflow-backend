@@ -47,8 +47,14 @@ import { PostsController } from '../posts/api/posts.controller';
 import { PostsQueryRepository } from '../posts/infrastructure/posts.query-repository';
 import { GetPostQueryHandler } from '../posts/application/queries/get-post.query-handler';
 import { CreatePostUseCase } from '../posts/application/usecases/create-post-use.case';
+import { UpdateProfileUseCase } from './users/profile/application/usecases/update-profile.usecase';
+import { ProfileController } from './users/profile/api/profile.controller';
+import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
+import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
+import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
 
 const controllers = [AuthController, SessionsController, OAuthController, PostsController];
+const controllers = [AuthController, SessionsController, OAuthController, ProfileController];
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
@@ -65,8 +71,10 @@ const useCases = [
   DeleteActiveSessionsUseCase,
   CreatePostUseCase,
   PublishPostUseCase,
+  UpdateProfileUseCase,
 ];
 const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler, GetPostQueryHandler];
+const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler, GetProfileQueryHandler];
 const services = [
   DateService,
   CryptoService,
@@ -82,6 +90,8 @@ const repositories = [
   SessionQueryRepository,
   PostsRepository,
   PostsQueryRepository,
+  ProfilesRepository,
+  ProfilesQueryRepository,
 ];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
 const configs = [UserAccountsConfig];
