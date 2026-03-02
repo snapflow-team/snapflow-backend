@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PostStatus, Prisma } from '@generated/prisma';
 import { PrismaService } from '../../../database/prisma.service';
 import BatchPayload = Prisma.BatchPayload;
+import { UpdatePostInputDto } from '../api/input-dto/update-post.input.dto';
 
 export type CreateMediaInput = {
   fileId: string;
@@ -64,6 +65,14 @@ export class PostsRepository {
       data: {
         status: PostStatus.PUBLISHED,
       },
+    });
+    return result.count === 1;
+  }
+
+  async updatePost(id: number, userId: number, dto: UpdatePostInputDto): Promise<boolean> {
+    const result: BatchPayload = await this.prisma.post.updateMany({
+      where: { id, userId, deletedAt: null },
+      data: { description: dto.description },
     });
     return result.count === 1;
   }
