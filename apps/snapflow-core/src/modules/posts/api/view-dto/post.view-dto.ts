@@ -1,4 +1,5 @@
 ﻿import { ApiProperty } from '@nestjs/swagger';
+import { PostWithInclude } from '../../infrastructure/posts.query-repository';
 
 type PostMediaViewSource = {
   id: number;
@@ -66,6 +67,7 @@ export type PostViewSource = {
     position: number;
   }>;
 };
+
 export class PostViewDto {
   @ApiProperty({
     example: 101,
@@ -90,7 +92,7 @@ export class PostViewDto {
     example: 'john_doe',
     description: 'Имя пользователя (username)',
   })
-  name: string;
+  username: string;
 
   @ApiProperty({
     example: 'PUBLISHED',
@@ -111,13 +113,13 @@ export class PostViewDto {
   })
   postMedias: PostMediaViewDto[];
 
-  static mapToView(post: PostViewSource): PostViewDto {
+  static mapToView(post: PostWithInclude): PostViewDto {
     const dto = new PostViewDto();
 
     dto.id = post.id;
     dto.description = post.description;
     dto.ownerId = post.user.id;
-    dto.name = post.user.username;
+    dto.username = post.user.username;
     dto.status = post.status;
     dto.createdAt = post.createdAt.toISOString();
     dto.postMedias = post.postMedias.map((m) => PostMediaViewDto.mapToView(m));
