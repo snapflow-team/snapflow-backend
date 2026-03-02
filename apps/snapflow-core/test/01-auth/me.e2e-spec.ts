@@ -7,8 +7,8 @@ import { JwtService } from '@nestjs/jwt';
 import { HttpStatus } from '@nestjs/common';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
 import { AuthTestManager } from '../managers/auth.test-manager';
-import { EmailService } from '../../src/modules/notifications/services/email.service';
-import { EmailTemplate } from '../../src/modules/notifications/templates/types';
+import { EmailService } from '../../src/modules/emails/services/email.service';
+import { EmailTemplate } from '../../src/modules/emails/templates/types';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 
 describe('AuthController - me() (POST: /auth/me)', () => {

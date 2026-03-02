@@ -6,7 +6,6 @@ import { RegisterUserUseCase } from './auth/application/usecases/register-user.u
 import { DateService } from '../../../../../libs/common/services/date.service';
 import { CryptoService } from '../../../../../libs/common/services/crypto.service';
 import { UserValidationService } from './users/application/services/user-validation.service';
-import { NotificationsModule } from '../notifications/notifications.module';
 import { ConfirmationEmailUseCase } from './auth/application/usecases/confirmation-email.usecase';
 import { LocalStrategy } from './auth/domain/guards/local/local.strategy';
 import { LoginUserUseCase } from './auth/application/usecases/login-user.usecase';
@@ -45,6 +44,7 @@ import { ProfileController } from './users/profile/api/profile.controller';
 import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
 import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
 import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
+import { EmailModule } from '../emails/email-module';
 
 const controllers = [AuthController, SessionsController, OAuthController, ProfileController];
 const useCases = [
@@ -85,7 +85,7 @@ const configs = [UserAccountsConfig];
 
 @Module({
   imports: [
-    NotificationsModule,
+    EmailModule,
     GoogleRecaptchaModule.forRootAsync({
       imports: [UserAccountsConfigModule],
       inject: [UserAccountsConfig],

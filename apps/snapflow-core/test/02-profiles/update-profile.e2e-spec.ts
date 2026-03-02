@@ -1,14 +1,12 @@
 import { Server } from 'http';
-import { EmailTemplate } from '../../src/modules/notifications/templates/types';
-import { EmailService } from '../../src/modules/notifications/services/email.service';
+import { EmailTemplate } from '../../src/modules/emails/templates/types';
+import { EmailService } from '../../src/modules/emails/services/email.service';
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { ProfileTestManager } from '../managers/profile.test-manager';
 import { AppTestManager } from '../managers/app.test-manager';
 import request, { Response } from 'supertest';
 import { HttpStatus } from '@nestjs/common';
-import {
-  UpdateProfileInputDto
-} from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
+import { UpdateProfileInputDto } from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
 import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';

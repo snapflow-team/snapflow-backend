@@ -2,10 +2,9 @@ import { DynamicModule, INestApplication } from '@nestjs/common';
 import { Test, TestingModule, TestingModuleBuilder } from '@nestjs/testing';
 import { Server } from 'http';
 import { PrismaService } from '../../src/database/prisma.service';
-import { SnapflowCoreConfig } from '../../src/snapflow-core.config';
 import { initSnapFlowCoreAppModule } from '../../src/init-snap-flow-core-app-module';
-import { appSetup } from '../../src/setup/app.setup';
 import { ThrottlerStorage } from '@nestjs/throttler';
+import { applyAppInitialization } from '../../src/setup/app-initialization';
 
 /**
  * 🧪 AppTestManager
@@ -23,7 +22,6 @@ import { ThrottlerStorage } from '@nestjs/throttler';
 export class AppTestManager {
   app: INestApplication;
   prisma: PrismaService;
-  snapflowCoreConfig: SnapflowCoreConfig;
 
   /**
    * 🚀 Инициализация тестового приложения
@@ -66,10 +64,9 @@ export class AppTestManager {
 
     this.app = testingAppModule.createNestApplication();
 
-    this.snapflowCoreConfig = this.app.get<SnapflowCoreConfig>(SnapflowCoreConfig);
     this.prisma = this.app.get(PrismaService);
 
-    appSetup(this.app, this.snapflowCoreConfig);
+    applyAppInitialization(this.app);
 
     await this.app.init();
   }
