@@ -16,11 +16,4 @@ export class SwaggerSettings {
     this.swaggerPassword = this.environmentVariables.SWAGGER_PASSWORD;
     this.swaggerPath = this.environmentVariables.SWAGGER_PATH;
   }
-
-  getBasicAuthCredentials() {
-    return {
-      username: this.swaggerUser,
-      password: this.swaggerPassword,
-    };
-  }
 }
