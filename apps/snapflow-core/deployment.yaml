@@ -150,6 +150,21 @@ spec:
                 secretKeyRef:
                   name: snapflow-backend-production-config-secret
                   key: GITHUB_OAUTH_CALLBACK_URL
+            - name: SWAGGER_USER
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: SWAGGER_USER
+            - name: SWAGGER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: SWAGGER_PASSWORD
+            - name: SWAGGER_PATH
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: SWAGGER_PATH
             - name: ALLOWED_ORIGINS
               valueFrom:
                 secretKeyRef:
