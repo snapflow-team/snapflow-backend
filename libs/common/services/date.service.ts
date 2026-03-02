@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { add, isBefore, Duration } from 'date-fns';
+import { add, differenceInYears, Duration, isBefore } from 'date-fns';
 
 @Injectable()
 export class DateService {
@@ -13,5 +13,9 @@ export class DateService {
 
   isExpired(expirationDate: Date, referenceDate: Date = this.now()): boolean {
     return isBefore(expirationDate, referenceDate);
+  }
+
+  getAge(dob: Date): number {
+    return differenceInYears(this.now(), dob);
   }
 }
