@@ -3,6 +3,8 @@ import * as dotenv from 'dotenv';
 import { ValidateNested, validateSync } from 'class-validator';
 import { ApiSettings } from './api-settings';
 import { ValidationError } from '@nestjs/common';
+import { BusinessRulesSettings } from './business-rules-settings';
+import { EnvironmentSettings } from './environment-settings';
 
 export type EnvironmentVariable = { [key: string]: string };
 
@@ -35,13 +37,13 @@ export class Configuration {
   //
   //   @ValidateNested()
   //   swaggerSettings: SwaggerSettings;
-  //
-  //   @ValidateNested()
-  //   environmentSettings: EnvironmentSettings;
-  //
-  //   @ValidateNested()
-  //   businessRulesSettings: BusinessRulesSettings;
-  //
+
+  @ValidateNested()
+  environmentSettings: EnvironmentSettings;
+
+  @ValidateNested()
+  businessRulesSettings: BusinessRulesSettings;
+
   private constructor(configuration: Configuration) {
     Object.assign(this, configuration);
   }
@@ -51,8 +53,8 @@ export class Configuration {
       apiSettings: new ApiSettings(environmentVariables),
       // databaseSettings: new DatabaseSettings(environmentVariables),
       // swaggerSettings: new SwaggerSettings(environmentVariables),
-      // environmentSettings: new EnvironmentSettings(environmentVariables),
-      // businessRulesSettings: new BusinessRulesSettings(environmentVariables),
+      environmentSettings: new EnvironmentSettings(environmentVariables),
+      businessRulesSettings: new BusinessRulesSettings(environmentVariables),
     });
   }
 }
