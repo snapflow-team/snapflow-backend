@@ -15,7 +15,10 @@ export const loadEnv = (): string[] => {
 
   switch (env) {
     case Environments.Development: {
-      return ['src/env/.env.development.local', 'src/env/.env.development'];
+      return [
+        'apps/snapflow-core/env/.env.development.local',
+        'apps/snapflow-core/env/.env.development',
+      ];
     }
 
     case Environments.Testing: {
