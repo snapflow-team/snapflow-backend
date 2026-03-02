@@ -1,9 +1,8 @@
 import { INestApplication } from '@nestjs/common';
-import { SnapflowCoreConfig } from '../snapflow-core.config';
 
-export function corsSetup(app: INestApplication, config: SnapflowCoreConfig) {
+export function corsSetup(app: INestApplication, origin: string[] | boolean) {
   app.enableCors({
-    origin: config.allowedOrigins,
+    origin,
     credentials: true, // ← важно для cookies
   });
 }

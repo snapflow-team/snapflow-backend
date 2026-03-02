@@ -1,7 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { DynamicModule } from '@nestjs/common';
-import { SnapflowCoreConfig } from './snapflow-core.config';
 import { SnapflowCoreModule } from './snapflow-core.module';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from './setup/configuration/configuration';
+import { ApiSettings } from './setup/configuration/api-settings';
 
 /**
  * Инициализация основного модуля с динамической конфигурацией.
@@ -10,7 +12,9 @@ import { SnapflowCoreModule } from './snapflow-core.module';
  */
 export async function initSnapFlowCoreAppModule(): Promise<DynamicModule> {
   const snapFlowCoreAppContext = await NestFactory.createApplicationContext(SnapflowCoreModule);
-  const snapFlowCoreAppConfig = snapFlowCoreAppContext.get<SnapflowCoreConfig>(SnapflowCoreConfig);
+  const configService = snapFlowCoreAppContext.get(ConfigService<Configuration, true>);
+  const apiSettings = configService.get<ApiSettings>('apiSettings');
+
   await snapFlowCoreAppContext.close();
-  return SnapflowCoreModule.forRoot(snapFlowCoreAppConfig);
+  return SnapflowCoreModule.forRoot(apiSettings);
 }

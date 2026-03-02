@@ -6,7 +6,6 @@ import { PrismaService } from '../../../../../../database/prisma.service';
 import { UsersRepository } from '../../../../users/infrastructure/users.repository';
 import { SnapflowCoreModule } from '../../../../../../snapflow-core.module';
 import { ConfirmationStatus, User } from '@generated/prisma';
-import { DatabaseConfig } from '../../../../../../database/database.config';
 
 describe('SessionsCleanupService (Integration, Prisma)', () => {
   let module: TestingModule;
@@ -14,13 +13,11 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
   let userAccountsConfig: UserAccountsConfig;
   let prisma: PrismaService;
   let sessionsRepository: SessionsRepository;
-  let usersRepository: UsersRepository;
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
       imports: [SnapflowCoreModule],
       providers: [
-        DatabaseConfig,
         SessionsCleanupService,
         SessionsRepository,
         UsersRepository,
@@ -33,7 +30,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
     userAccountsConfig = module.get<UserAccountsConfig>(UserAccountsConfig);
     prisma = module.get<PrismaService>(PrismaService);
     sessionsRepository = module.get<SessionsRepository>(SessionsRepository);
-    usersRepository = module.get<UsersRepository>(UsersRepository);
   });
 
   afterAll(async () => {
