@@ -52,9 +52,15 @@ import { ProfileController } from './users/profile/api/profile.controller';
 import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
 import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
 import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
+import { EditPostUseCase } from '../posts/application/usecases/edit-post.use.case';
 
-const controllers = [AuthController, SessionsController, OAuthController, PostsController];
-const controllers = [AuthController, SessionsController, OAuthController, ProfileController];
+const controllers = [
+  AuthController,
+  SessionsController,
+  OAuthController,
+  PostsController,
+  ProfileController,
+];
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
@@ -72,9 +78,14 @@ const useCases = [
   CreatePostUseCase,
   PublishPostUseCase,
   UpdateProfileUseCase,
+  EditPostUseCase,
 ];
-const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler, GetPostQueryHandler];
-const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler, GetProfileQueryHandler];
+const queries = [
+  GetMeQueryHandler,
+  GetAllSessionsQueryHandler,
+  GetPostQueryHandler,
+  GetProfileQueryHandler,
+];
 const services = [
   DateService,
   CryptoService,

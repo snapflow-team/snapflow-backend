@@ -1,80 +1,60 @@
 ﻿import { Injectable } from '@nestjs/common';
+import { PostStatus, Prisma } from '@generated/prisma';
 import { PrismaService } from '../../../database/prisma.service';
-import { PostStatus } from '@generated/prisma';
-import { PostViewDto, PostViewSource } from '../api/view-dto/post.view-dto';
+import { PostViewDto } from '../api/view-dto/post.view-dto';
+import { GetPostQuery, PostVisibility } from '../application/queries/get-post.query-handler';
+
+const postInclude = Prisma.validator<Prisma.PostInclude>()({
+  user: {
+    select: {
+      id: true,
+      username: true,
+    },
+  },
+  postMedias: {
+    where: { deletedAt: null },
+    orderBy: { position: 'asc' },
+    select: {
+      id: true,
+      url: true,
+      mimeType: true,
+      size: true,
+      position: true,
+    },
+  },
+});
+
+export type PostWithInclude = Prisma.PostGetPayload<{ include: typeof postInclude }>;
 
 @Injectable()
 export class PostsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getPostById(
-    id: number,
-    userId: number,
-    statuses: PostStatus[],
-  ): Promise<PostViewDto | null> {
-    const post: PostViewSource | null = await this.prisma.post.findFirst({
-      where: {
-        id,
-        userId,
-        deletedAt: null,
-        status: { in: statuses },
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
-        postMedias: {
-          where: { deletedAt: null },
-          orderBy: { position: 'asc' },
-          select: {
-            id: true,
-            url: true,
-            mimeType: true,
-            size: true,
-            position: true,
-          },
-        },
-      },
+  async getPost(query: GetPostQuery): Promise<PostViewDto | null> {
+    const where: Prisma.PostWhereInput = this.buildWhere(query);
+
+    const post: PostWithInclude | null = await this.prisma.post.findFirst({
+      where,
+      include: postInclude,
     });
 
-    if (!post) return null;
-
-    return PostViewDto.mapToView(post);
+    return post ? PostViewDto.mapToView(post) : null;
   }
 
-  async getPublicPost(id: number, status: PostStatus): Promise<PostViewDto | null> {
-    const post: PostViewSource | null = await this.prisma.post.findFirst({
-      where: {
-        id,
+  private buildWhere(query: GetPostQuery): Prisma.PostWhereInput {
+    if (query.postVisibility === PostVisibility.Owner) {
+      return {
+        id: query.postId,
+        userId: query.userId,
         deletedAt: null,
-        status: PostStatus.PUBLISHED,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-          },
-        },
-        postMedias: {
-          where: { deletedAt: null },
-          orderBy: { position: 'asc' },
-          select: {
-            id: true,
-            url: true,
-            mimeType: true,
-            size: true,
-            position: true,
-          },
-        },
-      },
-    });
+        status: { in: [PostStatus.DRAFT, PostStatus.PUBLISHED] },
+      };
+    }
 
-    if (!post) return null;
-
-    return PostViewDto.mapToView(post);
+    return {
+      id: query.postId,
+      deletedAt: null,
+      status: PostStatus.PUBLISHED,
+    };
   }
 }
