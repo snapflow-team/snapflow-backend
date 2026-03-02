@@ -22,11 +22,11 @@ export const loadEnv = (): string[] => {
     }
 
     case Environments.Testing: {
-      return ['src/env/.env.testing.local', 'src/env/.env.testing'];
+      return ['apps/snapflow-core/env/.env.testing.local', 'apps/snapflow-core/env/.env.testing'];
     }
 
     default: {
-      return ['src/env/.env'];
+      return ['apps/snapflow-core/env/.env'];
     }
   }
 };
