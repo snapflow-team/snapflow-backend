@@ -1,27 +1,37 @@
 import { NestFactory } from '@nestjs/core';
 import { initSnapFlowCoreAppModule } from './init-snap-flow-core-app-module';
-import { SnapflowCoreConfig } from './snapflow-core.config';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { appSetup } from './setup/app.setup';
+import { ConfigService } from '@nestjs/config';
+import { ApiSettings } from './setup/configuration/api-settings';
+import { EnvironmentSettings } from './setup/configuration/environment-settings';
+import { Configuration } from './setup/configuration/configuration';
+import { Express } from 'express';
+import { applyAppInitialization } from './setup/app-initialization';
 
 async function bootstrap() {
   const DynamicAppModule = await initSnapFlowCoreAppModule();
 
   const app = await NestFactory.create<NestExpressApplication>(DynamicAppModule);
 
-  const server = app.getHttpAdapter().getInstance();
+  const configService: ConfigService<Configuration, true> = app.get(
+    ConfigService<Configuration, true>,
+  );
+  const apiSettings: ApiSettings = configService.get<ApiSettings>('apiSettings');
+  const environmentSettings: EnvironmentSettings =
+    configService.get<EnvironmentSettings>('environmentSettings');
+
+  const server: Express = app.getHttpAdapter().getInstance();
   server.set('trust proxy', true);
 
-  const coreConfig: SnapflowCoreConfig = app.get<SnapflowCoreConfig>(SnapflowCoreConfig);
+  applyAppInitialization(app);
 
-  appSetup(app, coreConfig);
-
-  const port: number = coreConfig.port;
-  const env: string = coreConfig.env;
+  const port: number = apiSettings.port;
+  const env: string = environmentSettings.currentEnv;
 
   await app.listen(port, () => {
-    console.log('App starting listen port: ', port);
-    console.log('NODE_ENV: ', env);
+    console.log(`\n✅ Application is running in ${env} mode`);
+    console.log(`📡 Server listening on port ${port}`);
+    console.log(`🌍 Environment: ${env}\n`);
   });
 }
 

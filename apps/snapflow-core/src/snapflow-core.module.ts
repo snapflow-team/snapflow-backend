@@ -1,29 +1,26 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { SnapflowCoreController } from './snapflow-core.controller';
 import { SnapflowCoreService } from './snapflow-core.service';
-import { snapFlowConfigDynamicModule } from './snapflow-config-dynamic-module';
-import { SnapflowCoreConfig } from './snapflow-core.config';
 import { CoreModule } from './core/core.module';
 import { UserAccountsModule } from './modules/user-accounts/user-accounts.module';
 import { PrismaModule } from './database/prisma.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ApiSettings } from './setup/configuration/api-settings';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from './setup/configuration/configuration';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
   imports: [
     CoreModule,
     PrismaModule,
-    snapFlowConfigDynamicModule,
     UserAccountsModule,
     ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
-      inject: [SnapflowCoreConfig],
-      useFactory: (coreConfig: SnapflowCoreConfig) => [
-        {
-          ttl: coreConfig.throttleTtl,
-          limit: coreConfig.throttleLimit,
-        },
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<Configuration, true>) => [
+        configService.get<ApiSettings>('apiSettings').getThrottleOptions(),
       ],
     }),
   ],
@@ -46,7 +43,7 @@ export class SnapflowCoreModule {
    * })
    * export class AppModule {}
    */
-  static async forRoot(snapFlowCoreConfig: SnapflowCoreConfig): Promise<DynamicModule> {
+  static async forRoot(apiSettings: ApiSettings): Promise<DynamicModule> {
     //todo: добавить динамический TestingModule
     return {
       module: SnapflowCoreModule,
