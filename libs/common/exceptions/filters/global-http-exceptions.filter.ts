@@ -43,7 +43,6 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
       },
     };
 
-    // 🔥 Реальная серверная ошибка
     console.error({
       ...logPayload,
       stack: (exception as any)?.stack,
