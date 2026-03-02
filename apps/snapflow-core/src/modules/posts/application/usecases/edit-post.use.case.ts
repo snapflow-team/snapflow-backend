@@ -1,14 +1,31 @@
-import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repository';
+import { UpdatePostInputDto } from '../../api/input-dto/update-post.input.dto';
+import { DomainException } from '../../../../../../../libs/common/exceptions/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 
 export class EditPostCommand {
   constructor(
     public readonly userId: number,
     public readonly postId: number,
+    public readonly dto: UpdatePostInputDto,
   ) {}
 }
 
 @CommandHandler(EditPostCommand)
-export class CreatePostUseCase implements ICommandHandler<EditPostCommand> {
-  constructor(private readonly commandBus: CommandBus) {}
-  async execute(command: EditPostCommand): Promise<void> {}
+export class EditPostUseCase implements ICommandHandler<EditPostCommand> {
+  constructor(private readonly postsRepository: PostsRepository) {}
+  async execute({ userId, postId, dto }: EditPostCommand): Promise<void> {
+    const isUpdated: boolean = await this.postsRepository.updatePost(postId, userId, dto);
+
+    if (isUpdated) return;
+
+    const post: PostWithMedia | null = await this.postsRepository.findByIdAndUser(postId, userId);
+    if (!post) {
+      throw new DomainException({
+        code: DomainExceptionCode.NotFound,
+        message: 'Пост не найден',
+      });
+    }
+  }
 }
