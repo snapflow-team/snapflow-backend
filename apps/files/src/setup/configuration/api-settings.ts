@@ -1,4 +1,4 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsString } from 'class-validator';
 import { EnvironmentVariable } from './configuration';
 
 export class ApiSettings {
@@ -8,10 +8,16 @@ export class ApiSettings {
   @IsString()
   allowedOriginsRaw: string;
 
+  @IsBoolean()
+  sendInternalServerErrorDetails: boolean;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
     this.allowedOriginsRaw = environmentVariables.ALLOWED_ORIGINS;
+
+    this.sendInternalServerErrorDetails =
+      environmentVariables.SEND_INTERNAL_SERVER_ERROR_DETAILS === 'true';
   }
 
   get allowedOrigins(): string[] | boolean {
