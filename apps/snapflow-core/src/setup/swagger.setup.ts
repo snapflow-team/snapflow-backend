@@ -1,10 +1,10 @@
 import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
-import { RequestHandler } from 'express';
 import expressBasicAuth from 'express-basic-auth';
 import { SwaggerSettings } from './configuration/swagger-settings';
 import { EnvironmentSettings } from './configuration/environment-settings';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
+import type { RequestHandler } from 'express';
 
 export function swaggerSetup(
   app: INestApplication,
