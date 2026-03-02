@@ -14,10 +14,14 @@ import { User } from '../../generated/prisma';
 import { TestUtils } from '../helpers/test.utils';
 import { ErrorResponseDto } from '../../../../libs/common/exceptions/dto/error-response-body.dto';
 import { DomainExceptionCode } from '../../../../libs/common/exceptions/types/domain-exception-codes';
+import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
+import { ProfileTestManager } from '../managers/profile.test-manager';
+import { ProfilesRepository } from '../../src/modules/user-accounts/users/profile/infrastructure/profiles.repository';
 
 describe('AuthController - registration() (POST: /auth/registration)', () => {
   let appTestManager: AppTestManager;
   let authTestManager: AuthTestManager;
+  let profileTestManager: ProfileTestManager;
   let server: Server;
   let sendEmailMock: jest.Mock;
 
@@ -28,6 +32,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     server = appTestManager.getServer();
 
     authTestManager = new AuthTestManager(appTestManager.prisma, server);
+    profileTestManager = new ProfileTestManager(appTestManager.prisma, server);
 
     sendEmailMock = jest
       .spyOn(EmailService.prototype, 'sendEmail')
@@ -411,5 +416,90 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     // 🔸 Проверяем, что email не был отправлен
     expect(sendEmailMock).not.toHaveBeenCalled();
     expect(sendEmailMock).toHaveBeenCalledTimes(0);
+  });
+
+  // Profile
+
+  it('должен создать пользователя и профиль при успешной регистрации', async () => {
+    // 🔻 Создаем тестовые данные для регистрации пользователя
+    const [dto]: RegistrationUserInputDto[] = TestDtoFactory.generateRegistrationUserInputDto(1);
+
+    // 🔻 Выполняем POST-запрос на регистрацию пользователя
+    await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send(dto)
+      .expect(HttpStatus.NO_CONTENT);
+
+    // 🔻 Получаем пользователей из БД
+    const users: User[] = await authTestManager.getAll();
+    const createdUser: User = users[0];
+
+    if (!createdUser) {
+      throw new Error('User not found');
+    }
+
+    // 🔸 Проверяем пользователя
+    expect(users).toHaveLength(1);
+    expect(createdUser.username).toBe(dto.username);
+    expect(createdUser.email).toBe(dto.email);
+
+    // 🔻 Получаем профиль пользователя
+    const profile: ProfileViewDto = await profileTestManager.findProfileByUserId(createdUser.id);
+
+    if (!profile) {
+      throw new Error('Profile was not created');
+    }
+
+    // 🔸 Проверяем профиль
+    expect(typeof profile.id).toBe('string');
+    expect(profile.username).toBe(dto.username);
+    expect(profile.firstName).toBeNull();
+    expect(profile.lastName).toBeNull();
+    expect(profile.city).toBeNull();
+    expect(profile.country).toBeNull();
+    expect(profile.dateOfBirth).toBeNull();
+    expect(profile.aboutMe).toBeNull();
+    expect(profile.avatarUrl).toBeNull();
+    expect(profile.followersCount).toBe(0);
+    expect(profile.followingCount).toBe(0);
+    expect(profile.postsCount).toBe(0);
+
+    // 🔸 Проверяем отправку email
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('не должен создавать профиль если регистрация не прошла', async () => {
+    // 🔻 Пытаемся зарегистрировать пользователя без данных
+    await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send({})
+      .expect(HttpStatus.BAD_REQUEST);
+
+    // 🔻 Проверяем что профили не созданы
+    const profiles = await appTestManager.prisma.userProfile.findMany();
+    expect(profiles).toHaveLength(0);
+
+    expect(sendEmailMock).not.toHaveBeenCalled();
+  });
+
+  it('должен откатить создание пользователя если создание профиля упало (транзакция)', async () => {
+    // 🔻 Ломаем создание профиля
+    jest
+      .spyOn(appTestManager.app.get(ProfilesRepository), 'createProfile')
+      .mockRejectedValueOnce(new Error('DB error'));
+
+    const [dto]: RegistrationUserInputDto[] = TestDtoFactory.generateRegistrationUserInputDto(1);
+
+    await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/registration`)
+      .send(dto)
+      .expect(HttpStatus.INTERNAL_SERVER_ERROR);
+
+    const users: User[] = await authTestManager.getAll();
+    const profiles = await appTestManager.prisma.userProfile.findMany();
+
+    expect(users).toHaveLength(0);
+    expect(profiles).toHaveLength(0);
+    expect(sendEmailMock).not.toHaveBeenCalled();
   });
 });

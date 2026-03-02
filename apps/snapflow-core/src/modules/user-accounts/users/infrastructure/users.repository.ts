@@ -10,6 +10,15 @@ export class UsersRepository {
 
   // User ---------------------------------------------------------
 
+  async findUserById(id: number, tx: Prisma.TransactionClient = this.prisma): Promise<User | null> {
+    return tx.user.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+      },
+    });
+  }
+
   async findUserByEmail(
     email: string,
     tx: Prisma.TransactionClient = this.prisma,
