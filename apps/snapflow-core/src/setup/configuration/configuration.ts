@@ -5,6 +5,7 @@ import { ApiSettings } from './api-settings';
 import { ValidationError } from '@nestjs/common';
 import { BusinessRulesSettings } from './business-rules-settings';
 import { EnvironmentSettings } from './environment-settings';
+import { DatabaseSettings } from './database-settings';
 
 export type EnvironmentVariable = { [key: string]: string };
 
@@ -31,10 +32,10 @@ dotenv.config({ path: loadEnv() });
 export class Configuration {
   @ValidateNested()
   apiSettings: ApiSettings;
-  //
-  //   @ValidateNested()
-  //   databaseSettings: DatabaseSettings;
-  //
+
+  @ValidateNested()
+  databaseSettings: DatabaseSettings;
+
   //   @ValidateNested()
   //   swaggerSettings: SwaggerSettings;
 
@@ -51,7 +52,7 @@ export class Configuration {
   static createConfig(environmentVariables: EnvironmentVariable): Configuration {
     return new this({
       apiSettings: new ApiSettings(environmentVariables),
-      // databaseSettings: new DatabaseSettings(environmentVariables),
+      databaseSettings: new DatabaseSettings(environmentVariables),
       // swaggerSettings: new SwaggerSettings(environmentVariables),
       environmentSettings: new EnvironmentSettings(environmentVariables),
       businessRulesSettings: new BusinessRulesSettings(environmentVariables),
