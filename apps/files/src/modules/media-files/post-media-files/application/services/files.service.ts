@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { DomainException } from '../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../libs/common/exceptions/types/domain-exception-codes';
+import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 import { StorageService } from './storage.service';
-import { FilesRepository } from '../repository/files.repository';
+import { FilesRepository } from '../../infrastructure/files.repository';
 
 @Injectable()
 export class FilesService {
