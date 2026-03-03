@@ -1,11 +1,11 @@
 import { Environments } from '../../../../../libs/common/enums/enviroments.enum';
 import * as dotenv from 'dotenv';
 import { ValidateNested, validateSync } from 'class-validator';
-import { ApiSettings } from './api-settings';
 import { ValidationError } from '@nestjs/common';
 import { EnvironmentSettings } from './environment-settings';
 import { DatabaseSettings } from './database-settings';
-import { SwaggerSettings } from './swagger-settings';
+import { MicroserviceSettings } from './microservice.settings';
+import { S3Settings } from './s3.settings';
 
 export type EnvironmentVariable = { [key: string]: string };
 
@@ -31,16 +31,16 @@ dotenv.config({ path: loadEnv() });
 
 export class Configuration {
   @ValidateNested()
-  apiSettings: ApiSettings;
+  environmentSettings: EnvironmentSettings;
 
   @ValidateNested()
   databaseSettings: DatabaseSettings;
 
   @ValidateNested()
-  swaggerSettings: SwaggerSettings;
+  microserviceSettings: MicroserviceSettings;
 
   @ValidateNested()
-  environmentSettings: EnvironmentSettings;
+  s3Settings: S3Settings;
 
   private constructor(configuration: Configuration) {
     Object.assign(this, configuration);
@@ -48,10 +48,10 @@ export class Configuration {
 
   static createConfig(environmentVariables: EnvironmentVariable): Configuration {
     return new this({
-      apiSettings: new ApiSettings(environmentVariables),
-      databaseSettings: new DatabaseSettings(environmentVariables),
-      swaggerSettings: new SwaggerSettings(environmentVariables),
       environmentSettings: new EnvironmentSettings(environmentVariables),
+      databaseSettings: new DatabaseSettings(environmentVariables),
+      microserviceSettings: new MicroserviceSettings(environmentVariables),
+      s3Settings: new S3Settings(environmentVariables),
     });
   }
 }
