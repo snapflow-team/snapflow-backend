@@ -36,4 +36,15 @@ export class S3Settings {
     this.presignedExpiresIn = Number(this.env.S3_PRESIGNED_EXPIRES_IN || 600);
     this.postsMediaKeyPrefix = this.env.S3_POSTS_MEDIA_KEY_PREFIX;
   }
+
+  getS3ClientConfig() {
+    return {
+      region: this.region,
+      endpoint: this.endpoint,
+      credentials: {
+        accessKeyId: this.accessKey,
+        secretAccessKey: this.secretKey,
+      },
+    };
+  }
 }
