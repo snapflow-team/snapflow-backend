@@ -5,19 +5,25 @@ import {
   ConfirmUploadInputDto,
   FilesRpcCommand,
   GenerateUploadUrlInputDto,
+  GenerateUploadUrlResponse,
   ValidateFilesInputDto,
 } from '../../../../../../../libs/contracts/files';
+import { CommandBus } from '@nestjs/cqrs';
+import { GeneratedUploadUrlCommand } from '../application/usecases/generate-presignet-url.usecase';
 
-@Controller('files')
+@Controller()
 export class PostsMediaController {
-  constructor(private readonly filesService: PostsMediaService) {}
+  constructor(
+    private readonly filesService: PostsMediaService,
+    private readonly commandBus: CommandBus,
+  ) {}
 
   @MessagePattern({ cmd: FilesRpcCommand.GenerateUploadUrl })
   async generateUploadUrl(
     @Payload()
     data: GenerateUploadUrlInputDto,
-  ) {
-    return this.filesService.generatePresignedUrl(data.userId, data.mimeType, data.size);
+  ): Promise<GenerateUploadUrlResponse> {
+    return this.commandBus.execute(new GeneratedUploadUrlCommand(data));
   }
 
   @MessagePattern({ cmd: FilesRpcCommand.ConfirmUpload })
