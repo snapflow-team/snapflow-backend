@@ -6,7 +6,6 @@ import { UserAccountsModule } from './modules/user-accounts/user-accounts.module
 import { PrismaModule } from './database/prisma.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { ApiSettings } from './setup/configuration/api-settings';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from './setup/configuration/configuration';
@@ -24,16 +23,6 @@ import { Configuration } from './setup/configuration/configuration';
         configService.get<ApiSettings>('apiSettings').getThrottleOptions(),
       ],
     }),
-    ClientsModule.register([
-      {
-        name: 'FILES_SERVICE',
-        transport: Transport.TCP,
-        options: {
-          host: '0.0.0.0',
-          port: 3002,
-        },
-      },
-    ]),
   ],
   controllers: [SnapflowCoreController],
   providers: [SnapflowCoreService],

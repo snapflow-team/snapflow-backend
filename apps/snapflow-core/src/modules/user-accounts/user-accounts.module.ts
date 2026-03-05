@@ -1,6 +1,5 @@
 import { Request } from 'express';
 import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { UsersRepository } from './users/infrastructure/users.repository';
 import { AuthController } from './auth/api/auth.controller';
 import { RegisterUserUseCase } from './auth/application/usecases/register-user.useсase';
@@ -110,16 +109,6 @@ const configs = [UserAccountsConfig];
 @Module({
   imports: [
     EmailModule,
-    ClientsModule.register([
-      {
-        name: 'FILES_SERVICE',
-        transport: Transport.TCP,
-        options: {
-          host: '127.0.0.1',
-          port: 3002,
-        },
-      },
-    ]),
     GoogleRecaptchaModule.forRootAsync({
       imports: [UserAccountsConfigModule],
       inject: [UserAccountsConfig],
