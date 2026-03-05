@@ -13,6 +13,6 @@ export class ConfirmUploadInputDto implements ConfirmUploadRequest {
   @IsNumber()
   userId: number;
 
-  @IsUUID()
+  @IsUUID(4)
   fileId: string;
 }
