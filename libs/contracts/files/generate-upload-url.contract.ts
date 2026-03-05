@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber } from 'class-validator';
+import { IsEnum, IsNumber, Max } from 'class-validator';
 import { MimeType } from './mime-type.enum';
 
 export interface GenerateUploadUrlRequest {
@@ -20,5 +20,8 @@ export class GenerateUploadUrlInputDto implements GenerateUploadUrlRequest {
   mimeType: MimeType;
 
   @IsNumber()
+  @Max(20 * 1024 * 1024, {
+    message: `The maximum file size is 20 MB`,
+  })
   size: number;
 }
