@@ -1,7 +1,11 @@
 import { EnvironmentVariable } from './configuration';
+import { IsNumber, IsString } from 'class-validator';
 
 export class ExternalServicesSettings {
+  @IsString()
   filesHost: string;
+
+  @IsNumber()
   filesPort: number;
 
   constructor(env: EnvironmentVariable) {

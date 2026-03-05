@@ -52,6 +52,8 @@ import { GetProfileQueryHandler } from './users/profile/application/queries/get-
 import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
 import { EmailModule } from '../emails/email-module';
 import { EditPostUseCase } from '../posts/application/usecases/edit-post.use.case';
+import { FilesClientModule } from '../integrations/files/files-client.module';
+import { FilesClient } from '../integrations/files/files.client';
 
 const controllers = [
   AuthController,
@@ -86,6 +88,7 @@ const queries = [
   GetProfileQueryHandler,
 ];
 const services = [
+  FilesClient,
   DateService,
   CryptoService,
   UserUtilsService,
@@ -109,6 +112,7 @@ const configs = [UserAccountsConfig];
 @Module({
   imports: [
     EmailModule,
+    FilesClientModule,
     GoogleRecaptchaModule.forRootAsync({
       imports: [UserAccountsConfigModule],
       inject: [UserAccountsConfig],

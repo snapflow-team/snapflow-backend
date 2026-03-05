@@ -27,5 +27,6 @@ import { ExternalServicesSettings } from '../../../setup/configuration/external-
       },
     ]),
   ],
+  exports: [ClientsModule],
 })
 export class FilesClientModule {}
