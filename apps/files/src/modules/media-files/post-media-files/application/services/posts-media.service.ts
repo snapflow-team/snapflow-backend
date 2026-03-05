@@ -1,35 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
 import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
 import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
-import { StorageService } from './storage.service';
-import { FilesRepository } from '../../infrastructure/files.repository';
+import { StorageService } from '../../infrastructure/storage/storage.service';
+import { FilesRepository } from '../../infrastructure/repositories/files.repository';
 
 @Injectable()
-export class FilesService {
+export class PostsMediaService {
   constructor(
     private readonly storageService: StorageService,
     private readonly filesRepository: FilesRepository,
   ) {}
-
-  async generatePresignedUrl(userId: number, mimeType: string, size: number) {
-    // TODO use cryptos-ervice
-    const fileId = randomUUID();
-    const ext = mimeType.split('/')[1] || 'bin';
-    const key = `users/${userId}/${fileId}.${ext}`;
-
-    const uploadUrl = await this.storageService.getPresignedPutUrl(key, mimeType, size);
-
-    await this.filesRepository.createPending({
-      id: fileId,
-      userId,
-      key,
-      mimeType,
-      size,
-    });
-
-    return { fileId, uploadUrl };
-  }
 
   // для фронта после загрузки в хранилище
   async confirmUpload(fileId: string, userId: number) {
