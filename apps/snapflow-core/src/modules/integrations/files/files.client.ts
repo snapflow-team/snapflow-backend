@@ -1,31 +1,37 @@
-import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { Inject, Injectable } from '@nestjs/common';
 import { SERVICES } from '../../../../../../libs/contracts/services.tokens';
-import { ConfigService } from '@nestjs/config';
-import { Configuration } from '../../../setup/configuration/configuration';
-import { ExternalServicesSettings } from '../../../setup/configuration/external-services-settings';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
+import { GenerateUploadUrlResponse } from '../../../../../../libs/contracts/files/generate-upload-url.contract';
+import { ConfirmUploadResponse } from '../../../../../../libs/contracts/files/confirm-upload.contract';
+import { ValidateFilesResponse } from '../../../../../../libs/contracts/files/validate-files.contract';
 
-@Module({
-  imports: [
-    ClientsModule.registerAsync([
-      {
-        name: SERVICES.FILES,
-        inject: [ConfigService],
-        useFactory: (config: ConfigService<Configuration, true>) => {
-          const { host, port } = config
-            .get<ExternalServicesSettings>('externalServicesSettings')
-            .getFilesServiceOptions();
+@Injectable()
+export class FilesClient {
+  constructor(@Inject(SERVICES.FILES) private readonly client: ClientProxy) {}
 
-          return {
-            transport: Transport.TCP,
-            options: {
-              host,
-              port,
-            },
-          };
-        },
-      },
-    ]),
-  ],
-})
-export class FilesClientModule {}
+  async generateUploadUrl(
+    userId: number,
+    mimeType: string,
+    size: number,
+  ): Promise<GenerateUploadUrlResponse> {
+    return firstValueFrom(
+      this.client.send<GenerateUploadUrlResponse>(
+        { cmd: 'generate_upload_url' },
+        { userId, mimeType, size },
+      ),
+    );
+  }
+
+  async confirmUpload(userId: number, fileId: string) {
+    return firstValueFrom(
+      this.client.send<ConfirmUploadResponse>({ cmd: 'confirm_upload' }, { userId, fileId }),
+    );
+  }
+
+  async validateFiles(userId: number, fileIds: string[]) {
+    return firstValueFrom(
+      this.client.send<ValidateFilesResponse>({ cmd: 'validate_files' }, { userId, fileIds }),
+    );
+  }
+}
