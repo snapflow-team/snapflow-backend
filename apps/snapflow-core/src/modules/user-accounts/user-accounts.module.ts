@@ -27,7 +27,7 @@ import { AuthTokenService } from '../../../../../libs/common/services/auth-token
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
-import { RecaptchaBody } from '../../types/recaptcha.types';
+import { RecaptchaBody } from './types/recaptcha.types';
 import { UserAccountsConfigModule } from './config/user-accounts.config-module';
 import { SessionsCleanupService } from './auth/sessions/application/services/sessions-cleanup.service';
 import { GithubStrategy } from './auth/domain/guards/github/github.strategy';
