@@ -14,6 +14,7 @@ import {
   ValidateFilesRequest,
   ValidateFilesResponse,
 } from '../../../../../../libs/contracts/files/validate-files.contract';
+import { FilesRpcCommand } from '../../../../../../libs/contracts/files/files-rpc-commands';
 
 @Injectable()
 export class FilesClient {
@@ -21,19 +22,22 @@ export class FilesClient {
 
   async generateUploadUrl(payload: GenerateUploadUrlRequest): Promise<GenerateUploadUrlResponse> {
     return firstValueFrom(
-      this.client.send<GenerateUploadUrlResponse>({ cmd: 'generate_upload_url' }, payload),
+      this.client.send<GenerateUploadUrlResponse>(
+        { cmd: FilesRpcCommand.GenerateUploadUrl },
+        payload,
+      ),
     );
   }
 
   async confirmUpload(payload: ConfirmUploadRequest): Promise<ConfirmUploadResponse> {
     return firstValueFrom(
-      this.client.send<ConfirmUploadResponse>({ cmd: 'confirm_upload' }, payload),
+      this.client.send<ConfirmUploadResponse>({ cmd: FilesRpcCommand.ConfirmUpload }, payload),
     );
   }
 
   async validateFiles(payload: ValidateFilesRequest): Promise<ValidateFilesResponse> {
     return firstValueFrom(
-      this.client.send<ValidateFilesResponse>({ cmd: 'validate_files' }, payload),
+      this.client.send<ValidateFilesResponse>({ cmd: FilesRpcCommand.ValidateFiles }, payload),
     );
   }
 }
