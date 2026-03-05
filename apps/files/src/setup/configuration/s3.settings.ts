@@ -33,7 +33,7 @@ export class S3Settings {
     this.accessKey = this.env.S3_ACCESS_KEY;
     this.secretKey = this.env.S3_SECRET_KEY;
     this.publicBaseUrl = this.env.S3_PUBLIC_BASE_URL;
-    this.presignedExpiresIn = Number(this.env.S3_PRESIGNED_EXPIRES_IN || 600);
+    this.presignedExpiresIn = Number(this.env.S3_PRESIGNED_EXPIRES_IN);
     this.postsMediaKeyPrefix = this.env.S3_POSTS_MEDIA_KEY_PREFIX;
   }
 

@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../../../../setup/configuration/configuration';
+import { S3Settings } from '../../../../../setup/configuration/s3.settings';
 
 @Injectable()
 export class StorageService {
@@ -8,23 +11,16 @@ export class StorageService {
   private readonly bucket: string;
   private readonly publicBaseUrl: string;
 
-  constructor() {
-    this.bucket = process.env.S3_BUCKET!;
-    this.publicBaseUrl = process.env.S3_PUBLIC_BASE_URL!;
+  constructor(private readonly configService: ConfigService<Configuration, true>) {
+    this.bucket = configService.get<S3Settings>('s3Settings').bucket;
+    this.publicBaseUrl = configService.get<S3Settings>('s3Settings').publicBaseUrl;
 
-    this.s3 = new S3Client({
-      region: process.env.S3_REGION,
-      endpoint: process.env.S3_ENDPOINT,
-      forcePathStyle: false,
-      credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY!,
-        secretAccessKey: process.env.S3_SECRET_KEY!,
-      },
-    });
+    this.s3 = new S3Client(configService.get<S3Settings>('s3Settings').getS3ClientConfig());
   }
 
   async getPresignedPutUrl(key: string, mimeType: string, size: number): Promise<string> {
-    //PutObjectCommand — команда «положить файл».
+    const expiresIn: number = this.configService.get<S3Settings>('s3Settings').presignedExpiresIn;
+
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: key,
@@ -32,7 +28,7 @@ export class StorageService {
       ContentLength: size,
     });
 
-    return getSignedUrl(this.s3, command, { expiresIn: 600 }); // 10 минут //TODO вынести экспирейщен в конфиг
+    return getSignedUrl(this.s3, command, { expiresIn });
   }
 
   async objectExists(key: string): Promise<boolean> {
