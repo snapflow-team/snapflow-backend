@@ -1,19 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../../database/prisma.service';
-import { FileStatus } from '../../../../../../generated/prisma/index';
+import { FileStatus, Prisma } from '../../../../../../generated/prisma/index';
+import FileCreateInput = Prisma.FileCreateInput;
 
 @Injectable()
 export class FilesRepository {
   constructor(public readonly prisma: PrismaService) {}
 
-  async createPending(data: {
-    id: string;
-    userId: number;
-    key: string;
-    mimeType: string;
-    size: number;
-  }) {
-    return this.prisma.file.create({
+  async createPending(data: FileCreateInput): Promise<void> {
+    await this.prisma.file.create({
       data: {
         id: data.id,
         userId: data.userId,
