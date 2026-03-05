@@ -1,47 +1,38 @@
-import { Controller, Post, UseGuards } from '@nestjs/common';
-import { FilesService } from '../application/services/files.service';
+import { Controller } from '@nestjs/common';
+import { PostsMediaService } from '../application/services/posts-media.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
-  JwtAuthGuard
-} from '../../../../../../snapflow-core/src/modules/user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
+  ConfirmUploadInputDto,
+  FilesRpcCommand,
+  GenerateUploadUrlInputDto,
+  ValidateFilesInputDto,
+} from '../../../../../../../libs/contracts/files';
 
 @Controller('files')
 export class PostsMediaController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(private readonly filesService: PostsMediaService) {}
 
-  @Post('upload-url')
-  @UseGuards(JwtAuthGuard)
-  @MessagePattern({ cmd: 'generate_upload_url' })
+  @MessagePattern({ cmd: FilesRpcCommand.GenerateUploadUrl })
   async generateUploadUrl(
     @Payload()
-    data: {
-      userId: number;
-      mimeType: string;
-      size: number;
-    },
+    data: GenerateUploadUrlInputDto,
   ) {
     return this.filesService.generatePresignedUrl(data.userId, data.mimeType, data.size);
   }
 
-  @MessagePattern({ cmd: 'confirm_upload' })
+  @MessagePattern({ cmd: FilesRpcCommand.ConfirmUpload })
   async confirmUpload(
     @Payload()
-    data: {
-      userId: number;
-      fileId: string;
-    },
+    data: ConfirmUploadInputDto,
   ) {
     await this.filesService.confirmUpload(data.fileId, data.userId);
     return { success: true };
   }
 
-  @MessagePattern({ cmd: 'validate_files' })
+  @MessagePattern({ cmd: FilesRpcCommand.ValidateFiles })
   async validateFiles(
     @Payload()
-    data: {
-      userId: number;
-      fileIds: string[];
-    },
+    data: ValidateFilesInputDto,
   ) {
     return this.filesService.validateFilesForPost(data.userId, data.fileIds);
   }
