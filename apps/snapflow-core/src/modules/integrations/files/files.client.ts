@@ -3,18 +3,14 @@ import { SERVICES } from '../../../../../../libs/contracts/services.tokens';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import {
-  GenerateUploadUrlRequest,
-  GenerateUploadUrlResponse,
-} from '../../../../../../libs/contracts/files/generate-upload-url.contract';
-import {
   ConfirmUploadRequest,
   ConfirmUploadResponse,
-} from '../../../../../../libs/contracts/files/confirm-upload.contract';
-import {
+  FilesRpcCommand,
+  GenerateUploadUrlRequest,
+  GenerateUploadUrlResponse,
   ValidateFilesRequest,
   ValidateFilesResponse,
-} from '../../../../../../libs/contracts/files/validate-files.contract';
-import { FilesRpcCommand } from '../../../../../../libs/contracts/files/files-rpc-commands';
+} from '../../../../../../libs/contracts/files';
 
 @Injectable()
 export class FilesClient {
