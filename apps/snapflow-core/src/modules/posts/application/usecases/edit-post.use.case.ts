@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repository';
 import { UpdatePostInputDto } from '../../api/input-dto/update-post.input.dto';
 import { DomainException } from '../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../libs/common/exceptions/types/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../libs/common/exceptions/domain-exception-codes';
 
 export class EditPostCommand {
   constructor(

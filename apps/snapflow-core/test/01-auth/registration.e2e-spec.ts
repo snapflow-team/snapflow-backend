@@ -11,7 +11,7 @@ import { AuthTestManager } from '../managers/auth.test-manager';
 import { User } from '../../generated/prisma';
 import { TestUtils } from '../helpers/test.utils';
 import { ErrorResponseDto } from '../../../../libs/common/exceptions/dto/error-response-body.dto';
-import { DomainExceptionCode } from '../../../../libs/common/exceptions/types/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../libs/common/exceptions/domain-exception-codes';
 import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
 import { ProfileTestManager } from '../managers/profile.test-manager';
 import { ProfilesRepository } from '../../src/modules/user-accounts/users/profile/infrastructure/profiles.repository';

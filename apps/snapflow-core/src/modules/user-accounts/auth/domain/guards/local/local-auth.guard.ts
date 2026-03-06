@@ -5,7 +5,7 @@ import { validateSync } from 'class-validator';
 import { AuthGuard } from '@nestjs/passport';
 import { LoginUserInputDto } from '../../../api/input-dto/login-user.input-dto';
 import { DomainException } from '../../../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/domain-exception-codes';
 
 @Injectable()
 export class LocalAuthGuard extends AuthGuard('local') {

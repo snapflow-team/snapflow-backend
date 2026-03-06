@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
-import { DomainExceptionCode } from '../types/domain-exception-codes';
+import { DomainExceptionCode } from '../domain-exception-codes';
 
 export class DomainExceptionsCodeMapper {
   static mapToHttpStatus(code: DomainExceptionCode): number {

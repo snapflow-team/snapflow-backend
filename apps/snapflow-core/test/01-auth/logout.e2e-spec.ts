@@ -12,7 +12,7 @@ import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-
 import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
-import { DomainExceptionCode } from '../../../../libs/common/exceptions/types/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../libs/common/exceptions/domain-exception-codes';
 import { ErrorResponseDto } from '../../../../libs/common/exceptions/dto/error-response-body.dto';
 
 describe('AuthController - logout() (POST: /auth/logout)', () => {

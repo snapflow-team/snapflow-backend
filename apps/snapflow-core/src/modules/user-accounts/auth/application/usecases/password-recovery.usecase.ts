@@ -5,7 +5,7 @@ import { CryptoService } from '../../../../../../../../libs/common/services/cryp
 import { UserPasswordRecoveryEvent } from '../../domain/events/user-password-recovery.event';
 import { UserWithPasswordRecoveryCode } from '../../../users/types/user-with-password-recovery.type';
 import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/domain-exception-codes';
 import { ExpirationTime } from '../../enums/expiration-time.enum';
 
 export class PasswordRecoveryCommand {

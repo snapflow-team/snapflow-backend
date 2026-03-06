@@ -4,7 +4,7 @@ import { AuthTokenService } from '../../../../../../../../libs/common/services/a
 import { SessionsRepository } from '../../sessions/infrastructure/sessions.repository';
 import { Prisma, Session } from '@generated/prisma';
 import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/domain-exception-codes';
 import { PayloadRefreshToken } from '../types/payload-refresh-token.type';
 import { AuthTokens } from '../../domain/types/auth-tokens.type';
 
