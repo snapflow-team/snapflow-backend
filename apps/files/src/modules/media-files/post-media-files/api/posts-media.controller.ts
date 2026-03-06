@@ -10,6 +10,7 @@ import {
 } from '../../../../../../../libs/contracts/files';
 import { CommandBus } from '@nestjs/cqrs';
 import { GeneratedUploadUrlCommand } from '../application/usecases/generate-presignet-url.usecase';
+import { ConfirmUploadCommand } from '../application/usecases/comfirm-upload.usecase';
 
 @Controller()
 export class PostsMediaController {
@@ -31,7 +32,7 @@ export class PostsMediaController {
     @Payload()
     data: ConfirmUploadInputDto,
   ) {
-    await this.filesService.confirmUpload(data.fileId, data.userId);
+    await this.commandBus.execute(new ConfirmUploadCommand(data));
     return { success: true };
   }
 
