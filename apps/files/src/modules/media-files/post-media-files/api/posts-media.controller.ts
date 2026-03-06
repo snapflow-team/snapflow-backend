@@ -1,23 +1,22 @@
 import { Controller } from '@nestjs/common';
-import { PostsMediaService } from '../application/services/posts-media.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import {
   ConfirmUploadInputDto,
+  ConfirmUploadResponse,
   FilesRpcCommand,
   GenerateUploadUrlInputDto,
   GenerateUploadUrlResponse,
   ValidateFilesInputDto,
+  ValidateFilesResponse,
 } from '../../../../../../../libs/contracts/files';
 import { CommandBus } from '@nestjs/cqrs';
 import { GeneratedUploadUrlCommand } from '../application/usecases/generate-presignet-url.usecase';
 import { ConfirmUploadCommand } from '../application/usecases/comfirm-upload.usecase';
+import { ValidateFilesCommand } from '../application/usecases/validate-files.usecase';
 
 @Controller()
 export class PostsMediaController {
-  constructor(
-    private readonly filesService: PostsMediaService,
-    private readonly commandBus: CommandBus,
-  ) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   @MessagePattern({ cmd: FilesRpcCommand.GenerateUploadUrl })
   async generateUploadUrl(
@@ -31,7 +30,7 @@ export class PostsMediaController {
   async confirmUpload(
     @Payload()
     data: ConfirmUploadInputDto,
-  ) {
+  ): Promise<ConfirmUploadResponse> {
     await this.commandBus.execute(new ConfirmUploadCommand(data));
     return { success: true };
   }
@@ -40,7 +39,7 @@ export class PostsMediaController {
   async validateFiles(
     @Payload()
     data: ValidateFilesInputDto,
-  ) {
-    return this.filesService.validateFilesForPost(data.userId, data.fileIds);
+  ): Promise<ValidateFilesResponse> {
+    return this.commandBus.execute(new ValidateFilesCommand(data));
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../../database/prisma.service';
-import { FileStatus, Prisma } from '../../../../../../generated/prisma/index';
+import { File, FileStatus, Prisma } from '../../../../../../generated/prisma/index';
 import FileCreateInput = Prisma.FileCreateInput;
 
 @Injectable()
@@ -20,8 +20,7 @@ export class FilesRepository {
     });
   }
 
-  // TODO переименовать
-  async findByIdAndUserId(fileId: string, userId: number) {
+  async findByIdAndUserId(fileId: string, userId: number): Promise<File | null> {
     return this.prisma.file.findFirst({
       where: { id: fileId, userId, deletedAt: null },
     });
@@ -34,7 +33,7 @@ export class FilesRepository {
     });
   }
 
-  async findManyByIdsAndUser(userId: number, fileIds: string[]) {
+  async findManyByIdsAndUserId(userId: number, fileIds: string[]): Promise<File[]> {
     return this.prisma.file.findMany({
       where: {
         id: { in: fileIds },
