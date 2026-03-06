@@ -11,7 +11,7 @@ export class ConfirmUploadCommand {
 }
 
 @CommandHandler(ConfirmUploadCommand)
-class ConfirmUploadUseCase implements ICommandHandler<ConfirmUploadCommand> {
+export class ConfirmUploadUseCase implements ICommandHandler<ConfirmUploadCommand> {
   constructor(
     private readonly storageService: StorageService,
     private readonly filesRepository: FilesRepository,
