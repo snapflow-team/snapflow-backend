@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
-import { ValidationExceptionFilter } from '../../../../libs/common/exceptions/filters/validation-http-exception.filter';
-import { DomainHttpExceptionsFilter } from '../../../../libs/common/exceptions/filters/domain-http-exceptions.filter';
-import { GlobalExceptionsFilter } from '../../../../libs/common/exceptions/filters/global-http-exceptions.filter';
+import { ValidationExceptionFilter } from '../../../../libs/common/exceptions/filters/http/validation-http-exception.filter';
+import { DomainHttpExceptionsFilter } from '../../../../libs/common/exceptions/filters/http/domain-http-exceptions.filter';
+import { GlobalExceptionsFilter } from '../../../../libs/common/exceptions/filters/http/global-http-exceptions.filter';
 
 export function globalExceptionFilterSetup(app: INestApplication, isExposeDetails: boolean) {
   app.useGlobalFilters(new GlobalExceptionsFilter(isExposeDetails));
