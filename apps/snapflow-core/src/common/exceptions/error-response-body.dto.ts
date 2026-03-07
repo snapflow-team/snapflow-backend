@@ -1,12 +1,22 @@
-import {
-  DomainException,
-  DomainExceptionCode,
-  ErrorResponse,
-  Extension,
-} from '../../../../../libs/exceptions/http';
 import { ApiProperty } from '@nestjs/swagger';
+import type { SnapFlowDomainExceptionCodeType } from './domain-exception-codes';
+import { SnapFlowDomainExceptionCode } from './domain-exception-codes';
+import { DomainException, IExtension } from '../../../../../libs/exceptions/core/domain-exception';
+import { ErrorResponse } from '../../../../../libs/exceptions/core/error-response';
 
-export class ErrorResponseDto implements ErrorResponse {
+export class ExtensionsDto implements IExtension {
+  @ApiProperty({
+    example: 'email',
+  })
+  field: string;
+
+  @ApiProperty({
+    example: 'Invalid email format',
+  })
+  message: string;
+}
+
+export class ErrorResponseDto implements ErrorResponse<SnapFlowDomainExceptionCodeType> {
   @ApiProperty({
     example: '2026-02-09T12:34:56.789Z',
   })
@@ -30,17 +40,13 @@ export class ErrorResponseDto implements ErrorResponse {
   message: string;
 
   @ApiProperty({
-    enum: DomainExceptionCode,
-    example: DomainExceptionCode.ValidationError,
+    enum: Object.values(SnapFlowDomainExceptionCode),
+    example: SnapFlowDomainExceptionCode.ValidationError,
   })
-  code: DomainExceptionCode;
+  code: SnapFlowDomainExceptionCodeType;
 
-  @ApiProperty({
-    type: () => Extension,
-    isArray: true,
-    example: [{ field: 'email', message: 'Invalid email format' }],
-  })
-  extensions: Extension[];
+  @ApiProperty({ isArray: true })
+  extensions: ExtensionsDto[];
 
   private constructor(props: ErrorResponseDto) {
     Object.assign(this, props);
@@ -71,7 +77,7 @@ export class ErrorResponseDto implements ErrorResponse {
       path: requestUrl,
       method: requestMethod,
       message,
-      code: DomainExceptionCode.InternalServerError,
+      code: SnapFlowDomainExceptionCode.InternalServerError,
       extensions: [],
     });
   }

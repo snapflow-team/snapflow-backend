@@ -1,17 +1,17 @@
-import { CommonDomainExceptionCode } from './domain-exception-codes';
+import { CommonDomainExceptionCodeType } from './domain-exception-codes';
 
 export interface IExtension {
   field: string;
   message: string;
 }
 
-export interface IDomainExceptionProps<TCode = CommonDomainExceptionCode> {
+export interface IDomainExceptionProps<TCode = CommonDomainExceptionCodeType> {
   code: TCode;
   message: string;
   extensions?: IExtension[];
 }
 
-export abstract class DomainException<TCode = CommonDomainExceptionCode> extends Error {
+export abstract class DomainException<TCode = CommonDomainExceptionCodeType> extends Error {
   public readonly code: TCode;
   public readonly message: string;
   public readonly extensions: IExtension[];
