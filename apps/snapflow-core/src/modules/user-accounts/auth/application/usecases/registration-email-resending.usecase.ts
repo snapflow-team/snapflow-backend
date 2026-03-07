@@ -6,7 +6,7 @@ import { CryptoService } from '../../../../../../../../libs/common/services/cryp
 import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
 import { DomainException } from '../../../../../../../../libs/exceptions/http/damain.exception';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
-import { ValidationException } from '../../../../../../../../libs/exceptions/http/validation-exception';
+import { ValidationException } from '../../../../../../../../libs/exceptions/core/validation-exception';
 import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/core/domain-exception-codes';
 
 export class RegistrationEmailResendingCommand {
