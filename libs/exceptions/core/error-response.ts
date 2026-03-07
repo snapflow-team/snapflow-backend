@@ -1,7 +1,7 @@
 import { CommonDomainExceptionCodeType } from './domain-exception-codes';
 import { IExtension } from './domain-exception';
 
-export interface ErrorResponse<TCode = CommonDomainExceptionCodeType> {
+export interface IErrorResponse<TCode = CommonDomainExceptionCodeType> {
   timestamp: string;
   path: string | null;
   method: string | null;
