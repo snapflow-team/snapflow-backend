@@ -7,7 +7,7 @@ const logger = new Logger('RpcGlobalFilter');
 
 @Catch()
 export class GlobalRpcExceptionFilter implements ExceptionFilter {
-  catch(exception: unknown, host: ArgumentsHost): Observable<never> {
+  catch(exception: any, host: ArgumentsHost): Observable<never> {
     // Уже готовые RpcException НЕ ловим
     if (exception instanceof RpcException) {
       return throwError(() => exception);
