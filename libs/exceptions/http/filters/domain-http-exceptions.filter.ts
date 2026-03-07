@@ -2,11 +2,11 @@ import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { ErrorResponseDto } from '../../../../apps/snapflow-core/src/common/exceptions/error-response-body.dto';
 import { Request, Response } from 'express';
 import { DomainException } from '../../core/domain-exception';
-import { CommonDomainExceptionCode } from '../../core/domain-exception-codes';
+import { CommonDomainExceptionCodeType } from '../../core/domain-exception-codes';
 import type { IDomainCodeMapper } from '../utils';
 
 @Catch(DomainException)
-export class DomainHttpExceptionsFilter<TCode = CommonDomainExceptionCode>
+export class DomainHttpExceptionsFilter<TCode = CommonDomainExceptionCodeType>
   implements ExceptionFilter<DomainException<TCode>>
 {
   constructor(private readonly codeToStatusMapper: IDomainCodeMapper<TCode>) {}
