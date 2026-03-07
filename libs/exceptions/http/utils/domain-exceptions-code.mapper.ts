@@ -1,12 +1,12 @@
 import { HttpStatus } from '@nestjs/common';
-import { CommonDomainExceptionCode } from '../../core/domain-exception-codes';
+import { CommonDomainExceptionCode, CommonDomainExceptionCodeType, } from '../../core/domain-exception-codes';
 
-export interface IDomainCodeMapper<TCode = CommonDomainExceptionCode> {
+export interface IDomainCodeMapper<TCode = CommonDomainExceptionCodeType> {
   mapToHttpStatus(code: TCode): HttpStatus;
 }
 
 export class BaseDomainExceptionsCodeMapper implements IDomainCodeMapper {
-  mapToHttpStatus(code: CommonDomainExceptionCode): number {
+  mapToHttpStatus(code: CommonDomainExceptionCodeType): number {
     switch (code) {
       case CommonDomainExceptionCode.BadRequest:
       case CommonDomainExceptionCode.ValidationError:

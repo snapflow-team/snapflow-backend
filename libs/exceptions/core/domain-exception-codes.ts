@@ -9,7 +9,7 @@
 //
 // export type DomainExceptionCode = CommonDomainExceptionCode;
 
-export const COMMON_CODES = {
+export const CommonDomainExceptionCode = {
   ValidationError: 'ValidationError',
   BadRequest: 'BadRequest',
   Forbidden: 'Forbidden',
@@ -18,7 +18,7 @@ export const COMMON_CODES = {
   Unauthorized: 'Unauthorized',
 } as const;
 
-export type CommonDomainExceptionCode = typeof COMMON_CODES[keyof typeof COMMON_CODES];
+export type CommonDomainExceptionCodeType = typeof CommonDomainExceptionCode[keyof typeof CommonDomainExceptionCode];
 
 // export enum DomainExceptionCode {
 //   //common
