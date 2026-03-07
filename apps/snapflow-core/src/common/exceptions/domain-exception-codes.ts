@@ -9,13 +9,15 @@
 // export type SnapFlowDomainExceptionCodesTypy =
 //   | CommonDomainExceptionCode
 //   | SnapFlowDomainExceptionCodes;
-import { COMMON_CODES } from '../../../../../libs/exceptions/core/domain-exception-codes';
 
-export const SNAPFLOW_CODES = {
-  ...COMMON_CODES,
+import { CommonDomainExceptionCode } from '../../../../../libs/exceptions/core/domain-exception-codes';
+
+export const SnapFlowDomainExceptionCode = {
+  ...CommonDomainExceptionCode,
   EmailNotConfirmed: 'EmailNotConfirmed',
   ConfirmationCodeExpired: 'ConfirmationCodeExpired',
   PasswordRecoveryCodeExpired: 'PasswordRecoveryCodeExpired',
 } as const;
 
-export type SnapFlowDomainExceptionCode = (typeof SNAPFLOW_CODES)[keyof typeof SNAPFLOW_CODES];
+export type SnapFlowDomainExceptionCodeType =
+  (typeof SnapFlowDomainExceptionCode)[keyof typeof SnapFlowDomainExceptionCode];
