@@ -1,8 +1,8 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { SessionContextDto } from '../dto/session-context.dto';
 import { Request } from 'express';
-import { DomainException } from '../../../../../../../../../libs/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/domain-exception-codes';
+import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/http/domain-exception-codes';
 
 export const ExtractSessionFromRequest = createParamDecorator(
   (data: unknown, context: ExecutionContext): SessionContextDto => {

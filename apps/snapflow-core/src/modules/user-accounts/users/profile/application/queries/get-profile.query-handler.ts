@@ -3,8 +3,8 @@ import { ProfileViewDto } from '../../api/dto/view-dto/profile.view-dto';
 import { ProfilesQueryRepository } from '../../infrastructure/query/profiles.query-repository';
 import { User } from '@generated/prisma';
 import { UsersRepository } from '../../../infrastructure/users.repository';
-import { DomainException } from '../../../../../../../../../libs/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/domain-exception-codes';
+import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/http/domain-exception-codes';
 
 export class GetProfileQuery {
   constructor(public readonly userId: number) {}

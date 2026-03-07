@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { SessionsRepository } from '../../infrastructure/sessions.repository';
-import { DomainException } from '../../../../../../../../../libs/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/domain-exception-codes';
+import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/http/domain-exception-codes';
 import { SessionContextDto } from '../../../domain/guards/dto/session-context.dto';
 import { Session } from '@generated/prisma';
 

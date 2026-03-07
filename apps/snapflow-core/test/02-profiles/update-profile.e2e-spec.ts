@@ -13,7 +13,7 @@ import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accou
 import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-accounts.config';
 import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';
-import { DomainExceptionCode } from '../../../../libs/exceptions/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../libs/exceptions/http/domain-exception-codes';
 
 describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
   let appTestManager: AppTestManager;

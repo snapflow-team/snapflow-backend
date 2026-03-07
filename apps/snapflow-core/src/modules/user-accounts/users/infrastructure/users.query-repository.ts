@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma.service';
 import { MeViewDto } from '../../auth/api/view-dto/me.view-dto';
 import { RawUserForMe } from './types/raw-user-for-me';
-import { DomainException } from '../../../../../../../libs/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/domain-exception-codes';
+import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../libs/exceptions/http/domain-exception-codes';
 
 @Injectable()
 export class UsersQueryRepository {

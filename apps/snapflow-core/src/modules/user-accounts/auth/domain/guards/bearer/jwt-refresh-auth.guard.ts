@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { SessionContextDto } from '../dto/session-context.dto';
-import { DomainException } from '../../../../../../../../../libs/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/domain-exception-codes';
+import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/http/domain-exception-codes';
 
 @Injectable()
 export class JwtRefreshAuthGuard extends AuthGuard('jwt-refresh') {

@@ -3,7 +3,7 @@ import {
   DomainExceptionCode,
   ErrorResponse,
   Extension,
-} from '../../../../../libs/exceptions';
+} from '../../../../../libs/exceptions/http';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ErrorResponseDto implements ErrorResponse {
