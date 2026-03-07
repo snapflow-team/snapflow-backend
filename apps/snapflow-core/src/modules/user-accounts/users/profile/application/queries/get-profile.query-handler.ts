@@ -4,7 +4,7 @@ import { ProfilesQueryRepository } from '../../infrastructure/query/profiles.que
 import { User } from '@generated/prisma';
 import { UsersRepository } from '../../../infrastructure/users.repository';
 import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/core/domain-exception-codes';
 
 export class GetProfileQuery {
   constructor(public readonly userId: number) {}

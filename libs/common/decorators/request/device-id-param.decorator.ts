@@ -1,6 +1,6 @@
 import { Param, ParseUUIDPipe } from '@nestjs/common';
 import { DomainException } from '../../../exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../exceptions/core/domain-exception-codes';
 
 export function ValidatedDeviceId(paramName = 'deviceId'): ParameterDecorator {
   return Param(

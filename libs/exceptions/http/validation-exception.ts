@@ -1,4 +1,4 @@
-import { DomainExceptionCode } from './domain-exception-codes';
+import { DomainExceptionCode } from '../core/domain-exception-codes';
 import { DomainException, Extension } from './damain.exception';
 
 export class ValidationException extends DomainException {

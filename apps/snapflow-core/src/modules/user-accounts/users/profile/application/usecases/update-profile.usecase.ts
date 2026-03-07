@@ -3,7 +3,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UserProfile } from '@generated/prisma';
 import { ProfilesRepository } from '../../infrastructure/profiles.repository';
 import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/core/domain-exception-codes';
 import { DateService } from '../../../../../../../../../libs/common/services/date.service';
 
 export class UpdateProfileCommand {

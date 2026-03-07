@@ -1,6 +1,6 @@
 ﻿import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../libs/exceptions/core/domain-exception-codes';
 import { PostsQueryRepository } from '../../infrastructure/posts.query-repository';
 import { PostViewDto } from '../../api/view-dto/post.view-dto';
 

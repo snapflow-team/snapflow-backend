@@ -3,7 +3,7 @@ import { PrismaService } from '../../../../database/prisma.service';
 import { MeViewDto } from '../../auth/api/view-dto/me.view-dto';
 import { RawUserForMe } from './types/raw-user-for-me';
 import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../libs/exceptions/core/domain-exception-codes';
 
 @Injectable()
 export class UsersQueryRepository {

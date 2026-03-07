@@ -4,7 +4,7 @@ import { AuthTokenService } from '../../../../../../../../libs/common/services/a
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { AuthAccount, ConfirmationStatus, Prisma, User } from '@generated/prisma';
 import { DomainException } from '../../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/core/domain-exception-codes';
 import { UserUtilsService } from '../../../users/application/services/user-utils.service';
 import { AuthTokens } from '../../domain/types/auth-tokens.type';
 import { parseUserAgent } from '../../../../../../../../libs/common/utils/user-agent.parser';

@@ -3,7 +3,7 @@ import { SessionsRepository } from '../../sessions/infrastructure/sessions.repos
 import { Session } from '@generated/prisma';
 import { DomainException } from '../../../../../../../../libs/exceptions/http/damain.exception';
 import { LogoutUserApplicationDto } from '../dto/logout-user.application-dto';
-import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/core/domain-exception-codes';
 
 export class LogoutCommand {
   constructor(public readonly dto: LogoutUserApplicationDto) {}

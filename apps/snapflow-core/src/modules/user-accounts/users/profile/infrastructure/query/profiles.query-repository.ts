@@ -1,7 +1,7 @@
 import { PrismaService } from '../../../../../../database/prisma.service';
 import { UserProfile } from '@generated/prisma';
 import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/core/domain-exception-codes';
 import { ProfileViewDto } from '../../api/dto/view-dto/profile.view-dto';
 import { Injectable } from '@nestjs/common';
 

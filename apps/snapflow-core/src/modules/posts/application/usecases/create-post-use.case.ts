@@ -1,6 +1,6 @@
 ﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../libs/exceptions/core/domain-exception-codes';
 import { PostsRepository } from '../../infrastructure/posts-repository';
 import { PostStatus } from '@generated/prisma';
 import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';

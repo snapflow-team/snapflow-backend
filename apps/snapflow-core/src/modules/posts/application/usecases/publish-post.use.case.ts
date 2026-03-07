@@ -1,6 +1,6 @@
 ﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repository';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../libs/exceptions/core/domain-exception-codes';
 import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
 
 export class PublishPostCommand {

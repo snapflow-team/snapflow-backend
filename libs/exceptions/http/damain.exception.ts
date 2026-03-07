@@ -1,4 +1,4 @@
-import { DomainExceptionCode } from './domain-exception-codes';
+import { DomainExceptionCode } from '../core/domain-exception-codes';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class Extension {

@@ -1,5 +1,5 @@
 import { DomainExceptionCode } from './domain-exception-codes';
-import { Extension } from './damain.exception';
+import { Extension } from '../http';
 
 export interface ErrorResponse {
   timestamp: string;

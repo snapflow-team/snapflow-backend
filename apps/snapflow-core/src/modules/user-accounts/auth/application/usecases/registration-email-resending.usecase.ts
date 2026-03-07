@@ -7,7 +7,7 @@ import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
 import { DomainException } from '../../../../../../../../libs/exceptions/http/damain.exception';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
 import { ValidationException } from '../../../../../../../../libs/exceptions/http/validation-exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/core/domain-exception-codes';
 
 export class RegistrationEmailResendingCommand {
   constructor(public readonly email: string) {}

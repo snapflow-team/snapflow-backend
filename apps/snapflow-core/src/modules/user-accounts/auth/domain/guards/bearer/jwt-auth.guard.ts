@@ -3,8 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { UserContextDto } from '../dto/user-context.dto';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../../../../decorators/public.decorator';
-import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { UnauthorisedException } from '../../../../../../common/exceptions/domain-exceptions';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -27,10 +26,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   handleRequest<TUser = UserContextDto>(err: any, user: any): TUser {
     if (err || !user) {
-      throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
-        message: 'User is not authenticated',
-      });
+      throw new UnauthorisedException('User is not authenticated');
     }
 
     return user as TUser;
