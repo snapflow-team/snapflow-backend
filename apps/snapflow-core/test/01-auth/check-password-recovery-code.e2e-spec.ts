@@ -9,8 +9,8 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { HttpStatus } from '@nestjs/common';
 import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
-import { ErrorResponseDto } from '../../../../libs/common/exceptions/dto/error-response-body.dto';
-import { DomainExceptionCode } from '../../../../libs/common/exceptions/domain-exception-codes';
+import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
+import { DomainExceptionCode } from '../../../../libs/exceptions/domain-exception-codes';
 
 describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-password-recovery-code)', () => {
   let appTestManager: AppTestManager;

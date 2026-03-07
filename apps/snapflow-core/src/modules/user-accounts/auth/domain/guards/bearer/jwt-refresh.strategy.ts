@@ -7,8 +7,8 @@ import { SessionsRepository } from '../../../sessions/infrastructure/sessions.re
 import { ICookieRequest } from '../interfaces/cookie-request.interface';
 import { PayloadRefreshToken } from '../../../application/types/payload-refresh-token.type';
 import { Session } from '@generated/prisma';
-import { DomainException } from '../../../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/domain-exception-codes';
+import { DomainException } from '../../../../../../../../../libs/exceptions/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/domain-exception-codes';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {

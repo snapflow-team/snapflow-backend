@@ -9,7 +9,7 @@ import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
 import { User } from '@generated/prisma';
-import { DomainExceptionCode } from '../../../../libs/common/exceptions/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../libs/exceptions/domain-exception-codes';
 
 describe('ProfileController - getProfile() (GET: /users/profile/:userId)', () => {
   let appTestManager: AppTestManager;

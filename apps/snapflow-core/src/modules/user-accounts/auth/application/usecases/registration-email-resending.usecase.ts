@@ -4,10 +4,10 @@ import { DateService } from '../../../../../../../../libs/common/services/date.s
 import { ConfirmationStatus } from '@generated/prisma';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
-import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
+import { DomainException } from '../../../../../../../../libs/exceptions/damain.exception';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
-import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation-exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/domain-exception-codes';
+import { ValidationException } from '../../../../../../../../libs/exceptions/validation-exception';
+import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/domain-exception-codes';
 
 export class RegistrationEmailResendingCommand {
   constructor(public readonly email: string) {}

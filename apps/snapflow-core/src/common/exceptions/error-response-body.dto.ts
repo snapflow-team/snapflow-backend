@@ -1,8 +1,12 @@
-import { DomainExceptionCode } from '../domain-exception-codes';
-import { DomainException, Extension } from '../damain.exception';
+import {
+  DomainException,
+  DomainExceptionCode,
+  ErrorResponse,
+  Extension,
+} from '../../../../../libs/exceptions';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ErrorResponseDto {
+export class ErrorResponseDto implements ErrorResponse {
   @ApiProperty({
     example: '2026-02-09T12:34:56.789Z',
   })

@@ -3,8 +3,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { UserContextDto } from '../dto/user-context.dto';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../../../../decorators/public.decorator';
-import { DomainException } from '../../../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/domain-exception-codes';
+import { DomainException } from '../../../../../../../../../libs/exceptions/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/domain-exception-codes';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {

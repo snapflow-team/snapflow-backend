@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../infrastructure/users.repository';
-import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/domain-exception-codes';
+import { DomainException } from '../../../../../../../../libs/exceptions/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/domain-exception-codes';
 import { UserWithPasswordRecoveryCode } from '../../types/user-with-password-recovery.type';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
 

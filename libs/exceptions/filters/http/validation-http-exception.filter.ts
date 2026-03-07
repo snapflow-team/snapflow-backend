@@ -1,7 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ValidationException } from '../../validation-exception';
-import { ErrorResponseDto } from '../../dto/error-response-body.dto';
+import { ErrorResponseDto } from '../../../../apps/snapflow-core/src/common/exceptions/error-response-body.dto';
 
 @Catch(ValidationException)
 export class ValidationExceptionFilter implements ExceptionFilter {

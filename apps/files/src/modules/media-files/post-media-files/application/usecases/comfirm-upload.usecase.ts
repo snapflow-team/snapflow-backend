@@ -2,8 +2,8 @@ import { ConfirmUploadApplicationDto } from '../dto/confirm-upload.application-d
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { FilesRepository } from '../../infrastructure/repositories/files.repository';
 import { File, FileStatus } from '../../../../../../generated/prisma';
-import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/domain-exception-codes';
+import { DomainException } from '../../../../../../../../libs/exceptions/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/domain-exception-codes';
 import { StorageService } from '../../infrastructure/storage/storage.service';
 
 export class ConfirmUploadCommand {

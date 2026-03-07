@@ -4,8 +4,8 @@ import { DateService } from '../../../../../../../../libs/common/services/date.s
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { UserPasswordRecoveryEvent } from '../../domain/events/user-password-recovery.event';
 import { UserWithPasswordRecoveryCode } from '../../../users/types/user-with-password-recovery.type';
-import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/domain-exception-codes';
+import { DomainException } from '../../../../../../../../libs/exceptions/damain.exception';
+import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/domain-exception-codes';
 import { ExpirationTime } from '../../enums/expiration-time.enum';
 
 export class PasswordRecoveryCommand {

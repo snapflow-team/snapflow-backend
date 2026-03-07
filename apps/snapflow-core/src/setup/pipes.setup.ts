@@ -1,7 +1,7 @@
 import { INestApplication, ValidationError, ValidationPipe } from '@nestjs/common';
-import { formatValidationErrors } from '../../../../libs/common/exceptions/utils/format-validation-errors';
-import { Extension } from '../../../../libs/common/exceptions/damain.exception';
-import { ValidationException } from '../../../../libs/common/exceptions/validation-exception';
+import { formatValidationErrors } from '../../../../libs/exceptions/utils/format-validation-errors';
+import { Extension } from '../../../../libs/exceptions/damain.exception';
+import { ValidationException } from '../../../../libs/exceptions/validation-exception';
 
 export function pipesSetup(app: INestApplication) {
   app.useGlobalPipes(

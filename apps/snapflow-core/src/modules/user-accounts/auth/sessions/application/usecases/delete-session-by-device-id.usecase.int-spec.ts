@@ -7,7 +7,7 @@ import {
 } from './delete-session-by-device-id.usecase';
 import { Session } from '@generated/prisma';
 import { IntegrationTestModuleHelper } from '../../../../../../../test/helpers/integration-test-module.helper';
-import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/domain-exception-codes';
+import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/domain-exception-codes';
 import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
 
 describe('DeleteSessionByDeviceUseCase (Интеграция)', () => {
