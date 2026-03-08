@@ -1,5 +1,6 @@
 import { DomainException } from './domain-exception';
 import { IErrorResponse } from './error-response';
+import { CommonDomainExceptionCode } from './domain-exception-codes';
 
 export interface IErrorResponseFactory<TCode> {
   (
@@ -7,6 +8,10 @@ export interface IErrorResponseFactory<TCode> {
     requestUrl: string,
     requestMethod: string,
   ): IErrorResponse<TCode>;
+}
+
+export interface IServerErrorResponseFactory<TCode> {
+  (requestUrl: string | null, requestMethod: string | null, message: string): IErrorResponse<TCode>;
 }
 
 export const errorResponseFactory = <TCode>(
@@ -20,4 +25,17 @@ export const errorResponseFactory = <TCode>(
   message: exception.message,
   code: exception.code,
   extensions: exception.extensions ?? [],
+});
+
+export const serverErrorResponseFactory = (
+  requestUrl: string | null,
+  requestMethod: string | null,
+  message: string,
+): IErrorResponse => ({
+  timestamp: new Date().toISOString(),
+  path: requestUrl,
+  method: requestMethod,
+  message,
+  code: CommonDomainExceptionCode.InternalServerError,
+  extensions: [],
 });
