@@ -22,6 +22,15 @@ export class UnauthorizedException extends DomainException<SnapFlowDomainExcepti
   }
 }
 
+export class ForbiddenException extends DomainException<SnapFlowDomainExceptionCodeType> {
+  constructor(message: string = 'Forbidden') {
+    super({
+      code: SnapFlowDomainExceptionCode.Forbidden,
+      message,
+    });
+  }
+}
+
 export class NotFoundException extends DomainException<SnapFlowDomainExceptionCodeType> {
   constructor(message: string = 'Not Found') {
     super({
