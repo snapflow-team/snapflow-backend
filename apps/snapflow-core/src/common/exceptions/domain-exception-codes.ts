@@ -10,7 +10,7 @@
 //   | CommonDomainExceptionCode
 //   | SnapFlowDomainExceptionCodes;
 
-import { CommonDomainExceptionCode } from '../../../../../libs/exceptions/core/domain-exception-codes';
+import { CommonDomainExceptionCode } from '../../../../../libs/exceptions/core';
 
 export const SnapFlowDomainExceptionCode = {
   ...CommonDomainExceptionCode,
