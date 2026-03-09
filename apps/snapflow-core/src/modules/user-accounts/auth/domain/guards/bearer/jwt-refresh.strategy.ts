@@ -7,8 +7,7 @@ import { SessionsRepository } from '../../../sessions/infrastructure/sessions.re
 import { ICookieRequest } from '../interfaces/cookie-request.interface';
 import { PayloadRefreshToken } from '../../../application/types/payload-refresh-token.type';
 import { Session } from '@generated/prisma';
-import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/core/domain-exception-codes';
+import { UnauthorizedException } from '../../../../../../common/exceptions/domain-exceptions';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
@@ -38,10 +37,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     const session: Session | null = await this.sessionsRepository.findByDeviceId(deviceId);
 
     if (!session || new Date(session.iat).getTime() !== tokenIssuedDate.getTime()) {
-      throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
-        message: 'User is not authenticated',
-      });
+      throw new UnauthorizedException('User is not authenticated');
     }
 
     return {

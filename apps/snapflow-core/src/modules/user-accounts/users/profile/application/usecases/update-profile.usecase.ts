@@ -2,9 +2,8 @@ import { UpdateProfileApplicationDto } from '../dto/update-profile.application-d
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UserProfile } from '@generated/prisma';
 import { ProfilesRepository } from '../../infrastructure/profiles.repository';
-import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/core/domain-exception-codes';
 import { DateService } from '../../../../../../../../../libs/common/services/date.service';
+import { BadRequestException, InternalServerException, } from '../../../../../../common/exceptions/domain-exceptions';
 
 export class UpdateProfileCommand {
   constructor(public readonly dto: UpdateProfileApplicationDto) {}
@@ -22,20 +21,14 @@ export class UpdateProfileUseCase implements ICommandHandler<UpdateProfileComman
       const age: number = this.dateService.getAge(dob);
 
       if (age < 13) {
-        throw new DomainException({
-          code: DomainExceptionCode.BadRequest,
-          message: 'User must be at least 13 years old to update profile',
-        });
+        throw new BadRequestException('User must be at least 13 years old to update profile');
       }
     }
 
     const profile: UserProfile | null = await this.profilesRepository.findProfileByUserId(userId);
 
     if (!profile) {
-      throw new DomainException({
-        code: DomainExceptionCode.InternalServerError,
-        message: 'User profile is missing. Registration invariant violated',
-      });
+      throw new InternalServerException('User profile is missing. Registration invariant violated');
     }
 
     await this.profilesRepository.updateProfile({
