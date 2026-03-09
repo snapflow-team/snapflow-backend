@@ -6,14 +6,16 @@ import { ProfileTestManager } from '../managers/profile.test-manager';
 import { AppTestManager } from '../managers/app.test-manager';
 import request, { Response } from 'supertest';
 import { HttpStatus } from '@nestjs/common';
-import { UpdateProfileInputDto } from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
+import {
+  UpdateProfileInputDto
+} from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
 import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
 import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-accounts.config';
 import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';
-import { DomainExceptionCode } from '../../../../libs/exceptions/core/domain-exception-codes';
+import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
 
 describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
   let appTestManager: AppTestManager;
@@ -243,7 +245,7 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       path: `/${GLOBAL_PREFIX}/users/profile`,
       method: 'PUT',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',
@@ -285,7 +287,7 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       path: `/${GLOBAL_PREFIX}/users/profile`,
       method: 'PUT',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',
@@ -335,7 +337,7 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       path: `/${GLOBAL_PREFIX}/users/profile`,
       method: 'PUT',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',
@@ -388,7 +390,7 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       path: `/${GLOBAL_PREFIX}/users/profile`,
       method: 'PUT',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',
@@ -438,7 +440,7 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       path: `/${GLOBAL_PREFIX}/users/profile`,
       method: 'PUT',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',
@@ -490,7 +492,7 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       path: `/${GLOBAL_PREFIX}/users/profile`,
       method: 'PUT',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'dateOfBirth',
