@@ -1,5 +1,5 @@
 import { INestApplication, ValidationError, ValidationPipe } from '@nestjs/common';
-import { formatValidationErrors } from '../../../../libs/exceptions/http/utils/format-validation-errors';
+import { formatValidationErrors } from '../../../../libs/exceptions/core/utils/format-validation-errors';
 import { Extension } from '../../../../libs/exceptions/http/damain.exception';
 import { ValidationException } from '../../../../libs/exceptions/core/validation-exception';
 
