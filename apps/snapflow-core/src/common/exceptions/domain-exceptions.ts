@@ -1,5 +1,8 @@
 import { DomainException } from '../../../../../libs/exceptions/core';
-import { SnapFlowDomainExceptionCode, SnapFlowDomainExceptionCodeType, } from './domain-exception-codes';
+import {
+  SnapFlowDomainExceptionCode,
+  SnapFlowDomainExceptionCodeType,
+} from './domain-exception-codes';
 
 export class BadRequestException extends DomainException<SnapFlowDomainExceptionCodeType> {
   constructor(message: string = 'Bad Request') {
@@ -23,6 +26,15 @@ export class NotFoundException extends DomainException<SnapFlowDomainExceptionCo
   constructor(message: string = 'Not Found') {
     super({
       code: SnapFlowDomainExceptionCode.NotFound,
+      message,
+    });
+  }
+}
+
+export class InternalServerException extends DomainException<SnapFlowDomainExceptionCodeType> {
+  constructor(message: string = 'Some error occurred') {
+    super({
+      code: SnapFlowDomainExceptionCode.InternalServerError,
       message,
     });
   }

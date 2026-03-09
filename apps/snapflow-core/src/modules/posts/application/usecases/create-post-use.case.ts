@@ -1,9 +1,8 @@
 ﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/core/domain-exception-codes';
 import { PostsRepository } from '../../infrastructure/posts-repository';
 import { PostStatus } from '@generated/prisma';
 import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';
+import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
 
 export type ValidatedFile = {
   fileId: string;
@@ -52,10 +51,7 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
     // }
 
     if (validatedFiles.length === 0) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Нельзя опубликовать пост без медиа',
-      });
+      throw new BadRequestException("You can't publish a post without media");
     }
 
     return await this.postsRepository.createPostWithMedia({

@@ -1,7 +1,10 @@
 ﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repository';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/core/domain-exception-codes';
-import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
+import {
+  BadRequestException,
+  InternalServerException,
+  NotFoundException,
+} from '../../../../common/exceptions/domain-exceptions';
 
 export class PublishPostCommand {
   constructor(
@@ -24,29 +27,17 @@ export class PublishPostUseCase implements ICommandHandler<PublishPostCommand> {
     const post: PostWithMedia | null = await this.postsRepository.findByIdAndUser(postId, userId);
 
     if (!post) {
-      throw new DomainException({
-        code: DomainExceptionCode.NotFound,
-        message: 'Пост не найден',
-      });
+      throw new NotFoundException('The post was not found');
     }
 
     if (post.status !== 'DRAFT') {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Можно опубликовать только черновик',
-      });
+      throw new BadRequestException('You can only publish a draft');
     }
 
     if (!post.postMedias.length) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Нельзя опубликовать пост без фото',
-      });
+      throw new BadRequestException("You can't post a post without a photo");
     }
 
-    throw new DomainException({
-      code: DomainExceptionCode.InternalServerError,
-      message: 'Не удалось опубликовать пост',
-    });
+    throw new InternalServerException("Couldn't publish the post");
   }
 }

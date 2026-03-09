@@ -1,8 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repository';
 import { UpdatePostInputDto } from '../../api/input-dto/update-post.input.dto';
-import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/core/domain-exception-codes';
+import { NotFoundException } from '../../../../common/exceptions/domain-exceptions';
 
 export class EditPostCommand {
   constructor(
@@ -22,10 +21,7 @@ export class EditPostUseCase implements ICommandHandler<EditPostCommand> {
 
     const post: PostWithMedia | null = await this.postsRepository.findByIdAndUser(postId, userId);
     if (!post) {
-      throw new DomainException({
-        code: DomainExceptionCode.NotFound,
-        message: 'Пост не найден',
-      });
+      throw new NotFoundException('The post was not found');
     }
   }
 }
