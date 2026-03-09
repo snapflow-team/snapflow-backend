@@ -1,8 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
-import type { IServerErrorResponseFactory } from '../../core/error-response-factory';
-import { serverErrorResponseFactory } from '../../core/error-response-factory';
-import { IErrorResponse } from '../../core/error-response';
+import type { IServerErrorResponseFactory } from '../../core';
+import { IErrorResponse, serverErrorResponseFactory } from '../../core';
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
@@ -35,13 +34,6 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
             ? (exception.message ?? 'Unknown exception occurred')
             : 'Some error occurred',
         );
-    // const responseBody: ErrorResponseDto = ErrorResponseDto.fromInternalError(
-    //   this.isExposeDetails ? request.url : null,
-    //   this.isExposeDetails ? request.method : null,
-    //   this.isExposeDetails
-    //     ? (exception.message ?? 'Unknown exception occurred')
-    //     : 'Some error occurred',
-    // );
 
     this.logException(exception, request, status);
 
