@@ -1,4 +1,9 @@
-import { CommonDomainExceptionCode, CommonDomainExceptionCodeType, DomainException, IExtension, } from '../core';
+import {
+  CommonDomainExceptionCode,
+  CommonDomainExceptionCodeType,
+  DomainException,
+  IExtension,
+} from '../core';
 
 export interface IRpcErrorResponse<TCode = CommonDomainExceptionCodeType> {
   timestamp: string;

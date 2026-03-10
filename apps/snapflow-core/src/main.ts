@@ -8,9 +8,6 @@ import { Configuration } from './setup/configuration/configuration';
 import { Express } from 'express';
 import { applyAppInitialization } from './setup/app-initialization';
 import { ValidationPipe } from '@nestjs/common';
-import { RpcValidationPipeFilter } from '../../../libs/exceptions/rpc/validation-rpc.filter';
-import { RpcDomainExceptionFilter } from '../../../libs/exceptions/rpc/domain-rpc.filter';
-import { GlobalRpcExceptionFilter } from '../../../libs/exceptions/rpc/global-rpc.filter';
 
 async function bootstrap() {
   const DynamicAppModule = await initSnapFlowCoreAppModule();
@@ -23,12 +20,6 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
     }),
-  );
-
-  app.useGlobalFilters(
-    new RpcValidationPipeFilter(),
-    new RpcDomainExceptionFilter(),
-    new GlobalRpcExceptionFilter(),
   );
 
   const configService: ConfigService<Configuration, true> = app.get(

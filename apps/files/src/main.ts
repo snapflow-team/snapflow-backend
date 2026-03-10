@@ -4,6 +4,7 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from './setup/configuration/configuration';
 import { MicroserviceSettings } from './setup/configuration/microservice.settings';
+import { applyAppInitialization } from './setup/app-initialization';
 
 async function bootstrap() {
   const appContext = await NestFactory.createApplicationContext(FilesModule);
@@ -19,6 +20,8 @@ async function bootstrap() {
       port: microserviceSettings.port,
     },
   });
+
+  applyAppInitialization(app);
 
   await app.listen();
 

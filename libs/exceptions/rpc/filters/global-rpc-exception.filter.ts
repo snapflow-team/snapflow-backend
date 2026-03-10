@@ -1,6 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { IRpcErrorResponse, rpcServerErrorResponseFactory } from '../rpc-exception-response';
 import { TcpContext } from '@nestjs/microservices';
+import { Observable } from 'rxjs';
 
 @Catch()
 export class GlobalRpcExceptionFilter implements ExceptionFilter {
@@ -9,11 +10,11 @@ export class GlobalRpcExceptionFilter implements ExceptionFilter {
     private readonly isExposeDetails: boolean = false,
   ) {}
 
-  catch(exception: Error, host: ArgumentsHost): IRpcErrorResponse<string> {
+  catch(exception: Error, host: ArgumentsHost): Observable<any> | any {
     const ctx: TcpContext = host.switchToRpc().getContext<TcpContext>();
     const pattern: string = ctx.getPattern();
 
-    let message: string = 'ISome error occurred';
+    let message: string = 'Some error occurred';
 
     if (this.isExposeDetails) {
       message = exception.message ?? 'Unknown exception occurred';
