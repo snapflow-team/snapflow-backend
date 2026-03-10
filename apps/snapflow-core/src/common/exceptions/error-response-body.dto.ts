@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { SnapFlowDomainExceptionCodeType } from './domain-exception-codes';
 import { SnapFlowDomainExceptionCode } from './domain-exception-codes';
-import { IExtension } from '../../../../../libs/exceptions/core/domain-exception';
-import { IErrorResponse } from '../../../../../libs/exceptions/core/error-response';
+import { IErrorResponse, IExtension } from '../../../../../libs/exceptions/core';
 
 export class ExtensionsDto implements IExtension {
   @ApiProperty({
@@ -47,23 +46,4 @@ export class ErrorResponseDto implements IErrorResponse<SnapFlowDomainExceptionC
 
   @ApiProperty({ isArray: true })
   extensions: ExtensionsDto[];
-
-  private constructor(props: ErrorResponseDto) {
-    Object.assign(this, props);
-  }
-
-  static fromInternalError(
-    requestUrl: string | null,
-    requestMethod: string | null,
-    message: string,
-  ): ErrorResponseDto {
-    return new ErrorResponseDto({
-      timestamp: new Date().toISOString(),
-      path: requestUrl,
-      method: requestMethod,
-      message,
-      code: SnapFlowDomainExceptionCode.InternalServerError,
-      extensions: [],
-    });
-  }
 }
