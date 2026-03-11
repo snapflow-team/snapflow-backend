@@ -1,6 +1,6 @@
 ﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository } from '../../infrastructure/posts-repository';
-import { DomainException, DomainExceptionCode } from '../../../../../../../libs/exceptions/http';
+import { NotFoundException } from '../../../../common/exceptions/domain-exceptions';
 
 export class DeletePostCommand {
   constructor(
@@ -17,10 +17,7 @@ export class DeletePostUseCase implements ICommandHandler<DeletePostCommand> {
     const isDeleted: boolean = await this.postsRepository.deletePost(postId, userId);
 
     if (!isDeleted) {
-      throw new DomainException({
-        code: DomainExceptionCode.NotFound,
-        message: 'Пост не найден',
-      });
+      throw new NotFoundException('Post not found');
     }
   }
 }

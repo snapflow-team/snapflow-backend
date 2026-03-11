@@ -2,7 +2,6 @@
 import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repository';
 
 import { PostStatus } from '@generated/prisma';
-import { DomainException, DomainExceptionCode } from '../../../../../../../libs/exceptions/http';
 import {
   BadRequestException,
   InternalServerException,

@@ -1,7 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repository';
 import { UpdatePostInputDto } from '../../api/input-dto/update-post.input.dto';
-import { NotFoundException } from '../../../../common/exceptions/domain-exceptions';
+import {
+  InternalServerException,
+  NotFoundException,
+} from '../../../../common/exceptions/domain-exceptions';
+import { InternalServerErrorException } from '@nestjs/common';
 
 export class EditPostCommand {
   constructor(
@@ -24,10 +28,7 @@ export class EditPostUseCase implements ICommandHandler<EditPostCommand> {
     const isUpdated: boolean = await this.postsRepository.updatePost(postId, userId, dto);
 
     if (!isUpdated) {
-      throw new DomainException({
-        code: DomainExceptionCode.InternalServerError,
-        message: 'Не удалось обновить пост',
-      });
+      throw new InternalServerException('Failed to update post');
     }
   }
 }
