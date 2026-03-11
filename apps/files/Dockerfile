@@ -24,12 +24,12 @@ RUN pnpm install --frozen-lockfile
 COPY --chown=node . .
 
 # 🔥 5️⃣ prisma generate — ОБЯЗАТЕЛЬНО
-RUN #pnpm run prisma:generate:prod:${SERVICE}
+RUN pnpm run prisma:generate:prod:${SERVICE}
 RUN pnpm run build:${SERVICE} && cp -r apps/files/generated apps/files/dist/
 
 
 # 6️⃣ build
-RUN pnpm run build:${SERVICE}
+#RUN pnpm run build:${SERVICE}
 
 EXPOSE ${PORT}
 
