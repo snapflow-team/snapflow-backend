@@ -7,20 +7,11 @@ import { EnvironmentSettings } from './setup/configuration/environment-settings'
 import { Configuration } from './setup/configuration/configuration';
 import { Express } from 'express';
 import { applyAppInitialization } from './setup/app-initialization';
-import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const DynamicAppModule = await initSnapFlowCoreAppModule();
 
   const app = await NestFactory.create<NestExpressApplication>(DynamicAppModule);
-
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-      whitelist: true,
-      forbidNonWhitelisted: true,
-    }),
-  );
 
   const configService: ConfigService<Configuration, true> = app.get(
     ConfigService<Configuration, true>,
