@@ -14,12 +14,12 @@ pipeline {
         DOCKER_BUILD_NAME = "${env.REGISTRY_HOSTNAME}/${env.PROJECT}:${env.IMAGE_NAME}"
     }
 
-//     stages {
-//         stage('Clone repository') {
-//             steps {
-//                 checkout scm
-//             }
-//         }
+    stages {
+        stage('Clone repository') {
+            steps {
+                checkout scm
+            }
+        }
 //         stage('Unit tests') {
 //             steps {
 //                 script {
