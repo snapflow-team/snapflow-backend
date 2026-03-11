@@ -1,10 +1,14 @@
-import { IsEnum, IsNumber, Max } from 'class-validator';
 import { MimeType } from './mime-type.enum';
+import { ApiProperty } from '@nestjs/swagger';
 
-export interface GenerateUploadUrlRequest {
-  userId: number;
+export interface UploadFileRequest {
   mimeType: MimeType;
   size: number;
+}
+
+export interface GenerateUploadUrlsRequest {
+  userId: number;
+  files: UploadFileRequest[];
 }
 
 export interface GenerateUploadUrlResponse {
@@ -12,16 +16,19 @@ export interface GenerateUploadUrlResponse {
   fileId: string;
 }
 
-export class GenerateUploadUrlInputDto implements GenerateUploadUrlRequest {
-  @IsNumber()
-  userId: number;
+// TODO Вынести в files
 
-  @IsEnum(MimeType)
-  mimeType: MimeType;
-
-  @IsNumber()
-  @Max(20 * 1024 * 1024, {
-    message: `The maximum file size is 20 MB`,
+export class GenerateUploadUrlViewDto implements GenerateUploadUrlResponse {
+  @ApiProperty({
+    format: 'uri',
+    description: 'Подписанная ссылка для загрузки файла',
+    example: 'https://storage/...signed-url',
   })
-  size: number;
+  uploadUrl: string;
+
+  @ApiProperty({
+    format: 'uuid',
+    description: 'Идентификатор файла',
+  })
+  fileId: string;
 }

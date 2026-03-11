@@ -1,18 +1,19 @@
-import { IsNumber, IsUUID } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export interface ConfirmUploadRequest {
   userId: number;
-  fileId: string;
+  fileIds: string[];
 }
 
 export interface ConfirmUploadResponse {
   success: boolean;
 }
 
-export class ConfirmUploadInputDto implements ConfirmUploadRequest {
-  @IsNumber()
-  userId: number;
-
-  @IsUUID(4)
-  fileId: string;
+// TODO Вынести в files
+export class ConfirmUploadViewDto implements ConfirmUploadResponse {
+  @ApiProperty({
+    example: true,
+    description: 'Флаг успешного подтверждения загрузки',
+  })
+  success: boolean;
 }

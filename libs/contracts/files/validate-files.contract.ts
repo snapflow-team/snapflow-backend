@@ -1,19 +1,16 @@
-import { IsArray, IsNumber, IsUUID } from 'class-validator';
-
 export interface ValidateFilesRequest {
   userId: number;
   fileIds: string[];
 }
 
-export interface ValidateFilesResponse {
-  validFileIds: string[];
+export interface ValidatedFile {
+  fileId: string;
+  url: string;
+  mimeType: string;
+  size: number;
 }
 
-export class ValidateFilesInputDto implements ValidateFilesRequest {
-  @IsNumber()
-  userId: number;
-
-  @IsArray()
-  @IsUUID(4, { each: true })
-  fileIds: string[];
+export interface ValidateFilesResponse {
+  valid: boolean;
+  files: ValidatedFile[];
 }
