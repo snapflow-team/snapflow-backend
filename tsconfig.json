@@ -23,10 +23,10 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "@generated/prisma": [
-        "apps/files/generated/prisma"
+        "apps/snapflow-core/generated/prisma"
       ],
       "@generated/files/prisma": [
-        "apps/snapflow-core/generated/prisma"
+        "apps/files/generated/prisma"
       ],
       "@libs/common": [
         "libs/common/src"
