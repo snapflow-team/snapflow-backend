@@ -44,6 +44,7 @@ import { PostsRepository } from '../posts/infrastructure/posts-repository';
 import { PostsController } from '../posts/api/posts.controller';
 import { PostsQueryRepository } from '../posts/infrastructure/posts.query-repository';
 import { GetPostQueryHandler } from '../posts/application/queries/get-post.query-handler';
+import { GetProfilePostsQueryHandler } from '../posts/application/queries/get-profile-posts.query-handler';
 import { CreatePostUseCase } from '../posts/application/usecases/create-post-use.case';
 import { UpdateProfileUseCase } from './users/profile/application/usecases/update-profile.usecase';
 import { ProfileController } from './users/profile/api/profile.controller';
@@ -52,8 +53,10 @@ import { GetProfileQueryHandler } from './users/profile/application/queries/get-
 import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
 import { EmailModule } from '../emails/email-module';
 import { EditPostUseCase } from '../posts/application/usecases/edit-post.use.case';
+import { DeletePostUseCase } from '../posts/application/usecases/delete-post.use.case';
 import { FilesClientModule } from '../integrations/files/files-client.module';
 import { FilesClient } from '../integrations/files/files.client';
+import { FilesMediaController } from '../integrations/files/api/files-media.controller';
 
 const controllers = [
   AuthController,
@@ -61,6 +64,7 @@ const controllers = [
   OAuthController,
   PostsController,
   ProfileController,
+  FilesMediaController,
 ];
 const useCases = [
   RegisterUserUseCase,
@@ -80,11 +84,13 @@ const useCases = [
   PublishPostUseCase,
   UpdateProfileUseCase,
   EditPostUseCase,
+  DeletePostUseCase,
 ];
 const queries = [
   GetMeQueryHandler,
   GetAllSessionsQueryHandler,
   GetPostQueryHandler,
+  GetProfilePostsQueryHandler,
   GetProfileQueryHandler,
 ];
 const services = [

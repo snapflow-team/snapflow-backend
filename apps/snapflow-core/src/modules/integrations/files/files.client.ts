@@ -6,8 +6,8 @@ import {
   ConfirmUploadRequest,
   ConfirmUploadResponse,
   FilesRpcCommand,
-  GenerateUploadUrlRequest,
   GenerateUploadUrlResponse,
+  GenerateUploadUrlsRequest,
   ValidateFilesRequest,
   ValidateFilesResponse,
 } from '../../../../../../libs/contracts/files';
@@ -16,9 +16,11 @@ import {
 export class FilesClient {
   constructor(@Inject(SERVICES.FILES) private readonly client: ClientProxy) {}
 
-  async generateUploadUrl(payload: GenerateUploadUrlRequest): Promise<GenerateUploadUrlResponse> {
+  async generateUploadUrl(
+    payload: GenerateUploadUrlsRequest,
+  ): Promise<GenerateUploadUrlResponse[]> {
     return firstValueFrom(
-      this.client.send<GenerateUploadUrlResponse>(
+      this.client.send<GenerateUploadUrlResponse[]>(
         { cmd: FilesRpcCommand.GenerateUploadUrl },
         payload,
       ),
