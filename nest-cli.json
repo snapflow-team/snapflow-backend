@@ -12,7 +12,10 @@
         "options": {
           "classValidatorShim": true,
           "introspectComments": true,
-          "dtoFileNameSuffix": [".dto.ts", ".entity.ts"]
+          "dtoFileNameSuffix": [
+            ".dto.ts",
+            ".entity.ts"
+          ]
         }
       }
     ]
@@ -35,7 +38,10 @@
       "entryFile": "main",
       "sourceRoot": "apps/files/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/files/tsconfig.app.json"
+        "tsConfigPath": "apps/files/tsconfig.app.json",
+        "webpackResolveAliases": {
+          "@generated/files/prisma": "./apps/files/generated/prisma"
+        }
       }
     },
     "snapflow-core": {

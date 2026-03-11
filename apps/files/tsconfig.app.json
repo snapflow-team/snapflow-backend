@@ -8,12 +8,18 @@
       ],
       "@generated/prisma/*": [
         "./generated/prisma/*"
+      ],
+      "@generated/files/prisma": [
+        "./generated/prisma"
+      ],
+      "@generated/files/prisma/*": [
+        "./generated/prisma/*"
       ]
     },
-    "moduleResolution": "node",
-    "declaration": false,
-    "outDir": "../../dist/apps/files"
+    "moduleResolution": "bundler"
   },
+  "outDir": "../../dist/apps/files",
+  "declaration": false,
   "include": [
     "src/**/*"
   ],

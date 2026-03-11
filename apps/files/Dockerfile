@@ -25,7 +25,10 @@ COPY --chown=node . .
 
 # 🔥 5️⃣ prisma generate — ОБЯЗАТЕЛЬНО
 RUN pnpm run prisma:generate:prod:${SERVICE}
-RUN pnpm run build:${SERVICE} && cp -r apps/files/generated apps/files/dist/
+RUN pnpm run build:${SERVICE}
+RUN mkdir -p apps/files/dist/generated/files && \
+    cp -r apps/files/generated/prisma/* apps/files/dist/generated/files/prisma/
+es/generated apps/files/dist/
 
 
 # 6️⃣ build
