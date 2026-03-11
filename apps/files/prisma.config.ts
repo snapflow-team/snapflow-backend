@@ -1,6 +1,6 @@
 import { defineConfig } from '@prisma/config';
 import { config } from 'dotenv';
-import { loadEnv } from '../snapflow-core/src/setup/configuration/configuration';
+import { loadEnv } from './src/setup/configuration/configuration';
 
 config({
   path: loadEnv(),
