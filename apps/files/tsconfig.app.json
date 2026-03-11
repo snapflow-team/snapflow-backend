@@ -1,9 +1,39 @@
+//{
+//  "extends": "../../tsconfig.json",
+//  "compilerOptions": {
+//    "declaration": false,
+//    "outDir": "../../dist/apps/files"
+//  },
+//  "include": ["src/**/*"],
+//  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+//}
+
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "declaration": false,
-    "outDir": "../../dist/apps/files"
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "paths": {
+      "@generated/prisma": [
+        "./generated/prisma"
+      ],
+      "@generated/*": [
+        "./generated/*"
+      ],
+      "@libs/*": [
+        "../../libs/*/src"
+      ]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "**/*spec.ts"
+  ]
 }
+
