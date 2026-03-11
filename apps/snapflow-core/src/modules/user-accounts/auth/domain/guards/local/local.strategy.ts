@@ -3,11 +3,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import { UserContextDto } from '../dto/user-context.dto';
 import { Strategy } from 'passport-local';
 import { ConfirmationStatus } from '@generated/prisma';
-import { DomainException } from '../../../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 import { UsersRepository } from '../../../../users/infrastructure/users.repository';
 import { CryptoService } from '../../../../../../../../../libs/common/services/crypto.service';
 import { UserWithEmailConfirmation } from '../../../../users/types/user-with-confirmation.type';
+import { UnauthorizedException } from '../../../../../../common/exceptions/domain-exceptions';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
@@ -23,10 +22,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
       await this.usersRepository.findUserByEmailWithEmailConfirmation(email);
 
     if (!user || !user.password) {
-      throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
-        message: 'Invalid email or password',
-      });
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     const isPasswordValid: boolean = await this.cryptoService.comparePassword({
@@ -35,20 +31,14 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     });
 
     if (!isPasswordValid) {
-      throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
-        message: 'Invalid email or password',
-      });
+      throw new UnauthorizedException('Invalid email or password');
     }
 
     if (
       !user.emailConfirmationCode ||
       user.emailConfirmationCode.confirmationStatus !== ConfirmationStatus.Confirmed
     ) {
-      throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
-        message: 'The user has not verified his email',
-      });
+      throw new UnauthorizedException('The user has not verified his email');
     }
 
     return { id: user.id };

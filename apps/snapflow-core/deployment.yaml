@@ -165,6 +165,16 @@ spec:
                 secretKeyRef:
                   name: snapflow-backend-production-config-secret
                   key: SWAGGER_PATH
+            - name: FILES_SERVICE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: FILES_SERVICE_HOST
+            - name: FILES_SERVICE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: FILES_SERVICE_PORT
             - name: ALLOWED_ORIGINS
               valueFrom:
                 secretKeyRef:

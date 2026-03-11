@@ -25,6 +25,9 @@
       "@generated/prisma": [
         "apps/snapflow-core/generated/prisma"
       ],
+      "@generated/files/prisma": [
+        "apps/files/generated/prisma"
+      ],
       "@libs/common": [
         "libs/common/src"
       ],

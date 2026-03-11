@@ -3,10 +3,9 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AuthTokenService } from '../../../../../../../../libs/common/services/auth-token.service';
 import { SessionsRepository } from '../../sessions/infrastructure/sessions.repository';
 import { Prisma, Session } from '@generated/prisma';
-import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
 import { PayloadRefreshToken } from '../types/payload-refresh-token.type';
 import { AuthTokens } from '../../domain/types/auth-tokens.type';
+import { UnauthorizedException } from '../../../../../common/exceptions/domain-exceptions';
 
 export class RefreshTokenCommand {
   constructor(public readonly session: SessionContextDto) {}
@@ -25,10 +24,7 @@ export class RefreshTokenUseCase implements ICommandHandler<RefreshTokenCommand>
     const session: Session | null = await this.sessionsRepository.findByDeviceId(deviceId);
 
     if (!session || session.userId !== userId) {
-      throw new DomainException({
-        code: DomainExceptionCode.Unauthorized,
-        message: 'Unauthorized',
-      });
+      throw new UnauthorizedException();
     }
 
     const accessToken = this.authTokenService.generateAccessToken(userId);

@@ -1,7 +1,13 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiNoContentResponse, ApiOperation, } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiNoContentResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { UpdateProfileInputDto } from '../dto/input-dto/update-profile.input-dto';
-import { ErrorResponseDto } from '../../../../../../../../../libs/common/exceptions/dto/error-response-body.dto';
+import { ErrorResponseDto } from '../../../../../../common/exceptions/error-response-body.dto';
 
 export function ApiUpdateProfile() {
   return applyDecorators(

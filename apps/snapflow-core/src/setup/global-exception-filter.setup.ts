@@ -1,10 +1,16 @@
 import { INestApplication } from '@nestjs/common';
-import { ValidationExceptionFilter } from '../../../../libs/common/exceptions/filters/validation-http-exception.filter';
-import { DomainHttpExceptionsFilter } from '../../../../libs/common/exceptions/filters/domain-http-exceptions.filter';
-import { GlobalExceptionsFilter } from '../../../../libs/common/exceptions/filters/global-http-exceptions.filter';
+import {
+  DomainHttpExceptionsFilter,
+  GlobalExceptionsFilter,
+  ValidationExceptionFilter,
+} from '../../../../libs/exceptions/http/filters';
+import { SnapFlowDomainExceptionCodeMapper } from '../common/exceptions/snapflow-domain-exception-mapper';
+import { SnapFlowDomainExceptionCodeType } from '../common/exceptions/domain-exception-codes';
 
 export function globalExceptionFilterSetup(app: INestApplication, isExposeDetails: boolean) {
+  const mapper: SnapFlowDomainExceptionCodeMapper = app.get(SnapFlowDomainExceptionCodeMapper);
+
   app.useGlobalFilters(new GlobalExceptionsFilter(isExposeDetails));
-  app.useGlobalFilters(new DomainHttpExceptionsFilter());
+  app.useGlobalFilters(new DomainHttpExceptionsFilter<SnapFlowDomainExceptionCodeType>(mapper));
   app.useGlobalFilters(new ValidationExceptionFilter());
 }

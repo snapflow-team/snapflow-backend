@@ -1,9 +1,9 @@
 import { ConfigModule } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Provider } from '@nestjs/common';
-import { join } from 'path';
-import { DatabaseConfig } from '../../src/database/database.config';
+import { resolve } from 'path';
 import { PrismaService } from '../../src/database/prisma.service';
+import configuration, { validate } from '../../src/setup/configuration/configuration';
 
 /**
  * Хелпер для инициализации и очистки окружения интеграционных тестов.
@@ -17,22 +17,32 @@ export class IntegrationTestModuleHelper {
    * @returns Инициализированный `TestingModule`.
    */
   static async createTestingModule(providers: Provider[]): Promise<TestingModule> {
-    process.env.NODE_ENV = process.env.NODE_ENV ?? 'testing';
+    process.env.NODE_ENV = 'testing';
     process.env.PRISMA_LOG_QUERIES = process.env.PRISMA_LOG_QUERIES ?? 'false';
+    process.env.FILES_SERVICE_HOST = process.env.FILES_SERVICE_HOST ?? '127.0.0.1';
+    process.env.FILES_SERVICE_PORT = process.env.FILES_SERVICE_PORT ?? '3002';
+    process.env.DATABASE_URL = String(
+      process.env.DATABASE_URL ??
+        'postgresql://postgres:1234@localhost:5432/dbtest?connection_timeout=10000',
+    );
+    const appRootPath = resolve(__dirname, '..', '..');
+    const customEnvPath = process.env.ENV_FILE_PATH?.trim();
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
+          load: [configuration],
+          validate,
           envFilePath: [
-            process.env.ENV_FILE_PATH?.trim() || '',
-            join(process.cwd(), 'env', '.env.testing.local'),
-            join(process.cwd(), 'env', '.env.testing'),
-            join(process.cwd(), 'env', '.env.production'),
+            customEnvPath ? resolve(process.cwd(), customEnvPath) : '',
+            resolve(appRootPath, 'env', '.env.testing.local'),
+            resolve(appRootPath, 'env', '.env.testing'),
+            resolve(appRootPath, 'env', '.env'),
           ],
         }),
       ],
-      providers: [DatabaseConfig, PrismaService, ...providers],
+      providers: [PrismaService, ...providers],
     }).compile();
 
     await module.init();

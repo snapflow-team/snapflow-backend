@@ -26,7 +26,7 @@ import { AuthTokenService } from '../../../../../libs/common/services/auth-token
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
-import { RecaptchaBody } from '../../types/recaptcha.types';
+import { RecaptchaBody } from './types/recaptcha.types';
 import { UserAccountsConfigModule } from './config/user-accounts.config-module';
 import { SessionsCleanupService } from './auth/sessions/application/services/sessions-cleanup.service';
 import { GithubStrategy } from './auth/domain/guards/github/github.strategy';
@@ -39,14 +39,33 @@ import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/
 import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
 import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
 import { SessionsController } from './auth/sessions/api/sessions.controller';
+import { PublishPostUseCase } from '../posts/application/usecases/publish-post.use.case';
+import { PostsRepository } from '../posts/infrastructure/posts-repository';
+import { PostsController } from '../posts/api/posts.controller';
+import { PostsQueryRepository } from '../posts/infrastructure/posts.query-repository';
+import { GetPostQueryHandler } from '../posts/application/queries/get-post.query-handler';
+import { GetProfilePostsQueryHandler } from '../posts/application/queries/get-profile-posts.query-handler';
+import { CreatePostUseCase } from '../posts/application/usecases/create-post-use.case';
 import { UpdateProfileUseCase } from './users/profile/application/usecases/update-profile.usecase';
 import { ProfileController } from './users/profile/api/profile.controller';
 import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
 import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
 import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
 import { EmailModule } from '../emails/email-module';
+import { EditPostUseCase } from '../posts/application/usecases/edit-post.use.case';
+import { DeletePostUseCase } from '../posts/application/usecases/delete-post.use.case';
+import { FilesClientModule } from '../integrations/files/files-client.module';
+import { FilesClient } from '../integrations/files/files.client';
+import { FilesMediaController } from '../integrations/files/api/files-media.controller';
 
-const controllers = [AuthController, SessionsController, OAuthController, ProfileController];
+const controllers = [
+  AuthController,
+  SessionsController,
+  OAuthController,
+  PostsController,
+  ProfileController,
+  FilesMediaController,
+];
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
@@ -61,10 +80,21 @@ const useCases = [
   RefreshTokenUseCase,
   DeleteSessionByDeviceUseCase,
   DeleteActiveSessionsUseCase,
+  CreatePostUseCase,
+  PublishPostUseCase,
   UpdateProfileUseCase,
+  EditPostUseCase,
+  DeletePostUseCase,
 ];
-const queries = [GetMeQueryHandler, GetAllSessionsQueryHandler, GetProfileQueryHandler];
+const queries = [
+  GetMeQueryHandler,
+  GetAllSessionsQueryHandler,
+  GetPostQueryHandler,
+  GetProfilePostsQueryHandler,
+  GetProfileQueryHandler,
+];
 const services = [
+  FilesClient,
   DateService,
   CryptoService,
   UserUtilsService,
@@ -77,6 +107,8 @@ const repositories = [
   UsersQueryRepository,
   SessionsRepository,
   SessionQueryRepository,
+  PostsRepository,
+  PostsQueryRepository,
   ProfilesRepository,
   ProfilesQueryRepository,
 ];
@@ -86,6 +118,7 @@ const configs = [UserAccountsConfig];
 @Module({
   imports: [
     EmailModule,
+    FilesClientModule,
     GoogleRecaptchaModule.forRootAsync({
       imports: [UserAccountsConfigModule],
       inject: [UserAccountsConfig],
