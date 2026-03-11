@@ -2,13 +2,21 @@
 import { PostStatus, Prisma } from '@generated/prisma';
 import { PrismaService } from '../../../database/prisma.service';
 import { PostViewDto } from '../api/view-dto/post.view-dto';
-import { GetPostQuery, PostVisibility } from '../application/queries/get-post.query-handler';
+import { PostsPageViewDto } from '../api/view-dto/posts-page.view-dto';
+import { GetPostQuery } from '../application/queries/get-post.query-handler';
+import { PostVisibility } from '../enums/post-visibility.enum';
 
 const postInclude = Prisma.validator<Prisma.PostInclude>()({
   user: {
     select: {
       id: true,
       username: true,
+      profiles: {
+        where: { deletedAt: null },
+        select: {
+          id: true,
+        },
+      },
     },
   },
   postMedias: {
@@ -16,6 +24,7 @@ const postInclude = Prisma.validator<Prisma.PostInclude>()({
     orderBy: { position: 'asc' },
     select: {
       id: true,
+      fileId: true,
       url: true,
       mimeType: true,
       size: true,
@@ -29,6 +38,42 @@ export type PostWithInclude = Prisma.PostGetPayload<{ include: typeof postInclud
 @Injectable()
 export class PostsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findProfilePublicPosts(params: {
+    userId: number;
+    pageNumber: number;
+    pageSize: number;
+  }): Promise<PostsPageViewDto> {
+    const { userId, pageNumber, pageSize } = params;
+    const skip = (pageNumber - 1) * pageSize;
+
+    const where: Prisma.PostWhereInput = {
+      deletedAt: null,
+      status: PostStatus.PUBLISHED,
+      userId,
+    };
+
+    const [items, totalCount] = await Promise.all([
+      this.prisma.post.findMany({
+        where,
+        include: postInclude,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+      this.prisma.post.count({ where }),
+    ]);
+
+    const pagesCount = Math.ceil(totalCount / pageSize);
+
+    return {
+      pagesCount,
+      page: pageNumber,
+      pageSize,
+      totalCount,
+      items: items.map((post) => PostViewDto.mapToView(post)),
+    };
+  }
 
   async getPost(query: GetPostQuery): Promise<PostViewDto | null> {
     const where: Prisma.PostWhereInput = this.buildWhere(query);

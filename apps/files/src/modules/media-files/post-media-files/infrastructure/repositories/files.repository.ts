@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { FileStatus, Prisma, File } from '@generated/files/prisma';
 import { PrismaService } from '../../../../../database/prisma.service';
-import { File, FileStatus, Prisma } from '../../../../../../generated/prisma/index';
-import FileCreateInput = Prisma.FileCreateInput;
 
 @Injectable()
 export class FilesRepository {
   constructor(public readonly prisma: PrismaService) {}
 
-  async createPending(data: FileCreateInput): Promise<void> {
+  async createPending(data: Prisma.FileCreateInput): Promise<void> {
     await this.prisma.file.create({
       data: {
         id: data.id,
@@ -26,14 +25,37 @@ export class FilesRepository {
     });
   }
 
-  async confirmUpload(fileId: string) {
+  async confirmUpload(fileId: string): Promise<File | null> {
     return this.prisma.file.update({
       where: { id: fileId },
       data: { status: FileStatus.UPLOADED },
     });
   }
 
+  async confirmManyUploads(fileIds: string[]): Promise<void> {
+    await this.prisma.file.updateMany({
+      where: {
+        id: {
+          in: fileIds,
+        },
+      },
+      data: {
+        status: FileStatus.UPLOADED,
+      },
+    });
+  }
+
   async findManyByIdsAndUserId(userId: number, fileIds: string[]): Promise<File[]> {
+    return this.prisma.file.findMany({
+      where: {
+        id: { in: fileIds },
+        userId,
+        deletedAt: null,
+      },
+    });
+  }
+
+  async findManyUploadedByIdsAndUserId(userId: number, fileIds: string[]): Promise<File[]> {
     return this.prisma.file.findMany({
       where: {
         id: { in: fileIds },

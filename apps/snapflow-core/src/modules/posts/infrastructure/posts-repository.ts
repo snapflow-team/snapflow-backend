@@ -76,4 +76,13 @@ export class PostsRepository {
     });
     return result.count === 1;
   }
+
+  async deletePost(id: number, userId: number): Promise<boolean> {
+    const result: BatchPayload = await this.prisma.post.updateMany({
+      where: { id, userId, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+
+    return result.count === 1;
+  }
 }
