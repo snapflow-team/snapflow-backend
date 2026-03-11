@@ -1,12 +1,12 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import {
-  ConfirmUploadInputDto,
+import { FilesRpcCommand } from '../../../../../../../libs/contracts/files';
+import type {
+  GenerateUploadUrlsRequest,
+  ConfirmUploadRequest,
   ConfirmUploadResponse,
-  FilesRpcCommand,
-  GenerateUploadUrlInputDto,
   GenerateUploadUrlResponse,
-  ValidateFilesInputDto,
+  ValidateFilesRequest,
   ValidateFilesResponse,
 } from '../../../../../../../libs/contracts/files';
 import { CommandBus } from '@nestjs/cqrs';
@@ -21,15 +21,15 @@ export class PostsMediaController {
   @MessagePattern({ cmd: FilesRpcCommand.GenerateUploadUrl })
   async generateUploadUrl(
     @Payload()
-    data: GenerateUploadUrlInputDto,
-  ): Promise<GenerateUploadUrlResponse> {
+    data: GenerateUploadUrlsRequest,
+  ): Promise<GenerateUploadUrlResponse[]> {
     return this.commandBus.execute(new GeneratedUploadUrlCommand(data));
   }
 
   @MessagePattern({ cmd: FilesRpcCommand.ConfirmUpload })
   async confirmUpload(
     @Payload()
-    data: ConfirmUploadInputDto,
+    data: ConfirmUploadRequest,
   ): Promise<ConfirmUploadResponse> {
     await this.commandBus.execute(new ConfirmUploadCommand(data));
     return { success: true };
@@ -38,7 +38,7 @@ export class PostsMediaController {
   @MessagePattern({ cmd: FilesRpcCommand.ValidateFiles })
   async validateFiles(
     @Payload()
-    data: ValidateFilesInputDto,
+    data: ValidateFilesRequest,
   ): Promise<ValidateFilesResponse> {
     return this.commandBus.execute(new ValidateFilesCommand(data));
   }
