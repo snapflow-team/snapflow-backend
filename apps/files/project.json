@@ -1,7 +1,7 @@
 {
   "targets": {
     "build": {
-      "executor": "@nestjs/builders:webpack",
+      "executor": "@nestjs/cli:build",
       "options": {
         "tsConfig": "apps/files/tsconfig.app.json"
       }
