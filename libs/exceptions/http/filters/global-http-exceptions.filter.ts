@@ -1,10 +1,14 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ErrorResponseDto } from '../../../../apps/snapflow-core/src/common/exceptions/error-response-body.dto';
+import type { IServerErrorResponseFactory } from '../../core';
+import { IErrorResponse, serverErrorResponseFactory } from '../../core';
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly isExposeDetails: boolean) {}
+  constructor(
+    private readonly isExposeDetails: boolean,
+    private readonly customFactory?: IServerErrorResponseFactory<string>,
+  ) {}
 
   catch(exception: Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -15,13 +19,21 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
 
     if (exception instanceof HttpException) status = exception.getStatus();
     // todo: добавить возможность переопределить фабрику формирования ответа
-    const responseBody: ErrorResponseDto = ErrorResponseDto.fromInternalError(
-      this.isExposeDetails ? request.url : null,
-      this.isExposeDetails ? request.method : null,
-      this.isExposeDetails
-        ? (exception.message ?? 'Unknown exception occurred')
-        : 'Some error occurred',
-    );
+    const responseBody: IErrorResponse<string> = this.customFactory
+      ? this.customFactory(
+          this.isExposeDetails ? request.url : null,
+          this.isExposeDetails ? request.method : null,
+          this.isExposeDetails
+            ? (exception.message ?? 'Unknown exception occurred')
+            : 'Some error occurred',
+        )
+      : serverErrorResponseFactory(
+          this.isExposeDetails ? request.url : null,
+          this.isExposeDetails ? request.method : null,
+          this.isExposeDetails
+            ? (exception.message ?? 'Unknown exception occurred')
+            : 'Some error occurred',
+        );
 
     this.logException(exception, request, status);
 

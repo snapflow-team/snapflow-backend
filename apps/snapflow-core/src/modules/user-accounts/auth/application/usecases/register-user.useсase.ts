@@ -4,11 +4,11 @@ import { RegistrationUserApplicationDto } from '../../../users/application/dto/r
 import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
-import { ValidationException } from '../../../../../../../../libs/exceptions/http/validation-exception';
 import { ConfirmationStatus, User } from '@generated/prisma';
 import { ExpirationTime } from '../../enums/expiration-time.enum';
 import { ProfilesRepository } from '../../../users/profile/infrastructure/profiles.repository';
 import { PrismaService } from '../../../../../database/prisma.service';
+import { ValidationException } from '../../../../../../../../libs/exceptions/core';
 
 export class RegisterUserCommand {
   constructor(public readonly dto: RegistrationUserApplicationDto) {}

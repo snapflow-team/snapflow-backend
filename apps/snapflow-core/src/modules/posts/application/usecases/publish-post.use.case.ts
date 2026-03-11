@@ -3,6 +3,11 @@ import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repos
 
 import { PostStatus } from '@generated/prisma';
 import { DomainException, DomainExceptionCode } from '../../../../../../../libs/exceptions/http';
+import {
+  BadRequestException,
+  InternalServerException,
+  NotFoundException,
+} from '../../../../common/exceptions/domain-exceptions';
 
 export class PublishPostCommand {
   constructor(
@@ -25,29 +30,17 @@ export class PublishPostUseCase implements ICommandHandler<PublishPostCommand> {
     const post: PostWithMedia | null = await this.postsRepository.findByIdAndUser(postId, userId);
 
     if (!post) {
-      throw new DomainException({
-        code: DomainExceptionCode.NotFound,
-        message: 'Пост не найден',
-      });
+      throw new NotFoundException('The post was not found');
     }
 
     if (post.status !== PostStatus.DRAFT) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Можно опубликовать только черновик',
-      });
+      throw new BadRequestException('You can only publish a draft');
     }
 
     if (!post.postMedias.length) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Нельзя опубликовать пост без медиа',
-      });
+      throw new BadRequestException("You can't post a post without a photo");
     }
 
-    throw new DomainException({
-      code: DomainExceptionCode.InternalServerError,
-      message: 'Не удалось опубликовать пост',
-    });
+    throw new InternalServerException("Couldn't publish the post");
   }
 }

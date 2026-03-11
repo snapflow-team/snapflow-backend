@@ -1,12 +1,21 @@
-import {
-  DomainException,
-  DomainExceptionCode,
-  ErrorResponse,
-  Extension,
-} from '../../../../../libs/exceptions/http';
 import { ApiProperty } from '@nestjs/swagger';
+import type { SnapFlowDomainExceptionCodeType } from './domain-exception-codes';
+import { SnapFlowDomainExceptionCode } from './domain-exception-codes';
+import { IErrorResponse, IExtension } from '../../../../../libs/exceptions/core';
 
-export class ErrorResponseDto implements ErrorResponse {
+export class ExtensionsDto implements IExtension {
+  @ApiProperty({
+    example: 'email',
+  })
+  field: string;
+
+  @ApiProperty({
+    example: 'Invalid email format',
+  })
+  message: string;
+}
+
+export class ErrorResponseDto implements IErrorResponse<SnapFlowDomainExceptionCodeType> {
   @ApiProperty({
     example: '2026-02-09T12:34:56.789Z',
   })
@@ -30,49 +39,11 @@ export class ErrorResponseDto implements ErrorResponse {
   message: string;
 
   @ApiProperty({
-    enum: DomainExceptionCode,
-    example: DomainExceptionCode.ValidationError,
+    enum: Object.values(SnapFlowDomainExceptionCode),
+    example: SnapFlowDomainExceptionCode.ValidationError,
   })
-  code: DomainExceptionCode;
+  code: SnapFlowDomainExceptionCodeType;
 
-  @ApiProperty({
-    type: () => Extension,
-    isArray: true,
-    example: [{ field: 'email', message: 'Invalid email format' }],
-  })
-  extensions: Extension[];
-
-  private constructor(props: ErrorResponseDto) {
-    Object.assign(this, props);
-  }
-
-  static fromDomainException(
-    exception: DomainException,
-    requestUrl: string,
-    requestMethod: string,
-  ): ErrorResponseDto {
-    return new ErrorResponseDto({
-      timestamp: new Date().toISOString(),
-      path: requestUrl,
-      method: requestMethod,
-      message: exception.message,
-      code: exception.code,
-      extensions: exception.extensions ?? [],
-    });
-  }
-
-  static fromInternalError(
-    requestUrl: string | null,
-    requestMethod: string | null,
-    message: string,
-  ): ErrorResponseDto {
-    return new ErrorResponseDto({
-      timestamp: new Date().toISOString(),
-      path: requestUrl,
-      method: requestMethod,
-      message,
-      code: DomainExceptionCode.InternalServerError,
-      extensions: [],
-    });
-  }
+  @ApiProperty({ isArray: true })
+  extensions: ExtensionsDto[];
 }

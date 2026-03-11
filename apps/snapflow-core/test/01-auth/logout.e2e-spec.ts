@@ -12,8 +12,8 @@ import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-
 import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
-import { DomainExceptionCode } from '../../../../libs/exceptions/http/domain-exception-codes';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
+import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
 
 describe('AuthController - logout() (POST: /auth/logout)', () => {
   let appTestManager: AppTestManager;
@@ -94,7 +94,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
       path: `/${GLOBAL_PREFIX}/auth/logout`,
       method: 'POST',
       message: 'User is not authenticated',
-      code: DomainExceptionCode.Unauthorized,
+      code: SnapFlowDomainExceptionCode.Unauthorized,
       extensions: [],
     });
 
@@ -119,7 +119,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
       path: `/${GLOBAL_PREFIX}/auth/logout`,
       method: 'POST',
       message: 'User is not authenticated',
-      code: DomainExceptionCode.Unauthorized,
+      code: SnapFlowDomainExceptionCode.Unauthorized,
       extensions: [],
     });
 
@@ -147,7 +147,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
       path: `/${GLOBAL_PREFIX}/auth/logout`,
       method: 'POST',
       message: 'User is not authenticated',
-      code: DomainExceptionCode.Unauthorized,
+      code: SnapFlowDomainExceptionCode.Unauthorized,
       extensions: [],
     });
 
@@ -175,7 +175,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
       path: `/${GLOBAL_PREFIX}/auth/logout`,
       method: 'POST',
       message: 'User is not authenticated',
-      code: DomainExceptionCode.Unauthorized,
+      code: SnapFlowDomainExceptionCode.Unauthorized,
       extensions: [],
     });
 
@@ -200,7 +200,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
       path: `/${GLOBAL_PREFIX}/auth/logout`,
       method: 'POST',
       message: 'User is not authenticated',
-      code: DomainExceptionCode.Unauthorized,
+      code: SnapFlowDomainExceptionCode.Unauthorized,
       extensions: [],
     });
 
@@ -224,7 +224,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
       path: `/${GLOBAL_PREFIX}/auth/logout?refreshToken=${refreshToken}`,
       method: 'POST',
       message: 'User is not authenticated',
-      code: DomainExceptionCode.Unauthorized,
+      code: SnapFlowDomainExceptionCode.Unauthorized,
       extensions: [],
     });
 
@@ -263,7 +263,7 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
       path: `/${GLOBAL_PREFIX}/auth/logout`,
       method: 'POST',
       message: 'User is not authenticated',
-      code: DomainExceptionCode.Unauthorized,
+      code: SnapFlowDomainExceptionCode.Unauthorized,
       extensions: [],
     });
   });

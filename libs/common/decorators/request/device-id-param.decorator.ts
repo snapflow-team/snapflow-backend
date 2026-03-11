@@ -1,16 +1,12 @@
 import { Param, ParseUUIDPipe } from '@nestjs/common';
-import { DomainException } from '../../../exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../exceptions/http/domain-exception-codes';
+import { NotFoundException } from '../../../../apps/snapflow-core/src/common/exceptions/domain-exceptions';
 
+// todo: переместить в snapflow-core
 export function ValidatedDeviceId(paramName = 'deviceId'): ParameterDecorator {
   return Param(
     paramName,
     new ParseUUIDPipe({
-      exceptionFactory: () =>
-        new DomainException({
-          code: DomainExceptionCode.NotFound,
-          message: 'Session not found',
-        }),
+      exceptionFactory: () => new NotFoundException('Session not found'),
     }),
   );
 }

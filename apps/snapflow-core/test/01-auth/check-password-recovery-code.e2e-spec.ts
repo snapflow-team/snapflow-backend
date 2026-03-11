@@ -10,7 +10,7 @@ import { HttpStatus } from '@nestjs/common';
 import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
-import { DomainExceptionCode } from '../../../../libs/exceptions/http/domain-exception-codes';
+import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
 
 describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-password-recovery-code)', () => {
   let appTestManager: AppTestManager;
@@ -89,7 +89,7 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
       path: `/${GLOBAL_PREFIX}/auth/check-password-recovery-code`,
       method: 'POST',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'recoveryCode',
@@ -114,7 +114,7 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
       path: `/${GLOBAL_PREFIX}/auth/check-password-recovery-code`,
       method: 'POST',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'recoveryCode',
@@ -143,7 +143,7 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
       path: `/${GLOBAL_PREFIX}/auth/check-password-recovery-code`,
       method: 'POST',
       message: 'Recovery code has expired',
-      code: DomainExceptionCode.BadRequest,
+      code: SnapFlowDomainExceptionCode.BadRequest,
       extensions: [],
     });
   });

@@ -3,8 +3,7 @@ import { ProfileViewDto } from '../../api/dto/view-dto/profile.view-dto';
 import { ProfilesQueryRepository } from '../../infrastructure/query/profiles.query-repository';
 import { User } from '@generated/prisma';
 import { UsersRepository } from '../../../infrastructure/users.repository';
-import { DomainException } from '../../../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { NotFoundException } from '../../../../../../common/exceptions/domain-exceptions';
 
 export class GetProfileQuery {
   constructor(public readonly userId: number) {}
@@ -21,10 +20,7 @@ export class GetProfileQueryHandler implements IQueryHandler<GetProfileQuery, Pr
     const user: User | null = await this.usersRepository.findUserById(userId);
 
     if (!user) {
-      throw new DomainException({
-        code: DomainExceptionCode.NotFound,
-        message: `The user with ID (${userId}) does not exist`,
-      });
+      throw new NotFoundException(`The user with ID (${userId}) does not exist`);
     }
 
     return this.profilesQueryRepository.findProfileByUserId(userId);

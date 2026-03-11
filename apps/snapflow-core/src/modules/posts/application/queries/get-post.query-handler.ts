@@ -1,9 +1,8 @@
 ﻿import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/http/domain-exception-codes';
 import { PostsQueryRepository } from '../../infrastructure/posts.query-repository';
 import { PostViewDto } from '../../api/view-dto/post.view-dto';
 import { PostVisibility } from '../../enums/post-visibility.enum';
+import { BadRequestException, NotFoundException, } from '../../../../common/exceptions/domain-exceptions';
 
 export class GetPostQuery {
   constructor(
@@ -19,10 +18,7 @@ export class GetPostQueryHandler implements IQueryHandler<GetPostQuery> {
 
   async execute({ postId, postVisibility, userId }: GetPostQuery): Promise<PostViewDto> {
     if (postVisibility === PostVisibility.Owner && !userId) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Для owner-режима требуется userId',
-      });
+      throw new BadRequestException('The owner mode requires a userId');
     }
 
     const post: PostViewDto | null = await this.postsQueryRepository.getPost({
@@ -32,10 +28,7 @@ export class GetPostQueryHandler implements IQueryHandler<GetPostQuery> {
     });
 
     if (!post) {
-      throw new DomainException({
-        code: DomainExceptionCode.NotFound,
-        message: 'Пост не найден',
-      });
+      throw new NotFoundException('The post was not found');
     }
 
     return post;

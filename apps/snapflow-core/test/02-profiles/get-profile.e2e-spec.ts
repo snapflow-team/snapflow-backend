@@ -9,7 +9,7 @@ import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
 import { User } from '@generated/prisma';
-import { DomainExceptionCode } from '../../../../libs/exceptions/http/domain-exception-codes';
+import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
 
 describe('ProfileController - getProfile() (GET: /users/profile/:userId)', () => {
   let appTestManager: AppTestManager;
@@ -98,7 +98,7 @@ describe('ProfileController - getProfile() (GET: /users/profile/:userId)', () =>
       method: 'GET',
       extensions: [],
       message: `The user with ID (${nonExistingUserId}) does not exist`,
-      code: DomainExceptionCode.NotFound,
+      code: SnapFlowDomainExceptionCode.NotFound,
     });
   });
 
@@ -125,7 +125,7 @@ describe('ProfileController - getProfile() (GET: /users/profile/:userId)', () =>
       .expect(HttpStatus.NOT_FOUND);
 
     // 🔸 Проверяем сообщение
-    expect(res.body.code).toBe(DomainExceptionCode.NotFound);
+    expect(res.body.code).toBe(SnapFlowDomainExceptionCode.NotFound);
   });
 
   it('должен вернуть 400 если userId не число (ParseIntPipe)', async () => {

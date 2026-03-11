@@ -1,9 +1,8 @@
 ﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/http/domain-exception-codes';
 import { PostsRepository } from '../../infrastructure/posts-repository';
 import { PostStatus } from '@generated/prisma';
 import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';
+import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { ValidatedFile, ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
 
@@ -32,20 +31,14 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
       });
 
       if (!response.valid) {
-        throw new DomainException({
-          code: DomainExceptionCode.BadRequest,
-          message: 'Некоторые файлы недоступны или принадлежат другому пользователю',
-        });
+        throw new BadRequestException('Another user has some files');
       }
 
       validatedFiles = response.files;
     }
 
     if (validatedFiles.length === 0) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Пост должен содержать хотя бы одно медиа',
-      });
+      throw new BadRequestException("You can't publish a post without media");
     }
 
     return await this.postsRepository.createPostWithMedia({

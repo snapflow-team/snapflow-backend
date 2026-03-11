@@ -33,7 +33,7 @@
     "start:prod:files": "cross-env NODE_ENV=production node ./dist/apps/files/main.js",
     "start:debug:files": "cross-env NODE_ENV=development nest start files --debug --watch",
     "prisma:generate:files": "cross-env NODE_ENV=development npx prisma generate --config=./apps/files/prisma.config.ts",
-    "prisma:generate:prod:files": "cross-env NODE_ENV=production npx prisma generate --config=./apps/files/prisma.config.ts",
+    "prisma:generate:prod:files": "cross-env NODE_ENV=production npx prisma generate --schema=./apps/files/prisma/schema.prisma",
     "prisma:studio:files": "cross-env NODE_ENV=development npx prisma studio --config=./apps/files/prisma.config.ts",
     "prisma:reset:files": "cross-env NODE_ENV=development npx prisma migrate reset --config=./apps/files/prisma.config.ts",
     "prisma:deploy:prod:files": "cross-env NODE_ENV=production npx prisma migrate deploy --config=./apps/files/prisma.config.ts",

@@ -4,10 +4,9 @@ import { DateService } from '../../../../../../../../libs/common/services/date.s
 import { ConfirmationStatus } from '@generated/prisma';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
-import { DomainException } from '../../../../../../../../libs/exceptions/http/damain.exception';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
-import { ValidationException } from '../../../../../../../../libs/exceptions/http/validation-exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/http/domain-exception-codes';
+import { InternalServerException } from '../../../../../common/exceptions/domain-exceptions';
+import { ValidationException } from '../../../../../../../../libs/exceptions/core';
 
 export class RegistrationEmailResendingCommand {
   constructor(public readonly email: string) {}
@@ -41,10 +40,7 @@ export class RegistrationEmailResendingUseCase
 
     if (!emailConfirmationCode) {
       // TODO какой статус выкидывать в данном случае?
-      throw new DomainException({
-        code: DomainExceptionCode.InternalServerError,
-        message: 'Email confirmation request does not exist',
-      });
+      throw new InternalServerException('Email confirmation request does not exist');
     }
 
     if (emailConfirmationCode.confirmationStatus === ConfirmationStatus.Confirmed) {

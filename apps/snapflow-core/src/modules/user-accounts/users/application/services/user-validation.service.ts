@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from '../../infrastructure/users.repository';
-import { DomainException } from '../../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/http/domain-exception-codes';
 import { UserWithPasswordRecoveryCode } from '../../types/user-with-password-recovery.type';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
+import { BadRequestException } from '../../../../../common/exceptions/domain-exceptions';
 
 @Injectable()
 export class UserValidationService {
@@ -16,20 +15,14 @@ export class UserValidationService {
       await this.usersRepository.findUserByPasswordRecoveryCode(recoveryCode);
 
     if (!user || !user.passwordRecoveryCode) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Recovery code incorrect',
-      });
+      throw new BadRequestException('Recovery code incorrect');
     }
 
     if (
       user.passwordRecoveryCode.expirationDate &&
       this.dateService.isExpired(user.passwordRecoveryCode.expirationDate)
     ) {
-      throw new DomainException({
-        code: DomainExceptionCode.BadRequest,
-        message: 'Recovery code has expired',
-      });
+      throw new BadRequestException('Recovery code has expired');
     }
 
     return user;

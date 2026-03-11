@@ -3,8 +3,6 @@ import { UsersRepository } from '../../../users/infrastructure/users.repository'
 import { AuthTokenService } from '../../../../../../../../libs/common/services/auth-token.service';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { AuthAccount, ConfirmationStatus, Prisma, User } from '@generated/prisma';
-import { DomainException } from '../../../../../../../../libs/exceptions/http/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/exceptions/http/domain-exception-codes';
 import { UserUtilsService } from '../../../users/application/services/user-utils.service';
 import { AuthTokens } from '../../domain/types/auth-tokens.type';
 import { parseUserAgent } from '../../../../../../../../libs/common/utils/user-agent.parser';
@@ -13,6 +11,7 @@ import { SessionsRepository } from '../../sessions/infrastructure/sessions.repos
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
 import { PrismaService } from '../../../../../database/prisma.service';
 import { OAuthApplicationDto } from '../dto/oauth.application-dto';
+import { BadRequestException } from '../../../../../common/exceptions/domain-exceptions';
 
 export class OAuthCommand {
   constructor(public readonly dto: OAuthApplicationDto) {}
@@ -47,10 +46,7 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
       } else {
         // todo: что делать если нет email?
         if (!email) {
-          throw new DomainException({
-            code: DomainExceptionCode.BadRequest,
-            message: `${provider} user has no email`,
-          });
+          throw new BadRequestException(`${provider} user has no email`);
         }
 
         const existingUser: UserWithEmailConfirmation | null =

@@ -1,8 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ConfirmUploadApplicationDto } from '../dto/confirm-upload.application-dto';
 import { StorageService } from '../../infrastructure/storage/storage.service';
 import { FilesRepository } from '../../infrastructure/repositories/files.repository';
+import {
+  RpcBadRequestException,
+  RpcNotFoundException,
+} from '../../../../../common/exceptions/rpc-domain-exceptions';
 import { FileStatus } from '@generated/files/prisma';
 
 export class ConfirmUploadCommand {
@@ -21,7 +25,7 @@ export class ConfirmUploadUseCase implements ICommandHandler<ConfirmUploadComman
     const files = await this.filesRepository.findManyByIdsAndUserId(userId, fileIds);
 
     if (files.length !== fileIds.length) {
-      throw new NotFoundException('File not found');
+      throw new RpcNotFoundException('File not found');
     }
 
     for (const file of files) {
@@ -30,7 +34,7 @@ export class ConfirmUploadUseCase implements ICommandHandler<ConfirmUploadComman
       }
       const exist = await this.storageService.objectExists(file.key);
       if (!exist) {
-        throw new BadRequestException('The file was not uploaded to the storage');
+        throw new RpcBadRequestException('The file was not uploaded to the storage');
       }
     }
 
