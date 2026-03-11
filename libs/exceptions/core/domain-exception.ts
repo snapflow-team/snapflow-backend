@@ -5,7 +5,7 @@ export interface IExtension {
   message: string;
 }
 
-export interface IDomainExceptionProps<TCode = CommonDomainExceptionCodeType> {
+export interface IDomainExceptionProps<TCode> {
   code: TCode;
   message: string;
   extensions?: IExtension[];
