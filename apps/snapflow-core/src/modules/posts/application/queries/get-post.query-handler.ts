@@ -3,11 +3,8 @@ import { DomainException } from '../../../../../../../libs/exceptions/http/damai
 import { DomainExceptionCode } from '../../../../../../../libs/exceptions/http/domain-exception-codes';
 import { PostsQueryRepository } from '../../infrastructure/posts.query-repository';
 import { PostViewDto } from '../../api/view-dto/post.view-dto';
+import { PostVisibility } from '../../enums/post-visibility.enum';
 
-export enum PostVisibility {
-  Owner = 'owner',
-  Public = 'public',
-}
 export class GetPostQuery {
   constructor(
     public readonly postId: number,
@@ -20,15 +17,19 @@ export class GetPostQuery {
 export class GetPostQueryHandler implements IQueryHandler<GetPostQuery> {
   constructor(private readonly postsQueryRepository: PostsQueryRepository) {}
 
-  async execute(query: GetPostQuery): Promise<PostViewDto> {
-    if (query.postVisibility === PostVisibility.Owner && !query.userId) {
+  async execute({ postId, postVisibility, userId }: GetPostQuery): Promise<PostViewDto> {
+    if (postVisibility === PostVisibility.Owner && !userId) {
       throw new DomainException({
         code: DomainExceptionCode.BadRequest,
         message: 'Для owner-режима требуется userId',
       });
     }
 
-    const post: PostViewDto | null = await this.postsQueryRepository.getPost(query);
+    const post: PostViewDto | null = await this.postsQueryRepository.getPost({
+      postId,
+      postVisibility,
+      userId,
+    });
 
     if (!post) {
       throw new DomainException({
