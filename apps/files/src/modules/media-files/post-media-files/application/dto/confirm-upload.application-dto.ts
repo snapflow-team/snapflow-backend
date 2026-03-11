@@ -1,4 +1,4 @@
 export class ConfirmUploadApplicationDto {
   userId: number;
-  fileId: string;
+  fileIds: string[];
 }

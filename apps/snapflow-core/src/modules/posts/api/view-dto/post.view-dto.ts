@@ -58,7 +58,7 @@ export type PostViewSource = {
   description: string | null;
   status: 'DRAFT' | 'PUBLISHED';
   createdAt: Date;
-  user: { id: number; username: string };
+  user: { id: number; username: string; profiles: Array<{ id: number }> };
   postMedias: Array<{
     id: number;
     url: string;
@@ -84,9 +84,10 @@ export class PostViewDto {
 
   @ApiProperty({
     example: '12',
-    description: 'Id юзера',
+    nullable: true,
+    description: 'Id профиля автора',
   })
-  ownerId: number;
+  profileId: number | null;
 
   @ApiProperty({
     example: 'john_doe',
@@ -118,7 +119,7 @@ export class PostViewDto {
 
     dto.id = post.id;
     dto.description = post.description;
-    dto.ownerId = post.user.id;
+    dto.profileId = post.user.profiles[0]?.id ?? null;
     dto.username = post.user.username;
     dto.status = post.status;
     dto.createdAt = post.createdAt.toISOString();
