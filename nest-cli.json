@@ -38,10 +38,7 @@
       "entryFile": "main",
       "sourceRoot": "apps/files/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/files/tsconfig.app.json",
-        "webpackResolveAliases": {
-          "@generated/files/prisma": "./apps/files/generated/prisma"
-        }
+        "tsConfigPath": "apps/files/tsconfig.app.json"
       }
     },
     "snapflow-core": {

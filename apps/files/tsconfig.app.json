@@ -1,25 +1,9 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@generated/prisma": [
-        "./generated/prisma"
-      ],
-      "@generated/prisma/*": [
-        "./generated/prisma/*"
-      ],
-      "@generated/files/prisma": [
-        "./generated/prisma"
-      ],
-      "@generated/files/prisma/*": [
-        "./generated/prisma/*"
-      ]
-    },
-    "moduleResolution": "bundler"
+    "declaration": false,
+    "outDir": "../../dist/apps/files"
   },
-  "outDir": "../../dist/apps/files",
-  "declaration": false,
   "include": [
     "src/**/*"
   ],
