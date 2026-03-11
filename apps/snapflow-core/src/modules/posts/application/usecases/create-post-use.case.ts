@@ -4,17 +4,8 @@ import { DomainExceptionCode } from '../../../../../../../libs/exceptions/http/d
 import { PostsRepository } from '../../infrastructure/posts-repository';
 import { PostStatus } from '@generated/prisma';
 import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';
-
-export type ValidatedFile = {
-  fileId: string;
-  url: string;
-  mimeType: string;
-  size: number;
-};
-
-export type ValidateFilesResponse =
-  | { valid: true; files: ValidatedFile[] }
-  | { valid: false; files: [] };
+import { FilesClient } from '../../../integrations/files/files.client';
+import { ValidatedFile, ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
 
 export class CreatePostCommand {
   constructor(
@@ -27,34 +18,33 @@ export class CreatePostCommand {
 @CommandHandler(CreatePostCommand)
 export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
   constructor(
-    // @Inject('FILES_SERVICE') private readonly filesClient: ClientProxy,
+    private readonly filesClient: FilesClient,
     private readonly postsRepository: PostsRepository,
   ) {}
 
   async execute({ dto, userId, status }: CreatePostCommand): Promise<number> {
     let validatedFiles: ValidatedFile[] = [];
 
-    // if (dto.fileIds?.length > 0) {
-    //   const response: ValidateFilesResponse = await lastValueFrom(
-    //     this.filesClient
-    //       .send<ValidateFilesResponse>({ cmd: 'validate_files' }, { userId, fileIds: dto.fileIds })
-    //       .pipe(timeout(3000)),
-    //   );
-    //
-    //   if (!response.valid) {
-    //     throw new DomainException({
-    //       code: DomainExceptionCode.BadRequest,
-    //       message: 'Некоторые файлы недоступны или принадлежат другому пользователю',
-    //     });
-    //   }
-    //
-    //   validatedFiles = response.files;
-    // }
+    if (dto.fileIds?.length > 0) {
+      const response: ValidateFilesResponse = await this.filesClient.validateFiles({
+        userId,
+        fileIds: dto.fileIds,
+      });
+
+      if (!response.valid) {
+        throw new DomainException({
+          code: DomainExceptionCode.BadRequest,
+          message: 'Некоторые файлы недоступны или принадлежат другому пользователю',
+        });
+      }
+
+      validatedFiles = response.files;
+    }
 
     if (validatedFiles.length === 0) {
       throw new DomainException({
         code: DomainExceptionCode.BadRequest,
-        message: 'Нельзя опубликовать пост без медиа',
+        message: 'Пост должен содержать хотя бы одно медиа',
       });
     }
 

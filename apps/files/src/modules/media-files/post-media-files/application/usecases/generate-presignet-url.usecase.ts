@@ -22,23 +22,28 @@ export class GeneratedUploadUrlUseCase implements ICommandHandler<GeneratedUploa
   ) {}
 
   async execute({
-    dto: { userId, mimeType, size },
-  }: GeneratedUploadUrlCommand): Promise<GenerateUploadUrlResponse> {
+    dto: { userId, files },
+  }: GeneratedUploadUrlCommand): Promise<GenerateUploadUrlResponse[]> {
     const { postsMediaKeyPrefix }: S3Settings = this.configService.get<S3Settings>('s3Settings');
-    const fileId: string = this.cryptoService.generateUUID();
-    const ext: string = mimeType.split('/')[1];
-    const key: string = `${postsMediaKeyPrefix}/${userId}/${fileId}.${ext}`;
 
-    const uploadUrl: string = await this.storageService.getPresignedPutUrl(key, mimeType, size);
+    return Promise.all(
+      files.map(async ({ mimeType, size }) => {
+        const fileId: string = this.cryptoService.generateUUID();
+        const ext: string = mimeType.split('/')[1];
+        const key: string = `${postsMediaKeyPrefix}/${userId}/${fileId}.${ext}`;
 
-    await this.filesRepository.createPending({
-      id: fileId,
-      userId,
-      key,
-      mimeType,
-      size,
-    });
+        const uploadUrl: string = await this.storageService.getPresignedPutUrl(key, mimeType, size);
 
-    return { fileId, uploadUrl };
+        await this.filesRepository.createPending({
+          id: fileId,
+          userId,
+          key,
+          mimeType,
+          size,
+        });
+
+        return { fileId, uploadUrl };
+      }),
+    );
   }
 }

@@ -1,7 +1,8 @@
 ﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repository';
-import { DomainExceptionCode } from '../../../../../../../libs/exceptions/http/domain-exception-codes';
-import { DomainException } from '../../../../../../../libs/exceptions/http/damain.exception';
+
+import { PostStatus } from '@generated/prisma';
+import { DomainException, DomainExceptionCode } from '../../../../../../../libs/exceptions/http';
 
 export class PublishPostCommand {
   constructor(
@@ -30,7 +31,7 @@ export class PublishPostUseCase implements ICommandHandler<PublishPostCommand> {
       });
     }
 
-    if (post.status !== 'DRAFT') {
+    if (post.status !== PostStatus.DRAFT) {
       throw new DomainException({
         code: DomainExceptionCode.BadRequest,
         message: 'Можно опубликовать только черновик',
@@ -40,7 +41,7 @@ export class PublishPostUseCase implements ICommandHandler<PublishPostCommand> {
     if (!post.postMedias.length) {
       throw new DomainException({
         code: DomainExceptionCode.BadRequest,
-        message: 'Нельзя опубликовать пост без фото',
+        message: 'Нельзя опубликовать пост без медиа',
       });
     }
 

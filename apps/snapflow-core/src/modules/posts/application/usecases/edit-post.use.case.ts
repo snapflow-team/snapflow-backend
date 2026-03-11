@@ -16,15 +16,21 @@ export class EditPostCommand {
 export class EditPostUseCase implements ICommandHandler<EditPostCommand> {
   constructor(private readonly postsRepository: PostsRepository) {}
   async execute({ userId, postId, dto }: EditPostCommand): Promise<void> {
-    const isUpdated: boolean = await this.postsRepository.updatePost(postId, userId, dto);
-
-    if (isUpdated) return;
-
     const post: PostWithMedia | null = await this.postsRepository.findByIdAndUser(postId, userId);
+
     if (!post) {
       throw new DomainException({
         code: DomainExceptionCode.NotFound,
         message: 'Пост не найден',
+      });
+    }
+
+    const isUpdated: boolean = await this.postsRepository.updatePost(postId, userId, dto);
+
+    if (!isUpdated) {
+      throw new DomainException({
+        code: DomainExceptionCode.InternalServerError,
+        message: 'Не удалось обновить пост',
       });
     }
   }
