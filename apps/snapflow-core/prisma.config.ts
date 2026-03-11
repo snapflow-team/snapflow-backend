@@ -1,9 +1,9 @@
 import { defineConfig } from '@prisma/config';
 import { config } from 'dotenv';
-import { envFilePaths } from '../../env-file-paths';
+import { loadEnv } from './src/setup/configuration/configuration';
 
 config({
-  path: envFilePaths,
+  path: loadEnv(),
 });
 
 export default defineConfig({
