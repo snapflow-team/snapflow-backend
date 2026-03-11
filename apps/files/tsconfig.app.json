@@ -1,6 +1,16 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@generated/prisma": [
+        "./generated/prisma"
+      ],
+      "@generated/prisma/*": [
+        "./generated/prisma/*"
+      ]
+    },
+    "moduleResolution": "node",
     "declaration": false,
     "outDir": "../../dist/apps/files"
   },
