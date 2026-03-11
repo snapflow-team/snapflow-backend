@@ -1,6 +1,7 @@
 ﻿import { ApiProperty } from '@nestjs/swagger';
 import { PostViewDto } from './post.view-dto';
 
+//todo: почему пагинация только для постов?
 export class PostsPageViewDto {
   @ApiProperty({ example: 10 })
   pagesCount: number;

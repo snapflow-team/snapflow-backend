@@ -39,6 +39,7 @@ export type PostWithInclude = Prisma.PostGetPayload<{ include: typeof postInclud
 export class PostsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  // todo: что означает Profile в имени метода?
   async findProfilePublicPosts(params: {
     userId: number;
     pageNumber: number;

@@ -12,7 +12,7 @@ export class DeletePostCommand {
 @CommandHandler(DeletePostCommand)
 export class DeletePostUseCase implements ICommandHandler<DeletePostCommand> {
   constructor(private readonly postsRepository: PostsRepository) {}
-
+  //todo: почему не удаляем файл?
   async execute({ userId, postId }: DeletePostCommand): Promise<void> {
     const isDeleted: boolean = await this.postsRepository.deletePost(postId, userId);
 

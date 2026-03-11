@@ -21,21 +21,11 @@ export const applyAppInitialization = (app: INestApplication): void => {
   const envSetting: EnvironmentSettings =
     configService.get<EnvironmentSettings>('environmentSettings');
 
-  // app.enableCors();
   corsSetup(app, apiSettings.allowedOrigins);
-
-  // app.use(cookieParser());
   cookieSetup(app);
-
-  // setupValidationPipe(app)
   pipesSetup(app);
-
-  // app.setGlobalPrefix(GLOBAL_PREFIX);
   globalPrefixSetup(app);
-
   swaggerSetup(app, swaggerSettings, envSetting);
-
-  // setupExceptionFilters(app, apiSettings.SEND_INTERNAL_SERVER_ERROR_DETAILS);
   globalExceptionFilterSetup(app, apiSettings.sendInternalServerErrorDetails);
 
   if (envSetting.isDevelopment) {
