@@ -1,12 +1,10 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { Request, Response } from 'express';
 import type { IDomainCodeMapper, IErrorResponseFactory } from '../../core';
-import { CommonDomainExceptionCodeType, DomainException, errorResponseFactory, IErrorResponse, } from '../../core';
+import { DomainException, errorResponseFactory, IErrorResponse } from '../../core';
 
 @Catch(DomainException)
-export class DomainHttpExceptionsFilter<TCode = CommonDomainExceptionCodeType>
-  implements ExceptionFilter<DomainException<TCode>>
-{
+export class DomainHttpExceptionsFilter<TCode> implements ExceptionFilter<DomainException<TCode>> {
   constructor(
     private readonly codeToStatusMapper: IDomainCodeMapper<TCode>,
     private readonly customFactory?: IErrorResponseFactory<TCode>,
