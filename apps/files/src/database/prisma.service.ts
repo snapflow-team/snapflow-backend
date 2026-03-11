@@ -1,10 +1,10 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../../generated/prisma';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../setup/configuration/configuration';
 import { DatabaseSettings } from '../setup/configuration/database-settings';
+import { PrismaClient } from '@generated/files/prisma';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
@@ -30,6 +30,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       console.log('✅ Database connected successfully');
     } catch (error) {
       console.error('❌ Database connection failed:', error.message);
+
       process.exit(1);
     }
   }

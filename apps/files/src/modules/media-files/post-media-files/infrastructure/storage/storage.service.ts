@@ -25,7 +25,6 @@ export class StorageService {
       Bucket: this.bucket,
       Key: key,
       ContentType: mimeType,
-      ContentLength: size,
     });
 
     return getSignedUrl(this.s3, command, { expiresIn });
