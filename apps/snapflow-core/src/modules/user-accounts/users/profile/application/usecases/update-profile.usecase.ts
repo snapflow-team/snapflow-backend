@@ -1,9 +1,12 @@
 import { UpdateProfileApplicationDto } from '../dto/update-profile.application-dto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { UserProfile } from '@generated/prisma';
 import { ProfilesRepository } from '../../infrastructure/profiles.repository';
 import { DateService } from '../../../../../../../../../libs/common/services/date.service';
-import { BadRequestException, InternalServerException, } from '../../../../../../common/exceptions/domain-exceptions';
+import {
+  BadRequestException,
+  InternalServerException,
+} from '../../../../../../common/exceptions/domain-exceptions';
+import { UserProfile } from '@generated/prisma-snapflow';
 
 export class UpdateProfileCommand {
   constructor(public readonly dto: UpdateProfileApplicationDto) {}

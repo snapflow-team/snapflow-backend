@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { FileStatus, Prisma, File } from '@generated/files/prisma';
 import { PrismaService } from '../../../../../database/prisma.service';
+import { File, FileStatus, Prisma } from '@generated/prisma-files';
 
 @Injectable()
 export class FilesRepository {

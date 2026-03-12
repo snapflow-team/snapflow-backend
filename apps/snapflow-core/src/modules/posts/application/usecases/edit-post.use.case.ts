@@ -5,7 +5,6 @@ import {
   InternalServerException,
   NotFoundException,
 } from '../../../../common/exceptions/domain-exceptions';
-import { InternalServerErrorException } from '@nestjs/common';
 
 export class EditPostCommand {
   constructor(

@@ -1,10 +1,10 @@
 ﻿import { Injectable } from '@nestjs/common';
-import { PostStatus, Prisma } from '@generated/prisma';
 import { PrismaService } from '../../../database/prisma.service';
 import { PostViewDto } from '../api/view-dto/post.view-dto';
 import { PostsPageViewDto } from '../api/view-dto/posts-page.view-dto';
 import { GetPostQuery } from '../application/queries/get-post.query-handler';
 import { PostVisibility } from '../enums/post-visibility.enum';
+import { PostStatus, Prisma } from '@generated/prisma-snapflow';
 
 const postInclude = Prisma.validator<Prisma.PostInclude>()({
   user: {

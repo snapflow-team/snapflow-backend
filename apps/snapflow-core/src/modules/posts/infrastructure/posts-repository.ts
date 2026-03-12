@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { PostStatus, Prisma } from '@generated/prisma';
 import { PrismaService } from '../../../database/prisma.service';
-import BatchPayload = Prisma.BatchPayload;
 import { UpdatePostInputDto } from '../api/input-dto/update-post.input.dto';
+import { PostStatus, Prisma } from '@generated/prisma-snapflow';
+import BatchPayload = Prisma.BatchPayload;
 
 export type CreateMediaInput = {
   fileId: string;

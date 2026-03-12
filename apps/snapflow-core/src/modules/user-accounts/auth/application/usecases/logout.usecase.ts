@@ -1,8 +1,8 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { SessionsRepository } from '../../sessions/infrastructure/sessions.repository';
-import { Session } from '@generated/prisma';
 import { LogoutUserApplicationDto } from '../dto/logout-user.application-dto';
 import { UnauthorizedException } from '../../../../../common/exceptions/domain-exceptions';
+import { Session } from '@generated/prisma-snapflow';
 
 export class LogoutCommand {
   constructor(public readonly dto: LogoutUserApplicationDto) {}

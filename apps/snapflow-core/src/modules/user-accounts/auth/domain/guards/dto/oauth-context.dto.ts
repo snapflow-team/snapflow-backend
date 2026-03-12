@@ -1,4 +1,4 @@
-import { OAuthProvider } from '@generated/prisma';
+import { OAuthProvider } from '@generated/prisma-snapflow';
 
 export class OAuthContextDto {
   provider: OAuthProvider;

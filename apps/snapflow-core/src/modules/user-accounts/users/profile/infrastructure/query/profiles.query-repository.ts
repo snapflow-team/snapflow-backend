@@ -1,8 +1,8 @@
 import { PrismaService } from '../../../../../../database/prisma.service';
-import { UserProfile } from '@generated/prisma';
 import { ProfileViewDto } from '../../api/dto/view-dto/profile.view-dto';
 import { Injectable } from '@nestjs/common';
 import { NotFoundException } from '../../../../../../common/exceptions/domain-exceptions';
+import { UserProfile } from '@generated/prisma-snapflow';
 
 @Injectable()
 export class ProfilesQueryRepository {

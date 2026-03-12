@@ -2,7 +2,7 @@ import { ValidateFilesApplicationDto } from '../dto/validate-files.application-d
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { StorageService } from '../../infrastructure/storage/storage.service';
 import { FilesRepository } from '../../infrastructure/repositories/files.repository';
-import { File } from '@generated/files/prisma';
+import { File } from '@generated/prisma-files';
 
 export class ValidateFilesCommand {
   constructor(public readonly dto: ValidateFilesApplicationDto) {}

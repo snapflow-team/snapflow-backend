@@ -1,10 +1,10 @@
 ﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository } from '../../infrastructure/posts-repository';
-import { PostStatus } from '@generated/prisma';
 import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';
 import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { ValidatedFile, ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
+import { PostStatus } from '@generated/prisma-snapflow';
 
 export class CreatePostCommand {
   constructor(

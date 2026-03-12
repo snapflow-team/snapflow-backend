@@ -6,8 +6,8 @@ import { UserAccountsConfig } from '../../../../config/user-accounts.config';
 import { SessionsRepository } from '../../../sessions/infrastructure/sessions.repository';
 import { ICookieRequest } from '../interfaces/cookie-request.interface';
 import { PayloadRefreshToken } from '../../../application/types/payload-refresh-token.type';
-import { Session } from '@generated/prisma';
 import { UnauthorizedException } from '../../../../../../common/exceptions/domain-exceptions';
+import { Session } from '@generated/prisma-snapflow';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {

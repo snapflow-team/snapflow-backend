@@ -13,7 +13,6 @@
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { PostStatus } from '@generated/prisma';
 import { ExtractUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../user-accounts/auth/domain/guards/dto/user-context.dto';
 import { JwtAuthGuard } from '../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
@@ -36,6 +35,7 @@ import { PostVisibility } from '../enums/post-visibility.enum';
 import { GetProfilePostsQuery } from '../application/queries/get-profile-posts.query-handler';
 import { GetPostsQueryParamsDto } from './input-dto/get-posts.query-params.dto';
 import { PostsPageViewDto } from './view-dto/posts-page.view-dto';
+import { PostStatus } from '@generated/prisma-snapflow';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
