@@ -1,5 +1,5 @@
-import { Session } from '@generated/prisma';
 import { ApiProperty } from '@nestjs/swagger';
+import { Session } from '@generated/prisma-snapflow';
 
 export class SessionsViewDto {
   @ApiProperty({

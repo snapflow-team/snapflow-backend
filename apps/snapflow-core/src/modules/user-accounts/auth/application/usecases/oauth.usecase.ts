@@ -2,7 +2,6 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
 import { AuthTokenService } from '../../../../../../../../libs/common/services/auth-token.service';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
-import { AuthAccount, ConfirmationStatus, Prisma, User } from '@generated/prisma';
 import { UserUtilsService } from '../../../users/application/services/user-utils.service';
 import { AuthTokens } from '../../domain/types/auth-tokens.type';
 import { parseUserAgent } from '../../../../../../../../libs/common/utils/user-agent.parser';
@@ -12,6 +11,7 @@ import { UserWithEmailConfirmation } from '../../../users/types/user-with-confir
 import { PrismaService } from '../../../../../database/prisma.service';
 import { OAuthApplicationDto } from '../dto/oauth.application-dto';
 import { BadRequestException } from '../../../../../common/exceptions/domain-exceptions';
+import { AuthAccount, ConfirmationStatus, Prisma, User } from '@generated/prisma-snapflow';
 
 export class OAuthCommand {
   constructor(public readonly dto: OAuthApplicationDto) {}

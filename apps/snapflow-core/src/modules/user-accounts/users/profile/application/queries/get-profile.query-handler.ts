@@ -1,9 +1,9 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { ProfileViewDto } from '../../api/dto/view-dto/profile.view-dto';
 import { ProfilesQueryRepository } from '../../infrastructure/query/profiles.query-repository';
-import { User } from '@generated/prisma';
 import { UsersRepository } from '../../../infrastructure/users.repository';
 import { NotFoundException } from '../../../../../../common/exceptions/domain-exceptions';
+import { User } from '@generated/prisma-snapflow';
 
 export class GetProfileQuery {
   constructor(public readonly userId: number) {}

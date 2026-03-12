@@ -1,6 +1,6 @@
 import { IsBoolean, IsString } from 'class-validator';
 import { EnvironmentVariable } from './configuration';
-import { Prisma } from '@generated/prisma';
+import { Prisma } from '@generated/prisma-snapflow';
 
 export class DatabaseSettings {
   // @IsUrl({ require_tld: false, protocols: ['http', 'https'] })

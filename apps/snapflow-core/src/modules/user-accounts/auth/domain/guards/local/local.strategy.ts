@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { UserContextDto } from '../dto/user-context.dto';
 import { Strategy } from 'passport-local';
-import { ConfirmationStatus } from '@generated/prisma';
 import { UsersRepository } from '../../../../users/infrastructure/users.repository';
 import { CryptoService } from '../../../../../../../../../libs/common/services/crypto.service';
 import { UserWithEmailConfirmation } from '../../../../users/types/user-with-confirmation.type';
 import { UnauthorizedException } from '../../../../../../common/exceptions/domain-exceptions';
+import { ConfirmationStatus } from '@generated/prisma-snapflow';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, 'local') {

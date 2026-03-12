@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-github2';
 import { UserAccountsConfig } from '../../../../config/user-accounts.config';
-import { OAuthProvider } from '@generated/prisma';
 import { OAuthContextDto } from '../dto/oauth-context.dto';
+import { OAuthProvider } from '@generated/prisma-snapflow';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {

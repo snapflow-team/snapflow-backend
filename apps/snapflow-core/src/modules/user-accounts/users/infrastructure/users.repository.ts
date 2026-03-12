@@ -1,8 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { AuthAccount, ConfirmationStatus, OAuthProvider, Prisma, User } from '@generated/prisma';
 import { PrismaService } from '../../../../database/prisma.service';
 import { UserWithEmailConfirmation } from '../types/user-with-confirmation.type';
 import { UserWithPasswordRecoveryCode } from '../types/user-with-password-recovery.type';
+import {
+  AuthAccount,
+  ConfirmationStatus,
+  OAuthProvider,
+  Prisma,
+  User,
+} from '@generated/prisma-snapflow';
 
 @Injectable()
 export class UsersRepository {

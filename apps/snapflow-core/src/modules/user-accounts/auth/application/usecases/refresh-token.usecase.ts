@@ -2,10 +2,10 @@ import { SessionContextDto } from '../../domain/guards/dto/session-context.dto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AuthTokenService } from '../../../../../../../../libs/common/services/auth-token.service';
 import { SessionsRepository } from '../../sessions/infrastructure/sessions.repository';
-import { Prisma, Session } from '@generated/prisma';
 import { PayloadRefreshToken } from '../types/payload-refresh-token.type';
 import { AuthTokens } from '../../domain/types/auth-tokens.type';
 import { UnauthorizedException } from '../../../../../common/exceptions/domain-exceptions';
+import { Prisma, Session } from '@generated/prisma-snapflow';
 
 export class RefreshTokenCommand {
   constructor(public readonly session: SessionContextDto) {}

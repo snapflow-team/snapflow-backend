@@ -1,12 +1,12 @@
 ﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repository';
 
-import { PostStatus } from '@generated/prisma';
 import {
   BadRequestException,
   InternalServerException,
   NotFoundException,
 } from '../../../../common/exceptions/domain-exceptions';
+import { PostStatus } from '@generated/prisma-snapflow';
 
 export class PublishPostCommand {
   constructor(
