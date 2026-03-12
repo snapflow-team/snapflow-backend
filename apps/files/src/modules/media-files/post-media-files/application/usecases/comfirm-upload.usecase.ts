@@ -7,7 +7,7 @@ import {
   RpcBadRequestException,
   RpcNotFoundException,
 } from '../../../../../common/exceptions/rpc-domain-exceptions';
-import { FileStatus } from '@generated/files/prisma';
+import { File, FileStatus } from '@generated/prisma-files';
 
 export class ConfirmUploadCommand {
   constructor(public readonly dto: ConfirmUploadApplicationDto) {}
@@ -22,7 +22,7 @@ export class ConfirmUploadUseCase implements ICommandHandler<ConfirmUploadComman
   ) {}
 
   async execute({ dto: { userId, fileIds } }: ConfirmUploadCommand): Promise<void> {
-    const files = await this.filesRepository.findManyByIdsAndUserId(userId, fileIds);
+    const files: File[] = await this.filesRepository.findManyByIdsAndUserId(userId, fileIds);
 
     if (files.length !== fileIds.length) {
       throw new RpcNotFoundException('File not found');

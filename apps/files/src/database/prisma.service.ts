@@ -4,7 +4,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../setup/configuration/configuration';
 import { DatabaseSettings } from '../setup/configuration/database-settings';
-import { PrismaClient } from '@generated/files/prisma';
+import { PrismaClient } from '@generated/prisma-files';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
