@@ -1,4 +1,4 @@
-import { Request } from 'express';
+import { Express, Request } from 'express';
 import { Module } from '@nestjs/common';
 import { UsersRepository } from './users/infrastructure/users.repository';
 import { AuthController } from './auth/api/auth.controller';
@@ -57,6 +57,11 @@ import { DeletePostUseCase } from '../posts/application/usecases/delete-post.use
 import { FilesClientModule } from '../integrations/files/files-client.module';
 import { FilesClient } from '../integrations/files/files.client';
 import { FilesMediaController } from '../integrations/files/api/files-media.controller';
+import { MulterModule } from '@nestjs/platform-express';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '@nestjs/cli/lib/configuration';
+import { BusinessRulesSettings } from '../../setup/configuration/business-rules-settings';
+import { FileFilterCallback } from 'multer';
 
 const controllers = [
   AuthController,
@@ -122,12 +127,36 @@ const configs = [UserAccountsConfig];
     GoogleRecaptchaModule.forRootAsync({
       imports: [UserAccountsConfigModule],
       inject: [UserAccountsConfig],
+      // todo: выпилить UserAccountsConfig!
       useFactory: (config: UserAccountsConfig) => ({
         secretKey: config.googleRecaptchaSecretKey,
         response: (req: Request<unknown, unknown, RecaptchaBody>) =>
           req.body['recaptchaToken'] ?? '',
         skipMissing: false,
       }),
+    }),
+    MulterModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<Configuration, true>) => {
+        const businessRules: BusinessRulesSettings =
+          configService.get<BusinessRulesSettings>('businessRulesSettings');
+
+        return {
+          limits: {
+            fileSize: businessRules.getAvatarImageSize(),
+            fileFilter: (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+              const allowedMimeTypes: string[] = businessRules.getAvatarAllowedMimeTypes();
+
+              if (allowedMimeTypes.includes(file.mimetype)) {
+                cb(null, true);
+              } else {
+                cb(new Error('Unsupported file format'));
+              }
+            },
+            storage: 'buffer',
+          },
+        };
+      },
     }),
   ],
   controllers: [...controllers],
