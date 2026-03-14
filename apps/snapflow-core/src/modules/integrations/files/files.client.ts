@@ -8,6 +8,8 @@ import {
   FilesRpcCommand,
   GenerateUploadUrlResponse,
   GenerateUploadUrlsRequest,
+  UploadFileRequest,
+  UploadFileResponse,
   ValidateFilesRequest,
   ValidateFilesResponse,
 } from '../../../../../../libs/contracts/files';
@@ -62,6 +64,10 @@ export class FilesClient {
       }
       throw error;
     }
+  }
+
+  async uploadAvatar(payload: UploadFileRequest): Promise<UploadFileResponse> {
+    return firstValueFrom(this.client.send({ cmd: FilesRpcCommand.UploadFile }, payload));
   }
 
   private isRpcError(error: any): boolean {
