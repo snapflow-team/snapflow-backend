@@ -1,4 +1,4 @@
-import { Post, PostMedia, PostStatus, User } from '@generated/prisma';
+import { Post, PostMedia, PostStatus, User } from '@generated/prisma-snapflow';
 import { PrismaService } from '../../../../database/prisma.service';
 import { CreatePostCommand, CreatePostUseCase } from './create-post-use.case';
 import { Test, TestingModule } from '@nestjs/testing';

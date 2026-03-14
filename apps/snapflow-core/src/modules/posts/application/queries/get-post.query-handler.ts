@@ -2,7 +2,10 @@
 import { PostsQueryRepository } from '../../infrastructure/posts.query-repository';
 import { PostViewDto } from '../../api/view-dto/post.view-dto';
 import { PostVisibility } from '../../enums/post-visibility.enum';
-import { BadRequestException, NotFoundException, } from '../../../../common/exceptions/domain-exceptions';
+import {
+  BadRequestException,
+  NotFoundException,
+} from '../../../../common/exceptions/domain-exceptions';
 
 export class GetPostQuery {
   constructor(

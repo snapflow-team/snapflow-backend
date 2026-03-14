@@ -12,6 +12,6 @@
   },
   "moduleNameMapper": {
     "@/dbModule/(.*)$": "<rootDir>/modules/database/$1",
-    "^@generated/prisma$": "<rootDir>/generated/prisma"
+    "^@generated/(.*)$": "<rootDir>/../../generated/$1"
   }
 }
