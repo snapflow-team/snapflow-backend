@@ -1,14 +1,14 @@
 import { MimeType } from './mime-type.enum';
 import { ApiProperty } from '@nestjs/swagger';
 
-export interface UploadFileRequest {
+export interface UploadFileRequestForGenerateUploadUrls {
   mimeType: MimeType;
   size: number;
 }
 
 export interface GenerateUploadUrlsRequest {
   userId: number;
-  files: UploadFileRequest[];
+  files: UploadFileRequestForGenerateUploadUrls[];
 }
 
 export interface GenerateUploadUrlResponse {
