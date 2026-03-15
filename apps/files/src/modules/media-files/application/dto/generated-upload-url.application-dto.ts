@@ -1,4 +1,4 @@
-import { UploadFileRequestForGenerateUploadUrls } from '../../../../../../../../libs/contracts/files';
+import { UploadFileRequestForGenerateUploadUrls } from '../../../../../../../libs/contracts/files';
 
 export class GeneratedUploadUrlApplicationDto {
   userId: number;

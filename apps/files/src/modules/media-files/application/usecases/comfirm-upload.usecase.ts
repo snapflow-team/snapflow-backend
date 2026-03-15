@@ -6,7 +6,7 @@ import { FilesRepository } from '../../infrastructure/repositories/files.reposit
 import {
   RpcBadRequestException,
   RpcNotFoundException,
-} from '../../../../../common/exceptions/rpc-domain-exceptions';
+} from '../../../../common/exceptions/rpc-domain-exceptions';
 import { File, FileStatus } from '@generated/prisma-files';
 
 export class ConfirmUploadCommand {

@@ -1,14 +1,14 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { FilesRpcCommand } from '../../../../../../../libs/contracts/files';
 import type {
-  GenerateUploadUrlsRequest,
   ConfirmUploadRequest,
   ConfirmUploadResponse,
   GenerateUploadUrlResponse,
+  GenerateUploadUrlsRequest,
   ValidateFilesRequest,
   ValidateFilesResponse,
-} from '../../../../../../../libs/contracts/files';
+} from '../../../../../../libs/contracts/files';
+import { FilesRpcCommand } from '../../../../../../libs/contracts/files';
 import { CommandBus } from '@nestjs/cqrs';
 import { GeneratedUploadUrlCommand } from '../application/usecases/generate-presignet-url.usecase';
 import { ConfirmUploadCommand } from '../application/usecases/comfirm-upload.usecase';

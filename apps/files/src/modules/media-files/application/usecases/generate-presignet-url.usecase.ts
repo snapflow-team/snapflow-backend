@@ -1,12 +1,12 @@
 import { GeneratedUploadUrlApplicationDto } from '../dto/generated-upload-url.application-dto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
+import { CryptoService } from '../../../../../../../libs/common/services/crypto.service';
 import { ConfigService } from '@nestjs/config';
-import { Configuration } from '../../../../../setup/configuration/configuration';
-import { S3Settings } from '../../../../../setup/configuration/s3.settings';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { S3Settings } from '../../../../setup/configuration/s3.settings';
 import { StorageService } from '../../infrastructure/storage/storage.service';
 import { FilesRepository } from '../../infrastructure/repositories/files.repository';
-import { GenerateUploadUrlResponse } from '../../../../../../../../libs/contracts/files';
+import { GenerateUploadUrlResponse } from '../../../../../../../libs/contracts/files';
 
 export class GeneratedUploadUrlCommand {
   constructor(public readonly dto: GeneratedUploadUrlApplicationDto) {}

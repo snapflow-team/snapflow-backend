@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { PostsMediaController } from './post-media-files/api/posts-media.controller';
-import { GeneratedUploadUrlUseCase } from './post-media-files/application/usecases/generate-presignet-url.usecase';
-import { ConfirmUploadUseCase } from './post-media-files/application/usecases/comfirm-upload.usecase';
-import { StorageService } from './post-media-files/infrastructure/storage/storage.service';
-import { FilesRepository } from './post-media-files/infrastructure/repositories/files.repository';
+import { PostsMediaController } from './api/posts-media.controller';
+import { GeneratedUploadUrlUseCase } from './application/usecases/generate-presignet-url.usecase';
+import { ConfirmUploadUseCase } from './application/usecases/comfirm-upload.usecase';
+import { StorageService } from './infrastructure/storage/storage.service';
+import { FilesRepository } from './infrastructure/repositories/files.repository';
 import { CryptoService } from '../../../../../libs/common/services/crypto.service';
-import { ValidateFilesUseCase } from './post-media-files/application/usecases/validate-files.usecase';
+import { ValidateFilesUseCase } from './application/usecases/validate-files.usecase';
 
 const controllers = [PostsMediaController];
 const useCases = [GeneratedUploadUrlUseCase, ConfirmUploadUseCase, ValidateFilesUseCase];
