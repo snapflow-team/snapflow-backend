@@ -15,10 +15,9 @@ export class UploadAvatarUseCase implements ICommandHandler<UploadAvatarCommand>
     private filesClient: FilesClient,
   ) {}
 
-  async execute({ dto: { userId, mimetype, buffer, size, extension } }: UploadAvatarCommand) {
+  async execute({ dto: { userId, mimetype, buffer, size } }: UploadAvatarCommand) {
     const payload: UploadFileRequest = {
       userId,
-      filename: `avatar_${userId}_${Date.now()}.${extension}`,
       mimetype,
       buffer,
       size,
