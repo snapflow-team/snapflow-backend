@@ -1,6 +1,5 @@
 export interface UploadFileRequest {
   userId: number;
-  filename: string;
   mimetype: string;
   buffer: Buffer;
   size: number;
