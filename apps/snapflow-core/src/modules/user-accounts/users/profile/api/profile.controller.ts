@@ -6,8 +6,10 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Post,
   Put,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { JwtAuthGuard } from '../../../auth/domain/guards/bearer/jwt-auth.guard';
@@ -21,16 +23,24 @@ import { Public } from '../../../decorators/public.decorator';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiUpdateProfile } from './swagger/update-profile.swagger';
 import { ApiGetProfile } from './swagger/get-profile.swagger';
+import { FilesClient } from '../../../../integrations/files/files.client';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { AvatarFile } from '../pipes/avatar-file.pipe';
+import { UploadAvatarApplicationDto } from '../application/dto/apload-avatar.application-dto';
+import { UploadAvatarCommand } from '../application/usecases/upload-avatar';
+import { AvatarViewDto } from './dto/view-dto/acatar.view-dto';
 
 @ApiTags('Profile')
 @UseGuards(JwtAuthGuard)
 @Controller('users/profile')
 export class ProfileController {
   constructor(
+    private filesClient: FilesClient,
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
   ) {}
 
+  // Profile -------------------------------------
   @Put()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiUpdateProfile()
@@ -51,5 +61,24 @@ export class ProfileController {
   @ApiGetProfile()
   async getProfile(@Param('userId', ParseIntPipe) userId: number): Promise<ProfileViewDto> {
     return await this.queryBus.execute(new GetProfileQuery(userId));
+  }
+
+  // Avatar -------------------------------------
+  @Post('avatar')
+  @UseInterceptors(FileInterceptor('avatar'))
+  async uploadAvatar(
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+    @AvatarFile() file: Express.Multer.File,
+  ): Promise<AvatarViewDto> {
+    const extension: string = file.mimetype.split('/')[1];
+    const dto: UploadAvatarApplicationDto = {
+      userId,
+      mimetype: file.mimetype,
+      buffer: file.buffer,
+      size: file.size,
+      extension,
+    };
+
+    return await this.commandBus.execute(new UploadAvatarCommand(dto));
   }
 }
