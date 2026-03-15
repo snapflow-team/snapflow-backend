@@ -5,6 +5,8 @@ import type {
   ConfirmUploadResponse,
   GenerateUploadUrlResponse,
   GenerateUploadUrlsRequest,
+  UploadFileRequest,
+  UploadFileResponse,
   ValidateFilesRequest,
   ValidateFilesResponse,
 } from '../../../../../../libs/contracts/files';
@@ -13,6 +15,10 @@ import { CommandBus } from '@nestjs/cqrs';
 import { GeneratedUploadUrlCommand } from '../application/usecases/generate-presignet-url.usecase';
 import { ConfirmUploadCommand } from '../application/usecases/comfirm-upload.usecase';
 import { ValidateFilesCommand } from '../application/usecases/validate-files.usecase';
+import { MimetypeAvatar } from '../../../../../../libs/contracts/files/mimetype-avatar.enum';
+import { RpcBadRequestException } from '../../../common/exceptions/rpc-domain-exceptions';
+import { AVATAR_IMAGE_SIZE } from '../../../../../../libs/common/constants/image-size.constants';
+import { UploadAvatarCommand } from '../application/usecases/upload-avatar.usecase';
 
 @Controller()
 export class MediaController {
@@ -41,5 +47,36 @@ export class MediaController {
     data: ValidateFilesRequest,
   ): Promise<ValidateFilesResponse> {
     return this.commandBus.execute(new ValidateFilesCommand(data));
+  }
+
+  @MessagePattern({ cmd: FilesRpcCommand.UploadFile })
+  async uploadAvatar(
+    @Payload()
+    data: UploadFileRequest,
+  ): Promise<UploadFileResponse> {
+    const allowedTypes = Object.values(MimetypeAvatar) as string[];
+
+    if (!allowedTypes.includes(data.mimetype)) {
+      throw new RpcBadRequestException(
+        `Unsupported file type: ${data.mimetype}. Allowed: ${allowedTypes.join(', ')}`,
+      );
+    }
+
+    if (data.size > AVATAR_IMAGE_SIZE) {
+      const limitMb: number = AVATAR_IMAGE_SIZE / (1024 * 1024);
+      const actualMb: string = (data.size / (1024 * 1024)).toFixed(2);
+
+      throw new RpcBadRequestException(
+        `File is too large. Maximum allowed size is ${limitMb}MB, but received ${actualMb}MB.`,
+      );
+    }
+
+    return await this.commandBus.execute(
+      new UploadAvatarCommand({
+        userId: data.userId,
+        mimetype: data.mimetype,
+        buffer: data.buffer,
+      }),
+    );
   }
 }
