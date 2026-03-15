@@ -66,7 +66,7 @@ export class FilesClient {
     }
   }
 
-  async uploadAvatar(payload: UploadFileRequest): Promise<UploadFileResponse> {
+  async uploadFile(payload: UploadFileRequest): Promise<UploadFileResponse> {
     return firstValueFrom(this.client.send({ cmd: FilesRpcCommand.UploadFile }, payload));
   }
 
