@@ -70,13 +70,11 @@ export class ProfileController {
     @ExtractUserFromRequest() { id: userId }: UserContextDto,
     @AvatarFile() file: Express.Multer.File,
   ): Promise<AvatarViewDto> {
-    const extension: string = file.mimetype.split('/')[1];
     const dto: UploadAvatarApplicationDto = {
       userId,
       mimetype: file.mimetype,
       buffer: file.buffer,
       size: file.size,
-      extension,
     };
 
     return await this.commandBus.execute(new UploadAvatarCommand(dto));
