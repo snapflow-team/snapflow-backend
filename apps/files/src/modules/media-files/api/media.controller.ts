@@ -15,7 +15,7 @@ import { ConfirmUploadCommand } from '../application/usecases/comfirm-upload.use
 import { ValidateFilesCommand } from '../application/usecases/validate-files.usecase';
 
 @Controller()
-export class PostsMediaController {
+export class MediaController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @MessagePattern({ cmd: FilesRpcCommand.GenerateUploadUrl })
