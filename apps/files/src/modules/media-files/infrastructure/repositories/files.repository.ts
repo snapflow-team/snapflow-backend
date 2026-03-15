@@ -19,6 +19,19 @@ export class FilesRepository {
     });
   }
 
+  async createUploaded(data: Prisma.FileCreateInput): Promise<void> {
+    await this.prisma.file.create({
+      data: {
+        id: data.id,
+        userId: data.userId,
+        key: data.key,
+        mimeType: data.mimeType,
+        size: data.size,
+        status: FileStatus.UPLOADED,
+      },
+    });
+  }
+
   async findByIdAndUserId(fileId: string, userId: number): Promise<File | null> {
     return this.prisma.file.findFirst({
       where: { id: fileId, userId, deletedAt: null },
