@@ -76,6 +76,37 @@ export class PostsQueryRepository {
     };
   }
 
+  async findPosts(params: { pageNumber: number; pageSize: number }): Promise<PostsPageViewDto> {
+    const { pageNumber, pageSize } = params;
+    const skip = (pageNumber - 1) * pageSize;
+
+    const where: Prisma.PostWhereInput = {
+      deletedAt: null,
+      status: PostStatus.PUBLISHED,
+    };
+
+    const [items, totalCount] = await Promise.all([
+      this.prisma.post.findMany({
+        where,
+        include: postInclude,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize,
+      }),
+      this.prisma.post.count({ where }),
+    ]);
+
+    const pagesCount = Math.ceil(totalCount / pageSize);
+
+    return {
+      pagesCount,
+      page: pageNumber,
+      pageSize,
+      totalCount,
+      items: items.map((post) => PostViewDto.mapToView(post)),
+    };
+  }
+
   async getPost(query: GetPostQuery): Promise<PostViewDto | null> {
     const where: Prisma.PostWhereInput = this.buildWhere(query);
 

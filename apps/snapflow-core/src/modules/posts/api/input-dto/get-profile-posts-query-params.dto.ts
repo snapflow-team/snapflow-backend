@@ -2,17 +2,17 @@
 import { Type } from 'class-transformer';
 import { IsInt, Max, Min } from 'class-validator';
 
-export class GetPostsQueryParamsDto {
+export class GetProfilePostsQueryParamsDto {
   @ApiPropertyOptional({ example: 1, default: 1 })
   @Type(() => Number)
   @IsInt()
   @Min(1)
   pageNumber: number = 1;
 
-  @ApiPropertyOptional({ example: 4, default: 4 })
+  @ApiPropertyOptional({ example: 8, default: 8 })
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
-  pageSize: number = 4;
+  pageSize: number = 8;
 }

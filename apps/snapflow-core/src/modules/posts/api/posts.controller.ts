@@ -36,6 +36,8 @@ import { GetProfilePostsQuery } from '../application/queries/get-profile-posts.q
 import { GetPostsQueryParamsDto } from './input-dto/get-posts.query-params.dto';
 import { PostsPageViewDto } from './view-dto/posts-page.view-dto';
 import { PostStatus } from '@generated/prisma-snapflow';
+import { GetPostsQuery } from '../application/queries/get-posts.query-handler';
+import { GetProfilePostsQueryParamsDto } from './input-dto/get-profile-posts-query-params.dto';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -112,7 +114,7 @@ export class PostsController {
   @GetProfilePostsSwagger()
   async getProfilePosts(
     @Param('userId', ParseIntPipe) userId: number,
-    @Query() query: GetPostsQueryParamsDto,
+    @Query() query: GetProfilePostsQueryParamsDto,
   ): Promise<PostsPageViewDto> {
     return this.queryBus.execute(
       new GetProfilePostsQuery(userId, query.pageNumber, query.pageSize),
@@ -138,5 +140,11 @@ export class PostsController {
     return this.queryBus.execute<GetPostQuery, PostViewDto>(
       new GetPostQuery(postId, PostVisibility.Public),
     );
+  }
+
+  @Get()
+  @Public()
+  async getPost(@Query() query: GetPostsQueryParamsDto): Promise<PostsPageViewDto> {
+    return this.queryBus.execute(new GetPostsQuery(query.pageNumber, query.pageSize));
   }
 }

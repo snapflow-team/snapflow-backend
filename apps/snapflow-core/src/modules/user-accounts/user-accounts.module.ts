@@ -57,6 +57,7 @@ import { DeletePostUseCase } from '../posts/application/usecases/delete-post.use
 import { FilesClientModule } from '../integrations/files/files-client.module';
 import { FilesClient } from '../integrations/files/files.client';
 import { FilesMediaController } from '../integrations/files/api/files-media.controller';
+import { GetPostsQueryHandler } from '../posts/application/queries/get-posts.query-handler';
 
 const controllers = [
   AuthController,
@@ -92,6 +93,7 @@ const queries = [
   GetPostQueryHandler,
   GetProfilePostsQueryHandler,
   GetProfileQueryHandler,
+  GetPostsQueryHandler,
 ];
 const services = [
   FilesClient,
