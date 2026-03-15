@@ -40,12 +40,21 @@ export class StorageService {
     }
   }
 
-  getPublicUrl(key: string): string {
-    const baseUrl = process.env.S3_PUBLIC_BASE_URL;
+  async uploadFile(key: string, buffer: Buffer, mimetype: string): Promise<string> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: buffer,
+      ContentType: mimetype,
+      ACL: 'public-read',
+    });
 
-    if (baseUrl) {
-      return `${baseUrl}/${key}`;
-    }
+    await this.s3.send(command);
+
+    return this.getPublicUrl(key);
+  }
+
+  getPublicUrl(key: string): string {
     return `${this.publicBaseUrl}/${key}`;
   }
 }
