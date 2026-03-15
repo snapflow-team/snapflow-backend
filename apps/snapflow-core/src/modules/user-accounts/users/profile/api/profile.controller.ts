@@ -27,8 +27,8 @@ import { FilesClient } from '../../../../integrations/files/files.client';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AvatarFile } from '../pipes/avatar-file.pipe';
 import { UploadAvatarApplicationDto } from '../application/dto/apload-avatar.application-dto';
-import { UploadAvatarCommand } from '../application/usecases/upload-avatar';
 import { AvatarViewDto } from './dto/view-dto/acatar.view-dto';
+import { UploadAvatarCommand } from '../application/usecases/upload-avatar.usecase';
 
 @ApiTags('Profile')
 @UseGuards(JwtAuthGuard)

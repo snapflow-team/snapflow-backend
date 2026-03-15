@@ -62,6 +62,7 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from '@nestjs/cli/lib/configuration';
 import { BusinessRulesSettings } from '../../setup/configuration/business-rules-settings';
 import { FileFilterCallback } from 'multer';
+import { UploadAvatarUseCase } from './users/profile/application/usecases/upload-avatar.usecase';
 
 const controllers = [
   AuthController,
@@ -74,20 +75,28 @@ const controllers = [
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
+  RegistrationEmailResendingUseCase,
+
   OAuthUseCase,
+
   LoginUserUseCase,
   LogoutUseCase,
+
   CreateSessionUseCase,
-  RegistrationEmailResendingUseCase,
+  DeleteSessionByDeviceUseCase,
+  DeleteActiveSessionsUseCase,
+
   PasswordRecoveryUseCase,
   CheckPasswordRecoveryCodeUseCase,
   NewPasswordUseCase,
+
   RefreshTokenUseCase,
-  DeleteSessionByDeviceUseCase,
-  DeleteActiveSessionsUseCase,
+
+  UpdateProfileUseCase,
+  UploadAvatarUseCase,
+
   CreatePostUseCase,
   PublishPostUseCase,
-  UpdateProfileUseCase,
   EditPostUseCase,
   DeletePostUseCase,
 ];
