@@ -6,9 +6,15 @@ import { StorageService } from './infrastructure/storage/storage.service';
 import { FilesRepository } from './infrastructure/repositories/files.repository';
 import { CryptoService } from '../../../../../libs/common/services/crypto.service';
 import { ValidateFilesUseCase } from './application/usecases/validate-files.usecase';
+import { UploadAvatarUseCase } from './application/usecases/upload-avatar.usecase';
 
 const controllers = [MediaController];
-const useCases = [GeneratedUploadUrlUseCase, ConfirmUploadUseCase, ValidateFilesUseCase];
+const useCases = [
+  GeneratedUploadUrlUseCase,
+  ConfirmUploadUseCase,
+  ValidateFilesUseCase,
+  UploadAvatarUseCase,
+];
 const services = [StorageService, CryptoService];
 
 @Module({
