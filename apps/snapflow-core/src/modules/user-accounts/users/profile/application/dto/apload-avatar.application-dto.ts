@@ -3,5 +3,4 @@ export class UploadAvatarApplicationDto {
   mimetype: string;
   buffer: Buffer;
   size: number;
-  extension: string;
 }
