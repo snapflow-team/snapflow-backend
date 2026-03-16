@@ -1,7 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter, Logger } from '@nestjs/common';
 import { IRpcErrorResponse, rpcServerErrorResponseFactory } from '../rpc-exception-response';
 import { TcpContext } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { EnvironmentSettings } from '../../../../apps/files/src/setup/configuration/environment-settings';
 import { cleanStackTrace } from '../../core/utils/clean-stack-trace';
 
@@ -32,7 +32,7 @@ export class GlobalRpcExceptionFilter implements ExceptionFilter {
 
     this.logException(exception, pattern);
 
-    return responseBody;
+    return throwError(() => responseBody);
   }
 
   private logException(exception: any, pattern: string | any): void {
