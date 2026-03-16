@@ -4,17 +4,19 @@ import { Server } from 'http';
 import { EmailTemplate } from '../../src/modules/emails/templates/types';
 import { HttpStatus } from '@nestjs/common';
 import { EmailService } from '../../src/modules/emails/services/email.service';
-import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import {
+  RegistrationUserInputDto
+} from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { AuthTestManager } from '../managers/auth.test-manager';
-import { User } from '../../generated/prisma';
 import { TestUtils } from '../helpers/test.utils';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
 import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
 import { ProfileTestManager } from '../managers/profile.test-manager';
 import { ProfilesRepository } from '../../src/modules/user-accounts/users/profile/infrastructure/profiles.repository';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
+import { User } from '@generated/prisma-snapflow';
 
 describe('AuthController - registration() (POST: /auth/registration)', () => {
   let appTestManager: AppTestManager;
