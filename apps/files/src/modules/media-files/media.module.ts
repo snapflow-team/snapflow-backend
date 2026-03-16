@@ -7,6 +7,7 @@ import { FilesRepository } from './infrastructure/repositories/files.repository'
 import { CryptoService } from '../../../../../libs/common/services/crypto.service';
 import { ValidateFilesUseCase } from './application/usecases/validate-files.usecase';
 import { UploadAvatarUseCase } from './application/usecases/upload-avatar.usecase';
+import { DeleteFileUseCase } from './application/usecases/delete-file.usecase';
 
 const controllers = [MediaController];
 const useCases = [
@@ -14,6 +15,7 @@ const useCases = [
   ConfirmUploadUseCase,
   ValidateFilesUseCase,
   UploadAvatarUseCase,
+  DeleteFileUseCase,
 ];
 const services = [StorageService, CryptoService];
 
