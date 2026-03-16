@@ -1,6 +1,6 @@
 import { ValidationError } from '@nestjs/common';
-import { Extension } from '../damain.exception';
 import { formatValidationErrors } from './format-validation-errors';
+import { IExtension } from '../domain-exception';
 
 describe('Утилита formatValidationErrors (Форматирование ошибок валидации)', () => {
   describe('Базовый функционал', () => {
@@ -17,18 +17,18 @@ describe('Утилита formatValidationErrors (Форматирование о
         } as ValidationError,
       ];
 
-      const result: Extension[] = formatValidationErrors(errors);
+      const result: IExtension[] = formatValidationErrors(errors);
 
       expect(result).toHaveLength(2);
       expect(result).toEqual([
-        new Extension({
+        {
           field: 'username',
           message: 'Username must be between 6 and 30 characters',
-        }),
-        new Extension({
+        },
+        {
           field: 'username',
           message: 'Username can only contain 0-9, A-Z, a-z, _, -',
-        }),
+        },
       ]);
     });
 
@@ -54,12 +54,13 @@ describe('Утилита formatValidationErrors (Форматирование о
         } as ValidationError,
       ];
 
-      const result: Extension[] = formatValidationErrors(errors);
+      const result: IExtension[] = formatValidationErrors(errors);
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(
-        new Extension({ field: 'user.address.street', message: 'street should not be empty' }),
-      );
+      expect(result[0]).toEqual({
+        field: 'user.address.street',
+        message: 'street should not be empty',
+      });
     });
   });
 
@@ -85,7 +86,7 @@ describe('Утилита formatValidationErrors (Форматирование о
         } as ValidationError,
       ];
 
-      const result: Extension[] = formatValidationErrors(errors);
+      const result: IExtension[] = formatValidationErrors(errors);
 
       const fields = result.map((e) => e.field);
       expect(fields).toContain('username');
