@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -30,6 +31,8 @@ import { UploadAvatarApplicationDto } from '../application/dto/apload-avatar.app
 import { AvatarViewDto } from './dto/view-dto/acatar.view-dto';
 import { UploadAvatarCommand } from '../application/usecases/upload-avatar.usecase';
 import { ApiUploadAvatar } from './swagger/upload-avatar.swagger';
+import { DeleteAvatarCommand } from '../application/usecases/delete-avatar.usecase';
+import { ApiDeleteAvatar } from './swagger/delete-avatar.swagger';
 
 @ApiTags('Profile')
 @UseGuards(JwtAuthGuard)
@@ -81,5 +84,12 @@ export class ProfileController {
     };
 
     return await this.commandBus.execute(new UploadAvatarCommand(dto));
+  }
+
+  @Delete('avatar')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiDeleteAvatar()
+  async deleteAvatar(@ExtractUserFromRequest() { id: userId }: UserContextDto): Promise<void> {
+    await this.commandBus.execute(new DeleteAvatarCommand(userId));
   }
 }
