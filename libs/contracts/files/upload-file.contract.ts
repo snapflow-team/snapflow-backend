@@ -6,6 +6,5 @@ export interface UploadFileRequest {
 }
 
 export interface UploadFileResponse {
-  key: string;
   publicUrl: string;
 }

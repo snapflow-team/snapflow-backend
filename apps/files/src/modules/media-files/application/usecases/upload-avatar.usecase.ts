@@ -61,6 +61,6 @@ export class UploadAvatarUseCase implements ICommandHandler<UploadAvatarCommand>
       size: finalSize,
     });
 
-    return { key, publicUrl };
+    return { publicUrl };
   }
 }
