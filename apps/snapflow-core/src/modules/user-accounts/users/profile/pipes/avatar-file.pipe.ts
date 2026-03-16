@@ -1,32 +1,19 @@
-import {
-  FileTypeValidator,
-  Inject,
-  Injectable,
-  MaxFileSizeValidator,
-  ParseFilePipe,
-  UploadedFile,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { BusinessRulesSettings } from '../../../../../setup/configuration/business-rules-settings';
-import { Configuration } from '../../../../../setup/configuration/configuration';
+import { FileTypeValidator, Injectable, MaxFileSizeValidator, ParseFilePipe, UploadedFile, } from '@nestjs/common';
 import { ValidationException } from '../../../../../../../../libs/exceptions/core';
+import { AVATAR_IMAGE_SIZE } from '../../../../../../../../libs/common/constants/image-size.constants';
+import { MimetypeAvatar } from '../../../../../../../../libs/contracts/files/mimetype-avatar.enum';
 
 @Injectable()
 export class AvatarFilePipe extends ParseFilePipe {
-  constructor(@Inject(ConfigService) private configService: ConfigService<Configuration, true>) {
-    const businessRules: BusinessRulesSettings =
-      configService.get<BusinessRulesSettings>('businessRulesSettings');
-
-    const maxSize: number = businessRules.getAvatarImageSize();
-    const allowedTypesRegex = new RegExp(
-      businessRules.getAvatarAllowedMimeTypes().join('|').replace(/\//g, '\\/'),
-    );
+  constructor() {
+    const allowedTypes: MimetypeAvatar[] = Object.values(MimetypeAvatar);
+    const fileTypeRegex = new RegExp(allowedTypes.join('|'));
 
     super({
       fileIsRequired: true,
       validators: [
-        new MaxFileSizeValidator({ maxSize }),
-        new FileTypeValidator({ fileType: allowedTypesRegex }),
+        new MaxFileSizeValidator({ maxSize: AVATAR_IMAGE_SIZE }),
+        new FileTypeValidator({ fileType: fileTypeRegex }),
       ],
       exceptionFactory: (errors: string) => {
         return new ValidationException([
