@@ -38,6 +38,7 @@ import { PostsPageViewDto } from './view-dto/posts-page.view-dto';
 import { PostStatus } from '@generated/prisma-snapflow';
 import { GetPostsQuery } from '../application/queries/get-posts.query-handler';
 import { GetProfilePostsQueryParamsDto } from './input-dto/get-profile-posts-query-params.dto';
+import { GetPublicPostsSwagger } from './swagger/get-public-posts.swagger';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -121,7 +122,6 @@ export class PostsController {
     );
   }
 
-  //чтобы юзер мог получить пост со статусом драфт или пубдиш
   @Get(':id')
   @GetOwnPostSwagger()
   async getPostById(
@@ -144,7 +144,8 @@ export class PostsController {
 
   @Get()
   @Public()
-  async getPost(@Query() query: GetPostsQueryParamsDto): Promise<PostsPageViewDto> {
+  @GetPublicPostsSwagger()
+  async getPosts(@Query() query: GetPostsQueryParamsDto): Promise<PostsPageViewDto> {
     return this.queryBus.execute(new GetPostsQuery(query.pageNumber, query.pageSize));
   }
 }
