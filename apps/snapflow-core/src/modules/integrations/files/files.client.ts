@@ -1,10 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SERVICES } from '../../../../../../libs/contracts/services.tokens';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import {
   ConfirmUploadRequest,
   ConfirmUploadResponse,
+  DeleteFileRequest,
+  DeleteFileResponse,
   FilesRpcCommand,
   GenerateUploadUrlResponse,
   GenerateUploadUrlsRequest,
@@ -71,6 +73,17 @@ export class FilesClient {
       return firstValueFrom<UploadFileResponse>(
         this.client.send({ cmd: FilesRpcCommand.UploadFile }, payload),
       );
+    } catch (error) {
+      if (this.isRpcError(error)) {
+        throw this.exceptionMapper.mapRpcToDomainException(error);
+      }
+      throw error;
+    }
+  }
+
+  async deleteFile(data: DeleteFileRequest): Promise<DeleteFileResponse> {
+    try {
+      return await lastValueFrom(this.client.send({ cmd: FilesRpcCommand.DeleteFile }, data));
     } catch (error) {
       if (this.isRpcError(error)) {
         throw this.exceptionMapper.mapRpcToDomainException(error);
