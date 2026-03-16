@@ -65,6 +65,7 @@ export class ProfileController {
 
   // Avatar -------------------------------------
   @Post('avatar')
+  // todo: выяснить можно ли как то переопределить ошибку FileInterceptor
   @UseInterceptors(FileInterceptor('avatar'))
   async uploadAvatar(
     @ExtractUserFromRequest() { id: userId }: UserContextDto,
