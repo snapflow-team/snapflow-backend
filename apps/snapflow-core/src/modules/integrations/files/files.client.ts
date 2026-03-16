@@ -34,7 +34,7 @@ export class FilesClient {
       );
     } catch (error) {
       if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error.response);
+        throw this.exceptionMapper.mapRpcToDomainException(error);
       }
       throw error;
     }
@@ -47,7 +47,7 @@ export class FilesClient {
       );
     } catch (error) {
       if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error.response);
+        throw this.exceptionMapper.mapRpcToDomainException(error);
       }
       throw error;
     }
@@ -60,7 +60,7 @@ export class FilesClient {
       );
     } catch (error) {
       if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error.response);
+        throw this.exceptionMapper.mapRpcToDomainException(error);
       }
       throw error;
     }
@@ -73,13 +73,13 @@ export class FilesClient {
       );
     } catch (error) {
       if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error.response);
+        throw this.exceptionMapper.mapRpcToDomainException(error);
       }
       throw error;
     }
   }
 
   private isRpcError(error: any): boolean {
-    return error?.response?.service === 'Files';
+    return error?.service === 'Files';
   }
 }
