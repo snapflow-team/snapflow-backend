@@ -3,17 +3,17 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from './configuration/configuration';
 import { pipesSetup } from './pipes.setup';
 import { globalExceptionFilterSetup } from './global-exception-filter.setup';
-import { MicroserviceSettings } from './configuration/microservice.settings';
+import { EnvironmentSettings } from './configuration/environment-settings';
 
 export const applyAppInitialization = (app: INestMicroservice): void => {
   const configService: ConfigService<Configuration, true> = app.get(
     ConfigService<Configuration, true>,
   );
 
-  const microserviceSettings: MicroserviceSettings =
-    configService.get<MicroserviceSettings>('microserviceSettings');
+  const environmentSettings: EnvironmentSettings =
+    configService.get<EnvironmentSettings>('environmentSettings');
 
   pipesSetup(app);
 
-  globalExceptionFilterSetup(app, microserviceSettings.sendInternalServerErrorDetails);
+  globalExceptionFilterSetup(app, environmentSettings);
 };
