@@ -9,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { BusinessRulesSettings } from '../../../../../setup/configuration/business-rules-settings';
 import { Configuration } from '../../../../../setup/configuration/configuration';
+import { ValidationException } from '../../../../../../../../libs/exceptions/core';
 
 @Injectable()
 export class AvatarFilePipe extends ParseFilePipe {
@@ -27,6 +28,14 @@ export class AvatarFilePipe extends ParseFilePipe {
         new MaxFileSizeValidator({ maxSize }),
         new FileTypeValidator({ fileType: allowedTypesRegex }),
       ],
+      exceptionFactory: (errors: string) => {
+        return new ValidationException([
+          {
+            field: 'avatar',
+            message: errors,
+          },
+        ]);
+      },
     });
   }
 }
