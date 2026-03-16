@@ -67,7 +67,16 @@ export class FilesClient {
   }
 
   async uploadFile(payload: UploadFileRequest): Promise<UploadFileResponse> {
-    return firstValueFrom(this.client.send({ cmd: FilesRpcCommand.UploadFile }, payload));
+    try {
+      return firstValueFrom<UploadFileResponse>(
+        this.client.send({ cmd: FilesRpcCommand.UploadFile }, payload),
+      );
+    } catch (error) {
+      if (this.isRpcError(error)) {
+        throw this.exceptionMapper.mapRpcToDomainException(error.response);
+      }
+      throw error;
+    }
   }
 
   private isRpcError(error: any): boolean {
