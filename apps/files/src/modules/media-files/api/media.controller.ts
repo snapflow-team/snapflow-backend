@@ -19,6 +19,7 @@ import { MimetypeAvatar } from '../../../../../../libs/contracts/files/mimetype-
 import { RpcBadRequestException } from '../../../common/exceptions/rpc-domain-exceptions';
 import { AVATAR_IMAGE_SIZE } from '../../../../../../libs/common/constants/image-size.constants';
 import { UploadAvatarCommand } from '../application/usecases/upload-avatar.usecase';
+import { SerializedBuffer } from '../../../common/interfeces/serialized-buffer';
 
 @Controller()
 export class MediaController {
@@ -55,6 +56,9 @@ export class MediaController {
     data: UploadFileRequest,
   ): Promise<UploadFileResponse> {
     const allowedTypes = Object.values(MimetypeAvatar) as string[];
+    const imageBuffer = Buffer.isBuffer(data.buffer)
+      ? data.buffer
+      : Buffer.from((data.buffer as unknown as SerializedBuffer).data);
 
     if (!allowedTypes.includes(data.mimetype)) {
       throw new RpcBadRequestException(
@@ -75,7 +79,7 @@ export class MediaController {
       new UploadAvatarCommand({
         userId: data.userId,
         mimetype: data.mimetype,
-        buffer: data.buffer,
+        buffer: imageBuffer,
       }),
     );
   }
