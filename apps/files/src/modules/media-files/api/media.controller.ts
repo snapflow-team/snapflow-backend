@@ -3,6 +3,8 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import type {
   ConfirmUploadRequest,
   ConfirmUploadResponse,
+  DeleteFileRequest,
+  DeleteFileResponse,
   GenerateUploadUrlResponse,
   GenerateUploadUrlsRequest,
   UploadFileRequest,
@@ -20,6 +22,7 @@ import { RpcBadRequestException } from '../../../common/exceptions/rpc-domain-ex
 import { AVATAR_IMAGE_SIZE } from '../../../../../../libs/common/constants/image-size.constants';
 import { UploadAvatarCommand } from '../application/usecases/upload-avatar.usecase';
 import { SerializedBuffer } from '../../../common/interfeces/serialized-buffer';
+import { DeleteFileCommand } from '../application/usecases/delete-file.usecase';
 
 @Controller()
 export class MediaController {
@@ -82,5 +85,10 @@ export class MediaController {
         buffer: imageBuffer,
       }),
     );
+  }
+
+  @MessagePattern({ cmd: FilesRpcCommand.DeleteFile })
+  async deleteFile(@Payload() data: DeleteFileRequest): Promise<DeleteFileResponse> {
+    return this.commandBus.execute(new DeleteFileCommand(data));
   }
 }
