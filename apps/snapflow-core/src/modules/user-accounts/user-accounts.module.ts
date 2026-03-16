@@ -59,6 +59,7 @@ import { FilesClient } from '../integrations/files/files.client';
 import { FilesMediaController } from '../integrations/files/api/files-media.controller';
 import { MulterModule } from '@nestjs/platform-express';
 import { UploadAvatarUseCase } from './users/profile/application/usecases/upload-avatar.usecase';
+import { DeleteAvatarUseCase } from './users/profile/application/usecases/delete-avatar.usecase';
 
 const controllers = [
   AuthController,
@@ -90,6 +91,7 @@ const useCases = [
 
   UpdateProfileUseCase,
   UploadAvatarUseCase,
+  DeleteAvatarUseCase,
 
   CreatePostUseCase,
   PublishPostUseCase,
