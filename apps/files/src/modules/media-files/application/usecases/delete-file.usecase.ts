@@ -4,8 +4,8 @@ import { FilesRepository } from '../../infrastructure/repositories/files.reposit
 import { StorageService } from '../../infrastructure/storage/storage.service';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../../setup/configuration/configuration';
-import { DeleteFileResponse } from '../../../../../../../libs/contracts/files/delete-file.contract';
 import { S3Settings } from '../../../../setup/configuration/s3.settings';
+import { DeleteFileResponse } from '../../../../../../../libs/contracts/files';
 
 export class DeleteFileCommand {
   constructor(public readonly dto: DeleteFileApplicationDto) {}
