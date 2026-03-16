@@ -1,4 +1,4 @@
 export class UpdateAvatarInfrastructureDto {
   userId: number;
-  publicUrl: string;
+  publicUrl: string | null;
 }
