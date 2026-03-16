@@ -29,6 +29,7 @@ import { AvatarFile } from '../pipes/avatar-file.pipe';
 import { UploadAvatarApplicationDto } from '../application/dto/apload-avatar.application-dto';
 import { AvatarViewDto } from './dto/view-dto/acatar.view-dto';
 import { UploadAvatarCommand } from '../application/usecases/upload-avatar.usecase';
+import { ApiUploadAvatar } from './swagger/upload-avatar.swagger';
 
 @ApiTags('Profile')
 @UseGuards(JwtAuthGuard)
@@ -67,6 +68,7 @@ export class ProfileController {
   @Post('avatar')
   // todo: выяснить можно ли как то переопределить ошибку FileInterceptor
   @UseInterceptors(FileInterceptor('avatar'))
+  @ApiUploadAvatar()
   async uploadAvatar(
     @ExtractUserFromRequest() { id: userId }: UserContextDto,
     @AvatarFile() file: Express.Multer.File,
