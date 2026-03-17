@@ -20,6 +20,7 @@
     "test:watch:snapflow-core": "cross-env NODE_ENV=testing jest --watch",
     "test:cov:snapflow-core": "cross-env NODE_ENV=testing jest --coverage",
     "test:debug:snapflow-core": "cross-env NODE_ENV=testing node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:int:files": "cross-env NODE_ENV=testing jest --config ./apps/files/test/jest-int.json --runInBand --detectOpenHandles",
     "test": "jest",
     "prisma:create-migrate:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate dev --create-only --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:generate:snapflow-core": "cross-env NODE_ENV=development npx prisma generate --schema=./apps/snapflow-core/prisma/schema.prisma",
@@ -40,6 +41,8 @@
     "prisma:deploy:dev:files": "cross-env NODE_ENV=development npx prisma migrate deploy --config=./apps/files/prisma.config.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.888.0",
+    "@aws-sdk/s3-request-presigner": "^3.888.0",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/common": "11.0.1",
     "@nestjs/config": "4.0.2",
@@ -56,8 +59,6 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "@prisma/client-runtime-utils": "^7.3.0",
-    "@aws-sdk/client-s3": "^3.888.0",
-    "@aws-sdk/s3-request-presigner": "^3.888.0",
     "argon2": "^0.44.0",
     "class-transformer": "^0.5.1",
     "class-validator": "0.14.3",
@@ -73,6 +74,7 @@
     "pg": "^8.17.2",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.1",
+    "sharp": "^0.34.5",
     "swagger-ui-express": "^5.0.1",
     "ua-parser-js": "2.0.3"
   },
@@ -86,6 +88,7 @@
     "@types/cookie-parser": "1.4.10",
     "@types/express": "5.0.0",
     "@types/jest": "30.0.0",
+    "@types/multer": "^2.1.0",
     "@types/node": "22.10.7",
     "@types/nodemailer": "^7.0.9",
     "@types/passport": "^1.0.17",

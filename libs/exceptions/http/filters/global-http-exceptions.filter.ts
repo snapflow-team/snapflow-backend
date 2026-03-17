@@ -1,10 +1,20 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import type { IServerErrorResponseFactory } from '../../core';
 import { IErrorResponse, serverErrorResponseFactory } from '../../core';
+import { cleanStackTrace } from '../../core/utils/clean-stack-trace';
 
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
+  private readonly logger: Logger = new Logger(GlobalExceptionsFilter.name);
+
   constructor(
     private readonly isExposeDetails: boolean,
     private readonly customFactory?: IServerErrorResponseFactory<string>,
@@ -18,7 +28,6 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
     let status: number = HttpStatus.INTERNAL_SERVER_ERROR;
 
     if (exception instanceof HttpException) status = exception.getStatus();
-    // todo: добавить возможность переопределить фабрику формирования ответа
     const responseBody: IErrorResponse<string> = this.customFactory
       ? this.customFactory(
           this.isExposeDetails ? request.url : null,
@@ -41,22 +50,22 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
   }
 
   private logException(exception: unknown, request: Request, status: number): void {
-    const logPayload = {
-      level: status >= 500 ? 'error' : 'warn',
-      timestamp: new Date().toISOString(),
-      type: exception?.constructor?.name,
-      message: (exception as any)?.message,
-      request: {
-        method: request.method,
-        url: request.originalUrl,
-        ip: request.ip,
-        userAgent: request.headers['user-agent'],
-      },
-    };
+    const message = (exception as any)?.message || 'Unknown error occurred';
 
-    console.error({
-      ...logPayload,
-      stack: (exception as any)?.stack,
-    });
+    const ip = request.headers['x-forwarded-for'] || request.ip;
+    const userAgent = request.headers['user-agent'] || 'Unknown Agent';
+
+    const logMessage = `[${request.method} ${request.originalUrl}] ${status} - ${message}`;
+
+    const context = `IP: ${ip} | User-Agent: ${userAgent}`;
+
+    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      const stack = (exception as any)?.stack;
+      const cleanStack = stack ? cleanStackTrace(stack) : 'Stack is not available';
+
+      this.logger.error(`${logMessage} | ${context}`, cleanStack);
+    } else {
+      this.logger.warn(`${logMessage} | ${context}`);
+    }
   }
 }

@@ -57,6 +57,9 @@ import { DeletePostUseCase } from '../posts/application/usecases/delete-post.use
 import { FilesClientModule } from '../integrations/files/files-client.module';
 import { FilesClient } from '../integrations/files/files.client';
 import { FilesMediaController } from '../integrations/files/api/files-media.controller';
+import { MulterModule } from '@nestjs/platform-express';
+import { UploadAvatarUseCase } from './users/profile/application/usecases/upload-avatar.usecase';
+import { DeleteAvatarUseCase } from './users/profile/application/usecases/delete-avatar.usecase';
 
 const controllers = [
   AuthController,
@@ -69,20 +72,29 @@ const controllers = [
 const useCases = [
   RegisterUserUseCase,
   ConfirmationEmailUseCase,
+  RegistrationEmailResendingUseCase,
+
   OAuthUseCase,
+
   LoginUserUseCase,
   LogoutUseCase,
+
   CreateSessionUseCase,
-  RegistrationEmailResendingUseCase,
+  DeleteSessionByDeviceUseCase,
+  DeleteActiveSessionsUseCase,
+
   PasswordRecoveryUseCase,
   CheckPasswordRecoveryCodeUseCase,
   NewPasswordUseCase,
+
   RefreshTokenUseCase,
-  DeleteSessionByDeviceUseCase,
-  DeleteActiveSessionsUseCase,
+
+  UpdateProfileUseCase,
+  UploadAvatarUseCase,
+  DeleteAvatarUseCase,
+
   CreatePostUseCase,
   PublishPostUseCase,
-  UpdateProfileUseCase,
   EditPostUseCase,
   DeletePostUseCase,
 ];
@@ -119,9 +131,11 @@ const configs = [UserAccountsConfig];
   imports: [
     EmailModule,
     FilesClientModule,
+    MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({
       imports: [UserAccountsConfigModule],
       inject: [UserAccountsConfig],
+      // todo: выпилить UserAccountsConfig!
       useFactory: (config: UserAccountsConfig) => ({
         secretKey: config.googleRecaptchaSecretKey,
         response: (req: Request<unknown, unknown, RecaptchaBody>) =>

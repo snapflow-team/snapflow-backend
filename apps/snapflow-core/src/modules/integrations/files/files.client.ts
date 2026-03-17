@@ -1,13 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SERVICES } from '../../../../../../libs/contracts/services.tokens';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import {
   ConfirmUploadRequest,
   ConfirmUploadResponse,
+  DeleteFileRequest,
+  DeleteFileResponse,
   FilesRpcCommand,
   GenerateUploadUrlResponse,
   GenerateUploadUrlsRequest,
+  UploadFileRequest,
+  UploadFileResponse,
   ValidateFilesRequest,
   ValidateFilesResponse,
 } from '../../../../../../libs/contracts/files';
@@ -32,7 +36,7 @@ export class FilesClient {
       );
     } catch (error) {
       if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error.response);
+        throw this.exceptionMapper.mapRpcToDomainException(error);
       }
       throw error;
     }
@@ -45,7 +49,7 @@ export class FilesClient {
       );
     } catch (error) {
       if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error.response);
+        throw this.exceptionMapper.mapRpcToDomainException(error);
       }
       throw error;
     }
@@ -58,13 +62,37 @@ export class FilesClient {
       );
     } catch (error) {
       if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error.response);
+        throw this.exceptionMapper.mapRpcToDomainException(error);
+      }
+      throw error;
+    }
+  }
+
+  async uploadFile(payload: UploadFileRequest): Promise<UploadFileResponse> {
+    try {
+      return firstValueFrom<UploadFileResponse>(
+        this.client.send({ cmd: FilesRpcCommand.UploadFile }, payload),
+      );
+    } catch (error) {
+      if (this.isRpcError(error)) {
+        throw this.exceptionMapper.mapRpcToDomainException(error);
+      }
+      throw error;
+    }
+  }
+
+  async deleteFile(data: DeleteFileRequest): Promise<DeleteFileResponse> {
+    try {
+      return await lastValueFrom(this.client.send({ cmd: FilesRpcCommand.DeleteFile }, data));
+    } catch (error) {
+      if (this.isRpcError(error)) {
+        throw this.exceptionMapper.mapRpcToDomainException(error);
       }
       throw error;
     }
   }
 
   private isRpcError(error: any): boolean {
-    return error?.response?.service === 'Files';
+    return error?.service === 'Files';
   }
 }

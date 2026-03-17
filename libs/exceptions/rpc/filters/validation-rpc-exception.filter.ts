@@ -1,5 +1,5 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { ValidationException } from '../../core';
 import { TcpContext } from '@nestjs/microservices';
 import { rpcErrorResponseFactory } from '../rpc-exception-response';
@@ -12,6 +12,6 @@ export class ValidationRpcExceptionFilter implements ExceptionFilter {
     const ctx: TcpContext = host.switchToRpc().getContext<TcpContext>();
     const pattern: string = ctx.getPattern();
 
-    return rpcErrorResponseFactory(exception, this.serviceName, pattern);
+    return throwError(() => rpcErrorResponseFactory(exception, this.serviceName, pattern));
   }
 }

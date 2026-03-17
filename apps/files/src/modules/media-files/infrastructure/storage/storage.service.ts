@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client, } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
-import { Configuration } from '../../../../../setup/configuration/configuration';
-import { S3Settings } from '../../../../../setup/configuration/s3.settings';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { S3Settings } from '../../../../setup/configuration/s3.settings';
 
 @Injectable()
 export class StorageService {
@@ -40,12 +40,30 @@ export class StorageService {
     }
   }
 
-  getPublicUrl(key: string): string {
-    const baseUrl = process.env.S3_PUBLIC_BASE_URL;
+  async uploadFile(key: string, buffer: Buffer, mimetype: string): Promise<string> {
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: buffer,
+      ContentType: mimetype,
+      ACL: 'public-read',
+    });
 
-    if (baseUrl) {
-      return `${baseUrl}/${key}`;
-    }
+    await this.s3.send(command);
+
+    return this.getPublicUrl(key);
+  }
+
+  async deleteFile(key: string): Promise<void> {
+    const command = new DeleteObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    });
+
+    await this.s3.send(command);
+  }
+
+  getPublicUrl(key: string): string {
     return `${this.publicBaseUrl}/${key}`;
   }
 }

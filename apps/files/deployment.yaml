@@ -90,6 +90,11 @@ spec:
                 secretKeyRef:
                   name: snapflow-files-production-config-secret
                   key: S3_POSTS_MEDIA_KEY_PREFIX
+            - name: S3_AVATARS_MEDIA_KEY_PREFIX
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-files-production-config-secret
+                  key: S3_AVATARS_MEDIA_KEY_PREFIX
             - name: NODE_ENV
               valueFrom:
                 secretKeyRef:

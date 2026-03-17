@@ -1,5 +1,5 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { rpcErrorResponseFactory } from '../rpc-exception-response';
 import { CommonDomainExceptionCodeType, DomainException } from '../../core';
 import { TcpContext } from '@nestjs/microservices';
@@ -14,6 +14,6 @@ export class DomainRpcExceptionsFilter<TCode = CommonDomainExceptionCodeType>
     const ctx: TcpContext = host.switchToRpc().getContext<TcpContext>();
     const pattern: string = ctx.getPattern();
 
-    return rpcErrorResponseFactory(exception, this.serviceName, pattern);
+    return throwError(() => rpcErrorResponseFactory(exception, this.serviceName, pattern));
   }
 }

@@ -1,4 +1,4 @@
-import { ConfirmationStatus, Prisma, User } from '@generated/prisma';
+import { ConfirmationStatus, Prisma, User } from '@generated/prisma-snapflow';
 import { PrismaService } from '../../src/database/prisma.service';
 
 /**

@@ -2,6 +2,7 @@ import { PrismaService } from '../../../../../database/prisma.service';
 import { UpdateProfileInfrastructureDto } from './dto/update-profile.infrastructure-dto';
 import { Injectable } from '@nestjs/common';
 import { Prisma, UserProfile } from '@generated/prisma-snapflow';
+import { UpdateAvatarInfrastructureDto } from './dto/update-avatar.infrastructure-dto';
 
 @Injectable()
 export class ProfilesRepository {
@@ -46,6 +47,20 @@ export class ProfilesRepository {
         ...(country !== undefined && { country }),
         ...(city !== undefined && { city }),
         ...(aboutMe !== undefined && { aboutMe }),
+      },
+    });
+  }
+
+  async updateAvatarUrl(
+    dto: UpdateAvatarInfrastructureDto,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.userProfile.updateMany({
+      where: {
+        userId: dto.userId,
+      },
+      data: {
+        avatarUrl: dto.publicUrl,
       },
     });
   }

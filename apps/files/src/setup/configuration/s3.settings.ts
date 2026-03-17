@@ -26,6 +26,9 @@ export class S3Settings {
   @IsString()
   postsMediaKeyPrefix: string;
 
+  @IsString()
+  avatarsMediaKeyPrefix: string;
+
   constructor(private readonly env: EnvironmentVariable) {
     this.region = this.env.S3_REGION;
     this.endpoint = this.env.S3_ENDPOINT;
@@ -35,6 +38,7 @@ export class S3Settings {
     this.publicBaseUrl = this.env.S3_PUBLIC_BASE_URL;
     this.presignedExpiresIn = Number(this.env.S3_PRESIGNED_EXPIRES_IN);
     this.postsMediaKeyPrefix = this.env.S3_POSTS_MEDIA_KEY_PREFIX;
+    this.avatarsMediaKeyPrefix = this.env.S3_AVATARS_MEDIA_KEY_PREFIX;
   }
 
   getS3ClientConfig() {

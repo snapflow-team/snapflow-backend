@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../../../../database/prisma.service';
+import { PrismaService } from '../../../../database/prisma.service';
 import { File, FileStatus, Prisma } from '@generated/prisma-files';
 
 @Injectable()
@@ -19,6 +19,20 @@ export class FilesRepository {
     });
   }
 
+  async createUploaded(data: Prisma.FileCreateInput): Promise<void> {
+    await this.prisma.file.create({
+      data: {
+        id: data.id,
+        userId: data.userId,
+        key: data.key,
+        mimeType: data.mimeType,
+        size: data.size,
+        status: FileStatus.UPLOADED,
+      },
+    });
+  }
+
+  // todo: зачем эти методы (findByIdAndUserId, confirmUpload)?
   async findByIdAndUserId(fileId: string, userId: number): Promise<File | null> {
     return this.prisma.file.findFirst({
       where: { id: fileId, userId, deletedAt: null },
@@ -62,6 +76,18 @@ export class FilesRepository {
         userId,
         status: FileStatus.UPLOADED,
         deletedAt: null,
+      },
+    });
+  }
+
+  async softDelete(key: string, userId: number): Promise<void> {
+    await this.prisma.file.updateMany({
+      where: {
+        key,
+        userId,
+      },
+      data: {
+        deletedAt: new Date(),
       },
     });
   }
