@@ -10,7 +10,7 @@ import { DeleteFileResponse } from '../../../../../../../libs/contracts/files';
 export class DeleteFileCommand {
   constructor(public readonly dto: DeleteFileApplicationDto) {}
 }
-
+// todo: внедрить паттерн Outbox / Cron
 @CommandHandler(DeleteFileCommand)
 export class DeleteFileUseCase implements ICommandHandler<DeleteFileCommand> {
   constructor(
@@ -24,9 +24,9 @@ export class DeleteFileUseCase implements ICommandHandler<DeleteFileCommand> {
 
     const key: string = fileUrl.replace(`${publicBaseUrl}/`, '');
 
-    await this.filesRepository.softDelete(key, userId);
-
     await this.storageService.deleteFile(key);
+
+    await this.filesRepository.softDelete(key, userId);
 
     return { success: true };
   }
