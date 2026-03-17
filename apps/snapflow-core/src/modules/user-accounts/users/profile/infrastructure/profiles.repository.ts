@@ -1,7 +1,7 @@
 import { PrismaService } from '../../../../../database/prisma.service';
-import { Prisma, UserProfile } from '@generated/prisma';
 import { UpdateProfileInfrastructureDto } from './dto/update-profile.infrastructure-dto';
 import { Injectable } from '@nestjs/common';
+import { Prisma, UserProfile } from '@generated/prisma-snapflow';
 
 @Injectable()
 export class ProfilesRepository {

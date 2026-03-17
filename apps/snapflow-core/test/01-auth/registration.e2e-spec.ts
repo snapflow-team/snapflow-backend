@@ -10,11 +10,11 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { User } from '../../generated/prisma';
 import { TestUtils } from '../helpers/test.utils';
-import { ErrorResponseDto } from '../../../../libs/common/exceptions/dto/error-response-body.dto';
-import { DomainExceptionCode } from '../../../../libs/common/exceptions/types/domain-exception-codes';
+import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
 import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
 import { ProfileTestManager } from '../managers/profile.test-manager';
 import { ProfilesRepository } from '../../src/modules/user-accounts/users/profile/infrastructure/profiles.repository';
+import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
 
 describe('AuthController - registration() (POST: /auth/registration)', () => {
   let appTestManager: AppTestManager;
@@ -136,7 +136,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       path: `/${GLOBAL_PREFIX}/auth/registration`,
       method: 'POST',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',
@@ -177,7 +177,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       path: `/${GLOBAL_PREFIX}/auth/registration`,
       method: 'POST',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'email',
@@ -207,7 +207,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       path: `/${GLOBAL_PREFIX}/auth/registration`,
       method: 'POST',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',
@@ -251,7 +251,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       path: `/${GLOBAL_PREFIX}/auth/registration`,
       method: 'POST',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',
@@ -300,7 +300,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       path: `/${GLOBAL_PREFIX}/auth/registration`,
       method: 'POST',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',
@@ -349,7 +349,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       path: `/${GLOBAL_PREFIX}/auth/registration`,
       method: 'POST',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',
@@ -393,7 +393,7 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
       path: `/${GLOBAL_PREFIX}/auth/registration`,
       method: 'POST',
       message: 'Validation failed',
-      code: DomainExceptionCode.ValidationError,
+      code: SnapFlowDomainExceptionCode.ValidationError,
       extensions: [
         {
           field: 'username',

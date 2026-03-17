@@ -1,4 +1,4 @@
-import { Prisma } from '@generated/prisma';
+import { Prisma } from '@generated/prisma-snapflow';
 
 export type UserWithEmailConfirmation = Prisma.UserGetPayload<{
   include: {

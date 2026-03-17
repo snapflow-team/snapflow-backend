@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma.service';
 import { MeViewDto } from '../../auth/api/view-dto/me.view-dto';
 import { RawUserForMe } from './types/raw-user-for-me';
-import { DomainException } from '../../../../../../../libs/common/exceptions/damain.exception';
-import { DomainExceptionCode } from '../../../../../../../libs/common/exceptions/types/domain-exception-codes';
+import { NotFoundException } from '../../../../common/exceptions/domain-exceptions';
 
 @Injectable()
 export class UsersQueryRepository {
@@ -20,10 +19,7 @@ export class UsersQueryRepository {
     });
 
     if (!user) {
-      throw new DomainException({
-        code: DomainExceptionCode.NotFound,
-        message: `The user with ID (${id}) does not exist`,
-      });
+      throw new NotFoundException(`The user with ID (${id}) does not exist`);
     }
 
     return MeViewDto.mapToView(user);

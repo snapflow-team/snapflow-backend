@@ -1,5 +1,5 @@
-import { UserProfile } from '@generated/prisma';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserProfile } from '@generated/prisma-snapflow';
 
 export class ProfileViewDto {
   @ApiProperty({

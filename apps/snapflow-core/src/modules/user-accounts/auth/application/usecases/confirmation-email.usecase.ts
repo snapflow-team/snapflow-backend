@@ -2,8 +2,8 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
-import { ConfirmationStatus } from '@generated/prisma';
-import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation-exception';
+import { ValidationException } from '../../../../../../../../libs/exceptions/core';
+import { ConfirmationStatus } from '@generated/prisma-snapflow';
 
 export class ConfirmationEmailCommand {
   constructor(public readonly confirmationCode: string) {}

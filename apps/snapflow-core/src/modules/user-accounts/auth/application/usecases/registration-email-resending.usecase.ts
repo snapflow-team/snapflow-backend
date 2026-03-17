@@ -1,13 +1,12 @@
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
-import { ConfirmationStatus } from '@generated/prisma';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
-import { DomainException } from '../../../../../../../../libs/common/exceptions/damain.exception';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
-import { ValidationException } from '../../../../../../../../libs/common/exceptions/validation-exception';
-import { DomainExceptionCode } from '../../../../../../../../libs/common/exceptions/types/domain-exception-codes';
+import { InternalServerException } from '../../../../../common/exceptions/domain-exceptions';
+import { ValidationException } from '../../../../../../../../libs/exceptions/core';
+import { ConfirmationStatus } from '@generated/prisma-snapflow';
 
 export class RegistrationEmailResendingCommand {
   constructor(public readonly email: string) {}
@@ -41,10 +40,7 @@ export class RegistrationEmailResendingUseCase
 
     if (!emailConfirmationCode) {
       // TODO какой статус выкидывать в данном случае?
-      throw new DomainException({
-        code: DomainExceptionCode.InternalServerError,
-        message: 'Email confirmation request does not exist',
-      });
+      throw new InternalServerException('Email confirmation request does not exist');
     }
 
     if (emailConfirmationCode.confirmationStatus === ConfirmationStatus.Confirmed) {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Session } from '@generated/prisma';
 import { PrismaService } from '../../../../../database/prisma.service';
+import { Prisma, Session } from '@generated/prisma-snapflow';
 
 @Injectable()
 export class SessionsRepository {

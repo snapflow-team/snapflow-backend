@@ -3,7 +3,7 @@ import { Profile, Strategy } from 'passport-google-oauth20';
 import { UserAccountsConfig } from '../../../../config/user-accounts.config';
 import { Injectable } from '@nestjs/common';
 import { OAuthContextDto } from '../dto/oauth-context.dto';
-import { OAuthProvider } from '@generated/prisma';
+import { OAuthProvider } from '@generated/prisma-snapflow';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {

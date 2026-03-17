@@ -7,7 +7,7 @@ import {
   ApiTooManyRequestsResponse,
 } from '@nestjs/swagger';
 import { RegistrationEmailResendingInputDto } from '../input-dto/registration-email-resending.input-dto';
-import { ErrorResponseDto } from '../../../../../../../../libs/common/exceptions/dto/error-response-body.dto';
+import { ErrorResponseDto } from '../../../../../common/exceptions/error-response-body.dto';
 
 export function ApiRegisterEmailResendingCommand() {
   return applyDecorators(
