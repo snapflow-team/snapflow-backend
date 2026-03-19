@@ -4,6 +4,7 @@ import { UpdatePostInputDto } from '../api/input-dto/update-post.input.dto';
 import { PostStatus, Prisma } from '@generated/prisma-snapflow';
 import BatchPayload = Prisma.BatchPayload;
 
+// todo: вынести в отдельную директорию
 export type CreateMediaInput = {
   fileId: string;
   url: string;
@@ -12,12 +13,14 @@ export type CreateMediaInput = {
   position: number;
 };
 
+// todo: вынести в отдельную директорию
 export type PostWithMedia = Prisma.PostGetPayload<{ include: { postMedias: true } }>;
 
 @Injectable()
 export class PostsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  // todo: вынести параметры в dto
   async createPostWithMedia(params: {
     userId: number;
     description?: string;

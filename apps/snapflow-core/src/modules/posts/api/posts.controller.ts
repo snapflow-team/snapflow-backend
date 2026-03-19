@@ -76,6 +76,7 @@ export class PostsController {
     );
   }
 
+  // todo: удалить роут publish
   @Post(':id/publish')
   @PublishPostSwagger()
   async publish(

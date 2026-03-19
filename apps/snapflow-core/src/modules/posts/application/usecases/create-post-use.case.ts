@@ -8,6 +8,7 @@ import { PostStatus } from '@generated/prisma-snapflow';
 
 export class CreatePostCommand {
   constructor(
+    // todo: вынести параметры в CreatePostApplicationDto
     public readonly dto: CreatePostInputDto,
     public readonly userId: number,
     public readonly status: PostStatus,
@@ -24,12 +25,14 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
   async execute({ dto, userId, status }: CreatePostCommand): Promise<number> {
     let validatedFiles: ValidatedFile[] = [];
 
+    // todo: удалить "?"
     if (dto.fileIds?.length > 0) {
       const response: ValidateFilesResponse = await this.filesClient.validateFiles({
         userId,
         fileIds: dto.fileIds,
       });
 
+      // todo: переписать ошибку более понятно
       if (!response.valid) {
         throw new BadRequestException('Another user has some files');
       }
