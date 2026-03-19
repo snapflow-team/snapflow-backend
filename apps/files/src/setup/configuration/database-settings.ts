@@ -2,7 +2,6 @@ import { EnvironmentVariable } from './configuration';
 import { IsBoolean, IsString } from 'class-validator';
 import { Prisma } from '@generated/prisma-files';
 
-// todo: вынести в либу
 export class DatabaseSettings {
   @IsString()
   url: string;
