@@ -20,7 +20,6 @@ import { UpdateProfileInputDto } from './dto/input-dto/update-profile.input-dto'
 import { UpdateProfileCommand } from '../application/usecases/update-profile.usecase';
 import { ProfileViewDto } from './dto/view-dto/profile.view-dto';
 import { GetProfileQuery } from '../application/queries/get-profile.query-handler';
-import { Public } from '../../../decorators/public.decorator';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiUpdateProfile } from './swagger/update-profile.swagger';
 import { ApiGetProfile } from './swagger/get-profile.swagger';
@@ -33,6 +32,10 @@ import { UploadAvatarCommand } from '../application/usecases/upload-avatar.useca
 import { ApiUploadAvatar } from './swagger/upload-avatar.swagger';
 import { DeleteAvatarCommand } from '../application/usecases/delete-avatar.usecase';
 import { ApiDeleteAvatar } from './swagger/delete-avatar.swagger';
+import { Public } from '../../../decorators/public.decorator';
+import { PublicProfileViewDto } from './dto/view-dto/public-profile.view-dto';
+import { GetPublicProfileQuery } from '../application/queries/get-public-profile.query-handler';
+import { ApiGetPublicProfile } from './swagger/get-public-profile.swagger';
 
 @ApiTags('Profile')
 @UseGuards(JwtAuthGuard)
@@ -60,11 +63,21 @@ export class ProfileController {
     );
   }
 
-  @Get(':userId')
-  @Public()
+  @Get()
   @ApiGetProfile()
-  async getProfile(@Param('userId', ParseIntPipe) userId: number): Promise<ProfileViewDto> {
+  async getProfile(
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+  ): Promise<ProfileViewDto> {
     return await this.queryBus.execute(new GetProfileQuery(userId));
+  }
+
+  @Get(':profileId')
+  @Public()
+  @ApiGetPublicProfile()
+  async getPublicProfile(
+    @Param('profileId', ParseIntPipe) profileId: number,
+  ): Promise<PublicProfileViewDto> {
+    return await this.queryBus.execute(new GetPublicProfileQuery(profileId));
   }
 
   // Avatar -------------------------------------
