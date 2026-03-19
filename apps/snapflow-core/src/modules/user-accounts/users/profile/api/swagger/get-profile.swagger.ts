@@ -1,35 +1,28 @@
 import { applyDecorators } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiParam,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ProfileViewDto } from '../dto/view-dto/profile.view-dto';
 
 export function ApiGetProfile() {
   return applyDecorators(
     ApiOperation({
-      summary: 'Получение профиля пользователя по ID',
+      summary: 'Получение профиля пользователя',
     }),
-    ApiParam({
-      name: 'userId',
-      type: String,
-      required: true,
-      description: 'ID пользователя',
-      example: 1,
-    }),
+    ApiBearerAuth('access-token'),
     ApiOkResponse({
       description: 'Профиль пользователя успешно получен.',
       type: ProfileViewDto,
     }),
-    ApiBadRequestResponse({
-      description: 'Если параметр userId не валидный.',
-    }),
     ApiNotFoundResponse({
-      description:
-        'Если пользователь с таким ID не найден или не найден профиль этого пользователя.',
+      description: 'Если профиль пользователя не найден.',
+    }),
+    ApiUnauthorizedResponse({
+      description: 'Если пользователь не авторизован или access-токен недействителен',
     }),
   );
 }
