@@ -5,8 +5,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Param,
-  ParseIntPipe,
   Post,
   Put,
   UseGuards,
@@ -20,7 +18,6 @@ import { UpdateProfileInputDto } from './dto/input-dto/update-profile.input-dto'
 import { UpdateProfileCommand } from '../application/usecases/update-profile.usecase';
 import { ProfileViewDto } from './dto/view-dto/profile.view-dto';
 import { GetProfileQuery } from '../application/queries/get-profile.query-handler';
-import { Public } from '../../../decorators/public.decorator';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiUpdateProfile } from './swagger/update-profile.swagger';
 import { ApiGetProfile } from './swagger/get-profile.swagger';
@@ -60,10 +57,11 @@ export class ProfileController {
     );
   }
 
-  @Get(':userId')
-  @Public()
+  @Get()
   @ApiGetProfile()
-  async getProfile(@Param('userId', ParseIntPipe) userId: number): Promise<ProfileViewDto> {
+  async getProfile(
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+  ): Promise<ProfileViewDto> {
     return await this.queryBus.execute(new GetProfileQuery(userId));
   }
 
