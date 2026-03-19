@@ -7,7 +7,7 @@ import { UserProfile } from '@generated/prisma-snapflow';
 @Injectable()
 export class ProfilesQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
-  async findProfileByUserId(userId: number) {
+  async findProfileByUserIdOrNotFoundFail(userId: number) {
     const profile: UserProfile | null = await this.prisma.userProfile.findFirst({
       where: { userId, deletedAt: null },
     });
