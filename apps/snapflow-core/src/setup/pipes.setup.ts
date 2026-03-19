@@ -1,9 +1,5 @@
 import { INestApplication, ValidationError, ValidationPipe } from '@nestjs/common';
-import {
-  formatValidationErrors,
-  IExtension,
-  ValidationException,
-} from '../../../../libs/exceptions/core';
+import { formatValidationErrors, IExtension, ValidationException, } from '../../../../libs/exceptions/core';
 
 export function pipesSetup(app: INestApplication) {
   app.useGlobalPipes(
@@ -12,7 +8,6 @@ export function pipesSetup(app: INestApplication) {
       whitelist: true,
       stopAtFirstError: true,
       exceptionFactory: (errors: ValidationError[]) => {
-        // todo: создать базовую formatValidationErrors
         const extensions: IExtension[] = formatValidationErrors(errors);
         return new ValidationException(extensions);
       },
