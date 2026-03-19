@@ -1,19 +1,11 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMaxSize,
-  ArrayMinSize,
-  IsArray,
-  IsEnum,
-  IsInt,
-  Max,
-  Min,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsEnum, IsInt, Max, Min, ValidateNested, } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { MimeType } from '../../../../../../../../libs/contracts/files';
-
-const MAX_FILES_COUNT = 10;
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+import {
+  MAX_POST_IMAGE_COUNT,
+  POST_IMAGE_SIZE,
+} from '../../../../../../../../libs/common/constants/image-size.constants';
 
 export class UploadFileInputDto {
   @ApiProperty({
@@ -27,12 +19,12 @@ export class UploadFileInputDto {
   @ApiProperty({
     example: 1024,
     minimum: 1,
-    maximum: MAX_FILE_SIZE_BYTES,
+    maximum: POST_IMAGE_SIZE,
     description: 'Размер файла в байтах',
   })
   @IsInt()
   @Min(1, { message: 'File size must be greater than 0' })
-  @Max(MAX_FILE_SIZE_BYTES, {
+  @Max(POST_IMAGE_SIZE, {
     message: 'The maximum file size is 20 MB',
   })
   size: number;
@@ -46,8 +38,8 @@ export class GenerateUploadUrlsInputDto {
   })
   @IsArray()
   @ArrayMinSize(1, { message: 'At least one file is required' })
-  @ArrayMaxSize(MAX_FILES_COUNT, {
-    message: `You can upload up to ${MAX_FILES_COUNT} photos`,
+  @ArrayMaxSize(MAX_POST_IMAGE_COUNT, {
+    message: `You can upload up to ${MAX_POST_IMAGE_COUNT} photos`,
   })
   @ValidateNested({ each: true })
   @Type(() => UploadFileInputDto)
