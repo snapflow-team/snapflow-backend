@@ -62,6 +62,7 @@ import { UploadAvatarUseCase } from './users/profile/application/usecases/upload
 import { DeleteAvatarUseCase } from './users/profile/application/usecases/delete-avatar.usecase';
 import { GetTotalCountRegisteredUsersQueryHandler } from './users/application/queries/get-total-count-registered-users.query-handler';
 import { UsersController } from './users/api/users.controller';
+import { GetPublicProfileQueryHandler } from './users/profile/application/queries/get-public-profile.query-handler';
 
 const controllers = [
   AuthController,
@@ -107,6 +108,7 @@ const queries = [
 
   GetProfilePostsQueryHandler,
   GetProfileQueryHandler,
+  GetPublicProfileQueryHandler,
 
   GetAllSessionsQueryHandler,
 
