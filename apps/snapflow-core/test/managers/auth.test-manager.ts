@@ -1,5 +1,4 @@
 import { PrismaService } from '../../src/database/prisma.service';
-import { User } from '../../generated/prisma';
 import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
@@ -9,6 +8,7 @@ import {
   RegistrationUserInputDto
 } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
+import { User } from '@generated/prisma-snapflow';
 
 /**
  * 🔐 AuthTestManager

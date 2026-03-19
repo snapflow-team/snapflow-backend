@@ -7,8 +7,8 @@ import {
   ApiOperation,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { GenerateUploadUrlViewDto } from '../../../../../../../../libs/contracts/files';
 import { GenerateUploadUrlsInputDto } from '../input-dto/generate-upload-urls.input-dto';
+import { GenerateUploadUrlViewDto } from '../view-dto/generate-upload-urls.view-dto';
 
 export function GenerateUploadUrlsSwagger() {
   return applyDecorators(

@@ -1,12 +1,10 @@
 import { ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import { ExtractUserFromRequest } from '../domain/guards/decorators/extract-user-from-request.decorator';
-import { ExtractClientInfo } from '../../../../../../../libs/common/decorators/request/extract-client-info.decorator';
+import { ExtractClientInfo } from '../decorators/request/extract-client-info.decorator';
 import { ClientInfoDto } from '../../../../../../../libs/common/dto/client-info.dto';
 import type { Response } from 'express';
-import { UserAccountsConfig } from '../../config/user-accounts.config';
 import { CommandBus } from '@nestjs/cqrs';
-import { BASE_FRONT_URL } from '../constants/auth.constants';
 import { GithubAuthGuard } from '../domain/guards/github/github-auth.guard';
 import { AuthTokens } from '../domain/types/auth-tokens.type';
 import { OAuthCommand } from '../application/usecases/oauth.usecase';
@@ -16,14 +14,21 @@ import { GoogleAuthSwagger } from './swagger/google-auth.swagger';
 import { GoogleCallbackSwagger } from './swagger/google-callback.swagger';
 import { GithubAuthSwagger } from './swagger/github-auth.swagger';
 import { GithubCallbackSwagger } from './swagger/github-callback.swagger';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { ApiSettings } from '../../../../setup/configuration/api-settings';
 
 @ApiTags('OAuth')
 @Controller('oauth')
 export class OAuthController {
+  private apiSettings: ApiSettings;
+
   constructor(
-    private readonly userAccountsConfig: UserAccountsConfig,
+    private readonly configService: ConfigService<Configuration, true>,
     private readonly commandBus: CommandBus,
-  ) {}
+  ) {
+    this.apiSettings = this.configService.get<ApiSettings>('apiSettings');
+  }
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
@@ -49,8 +54,8 @@ export class OAuthController {
       }),
     );
 
-    res.cookie('refreshToken', refreshToken, this.userAccountsConfig.getCookieConfig());
-    res.redirect(`${BASE_FRONT_URL}`);
+    res.cookie('refreshToken', refreshToken, this.apiSettings.getCookieOptions());
+    res.redirect(`${this.apiSettings.redirectFrontUrl}`);
   }
 
   @Get('github')
@@ -77,7 +82,7 @@ export class OAuthController {
       }),
     );
 
-    res.cookie('refreshToken', refreshToken, this.userAccountsConfig.getCookieConfig());
-    res.redirect(`${BASE_FRONT_URL}`);
+    res.cookie('refreshToken', refreshToken, this.apiSettings.getCookieOptions());
+    res.redirect(`${this.apiSettings.redirectFrontUrl}`);
   }
 }

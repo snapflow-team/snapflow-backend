@@ -6,7 +6,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { DeleteSessionByDeviceIdCommand } from '../application/usecases/delete-session-by-device-id.usecase';
 import { ExtractSessionFromRequest } from '../../domain/guards/decorators/extract-session-from-request.decorator';
 import { SessionContextDto } from '../../domain/guards/dto/session-context.dto';
-import { ValidatedDeviceId } from '../../../../../../../../libs/common/decorators/request/device-id-param.decorator';
+import { ValidatedDeviceId } from '../../decorators/request/device-id-param.decorator';
 import { DeleteActiveSessionsCommand } from '../application/usecases/delete-active-sessions.usercase';
 import { GetAllSessionsQuery } from '../application/queries/get-all-sessions.query';
 import { SessionsViewDto } from '../../api/view-dto/sessions.view-dto';

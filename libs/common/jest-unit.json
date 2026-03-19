@@ -4,7 +4,10 @@
     "json",
     "ts"
   ],
-  "rootDir": ".",
+  "rootDir": "../..",
+  "roots": [
+    "<rootDir>/libs"
+  ],
   "testEnvironment": "node",
   "testRegex": "\\.unit-spec\\.ts$",
   "transform": {

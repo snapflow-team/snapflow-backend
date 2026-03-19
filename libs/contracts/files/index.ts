@@ -3,3 +3,5 @@ export * from './confirm-upload.contract';
 export * from './validate-files.contract';
 export * from './files-rpc-commands';
 export * from './mime-type.enum';
+export * from './upload-file.contract';
+export * from './delete-file.contract';
