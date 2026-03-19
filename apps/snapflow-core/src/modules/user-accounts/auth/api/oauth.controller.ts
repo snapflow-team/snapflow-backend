@@ -1,7 +1,7 @@
 import { ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import { ExtractUserFromRequest } from '../domain/guards/decorators/extract-user-from-request.decorator';
-import { ExtractClientInfo } from '../../../../../../../libs/common/decorators/request/extract-client-info.decorator';
+import { ExtractClientInfo } from '../decorators/request/extract-client-info.decorator';
 import { ClientInfoDto } from '../../../../../../../libs/common/dto/client-info.dto';
 import type { Response } from 'express';
 import { UserAccountsConfig } from '../../config/user-accounts.config';

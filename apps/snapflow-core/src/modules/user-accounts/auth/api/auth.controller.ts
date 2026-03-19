@@ -7,7 +7,7 @@ import { ApiRegistration } from './swagger/registration.swagger';
 import { LocalAuthGuard } from '../domain/guards/local/local-auth.guard';
 import { ExtractUserFromRequest } from '../domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../domain/guards/dto/user-context.dto';
-import { ExtractClientInfo } from '../../../../../../../libs/common/decorators/request/extract-client-info.decorator';
+import { ExtractClientInfo } from '../decorators/request/extract-client-info.decorator';
 import { ClientInfoDto } from '../../../../../../../libs/common/dto/client-info.dto';
 import { LoginViewDto } from './view-dto/login.view-dto';
 import { AuthTokens } from '../domain/types/auth-tokens.type';

@@ -1,7 +1,6 @@
 import { Param, ParseUUIDPipe } from '@nestjs/common';
-import { NotFoundException } from '../../../../apps/snapflow-core/src/common/exceptions/domain-exceptions';
+import { NotFoundException } from '../../../../../common/exceptions/domain-exceptions';
 
-// todo: переместить в snapflow-core
 export function ValidatedDeviceId(paramName = 'deviceId'): ParameterDecorator {
   return Param(
     paramName,
