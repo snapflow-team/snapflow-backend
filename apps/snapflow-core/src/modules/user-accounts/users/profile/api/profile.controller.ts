@@ -5,6 +5,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  ParseIntPipe,
   Post,
   Put,
   UseGuards,
@@ -30,6 +32,10 @@ import { UploadAvatarCommand } from '../application/usecases/upload-avatar.useca
 import { ApiUploadAvatar } from './swagger/upload-avatar.swagger';
 import { DeleteAvatarCommand } from '../application/usecases/delete-avatar.usecase';
 import { ApiDeleteAvatar } from './swagger/delete-avatar.swagger';
+import { Public } from '../../../decorators/public.decorator';
+import { PublicProfileViewDto } from './dto/view-dto/public-profile.view-dto';
+import { GetPublicProfileQuery } from '../application/queries/get-public-profile.query-handler';
+import { ApiGetPublicProfile } from './swagger/get-public-profile.swagger';
 
 @ApiTags('Profile')
 @UseGuards(JwtAuthGuard)
@@ -63,6 +69,15 @@ export class ProfileController {
     @ExtractUserFromRequest() { id: userId }: UserContextDto,
   ): Promise<ProfileViewDto> {
     return await this.queryBus.execute(new GetProfileQuery(userId));
+  }
+
+  @Get(':profileId')
+  @Public()
+  @ApiGetPublicProfile()
+  async getPublicProfile(
+    @Param('profileId', ParseIntPipe) profileId: number,
+  ): Promise<PublicProfileViewDto> {
+    return await this.queryBus.execute(new GetPublicProfileQuery(profileId));
   }
 
   // Avatar -------------------------------------
