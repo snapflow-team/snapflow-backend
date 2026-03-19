@@ -1,18 +1,20 @@
 ﻿import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsInt, Max, Min } from 'class-validator';
+import { BaseQueryParamsDto } from '../../../../../../../libs/dto/base-query.params.dto';
+import { IsEnum } from 'class-validator';
 
-export class GetPostsQueryParamsDto {
-  @ApiPropertyOptional({ example: 1, default: 1 })
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  pageNumber: number = 1;
+export enum PostSortBy {
+  createdAt = 'createdAt',
+}
 
+export class GetPostsQueryParamsDto extends BaseQueryParamsDto<PostSortBy> {
   @ApiPropertyOptional({ example: 4, default: 4 })
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  pageSize: number = 4;
+  override pageSize: number = 4;
+
+  @ApiPropertyOptional({
+    description: 'Sort by filed',
+    example: 'createdAt',
+    default: 'createdAt',
+  })
+  @IsEnum(PostSortBy)
+  sortBy: PostSortBy = PostSortBy.createdAt;
 }
