@@ -7,6 +7,7 @@ import { FilesClient } from '../../../integrations/files/files.client';
 import { TestEntityFactory } from '../../../../../test/helpers/test-entity.factory';
 import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
 import { PostStatus } from '@generated/prisma-snapflow';
+import { GetPostsQueryParamsDto } from '../../api/input-dto/get-posts.query-params.dto';
 
 describe('GetPostQueryHandler (INT)', () => {
   let prisma: PrismaService;
@@ -62,7 +63,9 @@ describe('GetPostQueryHandler (INT)', () => {
     await intTestHelper.createPost(user3.id, 'Пост #2', 'f2');
     await intTestHelper.createPost(user1.id, 'Пост #1 (самый новый)', 'f1');
 
-    const result = await handler.execute(new GetPostsQuery(1, 4));
+    const dto = new GetPostsQueryParamsDto();
+
+    const result = await handler.execute(new GetPostsQuery(dto));
 
     expect(result.items).toHaveLength(4);
     expect(result.items.map((p) => p.description)).toEqual([
@@ -78,7 +81,9 @@ describe('GetPostQueryHandler (INT)', () => {
   });
 
   it('должен вернуть пустой список, если обупликованных постов нет', async () => {
-    const result = await handler.execute(new GetPostsQuery(1, 4));
+    const dto = new GetPostsQueryParamsDto();
+
+    const result = await handler.execute(new GetPostsQuery(dto));
 
     expect(result.items).toEqual([]);
     expect(result.totalCount).toBe(0);
@@ -92,8 +97,9 @@ describe('GetPostQueryHandler (INT)', () => {
 
     await intTestHelper.createPost(user.id, 'DraftPost', 'f1', PostStatus.DRAFT);
     await intTestHelper.createPost(user.id, 'PublicPost', 'f2', PostStatus.PUBLISHED);
+    const dto = new GetPostsQueryParamsDto();
 
-    const result = await handler.execute(new GetPostsQuery(1, 4));
+    const result = await handler.execute(new GetPostsQuery(dto));
 
     expect(result.items).toHaveLength(1);
     expect(result.items[0].description).toBe('PublicPost');
@@ -105,16 +111,9 @@ describe('GetPostQueryHandler (INT)', () => {
 
     await intTestHelper.createPost(user.id, 'Видимый пост', 'f1');
 
-    const deletedPost = await prisma.post.create({
-      data: {
-        description: 'Удалённый пост',
-        status: PostStatus.PUBLISHED,
-        userId: user.id,
-        deletedAt: new Date(),
-      },
-    });
+    const dto = new GetPostsQueryParamsDto();
 
-    const result = await handler.execute(new GetPostsQuery(1, 4));
+    const result = await handler.execute(new GetPostsQuery(dto));
 
     expect(result.items).toHaveLength(1);
     expect(result.items[0].description).toBe('Видимый пост');

@@ -1,39 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../../database/prisma.service';
-import { ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
 import { SnapflowCoreModule } from '../../../../snapflow-core.module';
 import { FilesClient } from '../../../integrations/files/files.client';
-import { CreatePostCommand, CreatePostUseCase } from '../usecases/create-post-use.case';
+import { CreatePostUseCase } from '../usecases/create-post-use.case';
 import { TestEntityFactory } from '../../../../../test/helpers/test-entity.factory';
-import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';
 import { PostStatus } from '@generated/prisma-snapflow';
 import {
   GetProfilePostsQuery,
   GetProfilePostsQueryHandler,
 } from './get-profile-posts.query-handler';
+import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
+import { GetProfilePostsQueryParamsDto } from '../../api/input-dto/get-profile-posts-query-params.dto';
+import { PostSortBy } from '../../api/input-dto/get-posts.query-params.dto';
 
 describe('GetProfilePostsQueryHandler', () => {
   let module: TestingModule;
   let handler: GetProfilePostsQueryHandler;
   let prisma: PrismaService;
   let useCase: CreatePostUseCase;
+  let helper: IntTestHelper;
 
-  let validateFilesMock: jest.Mock<
-    Promise<ValidateFilesResponse>,
-    [{ userId: number; fileIds: string[] }]
-  >;
+  const validateFilesMock = jest.fn();
 
   beforeAll(async () => {
-    validateFilesMock = jest.fn() as unknown as jest.Mock<
-      Promise<ValidateFilesResponse>,
-      [{ userId: number; fileIds: string[] }]
-    >;
-
-    validateFilesMock.mockResolvedValue({
-      valid: true,
-      files: [{ fileId: 'f1', url: 'test.jpg', mimeType: 'image/jpeg', size: 1000 }],
-    });
-
     module = await Test.createTestingModule({
       imports: [SnapflowCoreModule],
     })
@@ -46,6 +35,7 @@ describe('GetProfilePostsQueryHandler', () => {
     useCase = module.get<CreatePostUseCase>(CreatePostUseCase);
     prisma = module.get<PrismaService>(PrismaService);
     handler = module.get<GetProfilePostsQueryHandler>(GetProfilePostsQueryHandler);
+    helper = new IntTestHelper(validateFilesMock, useCase);
   });
 
   afterAll(async () => {
@@ -61,21 +51,21 @@ describe('GetProfilePostsQueryHandler', () => {
     validateFilesMock.mockClear();
   });
 
-  it('должен вернуть опубликованный публик потс', async () => {
-    const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'get_public' });
-    for (let i = 0; i < 12; i++) {
-      const dto: CreatePostInputDto = {
-        description: `Post ${i + 1}`,
-        fileIds: [`file-${i + 1}`],
-      };
-      validateFilesMock.mockResolvedValueOnce({
-        valid: true,
-        files: [{ fileId: dto.fileIds[0], url: 'test.jpg', mimeType: 'image/jpeg', size: 1000 }],
-      });
+  it('должен вернуть опубликованные посты профиля (DESC)', async () => {
+    const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'user-1' });
 
-      await useCase.execute(new CreatePostCommand(dto, user.id, PostStatus.PUBLISHED));
+    for (let i = 0; i < 12; i++) {
+      await helper.createPost(user.id, `Post ${i + 1}`, `file-${i + 1}`, PostStatus.PUBLISHED);
     }
-    const result = await handler.execute(new GetProfilePostsQuery(user.id, 1, 8));
+
+    const dto = new GetProfilePostsQueryParamsDto();
+    dto.pageNumber = 1;
+    dto.pageSize = 8;
+    dto.sortBy = PostSortBy.createdAt;
+
+    const query = new GetProfilePostsQuery(dto, user.id);
+
+    const result = await handler.execute(query);
 
     expect(result.items).toHaveLength(8);
     expect(result.items[0].description).toBe('Post 12');
@@ -86,13 +76,66 @@ describe('GetProfilePostsQueryHandler', () => {
     expect(result.pagesCount).toBe(2);
   });
 
-  it('должен вернуть пустой результат для пользователя без постов', async () => {
+  it('пустой профиль', async () => {
     const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'no_posts' });
 
-    const result = await handler.execute(new GetProfilePostsQuery(user.id, 1, 8));
+    const dto = new GetProfilePostsQueryParamsDto();
+    const query = new GetProfilePostsQuery(dto, user.id);
+
+    const result = await handler.execute(query);
 
     expect(result.items).toHaveLength(0);
     expect(result.totalCount).toBe(0);
     expect(result.pagesCount).toBe(0);
+  });
+
+  it('игнорирует черновики (DRAFT)', async () => {
+    const user = await TestEntityFactory.createTestUser(prisma);
+    await helper.createPost(user.id, 'Published', 'file1', PostStatus.PUBLISHED);
+    await helper.createPost(user.id, 'Draft', 'file2', PostStatus.DRAFT);
+
+    const query = new GetProfilePostsQuery(new GetProfilePostsQueryParamsDto(), user.id);
+    const result = await handler.execute(query);
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].description).toBe('Published');
+    expect(result.totalCount).toBe(1);
+  });
+
+  it('страница 2 возвращает посты 4-11', async () => {
+    const user = await TestEntityFactory.createTestUser(prisma);
+    for (let i = 0; i < 12; i++) {
+      await helper.createPost(user.id, `Post ${i + 1}`, `file-${i + 1}`);
+    }
+
+    const dto = new GetProfilePostsQueryParamsDto();
+    dto.pageNumber = 2;
+    dto.pageSize = 8;
+    const query = new GetProfilePostsQuery(dto, user.id);
+
+    const result = await handler.execute(query);
+
+    expect(result.items).toHaveLength(4);
+    expect(result.items[0].description).toBe('Post 4');
+    expect(result.page).toBe(2);
+  });
+
+  it('должен вернуть без params', async () => {
+    const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'defaults' });
+
+    for (let i = 1; i <= 12; i++) {
+      await helper.createPost(user.id, `Post ${i}`, `file-${i}`, PostStatus.PUBLISHED);
+    }
+
+    const dto = new GetProfilePostsQueryParamsDto();
+    const query = new GetProfilePostsQuery(dto, user.id);
+
+    const result = await handler.execute(query);
+
+    expect(result.page).toBe(1);
+    expect(result.pageSize).toBe(8);
+    expect(result.items).toHaveLength(8);
+    expect(result.items[0].description).toBe('Post 12');
+    expect(result.items[7].description).toBe('Post 5');
   });
 });
