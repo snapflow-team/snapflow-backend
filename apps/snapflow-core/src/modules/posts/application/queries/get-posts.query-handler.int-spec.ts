@@ -64,6 +64,7 @@ describe('GetPostQueryHandler (INT)', () => {
     await intTestHelper.createPost(user1.id, 'Пост #1 (самый новый)', 'f1');
 
     const dto = new GetPostsQueryParamsDto();
+    dto.pageSize = 4;
 
     const result = await handler.execute(new GetPostsQuery(dto));
 
@@ -83,6 +84,7 @@ describe('GetPostQueryHandler (INT)', () => {
   it('должен вернуть пустой список, если обупликованных постов нет', async () => {
     const dto = new GetPostsQueryParamsDto();
 
+    dto.pageSize = 4;
     const result = await handler.execute(new GetPostsQuery(dto));
 
     expect(result.items).toEqual([]);

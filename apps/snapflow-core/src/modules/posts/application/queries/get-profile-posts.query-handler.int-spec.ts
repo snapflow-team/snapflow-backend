@@ -10,8 +10,7 @@ import {
   GetProfilePostsQueryHandler,
 } from './get-profile-posts.query-handler';
 import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
-import { GetProfilePostsQueryParamsDto } from '../../api/input-dto/get-profile-posts-query-params.dto';
-import { PostSortBy } from '../../api/input-dto/get-posts.query-params.dto';
+import { GetPostsQueryParamsDto, PostSortBy } from '../../api/input-dto/get-posts.query-params.dto';
 
 describe('GetProfilePostsQueryHandler', () => {
   let module: TestingModule;
@@ -58,7 +57,7 @@ describe('GetProfilePostsQueryHandler', () => {
       await helper.createPost(user.id, `Post ${i + 1}`, `file-${i + 1}`, PostStatus.PUBLISHED);
     }
 
-    const dto = new GetProfilePostsQueryParamsDto();
+    const dto = new GetPostsQueryParamsDto();
     dto.pageNumber = 1;
     dto.pageSize = 8;
     dto.sortBy = PostSortBy.createdAt;
@@ -79,7 +78,7 @@ describe('GetProfilePostsQueryHandler', () => {
   it('пустой профиль', async () => {
     const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'no_posts' });
 
-    const dto = new GetProfilePostsQueryParamsDto();
+    const dto = new GetPostsQueryParamsDto();
     const query = new GetProfilePostsQuery(dto, user.id);
 
     const result = await handler.execute(query);
@@ -94,7 +93,7 @@ describe('GetProfilePostsQueryHandler', () => {
     await helper.createPost(user.id, 'Published', 'file1', PostStatus.PUBLISHED);
     await helper.createPost(user.id, 'Draft', 'file2', PostStatus.DRAFT);
 
-    const query = new GetProfilePostsQuery(new GetProfilePostsQueryParamsDto(), user.id);
+    const query = new GetProfilePostsQuery(new GetPostsQueryParamsDto(), user.id);
     const result = await handler.execute(query);
 
     expect(result.items).toHaveLength(1);
@@ -108,7 +107,7 @@ describe('GetProfilePostsQueryHandler', () => {
       await helper.createPost(user.id, `Post ${i + 1}`, `file-${i + 1}`);
     }
 
-    const dto = new GetProfilePostsQueryParamsDto();
+    const dto = new GetPostsQueryParamsDto();
     dto.pageNumber = 2;
     dto.pageSize = 8;
     const query = new GetProfilePostsQuery(dto, user.id);
@@ -127,7 +126,7 @@ describe('GetProfilePostsQueryHandler', () => {
       await helper.createPost(user.id, `Post ${i}`, `file-${i}`, PostStatus.PUBLISHED);
     }
 
-    const dto = new GetProfilePostsQueryParamsDto();
+    const dto = new GetPostsQueryParamsDto();
     const query = new GetProfilePostsQuery(dto, user.id);
 
     const result = await handler.execute(query);

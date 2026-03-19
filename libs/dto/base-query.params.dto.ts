@@ -7,18 +7,18 @@ export enum SortDirection {
   Descending = 'desc',
 }
 
-export abstract class BaseQueryParamsDto<T extends string> {
+export abstract class BaseQueryParamsDto<T> {
   @ApiPropertyOptional({ example: 1, default: 1 })
   @Type(() => Number)
   @IsOptional()
   @IsNumber()
   pageNumber: number = 1;
 
-  @ApiPropertyOptional({ example: 10, default: 10 })
+  @ApiPropertyOptional({ example: 10, default: 8 })
   @Type(() => Number)
   @IsOptional()
   @IsNumber()
-  pageSize: number = 10;
+  pageSize: number = 8;
 
   @ApiPropertyOptional({
     enum: SortDirection,

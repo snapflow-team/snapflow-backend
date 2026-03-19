@@ -7,9 +7,6 @@ export enum PostSortBy {
 }
 
 export class GetPostsQueryParamsDto extends BaseQueryParamsDto<PostSortBy> {
-  @ApiPropertyOptional({ example: 4, default: 4 })
-  override pageSize: number = 4;
-
   @ApiPropertyOptional({
     description: 'Sort by filed',
     example: 'createdAt',

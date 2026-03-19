@@ -2,11 +2,11 @@
 import { PostsQueryRepository } from '../../infrastructure/posts.query-repository';
 import { PaginatedViewDto } from '../../../../../../../libs/dto/paginated.view-dto';
 import { PostViewDto } from '../../api/view-dto/post.view-dto';
-import { GetProfilePostsQueryParamsDto } from '../../api/input-dto/get-profile-posts-query-params.dto';
+import { GetPostsQueryParamsDto } from '../../api/input-dto/get-posts.query-params.dto';
 
 export class GetProfilePostsQuery {
   constructor(
-    public readonly query: GetProfilePostsQueryParamsDto,
+    public readonly query: GetPostsQueryParamsDto,
     public readonly userId: number,
   ) {}
 }

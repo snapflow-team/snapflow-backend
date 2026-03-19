@@ -7,7 +7,6 @@ import { PostStatus, Prisma } from '@generated/prisma-snapflow';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
 import { GetPostsQueryParamsDto } from '../api/input-dto/get-posts.query-params.dto';
 import { SortDirection } from '../../../../../../libs/dto/base-query.params.dto';
-import { GetProfilePostsQueryParamsDto } from '../api/input-dto/get-profile-posts-query-params.dto';
 import { postInclude, PostWithInclude } from 'libs/prisma/post.include';
 
 @Injectable()
@@ -15,7 +14,7 @@ export class PostsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findProfilePosts(
-    params: GetProfilePostsQueryParamsDto,
+    params: GetPostsQueryParamsDto,
     userId: number,
   ): Promise<PaginatedViewDto<PostViewDto>> {
     const where: Prisma.PostWhereInput = {
@@ -24,36 +23,8 @@ export class PostsQueryRepository {
       userId,
     };
 
-    return this.findPaginatedPosts(where, params);
-  }
-
-  async findPosts(params: GetPostsQueryParamsDto): Promise<PaginatedViewDto<PostViewDto>> {
-    const where: Prisma.PostWhereInput = {
-      deletedAt: null,
-      status: PostStatus.PUBLISHED,
-    };
-
-    return this.findPaginatedPosts(where, params);
-  }
-
-  async getPost(query: GetPostQuery): Promise<PostViewDto | null> {
-    const where: Prisma.PostWhereInput = this.buildWhere(query);
-
-    const post: PostWithInclude | null = await this.prisma.post.findFirst({
-      where,
-      include: postInclude,
-    });
-
-    return post ? PostViewDto.mapToView(post) : null;
-  }
-
-  private async findPaginatedPosts(
-    where: Prisma.PostWhereInput,
-    params: GetPostsQueryParamsDto | GetProfilePostsQueryParamsDto,
-  ): Promise<PaginatedViewDto<PostViewDto>> {
     const { pageNumber, pageSize, sortBy, sortDirection } = params;
 
-    console.log({ sortBy, sortDirection });
     const [items, totalCount] = await Promise.all([
       this.prisma.post.findMany({
         where,
@@ -73,6 +44,49 @@ export class PostsQueryRepository {
       size: pageSize,
       totalCount,
     });
+  }
+
+  async findPosts(params: GetPostsQueryParamsDto): Promise<PaginatedViewDto<PostViewDto>> {
+    const where: Prisma.PostWhereInput = {
+      deletedAt: null,
+      status: PostStatus.PUBLISHED,
+    };
+
+    const { pageNumber, pageSize, sortBy, sortDirection } = params;
+
+    const [posts, totalCount] = await Promise.all([
+      this.prisma.post.findMany({
+        where,
+        include: postInclude,
+        orderBy: {
+          [sortBy]: sortDirection === SortDirection.Descending ? 'desc' : 'asc',
+        },
+        skip: params.calculateSkip(),
+        take: pageSize,
+      }),
+      this.prisma.post.count({ where }),
+    ]);
+    const pagesCount: number = Math.ceil(totalCount / pageSize);
+
+    const items: PostViewDto[] = posts.map((post: PostWithInclude) => PostViewDto.mapToView(post));
+    return {
+      pageSize,
+      page: pageNumber,
+      totalCount,
+      pagesCount,
+      items,
+    };
+  }
+
+  async getPost(query: GetPostQuery): Promise<PostViewDto | null> {
+    const where: Prisma.PostWhereInput = this.buildWhere(query);
+
+    const post: PostWithInclude | null = await this.prisma.post.findFirst({
+      where,
+      include: postInclude,
+    });
+
+    return post ? PostViewDto.mapToView(post) : null;
   }
 
   private buildWhere(query: GetPostQuery): Prisma.PostWhereInput {

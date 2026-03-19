@@ -37,7 +37,6 @@ import { GetPostsQueryParamsDto } from './input-dto/get-posts.query-params.dto';
 import { PostsPageViewDto } from './view-dto/posts-page.view-dto';
 import { PostStatus } from '@generated/prisma-snapflow';
 import { GetPostsQuery } from '../application/queries/get-posts.query-handler';
-import { GetProfilePostsQueryParamsDto } from './input-dto/get-profile-posts-query-params.dto';
 import { GetPublicPostsSwagger } from './swagger/get-public-posts.swagger';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
 
@@ -116,7 +115,7 @@ export class PostsController {
   @GetProfilePostsSwagger()
   async getProfilePosts(
     @Param('userId', ParseIntPipe) userId: number,
-    @Query() dto: GetProfilePostsQueryParamsDto,
+    @Query() dto: GetPostsQueryParamsDto,
   ): Promise<PaginatedViewDto<PostsPageViewDto>> {
     return this.queryBus.execute(new GetProfilePostsQuery(dto, userId));
   }
@@ -144,9 +143,9 @@ export class PostsController {
   @Get()
   @Public()
   @GetPublicPostsSwagger()
-  async getPosts(@Query() dto: GetPostsQueryParamsDto): Promise<PaginatedViewDto<PostViewDto>> {
-    return this.queryBus.execute(new GetPostsQuery(dto));
+  async getPosts(@Query() query: GetPostsQueryParamsDto): Promise<PaginatedViewDto<PostViewDto>> {
+    return this.queryBus.execute(new GetPostsQuery(query));
   }
 
-  // TODO Добавить роут на получени черника по юзер ид
+  // TODO Добавить роут на получени черновика по юзер ид
 }
