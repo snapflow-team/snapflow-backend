@@ -13,7 +13,9 @@
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ExtractUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
+import {
+  ExtractUserFromRequest
+} from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../user-accounts/auth/domain/guards/dto/user-context.dto';
 import { JwtAuthGuard } from '../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
 import { CreatePostInputDto } from './input-dto/create-post.input-dto';
@@ -111,6 +113,7 @@ export class PostsController {
     await this.commandBus.execute<DeletePostCommand, void>(new DeletePostCommand(user.id, postId));
   }
 
+  // todo: заменить profile на user
   @Get('profile/:userId')
   @Public()
   @GetProfilePostsSwagger()
@@ -128,6 +131,7 @@ export class PostsController {
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<PostViewDto> {
     return this.queryBus.execute<GetPostQuery, PostViewDto>(
+      // todo: разнести по разным query
       new GetPostQuery(postId, PostVisibility.Owner, user.id),
     );
   }
@@ -137,6 +141,7 @@ export class PostsController {
   @GetPublicPostSwagger()
   async getPublicPost(@Param('id', ParseIntPipe) postId: number): Promise<PostViewDto> {
     return this.queryBus.execute<GetPostQuery, PostViewDto>(
+      // todo: разнести по разным query
       new GetPostQuery(postId, PostVisibility.Public),
     );
   }
