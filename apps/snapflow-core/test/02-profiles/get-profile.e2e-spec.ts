@@ -14,7 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';
 import { UserProfile } from '@generated/prisma-snapflow';
 
-describe('ProfileController - getProfile() (GET: /users/profile/:userId)', () => {
+describe('ProfileController - getProfile() (GET: /users/profile)', () => {
   let appTestManager: AppTestManager;
   let authTestManager: AuthTestManager;
   let profileTestManager: ProfileTestManager;
