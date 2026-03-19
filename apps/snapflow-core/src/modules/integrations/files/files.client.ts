@@ -93,6 +93,6 @@ export class FilesClient {
   }
 
   private isRpcError(error: any): boolean {
-    return error?.service === 'Files';
+    return error?.service === SERVICES.FILES;
   }
 }

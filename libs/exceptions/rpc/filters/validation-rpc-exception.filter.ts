@@ -6,7 +6,7 @@ import { rpcErrorResponseFactory } from '../rpc-exception-response';
 
 @Catch(ValidationException)
 export class ValidationRpcExceptionFilter implements ExceptionFilter {
-  constructor(private readonly serviceName: string) {}
+  constructor(private readonly serviceName: symbol) {}
 
   catch(exception: ValidationException, host: ArgumentsHost): Observable<any> | any {
     const ctx: TcpContext = host.switchToRpc().getContext<TcpContext>();

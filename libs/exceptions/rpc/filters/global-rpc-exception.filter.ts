@@ -10,7 +10,7 @@ export class GlobalRpcExceptionFilter implements ExceptionFilter {
   private readonly logger: Logger = new Logger(GlobalRpcExceptionFilter.name);
 
   constructor(
-    private readonly serviceName: string,
+    private readonly serviceName: symbol,
     private readonly environmentSettings: EnvironmentSettings,
   ) {}
 
