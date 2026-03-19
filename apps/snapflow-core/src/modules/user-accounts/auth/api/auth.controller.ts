@@ -16,7 +16,6 @@ import type { Response } from 'express';
 import { ConfirmationEmailCodeInputDto } from './input-dto/confirmation-email-code.input-dto';
 import { ConfirmationEmailCommand } from '../application/usecases/confirmation-email.usecase';
 import { ConfirmRegistrationSwagger } from './swagger/confirm-registration.swagger';
-import { UserAccountsConfig } from '../../config/user-accounts.config';
 import { LoginSwagger } from './swagger/login.swagger';
 import { JwtRefreshAuthGuard } from '../domain/guards/bearer/jwt-refresh-auth.guard';
 import { ExtractSessionFromRequest } from '../domain/guards/decorators/extract-session-from-request.decorator';
@@ -43,15 +42,22 @@ import { RefreshTokenCommand } from '../application/usecases/refresh-token.useca
 import { RefreshTokenSwagger } from './swagger/refresh-token.swagger';
 import { Recaptcha } from '@nestlab/google-recaptcha';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { ApiSettings } from '../../../../setup/configuration/api-settings';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../../../setup/configuration/configuration';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
+  private apiSettings: ApiSettings;
+
   constructor(
-    private readonly userAccountsConfig: UserAccountsConfig,
+    private readonly configService: ConfigService<Configuration, true>,
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
-  ) {}
+  ) {
+    this.apiSettings = this.configService.get<ApiSettings>('apiSettings');
+  }
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiRegistration()
@@ -93,7 +99,7 @@ export class AuthController {
       }),
     );
 
-    res.cookie('refreshToken', refreshToken, this.userAccountsConfig.getCookieConfig());
+    res.cookie('refreshToken', refreshToken, this.apiSettings.getCookieOptions());
 
     return { accessToken };
   }
@@ -108,7 +114,7 @@ export class AuthController {
   ): Promise<void> {
     await this.commandBus.execute(new LogoutCommand(session));
 
-    const { httpOnly, secure, sameSite } = this.userAccountsConfig.getCookieConfig();
+    const { httpOnly, secure, sameSite } = this.apiSettings.getCookieOptions();
 
     res.clearCookie('refreshToken', {
       httpOnly,
@@ -161,7 +167,7 @@ export class AuthController {
       new RefreshTokenCommand(session),
     );
 
-    res.cookie('refreshToken', refreshToken, this.userAccountsConfig.getCookieConfig());
+    res.cookie('refreshToken', refreshToken, this.apiSettings.getCookieOptions());
 
     return { accessToken };
   }

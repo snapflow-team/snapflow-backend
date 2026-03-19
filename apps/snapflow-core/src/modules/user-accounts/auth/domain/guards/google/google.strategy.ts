@@ -1,17 +1,21 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-google-oauth20';
-import { UserAccountsConfig } from '../../../../config/user-accounts.config';
 import { Injectable } from '@nestjs/common';
 import { OAuthContextDto } from '../dto/oauth-context.dto';
 import { OAuthProvider } from '@generated/prisma-snapflow';
+import { ApiSettings } from '../../../../../../setup/configuration/api-settings';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../../../../../setup/configuration/configuration';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
-  constructor(private readonly userAccountConfig: UserAccountsConfig) {
+  constructor(private readonly configService: ConfigService<Configuration, true>) {
+    const googleOauthOptions = configService
+      .get<ApiSettings>('apiSettings')
+      .getGoogleOauthOptions();
+
     super({
-      clientID: userAccountConfig.googleClientId,
-      clientSecret: userAccountConfig.googleClientSecret,
-      callbackURL: userAccountConfig.googleCallbackUrl,
+      ...googleOauthOptions,
       scope: ['email', 'profile'],
     });
   }

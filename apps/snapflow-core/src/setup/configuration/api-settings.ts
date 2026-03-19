@@ -42,6 +42,9 @@ export class ApiSettings {
   @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
   githubOauthCallbackUrl: string;
 
+  @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
+  redirectFrontUrl: string;
+
   @IsNotEmpty()
   googleRecaptchaSecretKey: string;
 
@@ -88,6 +91,8 @@ export class ApiSettings {
     this.githubOauthClientSecret = environmentVariables.GITHUB_OAUTH_CLIENT_SECRET;
     this.githubOauthCallbackUrl = environmentVariables.GITHUB_OAUTH_CALLBACK_URL;
 
+    this.redirectFrontUrl = environmentVariables.REDIRECT_FRONT_URL;
+
     this.googleRecaptchaSecretKey = environmentVariables.GOOGLE_RECAPTCHA_SECRET_KEY;
 
     this.httpOnly = environmentVariables.HTTP_ONLY === 'true';
@@ -121,7 +126,7 @@ export class ApiSettings {
 
   getGoogleOauthOptions() {
     return {
-      clientId: this.googleClientId,
+      clientID: this.googleClientId,
       clientSecret: this.googleClientSecret,
       callbackURL: this.googleCallbackUrl,
     };
@@ -129,7 +134,7 @@ export class ApiSettings {
 
   getGithubOauthOptions() {
     return {
-      clientId: this.githubOauthClientId,
+      clientID: this.githubOauthClientId,
       clientSecret: this.githubOauthClientSecret,
       callbackURL: this.githubOauthCallbackUrl,
     };

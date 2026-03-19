@@ -2,20 +2,24 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { SessionContextDto } from '../dto/session-context.dto';
-import { UserAccountsConfig } from '../../../../config/user-accounts.config';
 import { SessionsRepository } from '../../../sessions/infrastructure/sessions.repository';
 import { ICookieRequest } from '../interfaces/cookie-request.interface';
 import { PayloadRefreshToken } from '../../../application/types/payload-refresh-token.type';
 import { UnauthorizedException } from '../../../../../../common/exceptions/domain-exceptions';
 import { Session } from '@generated/prisma-snapflow';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../../../../../setup/configuration/configuration';
+import { ApiSettings } from '../../../../../../setup/configuration/api-settings';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(
-    private readonly userAccountConfig: UserAccountsConfig,
+    private readonly configService: ConfigService<Configuration, true>,
     private readonly sessionsRepository: SessionsRepository,
   ) {
-    const secret: string = userAccountConfig.refreshTokenSecret;
+    const {
+      refreshToken: { secret },
+    } = configService.get<ApiSettings>('apiSettings').getJwtOptions();
 
     if (!secret) {
       throw new Error('REFRESH_TOKEN_SECRET is not defined in environment variables');

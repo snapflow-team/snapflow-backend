@@ -11,7 +11,6 @@ import { LocalStrategy } from './auth/domain/guards/local/local.strategy';
 import { LoginUserUseCase } from './auth/application/usecases/login-user.usecase';
 import { CreateSessionUseCase } from './auth/sessions/application/usecases/create-session.usecase';
 import { SessionsRepository } from './auth/sessions/infrastructure/sessions.repository';
-import { UserAccountsConfig } from './config/user-accounts.config';
 import { AccessTokenProvider } from './auth/providers/access-token.provider';
 import { RefreshTokenProvider } from './auth/providers/refresh-token.provider';
 import { JwtRefreshStrategy } from './auth/domain/guards/bearer/jwt-refresh.strategy';
@@ -27,7 +26,6 @@ import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.u
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
 import { RecaptchaBody } from './types/recaptcha.types';
-import { UserAccountsConfigModule } from './config/user-accounts.config-module';
 import { SessionsCleanupService } from './auth/sessions/application/services/sessions-cleanup.service';
 import { GithubStrategy } from './auth/domain/guards/github/github.strategy';
 import { UserUtilsService } from './users/application/services/user-utils.service';
@@ -63,6 +61,9 @@ import { DeleteAvatarUseCase } from './users/profile/application/usecases/delete
 import { GetTotalCountRegisteredUsersQueryHandler } from './users/application/queries/get-total-count-registered-users.query-handler';
 import { UsersController } from './users/api/users.controller';
 import { GetPublicProfileQueryHandler } from './users/profile/application/queries/get-public-profile.query-handler';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../setup/configuration/configuration';
+import { ApiSettings } from '../../setup/configuration/api-settings';
 
 const controllers = [
   AuthController,
@@ -134,7 +135,6 @@ const repositories = [
   ProfilesQueryRepository,
 ];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
-const configs = [UserAccountsConfig];
 
 @Module({
   imports: [
@@ -142,11 +142,9 @@ const configs = [UserAccountsConfig];
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({
-      imports: [UserAccountsConfigModule],
-      inject: [UserAccountsConfig],
-      // todo: выпилить UserAccountsConfig!
-      useFactory: (config: UserAccountsConfig) => ({
-        secretKey: config.googleRecaptchaSecretKey,
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<Configuration, true>) => ({
+        secretKey: configService.get<ApiSettings>('apiSettings').googleRecaptchaSecretKey,
         response: (req: Request<unknown, unknown, RecaptchaBody>) =>
           req.body['recaptchaToken'] ?? '',
         skipMissing: false,
@@ -162,7 +160,6 @@ const configs = [UserAccountsConfig];
     ...services,
     ...repositories,
     ...strategies,
-    ...configs,
   ],
   exports: [],
 })
