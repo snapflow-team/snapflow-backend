@@ -30,7 +30,11 @@ export class ProfilesQueryRepository {
         user: {
           include: {
             _count: {
-              select: { posts: true },
+              select: {
+                posts: {
+                  where: { deletedAt: null },
+                },
+              },
             },
           },
         },
