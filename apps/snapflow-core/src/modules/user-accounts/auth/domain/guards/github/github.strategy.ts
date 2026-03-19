@@ -1,17 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy } from 'passport-github2';
-import { UserAccountsConfig } from '../../../../config/user-accounts.config';
 import { OAuthContextDto } from '../dto/oauth-context.dto';
 import { OAuthProvider } from '@generated/prisma-snapflow';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../../../../../setup/configuration/configuration';
+import { ApiSettings } from '../../../../../../setup/configuration/api-settings';
 
 @Injectable()
 export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
-  constructor(private readonly userAccountsConfig: UserAccountsConfig) {
+  constructor(private readonly configService: ConfigService<Configuration, true>) {
+    const githubOauthOptions = configService
+      .get<ApiSettings>('apiSettings')
+      .getGithubOauthOptions();
+
     super({
-      clientID: userAccountsConfig.githubOauthClientId,
-      clientSecret: userAccountsConfig.googleClientSecret,
-      callbackURL: userAccountsConfig.githubOauthCallbackUrl,
+      ...githubOauthOptions,
       scope: ['user:email'],
     });
   }

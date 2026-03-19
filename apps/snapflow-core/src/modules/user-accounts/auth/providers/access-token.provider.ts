@@ -1,18 +1,21 @@
 import { Provider } from '@nestjs/common';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../constants/auth.constants';
-import { UserAccountsConfig } from '../../config/user-accounts.config';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { ApiSettings } from '../../../../setup/configuration/api-settings';
 
 export const AccessTokenProvider: Provider = {
   provide: ACCESS_TOKEN_STRATEGY_INJECT_TOKEN,
-  inject: [UserAccountsConfig],
+  inject: [ConfigService],
 
   // todo: разобраться с типизацией expiresIn
-  useFactory: (userAccountConfig: UserAccountsConfig): JwtService => {
+  useFactory: (configService: ConfigService<Configuration, true>): JwtService => {
+    const { accessToken } = configService.get<ApiSettings>('apiSettings').getJwtOptions();
     return new JwtService({
-      secret: userAccountConfig.accessTokenSecret,
+      secret: accessToken.secret,
       signOptions: {
-        expiresIn: userAccountConfig.accessTokenExpireIn as number,
+        expiresIn: accessToken.expiresIn as number,
       },
     });
   },

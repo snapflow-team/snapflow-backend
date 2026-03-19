@@ -8,8 +8,8 @@ import {
   ApiOperation,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { ConfirmUploadViewDto } from '../../../../../../../../libs/contracts/files';
 import { ConfirmUploadInputDto } from '../input-dto/confirm-upload-urls.input-dto';
+import { ConfirmUploadViewDto } from '../view-dto/confirm-upload.view-dto';
 
 export function ConfirmUploadsSwagger() {
   return applyDecorators(

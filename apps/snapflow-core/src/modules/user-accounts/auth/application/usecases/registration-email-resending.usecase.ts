@@ -39,7 +39,6 @@ export class RegistrationEmailResendingUseCase
     const { emailConfirmationCode } = user;
 
     if (!emailConfirmationCode) {
-      // TODO какой статус выкидывать в данном случае?
       throw new InternalServerException('Email confirmation request does not exist');
     }
 

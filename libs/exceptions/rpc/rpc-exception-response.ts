@@ -7,8 +7,8 @@ import {
 
 export interface IRpcErrorResponse<TCode = CommonDomainExceptionCodeType> {
   timestamp: string;
-  service: string; // ← RPC: имя сервиса
-  pattern: string | null; // ← RPC: паттерн сообщения
+  service: symbol;
+  pattern: string | null;
   message: string;
   code: TCode;
   extensions: IExtension[];
@@ -16,7 +16,7 @@ export interface IRpcErrorResponse<TCode = CommonDomainExceptionCodeType> {
 
 export const rpcErrorResponseFactory = <TCode>(
   exception: DomainException<TCode>,
-  service: string,
+  service: symbol,
   pattern: string | null,
 ): IRpcErrorResponse<TCode> => ({
   timestamp: new Date().toISOString(),
@@ -28,7 +28,7 @@ export const rpcErrorResponseFactory = <TCode>(
 });
 
 export const rpcServerErrorResponseFactory = (
-  service: string,
+  service: symbol,
   pattern: string | null,
   message: string,
 ): IRpcErrorResponse => ({

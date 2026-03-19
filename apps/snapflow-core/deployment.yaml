@@ -175,6 +175,11 @@ spec:
                 secretKeyRef:
                   name: snapflow-backend-production-config-secret
                   key: FILES_SERVICE_PORT
+            - name: REDIRECT_FRONT_URL
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-backend-production-config-secret
+                  key: REDIRECT_FRONT_URL
             - name: ALLOWED_ORIGINS
               valueFrom:
                 secretKeyRef:

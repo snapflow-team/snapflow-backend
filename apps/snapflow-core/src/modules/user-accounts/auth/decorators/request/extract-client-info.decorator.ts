@@ -1,6 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
-import { ClientInfoDto } from '../../dto/client-info.dto';
+import { ClientInfoDto } from '../../../../../../../../libs/common/dto/client-info.dto';
 
 export const ExtractClientInfo = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): ClientInfoDto => {

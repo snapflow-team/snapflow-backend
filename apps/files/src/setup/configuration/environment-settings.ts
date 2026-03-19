@@ -2,7 +2,6 @@ import { EnvironmentVariable } from './configuration';
 import { Environments } from '../../../../../libs/common/enums/enviroments.enum';
 import { IsEnum } from 'class-validator';
 
-// todo: вынести в либу
 export class EnvironmentSettings {
   @IsEnum(Environments)
   private readonly NODE_ENV: Environments;
