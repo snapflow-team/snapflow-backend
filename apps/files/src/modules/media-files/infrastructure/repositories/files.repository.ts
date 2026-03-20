@@ -95,4 +95,19 @@ export class FilesRepository {
       },
     });
   }
+
+  // todo: после ревью, вынести в отдельный репозиторий
+  async createOutboxEvent(
+    type: string,
+    payload: Prisma.InputJsonValue,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.outboxEvent.create({
+      data: {
+        type,
+        payload,
+        status: 'PENDING',
+      },
+    });
+  }
 }
