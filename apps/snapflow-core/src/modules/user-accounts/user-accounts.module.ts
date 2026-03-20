@@ -37,7 +37,6 @@ import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/
 import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
 import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
 import { SessionsController } from './auth/sessions/api/sessions.controller';
-import { PublishPostUseCase } from '../posts/application/usecases/publish-post.use.case';
 import { PostsRepository } from '../posts/infrastructure/posts-repository';
 import { PostsController } from '../posts/api/posts.controller';
 import { PostsQueryRepository } from '../posts/infrastructure/posts.query-repository';
@@ -101,7 +100,6 @@ const useCases = [
   DeleteAvatarUseCase,
 
   CreatePostUseCase,
-  PublishPostUseCase,
   EditPostUseCase,
   DeletePostUseCase,
 ];

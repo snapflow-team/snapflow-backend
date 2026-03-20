@@ -3,24 +3,20 @@ import { PostsQueryRepository } from '../../infrastructure/posts.query-repositor
 import { PostViewDto } from '../../api/view-dto/post.view-dto';
 import { NotFoundException } from '../../../../common/exceptions/domain-exceptions';
 
-export class GetPostQuery {
-  constructor(
-    public readonly postId: number,
-    public readonly userId: number,
-  ) {}
+export class GetPublicPostQuery {
+  constructor(public readonly postId: number) {}
 }
 
-@QueryHandler(GetPostQuery)
-export class GetPostQueryHandler implements IQueryHandler<GetPostQuery> {
+@QueryHandler(GetPublicPostQuery)
+export class GetPublicPostQueryHandler implements IQueryHandler<GetPublicPostQuery> {
   constructor(private readonly postsQueryRepository: PostsQueryRepository) {}
 
-  async execute({ postId, userId }: GetPostQuery): Promise<PostViewDto> {
-    const post: PostViewDto | null = await this.postsQueryRepository.getPost(postId, userId);
+  async execute({ postId }: GetPublicPostQuery): Promise<PostViewDto> {
+    const post: PostViewDto | null = await this.postsQueryRepository.getPublicPost(postId);
 
     if (!post) {
       throw new NotFoundException('The post was not found');
     }
-
     return post;
   }
 }

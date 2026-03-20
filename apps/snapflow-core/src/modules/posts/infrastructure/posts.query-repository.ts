@@ -1,8 +1,6 @@
 ﻿import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import { PostViewDto } from '../api/view-dto/post.view-dto';
-import { GetPostQuery } from '../application/queries/get-post.query-handler';
-import { PostVisibility } from '../enums/post-visibility.enum';
 import { PostStatus, Prisma } from '@generated/prisma-snapflow';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
 import { GetPostsQueryParamsDto } from '../api/input-dto/get-posts.query-params.dto';
@@ -78,11 +76,9 @@ export class PostsQueryRepository {
     };
   }
 
-  async getPost(query: GetPostQuery): Promise<PostViewDto | null> {
-    const where: Prisma.PostWhereInput = this.buildWhere(query);
-
+  async getPublicPost(postId: number): Promise<PostViewDto | null> {
     const post: PostWithInclude | null = await this.prisma.post.findFirst({
-      where,
+      where: { id: postId },
       include: postInclude,
     });
 
@@ -103,20 +99,11 @@ export class PostsQueryRepository {
     return posts.map((post: PostWithInclude) => PostViewDto.mapToView(post));
   }
 
-  private buildWhere(query: GetPostQuery): Prisma.PostWhereInput {
-    if (query.postVisibility === PostVisibility.Owner) {
-      return {
-        id: query.postId,
-        userId: query.userId,
-        deletedAt: null,
-        status: { in: [PostStatus.DRAFT, PostStatus.PUBLISHED] },
-      };
-    }
-
-    return {
-      id: query.postId,
-      deletedAt: null,
-      status: PostStatus.PUBLISHED,
-    };
+  async getPost(postId: number, userId: number): Promise<PostViewDto | null> {
+    const post: PostWithInclude | null = await this.prisma.post.findFirst({
+      where: { id: postId, userId, deletedAt: null },
+      include: postInclude,
+    });
+    return post ? PostViewDto.mapToView(post) : null;
   }
 }

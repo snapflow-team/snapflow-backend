@@ -1,35 +1,29 @@
 import { PrismaService } from '../../../../database/prisma.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DeletePostCommand, DeletePostUseCase } from './delete-post.use.case';
-import { CreatePostCommand, CreatePostUseCase } from './create-post-use.case';
+import { CreatePostUseCase } from './create-post-use.case';
 import { ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
 import { SnapflowCoreModule } from '../../../../snapflow-core.module';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { Post, PostMedia, PostStatus, User } from '@generated/prisma-snapflow';
 import { TestEntityFactory } from '../../../../../test/helpers/test-entity.factory';
-import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';
+import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
 
 describe('DeletePostUseCase', () => {
   let module: TestingModule;
   let prisma: PrismaService;
   let deletePostUseCase: DeletePostUseCase;
-  let createPostUseCase: CreatePostUseCase;
+  let helper: IntTestHelper;
 
   let validateFilesMock: jest.Mock<
     Promise<ValidateFilesResponse>,
     [{ userId: number; fileIds: string[] }]
   >;
+  let deleteFileMock: jest.Mock;
 
   beforeAll(async () => {
-    validateFilesMock = jest.fn() as unknown as jest.Mock<
-      Promise<ValidateFilesResponse>,
-      [{ userId: number; fileIds: string[] }]
-    >;
-
-    validateFilesMock.mockResolvedValue({
-      valid: true,
-      files: [{ fileId: 'f1', url: 'test.jpg', mimeType: 'image/jpeg', size: 1000 }],
-    });
+    validateFilesMock = jest.fn();
+    deleteFileMock = jest.fn().mockResolvedValue(undefined);
 
     module = await Test.createTestingModule({
       imports: [SnapflowCoreModule],
@@ -37,18 +31,19 @@ describe('DeletePostUseCase', () => {
       .overrideProvider(FilesClient)
       .useValue({
         validateFiles: validateFilesMock,
+        deleteFile: deleteFileMock,
       })
       .compile();
 
     deletePostUseCase = module.get<DeletePostUseCase>(DeletePostUseCase);
-    createPostUseCase = module.get<CreatePostUseCase>(CreatePostUseCase);
+    const createPostUseCase = module.get<CreatePostUseCase>(CreatePostUseCase);
     prisma = module.get<PrismaService>(PrismaService);
+
+    helper = new IntTestHelper(validateFilesMock, createPostUseCase);
   });
 
   afterAll(async () => {
-    if (module) {
-      await module.close();
-    }
+    if (module) await module.close();
   });
 
   beforeEach(async () => {
@@ -56,31 +51,20 @@ describe('DeletePostUseCase', () => {
     await prisma.post.deleteMany({});
     await prisma.user.deleteMany({});
     validateFilesMock.mockClear();
+    deleteFileMock.mockClear();
   });
 
-  it('должен удалить опубликованный пост', async () => {
+  it('должен soft-delete опубликованный пост', async () => {
     const user: User = await TestEntityFactory.createTestUser(prisma, {
       suffix: 'delete_published',
     });
-    const fileIds: string[] = ['22222222-2222-4222-8222-222222222222'];
+    const fileId = '22222222-2222-4222-8222-222222222222';
 
-    const dto: CreatePostInputDto = {
-      description: 'Published post to delete',
-      fileIds,
-    };
-
-    validateFilesMock.mockResolvedValueOnce({
-      valid: true,
-      files: fileIds.map((fileId) => ({
-        fileId,
-        url: `https://cdn.test/files/${fileId}`,
-        mimeType: 'image/png',
-        size: 2000,
-      })),
-    });
-
-    const postId: number = await createPostUseCase.execute(
-      new CreatePostCommand(dto, user.id, PostStatus.PUBLISHED),
+    const postId: number = await helper.createPost(
+      user.id,
+      'Published post',
+      fileId,
+      PostStatus.PUBLISHED,
     );
 
     await deletePostUseCase.execute(new DeletePostCommand(user.id, postId));
@@ -88,15 +72,22 @@ describe('DeletePostUseCase', () => {
     const deletedPost: Post | null = await prisma.post.findUnique({ where: { id: postId } });
     expect(deletedPost!.deletedAt).not.toBeNull();
 
-    // const medias: PostMedia[] = await prisma.postMedia.findMany({
-    //   where: { postId, deletedAt: null },
-    // });
-    // expect(medias).toHaveLength(0);
-    // TODO при удалении поста медиа не удаляются
+    const medias: PostMedia[] = await prisma.postMedia.findMany({
+      where: { postId, deletedAt: null },
+    });
+    expect(medias).toHaveLength(0);
+
+    expect(deleteFileMock).toHaveBeenCalledTimes(1);
+    expect(deleteFileMock).toHaveBeenCalledWith({
+      userId: user.id,
+      fileUrl: `https://cdn.test/files/${fileId}`,
+    });
   });
 
-  it('должен кинуть NotFound если пост не найден или чужой', async () => {
-    const user: User = await TestEntityFactory.createTestUser(prisma, { suffix: 'post_not_found' });
+  it('должен кинуть NotFound если пост не существует', async () => {
+    const user: User = await TestEntityFactory.createTestUser(prisma, {
+      suffix: 'not_found',
+    });
 
     await expect(
       deletePostUseCase.execute(new DeletePostCommand(user.id, 999)),
@@ -105,7 +96,6 @@ describe('DeletePostUseCase', () => {
       message: 'Post not found',
     });
 
-    const posts: Post[] = await prisma.post.findMany();
-    expect(posts).toHaveLength(0);
+    expect(deleteFileMock).not.toHaveBeenCalled();
   });
 });

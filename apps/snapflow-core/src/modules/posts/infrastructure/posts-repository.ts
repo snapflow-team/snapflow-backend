@@ -54,24 +54,6 @@ export class PostsRepository {
     });
   }
 
-  async publishDraft(postId: number, userId: number): Promise<boolean> {
-    const result: BatchPayload = await this.prisma.post.updateMany({
-      where: {
-        id: postId,
-        userId,
-        status: PostStatus.DRAFT,
-        deletedAt: null,
-        postMedias: {
-          some: { deletedAt: null },
-        },
-      },
-      data: {
-        status: PostStatus.PUBLISHED,
-      },
-    });
-    return result.count === 1;
-  }
-
   async updatePost(id: number, userId: number, dto: UpdatePostInputDto): Promise<boolean> {
     const result: BatchPayload = await this.prisma.post.updateMany({
       where: { id, userId, deletedAt: null },
@@ -80,10 +62,24 @@ export class PostsRepository {
     return result.count === 1;
   }
 
+  async findById(postId: number): Promise<PostWithMedia | null> {
+    return this.prisma.post.findFirst({
+      where: { id: postId, deletedAt: null },
+      include: { postMedias: { where: { deletedAt: null } } },
+    });
+  }
+
   async deletePost(id: number, userId: number): Promise<boolean> {
-    const result: BatchPayload = await this.prisma.post.updateMany({
+    const now = new Date();
+
+    const result = await this.prisma.post.updateMany({
       where: { id, userId, deletedAt: null },
-      data: { deletedAt: new Date() },
+      data: { deletedAt: now },
+    });
+
+    await this.prisma.postMedia.updateMany({
+      where: { postId: id, deletedAt: null },
+      data: { deletedAt: now },
     });
 
     return result.count === 1;

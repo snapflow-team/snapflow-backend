@@ -16,7 +16,7 @@ export class IntTestHelper {
       files: [
         {
           fileId,
-          url: 'test.jpg',
+          url: `https://cdn.test/files/${fileId}`,
           mimeType: 'image/jpeg',
           size: 1000,
         },
@@ -31,7 +31,7 @@ export class IntTestHelper {
     status: PostStatus = PostStatus.PUBLISHED,
   ) {
     this.mockFileValidation(fileId);
-    await this.useCase.execute(
+    return this.useCase.execute(
       new CreatePostCommand({ description, fileIds: [fileId] }, userId, status),
     );
   }
