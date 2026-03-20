@@ -80,8 +80,12 @@ export class FilesRepository {
     });
   }
 
-  async softDelete(key: string, userId: number): Promise<void> {
-    await this.prisma.file.updateMany({
+  async softDelete(
+    key: string,
+    userId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.file.updateMany({
       where: {
         key,
         userId,
