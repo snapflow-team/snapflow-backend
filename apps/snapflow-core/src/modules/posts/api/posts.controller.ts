@@ -13,9 +13,7 @@
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import {
-  ExtractUserFromRequest
-} from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
+import { ExtractUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../user-accounts/auth/domain/guards/dto/user-context.dto';
 import { JwtAuthGuard } from '../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
 import { CreatePostInputDto } from './input-dto/create-post.input-dto';
@@ -41,6 +39,8 @@ import { PostStatus } from '@generated/prisma-snapflow';
 import { GetPostsQuery } from '../application/queries/get-posts.query-handler';
 import { GetPublicPostsSwagger } from './swagger/get-public-posts.swagger';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
+import { GetMyDraftsQuery } from '../application/queries/get-my-drafts.query.handler';
+import { GetDraftPostsSwagger } from './swagger/get-draft-posts.swagger';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -113,6 +113,12 @@ export class PostsController {
     await this.commandBus.execute<DeletePostCommand, void>(new DeletePostCommand(user.id, postId));
   }
 
+  @Get('drafts')
+  @GetDraftPostsSwagger()
+  async getMyDrafts(@ExtractUserFromRequest() user: UserContextDto): Promise<PostViewDto[]> {
+    return this.queryBus.execute(new GetMyDraftsQuery(user.id));
+  }
+
   // todo: заменить profile на user
   @Get('profile/:userId')
   @Public()
@@ -152,6 +158,4 @@ export class PostsController {
   async getPosts(@Query() query: GetPostsQueryParamsDto): Promise<PaginatedViewDto<PostViewDto>> {
     return this.queryBus.execute(new GetPostsQuery(query));
   }
-
-  // TODO Добавить роут на получени черновика по юзер ид
 }

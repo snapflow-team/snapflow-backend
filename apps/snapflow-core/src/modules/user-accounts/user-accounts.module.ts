@@ -65,6 +65,7 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
 import { GetPostsQueryHandler } from '../posts/application/queries/get-posts.query-handler';
+import { GetMyDraftsHandler } from '../posts/application/queries/get-my-drafts.query.handler';
 
 const controllers = [
   AuthController,
@@ -116,6 +117,7 @@ const queries = [
 
   GetPostQueryHandler,
   GetPostsQueryHandler,
+  GetMyDraftsHandler,
 ];
 const services = [
   FilesClient,

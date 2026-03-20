@@ -89,6 +89,20 @@ export class PostsQueryRepository {
     return post ? PostViewDto.mapToView(post) : null;
   }
 
+  async findDraftsByUserId(userId: number): Promise<PostViewDto[]> {
+    const posts = await this.prisma.post.findMany({
+      where: {
+        userId,
+        status: PostStatus.DRAFT,
+        deletedAt: null,
+      },
+      include: postInclude,
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return posts.map((post: PostWithInclude) => PostViewDto.mapToView(post));
+  }
+
   private buildWhere(query: GetPostQuery): Prisma.PostWhereInput {
     if (query.postVisibility === PostVisibility.Owner) {
       return {
