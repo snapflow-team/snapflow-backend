@@ -55,7 +55,12 @@ export class PostsController {
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<PostViewDto> {
     const postId: number = await this.commandBus.execute<CreatePostCommand, number>(
-      new CreatePostCommand(dto, user.id, PostStatus.PUBLISHED),
+      new CreatePostCommand({
+        userId: user.id,
+        status: PostStatus.PUBLISHED,
+        description: dto.description,
+        fileIds: dto.fileIds,
+      }),
     );
     return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
   }
@@ -67,7 +72,12 @@ export class PostsController {
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<PostViewDto> {
     const postId: number = await this.commandBus.execute<CreatePostCommand, number>(
-      new CreatePostCommand(dto, user.id, PostStatus.DRAFT),
+      new CreatePostCommand({
+        userId: user.id,
+        status: PostStatus.DRAFT,
+        description: dto.description,
+        fileIds: dto.fileIds,
+      }),
     );
     return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
   }
@@ -80,7 +90,9 @@ export class PostsController {
     @Param('id', ParseIntPipe) postId: number,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
-    await this.commandBus.execute<EditPostCommand, void>(new EditPostCommand(user.id, postId, dto));
+    await this.commandBus.execute<EditPostCommand, void>(
+      new EditPostCommand({ userId: user.id, postId, description: dto.description }),
+    );
   }
 
   @Delete(':id')

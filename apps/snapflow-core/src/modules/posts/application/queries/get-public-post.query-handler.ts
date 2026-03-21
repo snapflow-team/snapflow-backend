@@ -12,7 +12,7 @@ export class GetPublicPostQueryHandler implements IQueryHandler<GetPublicPostQue
   constructor(private readonly postsQueryRepository: PostsQueryRepository) {}
 
   async execute({ postId }: GetPublicPostQuery): Promise<PostViewDto> {
-    const post: PostViewDto | null = await this.postsQueryRepository.getPublicPost(postId);
+    const post: PostViewDto | null = await this.postsQueryRepository.findPublicPost(postId);
 
     if (!post) {
       throw new NotFoundException('The post was not found');

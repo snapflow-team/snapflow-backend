@@ -15,7 +15,7 @@ export class GetPostQueryHandler implements IQueryHandler<GetPostQuery> {
   constructor(private readonly postsQueryRepository: PostsQueryRepository) {}
 
   async execute({ postId, userId }: GetPostQuery): Promise<PostViewDto> {
-    const post: PostViewDto | null = await this.postsQueryRepository.getPost(postId, userId);
+    const post: PostViewDto | null = await this.postsQueryRepository.findPost(postId, userId);
 
     if (!post) {
       throw new NotFoundException('The post was not found');
