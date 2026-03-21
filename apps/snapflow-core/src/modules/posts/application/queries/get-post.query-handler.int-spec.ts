@@ -7,10 +7,12 @@ import { CreatePostUseCase } from '../usecases/create-post-use.case';
 import { TestEntityFactory } from '../../../../../test/helpers/test-entity.factory';
 import { PostStatus } from '@generated/prisma-snapflow';
 import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
+import { ProfilesRepository } from '../../../user-accounts/users/profile/infrastructure/profiles.repository';
 
 describe('GetPostQueryHandler', () => {
   let module: TestingModule;
   let handler: GetPostQueryHandler;
+  let repo: ProfilesRepository;
   let prisma: PrismaService;
   let useCase: CreatePostUseCase;
   let intTestHelper: IntTestHelper;
@@ -30,7 +32,8 @@ describe('GetPostQueryHandler', () => {
     useCase = module.get<CreatePostUseCase>(CreatePostUseCase);
     prisma = module.get<PrismaService>(PrismaService);
     handler = module.get<GetPostQueryHandler>(GetPostQueryHandler);
-    intTestHelper = new IntTestHelper(validateFilesMock, useCase);
+    repo = module.get<ProfilesRepository>(ProfilesRepository);
+    intTestHelper = new IntTestHelper(validateFilesMock, useCase, repo);
   });
 
   afterAll(async () => {
@@ -43,13 +46,18 @@ describe('GetPostQueryHandler', () => {
     await prisma.postMedia.deleteMany({});
     await prisma.post.deleteMany({});
     await prisma.user.deleteMany({});
+    await prisma.userProfile.deleteMany();
     validateFilesMock.mockClear();
   });
 
   it('должен вернуть опубликованный публик тест', async () => {
-    const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'get_public' });
-
-    const postId = await intTestHelper.createPost(user.id, 'Public post', 'f1');
+    const user = await intTestHelper.createUserWithProfile(prisma, 'get_public');
+    const postId = await intTestHelper.createPost(
+      user.id,
+      ['f'],
+      PostStatus.PUBLISHED,
+      'Public post',
+    );
 
     const post = await handler.execute(new GetPostQuery(postId, user.id));
 
@@ -59,8 +67,9 @@ describe('GetPostQueryHandler', () => {
   });
 
   it('должен вернуть черновик только с Owner visibility и правильным userId', async () => {
-    const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'get_draft' });
-    const postId = await intTestHelper.createPost(user.id, 'Draft post', 'f2', PostStatus.DRAFT);
+    const user = await intTestHelper.createUserWithProfile(prisma, 'get_draft');
+
+    const postId = await intTestHelper.createPost(user.id, ['f2'], PostStatus.DRAFT, 'Draft post');
 
     const post = await handler.execute(new GetPostQuery(postId, user.id));
 
