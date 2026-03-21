@@ -1,39 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import { UpdatePostInputDto } from '../api/input-dto/update-post.input.dto';
-import { PostStatus, Prisma } from '@generated/prisma-snapflow';
+import { Prisma } from '@generated/prisma-snapflow';
+import { CreateMediaInput, PostWithMedia } from '../types/create-media.type';
+import { CreatePostWithMediaRepositoryDto } from './dto/create-post-with-media.repository-dto';
 import BatchPayload = Prisma.BatchPayload;
-
-// todo: вынести в отдельную директорию
-export type CreateMediaInput = {
-  fileId: string;
-  url: string;
-  mimeType: string;
-  size: number;
-  position: number;
-};
-
-// todo: вынести в отдельную директорию
-export type PostWithMedia = Prisma.PostGetPayload<{ include: { postMedias: true } }>;
+import { UpdatePostRepositoryDto } from './dto/update-post.repository-dto';
 
 @Injectable()
 export class PostsRepository {
   constructor(private readonly prisma: PrismaService) {}
-
-  // todo: вынести параметры в dto
-  async createPostWithMedia(params: {
-    userId: number;
-    description?: string;
-    status: PostStatus;
-    medias: CreateMediaInput[];
-  }): Promise<number> {
+  async createPostWithMedia(dto: CreatePostWithMediaRepositoryDto): Promise<number> {
     const post: { id: number } = await this.prisma.post.create({
       data: {
-        userId: params.userId,
-        description: params.description,
-        status: params.status,
+        userId: dto.userId,
+        description: dto.description,
+        status: dto.status,
         postMedias: {
-          create: params.medias.map((media: CreateMediaInput) => ({
+          create: dto.medias.map((media: CreateMediaInput) => ({
             fileId: media.fileId,
             url: media.url,
             mimeType: media.mimeType,
@@ -54,19 +38,12 @@ export class PostsRepository {
     });
   }
 
-  async updatePost(id: number, userId: number, dto: UpdatePostInputDto): Promise<boolean> {
+  async updatePost(dto: UpdatePostRepositoryDto): Promise<boolean> {
     const result: BatchPayload = await this.prisma.post.updateMany({
-      where: { id, userId, deletedAt: null },
+      where: { id: dto.postId, userId: dto.userId, deletedAt: null },
       data: { description: dto.description },
     });
     return result.count === 1;
-  }
-
-  async findById(postId: number): Promise<PostWithMedia | null> {
-    return this.prisma.post.findFirst({
-      where: { id: postId, deletedAt: null },
-      include: { postMedias: { where: { deletedAt: null } } },
-    });
   }
 
   async deletePost(id: number, userId: number): Promise<boolean> {
