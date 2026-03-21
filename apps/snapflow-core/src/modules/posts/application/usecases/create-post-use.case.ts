@@ -1,18 +1,13 @@
 ﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository } from '../../infrastructure/posts-repository';
-import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';
 import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
-import { PostStatus } from '@generated/prisma-snapflow';
+import { ProfilesRepository } from '../../../user-accounts/users/profile/infrastructure/profiles.repository';
+import { CreatePostApplicationDto } from '../dto/create-post-application.dto';
 
 export class CreatePostCommand {
-  constructor(
-    // todo: вынести параметры в CreatePostApplicationDto
-    public readonly dto: CreatePostInputDto,
-    public readonly userId: number,
-    public readonly status: PostStatus,
-  ) {}
+  constructor(public readonly dto: CreatePostApplicationDto) {}
 }
 
 @CommandHandler(CreatePostCommand)
@@ -20,12 +15,24 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
   constructor(
     private readonly filesClient: FilesClient,
     private readonly postsRepository: PostsRepository,
+    private readonly profilesRepository: ProfilesRepository,
   ) {}
 
-  async execute({ dto, userId, status }: CreatePostCommand): Promise<number> {
+  async execute({ dto }: CreatePostCommand): Promise<number> {
+    const { userId, status, description, fileIds } = dto;
+
+    if (!fileIds || fileIds.length === 0) {
+      throw new BadRequestException("You can't publish a post without media");
+    }
+
+    const profile = await this.profilesRepository.findProfileByUserId(userId);
+
+    if (!profile) {
+      throw new BadRequestException('Profile required to create post');
+    }
     const response: ValidateFilesResponse = await this.filesClient.validateFiles({
       userId,
-      fileIds: dto.fileIds,
+      fileIds: fileIds,
     });
 
     if (!response.valid) {
@@ -40,7 +47,7 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
 
     return this.postsRepository.createPostWithMedia({
       userId,
-      description: dto.description,
+      description: description,
       status,
       medias: validatedFiles.map((file, index) => ({
         fileId: file.fileId,
