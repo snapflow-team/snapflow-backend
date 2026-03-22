@@ -55,7 +55,7 @@ export class OAuthController {
     );
 
     res.cookie('refreshToken', refreshToken, this.apiSettings.getCookieOptions());
-    res.redirect(`${this.apiSettings.redirectFrontUrl}`);
+    res.redirect(`${this.apiSettings.baseFrontUrl}`);
   }
 
   @Get('github')
@@ -83,6 +83,6 @@ export class OAuthController {
     );
 
     res.cookie('refreshToken', refreshToken, this.apiSettings.getCookieOptions());
-    res.redirect(`${this.apiSettings.redirectFrontUrl}`);
+    res.redirect(`${this.apiSettings.baseFrontUrl}`);
   }
 }
