@@ -75,6 +75,15 @@ export class ApiSettings {
   @IsBoolean()
   sendInternalServerErrorDetails: boolean;
 
+  @IsUrl()
+  redisUrl: string;
+
+  @IsString()
+  nextjsRevalidationSecret: string;
+
+  @IsUrl()
+  revalidationFrontendUrl: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
@@ -109,6 +118,11 @@ export class ApiSettings {
 
     this.sendInternalServerErrorDetails =
       environmentVariables.SEND_INTERNAL_SERVER_ERROR_DETAILS === 'true';
+
+    this.redisUrl = environmentVariables.REDIS_URL;
+
+    this.nextjsRevalidationSecret = environmentVariables.NEXTJS_REVALIDATION_SECRET;
+    this.revalidationFrontendUrl = environmentVariables.REVALIDATION_FRONTEND_URL;
   }
 
   getJwtOptions() {
