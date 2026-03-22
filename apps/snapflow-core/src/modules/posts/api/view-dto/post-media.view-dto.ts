@@ -2,10 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 type PostMediaViewSource = {
   id: number;
+  fileId: string;
   url: string;
-  mimeType: string;
-  size: number;
-  position: number;
 };
 
 export class PostMediaViewDto {
@@ -13,7 +11,13 @@ export class PostMediaViewDto {
     example: 1,
     description: 'Идентификатор медиа',
   })
-  id: number;
+  postMediaId: number;
+
+  @ApiProperty({
+    example: '550e8400-e29b-41d4-a716-446655440000',
+    description: 'File identifier',
+  })
+  fileId: string;
 
   @ApiProperty({
     example: 'https://cdn.example.com/users/10/file.jpg',
@@ -21,33 +25,11 @@ export class PostMediaViewDto {
   })
   url: string;
 
-  @ApiProperty({
-    example: 'image/jpeg',
-    description: 'MIME-тип медиа',
-  })
-  mimeType: string;
-
-  @ApiProperty({
-    example: 245001,
-    description: 'Размер файла в байтах',
-  })
-  size: number;
-
-  @ApiProperty({
-    example: 0,
-    description: 'Позиция медиа в посте',
-  })
-  position: number;
-
   static mapToView(media: PostMediaViewSource): PostMediaViewDto {
     const dto = new PostMediaViewDto();
-
-    dto.id = media.id;
+    dto.postMediaId = media.id;
+    dto.fileId = media.fileId;
     dto.url = media.url;
-    dto.mimeType = media.mimeType;
-    dto.size = media.size;
-    dto.position = media.position;
-
     return dto;
   }
 }

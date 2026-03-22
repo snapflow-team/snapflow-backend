@@ -2,45 +2,35 @@ import { Post, PostMedia, PostStatus, User } from '@generated/prisma-snapflow';
 import { PrismaService } from '../../../../database/prisma.service';
 import { CreatePostCommand, CreatePostUseCase } from './create-post-use.case';
 import { Test, TestingModule } from '@nestjs/testing';
-
-import { TestEntityFactory } from '../../../../../test/helpers/test-entity.factory';
-import { ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
 import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { SnapflowCoreModule } from '../../../../snapflow-core.module';
+import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
+import { ProfilesRepository } from '../../../user-accounts/users/profile/infrastructure/profiles.repository';
 
 describe('CreatePostUseCase (Интеграция)', () => {
   let module: TestingModule;
   let useCase: CreatePostUseCase;
+  let repo: ProfilesRepository;
   let prisma: PrismaService;
+  let intTestHelper: IntTestHelper;
 
-  let validateFilesMock: jest.Mock<
-    Promise<ValidateFilesResponse>,
-    [{ userId: number; fileIds: string[] }]
-  >;
+  const validateFilesMock = jest.fn();
 
   beforeAll(async () => {
-    validateFilesMock = jest.fn() as unknown as jest.Mock<
-      Promise<ValidateFilesResponse>,
-      [{ userId: number; fileIds: string[] }]
-    >;
-
-    validateFilesMock.mockResolvedValue({
-      valid: true,
-      files: [{ fileId: 'f1', url: 'test.jpg', mimeType: 'image/jpeg', size: 1000 }],
-    });
-
     module = await Test.createTestingModule({
       imports: [SnapflowCoreModule],
     })
       .overrideProvider(FilesClient)
       .useValue({
-        validateFiles: validateFilesMock, // метод из useCase
+        validateFiles: validateFilesMock,
       })
       .compile();
 
     useCase = module.get<CreatePostUseCase>(CreatePostUseCase);
     prisma = module.get<PrismaService>(PrismaService);
+    repo = module.get<ProfilesRepository>(ProfilesRepository);
+    intTestHelper = new IntTestHelper(validateFilesMock, useCase, repo);
   });
 
   afterAll(async () => {
@@ -52,12 +42,15 @@ describe('CreatePostUseCase (Интеграция)', () => {
   beforeEach(async () => {
     await prisma.postMedia.deleteMany({});
     await prisma.post.deleteMany({});
+    await prisma.userProfile.deleteMany();
     await prisma.user.deleteMany({});
     validateFilesMock.mockClear();
+    validateFilesMock.mockReset();
   });
 
   it('должен создать опубликованный пост с медиа при успешной валидации файлов', async () => {
-    const user: User = await TestEntityFactory.createTestUser(prisma, { suffix: 'post_ok' });
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'post_ok');
+
     const fileIds: string[] = [
       '11111111-1111-4111-8111-111111111111',
       '22222222-2222-4222-8222-222222222222',
@@ -67,18 +60,11 @@ describe('CreatePostUseCase (Интеграция)', () => {
       fileIds,
     };
 
-    validateFilesMock.mockResolvedValueOnce({
-      valid: true,
-      files: fileIds.map((fileId, index) => ({
-        fileId,
-        url: `https://cdn.test/files/${fileId}`,
-        mimeType: 'image/jpeg',
-        size: 1000 + index,
-      })),
-    });
-
-    const postId: number = await useCase.execute(
-      new CreatePostCommand(dto, user.id, PostStatus.PUBLISHED),
+    const postId: number = await intTestHelper.createPost(
+      user.id,
+      fileIds,
+      PostStatus.PUBLISHED,
+      dto.description,
     );
 
     expect(validateFilesMock).toHaveBeenCalledTimes(1);
@@ -103,26 +89,12 @@ describe('CreatePostUseCase (Интеграция)', () => {
   });
 
   it('должен создать черновик поста при переданном статусе DRAFT', async () => {
-    const user: User = await TestEntityFactory.createTestUser(prisma, { suffix: 'post_draft' });
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'post_ok');
     const dto: CreatePostInputDto = {
       fileIds: ['33333333-3333-4333-8333-333333333333'],
     };
 
-    validateFilesMock.mockResolvedValueOnce({
-      valid: true,
-      files: [
-        {
-          fileId: dto.fileIds[0],
-          url: `https://cdn.test/files/${dto.fileIds[0]}`,
-          mimeType: 'image/png',
-          size: 2000,
-        },
-      ],
-    });
-
-    const postId: number = await useCase.execute(
-      new CreatePostCommand(dto, user.id, PostStatus.DRAFT),
-    );
+    const postId: number = await intTestHelper.createPost(user.id, dto.fileIds, PostStatus.DRAFT);
     const post: Post | null = await prisma.post.findUnique({ where: { id: postId } });
 
     expect(post).not.toBeNull();
@@ -130,7 +102,7 @@ describe('CreatePostUseCase (Интеграция)', () => {
   });
 
   it('должен выбросить BadRequest, если файлы невалидны или принадлежат другому пользователю', async () => {
-    const user: User = await TestEntityFactory.createTestUser(prisma, { suffix: 'post_inv' });
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'post_ok');
     const dto: CreatePostInputDto = {
       fileIds: ['44444444-4444-4444-8444-444444444444'],
     };
@@ -141,10 +113,10 @@ describe('CreatePostUseCase (Интеграция)', () => {
     });
 
     await expect(
-      useCase.execute(new CreatePostCommand(dto, user.id, PostStatus.PUBLISHED)),
+      intTestHelper.createPost(user.id, dto.fileIds, PostStatus.PUBLISHED),
     ).rejects.toMatchObject({
       code: 'BadRequest',
-      message: 'Another user has some files',
+      message: 'Some files do not belong to you',
     });
 
     const posts: Post[] = await prisma.post.findMany();
@@ -152,21 +124,21 @@ describe('CreatePostUseCase (Интеграция)', () => {
   });
 
   it('должен выбросить BadRequest, если validateFiles возвращает пустой список файлов', async () => {
-    const user: User = await TestEntityFactory.createTestUser(prisma, { suffix: 'post_emp' });
-    const dto: CreatePostInputDto = {
-      fileIds: ['55555555-5555-4555-8555-555555555555'],
-    };
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'post_emp');
 
-    validateFilesMock.mockResolvedValueOnce({
-      valid: true,
-      files: [],
-    });
+    validateFilesMock.mockResolvedValueOnce({ valid: true, files: [] });
 
     await expect(
-      useCase.execute(new CreatePostCommand(dto, user.id, PostStatus.PUBLISHED)),
+      useCase.execute(
+        new CreatePostCommand({
+          userId: user.id,
+          status: PostStatus.PUBLISHED,
+          fileIds: ['55555555-5555-4555-8555-555555555555'],
+        }),
+      ),
     ).rejects.toMatchObject({
       code: 'BadRequest',
-      message: "You can't publish a post without media",
+      message: 'Post requires at least one valid media file',
     });
 
     const posts: Post[] = await prisma.post.findMany();
@@ -174,13 +146,16 @@ describe('CreatePostUseCase (Интеграция)', () => {
   });
 
   it('должен выбросить BadRequest при пустом fileIds и не вызывать файловый сервис', async () => {
-    const user: User = await TestEntityFactory.createTestUser(prisma, { suffix: 'post_no_files' });
-    const dto: CreatePostInputDto = {
-      fileIds: [],
-    };
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'post_no_files');
 
     await expect(
-      useCase.execute(new CreatePostCommand(dto, user.id, PostStatus.PUBLISHED)),
+      useCase.execute(
+        new CreatePostCommand({
+          userId: user.id,
+          status: PostStatus.PUBLISHED,
+          fileIds: [],
+        }),
+      ),
     ).rejects.toMatchObject({
       code: 'BadRequest',
       message: "You can't publish a post without media",

@@ -19,19 +19,16 @@ import { JwtAuthGuard } from '../../user-accounts/auth/domain/guards/bearer/jwt-
 import { CreatePostInputDto } from './input-dto/create-post.input-dto';
 import { GetPostQuery } from '../application/queries/get-post.query-handler';
 import { CreatePostCommand } from '../application/usecases/create-post-use.case';
-import { PublishPostCommand } from '../application/usecases/publish-post.use.case';
 import { PostViewDto } from './view-dto/post.view-dto';
 import { CreateDraftPostSwagger, CreatePublishPostSwagger } from './swagger/create-post.swagger';
-import { PublishPostSwagger } from './swagger/publish-post.swagger';
 import { EditPostSwagger } from './swagger/edit-post.swagger';
 import { DeletePostSwagger } from './swagger/delete-post.swagger';
 import { GetProfilePostsSwagger } from './swagger/get-profile-posts.swagger';
-import { GetOwnPostSwagger, GetPublicPostSwagger } from './swagger/get-post.swagger';
+import { GetPostByIdSwagger, GetPublicPostSwagger } from './swagger/get-post.swagger';
 import { Public } from '../../user-accounts/decorators/public.decorator';
 import { EditPostCommand } from '../application/usecases/edit-post.use.case';
 import { DeletePostCommand } from '../application/usecases/delete-post.use.case';
 import { UpdatePostInputDto } from './input-dto/update-post.input.dto';
-import { PostVisibility } from '../enums/post-visibility.enum';
 import { GetProfilePostsQuery } from '../application/queries/get-profile-posts.query-handler';
 import { GetPostsQueryParamsDto } from './input-dto/get-posts.query-params.dto';
 import { PostsPageViewDto } from './view-dto/posts-page.view-dto';
@@ -41,6 +38,7 @@ import { GetPublicPostsSwagger } from './swagger/get-public-posts.swagger';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
 import { GetMyDraftsQuery } from '../application/queries/get-my-drafts.query.handler';
 import { GetDraftPostsSwagger } from './swagger/get-draft-posts.swagger';
+import { GetPublicPostQuery } from '../application/queries/get-public-post.query-handler';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -57,11 +55,14 @@ export class PostsController {
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<PostViewDto> {
     const postId: number = await this.commandBus.execute<CreatePostCommand, number>(
-      new CreatePostCommand(dto, user.id, PostStatus.PUBLISHED),
+      new CreatePostCommand({
+        userId: user.id,
+        status: PostStatus.PUBLISHED,
+        description: dto.description,
+        fileIds: dto.fileIds,
+      }),
     );
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(
-      new GetPostQuery(postId, PostVisibility.Public, user.id),
-    );
+    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
   }
 
   @Post('draft')
@@ -71,25 +72,14 @@ export class PostsController {
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<PostViewDto> {
     const postId: number = await this.commandBus.execute<CreatePostCommand, number>(
-      new CreatePostCommand(dto, user.id, PostStatus.DRAFT),
+      new CreatePostCommand({
+        userId: user.id,
+        status: PostStatus.DRAFT,
+        description: dto.description,
+        fileIds: dto.fileIds,
+      }),
     );
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(
-      new GetPostQuery(postId, PostVisibility.Owner, user.id),
-    );
-  }
-
-  // todo: удалить роут publish
-  @Post(':id/publish')
-  @PublishPostSwagger()
-  async publish(
-    @Param('id', ParseIntPipe) postId: number,
-    @ExtractUserFromRequest() user: UserContextDto,
-  ): Promise<PostViewDto> {
-    await this.commandBus.execute(new PublishPostCommand(postId, user.id));
-
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(
-      new GetPostQuery(postId, PostVisibility.Public, user.id),
-    );
+    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
   }
 
   @Patch(':id')
@@ -100,7 +90,9 @@ export class PostsController {
     @Param('id', ParseIntPipe) postId: number,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
-    await this.commandBus.execute<EditPostCommand, void>(new EditPostCommand(user.id, postId, dto));
+    await this.commandBus.execute<EditPostCommand, void>(
+      new EditPostCommand({ userId: user.id, postId, description: dto.description }),
+    );
   }
 
   @Delete(':id')
@@ -119,8 +111,7 @@ export class PostsController {
     return this.queryBus.execute(new GetMyDraftsQuery(user.id));
   }
 
-  // todo: заменить profile на user
-  @Get('profile/:userId')
+  @Get('user/:userId')
   @Public()
   @GetProfilePostsSwagger()
   async getProfilePosts(
@@ -131,25 +122,19 @@ export class PostsController {
   }
 
   @Get(':id')
-  @GetOwnPostSwagger()
+  @GetPostByIdSwagger()
   async getPostById(
     @Param('id', ParseIntPipe) postId: number,
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<PostViewDto> {
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(
-      // todo: разнести по разным query
-      new GetPostQuery(postId, PostVisibility.Owner, user.id),
-    );
+    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
   }
 
   @Get(':id/public')
   @Public()
   @GetPublicPostSwagger()
   async getPublicPost(@Param('id', ParseIntPipe) postId: number): Promise<PostViewDto> {
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(
-      // todo: разнести по разным query
-      new GetPostQuery(postId, PostVisibility.Public),
-    );
+    return this.queryBus.execute<GetPublicPostQuery, PostViewDto>(new GetPublicPostQuery(postId));
   }
 
   @Get()

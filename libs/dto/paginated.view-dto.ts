@@ -14,19 +14,4 @@ export abstract class PaginatedViewDto<T> {
   totalCount: number;
   @ApiProperty({ isArray: true })
   items: T[];
-
-  static mapToView<T>(data: {
-    items: T[];
-    page: number;
-    size: number;
-    totalCount: number;
-  }): PaginatedViewDto<T> {
-    return {
-      pageSize: data.size,
-      page: data.page,
-      totalCount: data.totalCount,
-      pagesCount: Math.ceil(data.totalCount / data.size),
-      items: data.items,
-    };
-  }
 }
