@@ -57,7 +57,9 @@ import { FilesMediaController } from '../integrations/files/api/files-media.cont
 import { MulterModule } from '@nestjs/platform-express';
 import { UploadAvatarUseCase } from './users/profile/application/usecases/upload-avatar.usecase';
 import { DeleteAvatarUseCase } from './users/profile/application/usecases/delete-avatar.usecase';
-import { GetTotalCountRegisteredUsersQueryHandler } from './users/application/queries/get-total-count-registered-users.query-handler';
+import {
+  GetTotalCountRegisteredUsersQueryHandler
+} from './users/application/queries/get-total-count-registered-users.query-handler';
 import { UsersController } from './users/api/users.controller';
 import { GetPublicProfileQueryHandler } from './users/profile/application/queries/get-public-profile.query-handler';
 import { ConfigService } from '@nestjs/config';
@@ -141,6 +143,7 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
 @Module({
   imports: [
     EmailModule,
+    // todo(vilyamz): вынести регистрацию FilesClientModule в SnapFlowCoreModule
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({
