@@ -37,7 +37,6 @@ import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/
 import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
 import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
 import { SessionsController } from './auth/sessions/api/sessions.controller';
-import { PublishPostUseCase } from '../posts/application/usecases/publish-post.use.case';
 import { PostsRepository } from '../posts/infrastructure/posts-repository';
 import { PostsController } from '../posts/api/posts.controller';
 import { PostsQueryRepository } from '../posts/infrastructure/posts.query-repository';
@@ -64,6 +63,8 @@ import { GetPublicProfileQueryHandler } from './users/profile/application/querie
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
+import { GetPostsQueryHandler } from '../posts/application/queries/get-posts.query-handler';
+import { GetMyDraftsHandler } from '../posts/application/queries/get-my-drafts.query.handler';
 
 const controllers = [
   AuthController,
@@ -99,7 +100,6 @@ const useCases = [
   DeleteAvatarUseCase,
 
   CreatePostUseCase,
-  PublishPostUseCase,
   EditPostUseCase,
   DeletePostUseCase,
 ];
@@ -114,6 +114,8 @@ const queries = [
   GetAllSessionsQueryHandler,
 
   GetPostQueryHandler,
+  GetPostsQueryHandler,
+  GetMyDraftsHandler,
 ];
 const services = [
   FilesClient,
