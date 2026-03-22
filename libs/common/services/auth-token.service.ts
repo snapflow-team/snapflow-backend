@@ -5,7 +5,9 @@ import {
 } from '../../../apps/snapflow-core/src/modules/user-accounts/auth/constants/auth.constants';
 import { JwtService } from '@nestjs/jwt';
 import { PayloadRefreshToken } from '../../../apps/snapflow-core/src/modules/user-accounts/auth/application/types/payload-refresh-token.type';
+import * as jwt from 'jsonwebtoken';
 
+// todo(magomed): почему inject токены тянутся из snapflow-core в lib?
 @Injectable()
 export class AuthTokenService {
   constructor(
@@ -26,5 +28,13 @@ export class AuthTokenService {
 
   decodeRefreshToken(token: string): PayloadRefreshToken {
     return this.refreshJwt.verify(token);
+  }
+
+  generateWebhookToken(
+    payload: Record<string, any>,
+    secret: string,
+    expiresIn: jwt.SignOptions['expiresIn'] = '1m',
+  ): string {
+    return jwt.sign(payload, secret, { expiresIn });
   }
 }
