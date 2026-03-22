@@ -1,10 +1,11 @@
-﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+﻿import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository } from '../../infrastructure/posts-repository';
 import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
 import { ProfilesRepository } from '../../../user-accounts/users/profile/infrastructure/profiles.repository';
 import { CreatePostApplicationDto } from '../dto/create-post-application.dto';
+import { PostCreatedEvent } from '../../domain/events/post-created.event';
 
 export class CreatePostCommand {
   constructor(public readonly dto: CreatePostApplicationDto) {}
@@ -13,6 +14,7 @@ export class CreatePostCommand {
 @CommandHandler(CreatePostCommand)
 export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
   constructor(
+    private readonly eventBus: EventBus,
     private readonly filesClient: FilesClient,
     private readonly postsRepository: PostsRepository,
     private readonly profilesRepository: ProfilesRepository,
@@ -45,7 +47,7 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
       throw new BadRequestException('Post requires at least one valid media file');
     }
 
-    return this.postsRepository.createPostWithMedia({
+    const result: number = await this.postsRepository.createPostWithMedia({
       userId,
       description: description,
       status,
@@ -57,5 +59,9 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
         position: index,
       })),
     });
+
+    this.eventBus.publish(new PostCreatedEvent());
+
+    return result;
   }
 }
