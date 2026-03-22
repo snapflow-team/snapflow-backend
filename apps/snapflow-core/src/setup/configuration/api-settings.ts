@@ -75,7 +75,10 @@ export class ApiSettings {
   @IsBoolean()
   sendInternalServerErrorDetails: boolean;
 
-  @IsUrl()
+  @IsUrl({
+    protocols: ['redis', 'rediss'],
+    require_tld: false,
+  })
   redisUrl: string;
 
   @IsString()
