@@ -1,30 +1,32 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PostsRepository, PostWithMedia } from '../../infrastructure/posts-repository';
-import { UpdatePostInputDto } from '../../api/input-dto/update-post.input.dto';
+import { PostsRepository } from '../../infrastructure/posts-repository';
 import {
   InternalServerException,
   NotFoundException,
 } from '../../../../common/exceptions/domain-exceptions';
+import { EditPostApplicationDto } from '../dto/edit-post-application.dto';
+import { PostWithMedia } from '../../types/create-media.type';
 
 export class EditPostCommand {
-  constructor(
-    public readonly userId: number,
-    public readonly postId: number,
-    public readonly dto: UpdatePostInputDto,
-  ) {}
+  constructor(public readonly dto: EditPostApplicationDto) {}
 }
 
 @CommandHandler(EditPostCommand)
 export class EditPostUseCase implements ICommandHandler<EditPostCommand> {
   constructor(private readonly postsRepository: PostsRepository) {}
-  async execute({ userId, postId, dto }: EditPostCommand): Promise<void> {
+  async execute({ dto }: EditPostCommand): Promise<void> {
+    const { userId, postId, description } = dto;
     const post: PostWithMedia | null = await this.postsRepository.findByIdAndUser(postId, userId);
 
     if (!post) {
       throw new NotFoundException('The post was not found');
     }
 
-    const isUpdated: boolean = await this.postsRepository.updatePost(postId, userId, dto);
+    const isUpdated: boolean = await this.postsRepository.updatePost({
+      postId,
+      userId,
+      description,
+    });
 
     if (!isUpdated) {
       throw new InternalServerException('Failed to update post');

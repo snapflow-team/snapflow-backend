@@ -9,7 +9,7 @@ import {
 } from '@nestjs/swagger';
 import { PostViewDto } from '../view-dto/post.view-dto';
 
-export function GetOwnPostSwagger() {
+export function GetPostByIdSwagger() {
   return applyDecorators(
     ApiBearerAuth('access-token'),
     ApiOperation({ summary: 'Получить свой пост (черновик или опубликованный)' }),
