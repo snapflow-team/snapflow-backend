@@ -29,12 +29,15 @@ export class NextjsRevalidationService {
     this.logger.log(`New post created. Current un-revalidated count: ${count}`);
 
     if (count >= 4) {
-      await this.triggerRevalidation();
-      await this.redis.set('revalidate:posts_count', 0);
+      const isSuccess: boolean = await this.triggerRevalidation();
+
+      if (isSuccess) {
+        await this.redis.set('revalidate:posts_count', 0);
+      }
     }
   }
 
-  private async triggerRevalidation() {
+  private async triggerRevalidation(): Promise<boolean> {
     try {
       const secret: string = this.apiSettings.nextjsRevalidationSecret;
       const frontendUrl: string = this.apiSettings.baseFrontUrl;
@@ -53,9 +56,14 @@ export class NextjsRevalidationService {
           { headers: { Authorization: `Bearer ${token}` } },
         ),
       );
+
       this.logger.log('Successfully triggered Next.js revalidation');
+
+      return true;
     } catch (error) {
       this.logger.error('Failed to trigger Next.js revalidation', error.message);
+
+      return false;
     }
   }
 }
