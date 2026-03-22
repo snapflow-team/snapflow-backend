@@ -18,18 +18,6 @@ export class PostViewDto {
   description: string | null;
 
   @ApiProperty({
-    example: '12',
-    description: 'Author profile id',
-  })
-  profileId: number;
-
-  @ApiProperty({
-    example: 'john_doe',
-    description: 'Username',
-  })
-  username: string;
-
-  @ApiProperty({
     example: 'PUBLISHED',
     enum: ['DRAFT', 'PUBLISHED'],
     description: 'Post status',
@@ -41,12 +29,6 @@ export class PostViewDto {
     description: 'Post creation date in ISO format',
   })
   createdAt: string;
-
-  @ApiProperty({
-    example: '2026-02-15T18:59:28.562Z',
-    description: 'Post update date in ISO format',
-  })
-  updateAt: string;
 
   @ApiProperty({
     type: [PostMediaViewDto],
@@ -62,13 +44,14 @@ export class PostViewDto {
 
     dto.id = post.id;
     dto.description = post.description;
-    dto.profileId = post.user.profiles[0].id;
-    dto.username = post.user.username;
     dto.status = post.status;
     dto.createdAt = post.createdAt.toISOString();
-    dto.updateAt = post.updatedAt.toISOString();
     dto.postMedias = post.postMedias.map((m) => PostMediaViewDto.mapToView(m));
-    dto.owner = OwnerViewDto.mapToView(post.user.profiles[0]);
+    dto.owner = OwnerViewDto.mapToView({
+      ownerId: post.user.id,
+      username: post.user.username,
+      avatarUrl: post.user.profiles[0]?.avatarUrl ?? null,
+    });
     return dto;
   }
 }

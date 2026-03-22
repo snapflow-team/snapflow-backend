@@ -11,7 +11,7 @@ export class PostMediaViewDto {
     example: 1,
     description: 'Идентификатор медиа',
   })
-  id: number;
+  postMediaId: number;
 
   @ApiProperty({
     example: '550e8400-e29b-41d4-a716-446655440000',
@@ -27,7 +27,7 @@ export class PostMediaViewDto {
 
   static mapToView(media: PostMediaViewSource): PostMediaViewDto {
     const dto = new PostMediaViewDto();
-    dto.id = media.id;
+    dto.postMediaId = media.id;
     dto.fileId = media.fileId;
     dto.url = media.url;
     return dto;

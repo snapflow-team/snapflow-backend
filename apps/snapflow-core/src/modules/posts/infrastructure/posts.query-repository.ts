@@ -31,7 +31,10 @@ export class PostsQueryRepository {
             select: {
               id: true,
               username: true,
-              profiles: { where: { deletedAt: null }, select: { id: true } },
+              profiles: {
+                where: { deletedAt: null },
+                select: { avatarUrl: true },
+              },
             },
           },
           postMedias: {
@@ -84,7 +87,7 @@ export class PostsQueryRepository {
               username: true,
               profiles: {
                 where: { deletedAt: null },
-                select: { id: true, username: true, firstName: true, lastName: true },
+                select: { avatarUrl: true },
               },
             },
           },
@@ -130,7 +133,7 @@ export class PostsQueryRepository {
             username: true,
             profiles: {
               where: { deletedAt: null },
-              select: { id: true, username: true, firstName: true, lastName: true },
+              select: { avatarUrl: true },
             },
           },
         },
@@ -163,7 +166,7 @@ export class PostsQueryRepository {
             username: true,
             profiles: {
               where: { deletedAt: null },
-              select: { id: true, username: true, firstName: true, lastName: true },
+              select: { avatarUrl: true },
             },
           },
         },
@@ -193,7 +196,7 @@ export class PostsQueryRepository {
             username: true,
             profiles: {
               where: { deletedAt: null },
-              select: { id: true, username: true, firstName: true, lastName: true },
+              select: { avatarUrl: true },
             },
           },
         },

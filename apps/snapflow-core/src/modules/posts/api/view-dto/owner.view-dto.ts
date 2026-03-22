@@ -1,19 +1,32 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 type OwnerViewSource = {
-  firstName: string | null;
-  lastName: string | null;
+  ownerId: number;
+  username: string;
+  avatarUrl: string | null;
 };
 export class OwnerViewDto {
-  @ApiProperty({ example: 'John', nullable: true, description: 'Owner first name' })
-  firstName: string | null;
+  @ApiProperty({
+    example: 1,
+    description: 'Идентификатор юзера',
+  })
+  ownerId: number;
 
-  @ApiProperty({ example: 'Doe', nullable: true, description: 'Owner last name' })
-  lastName: string | null;
+  @ApiProperty({ example: 'John', description: 'Имя юзера' })
+  username: string;
+
+  @ApiProperty({
+    example: 'https://cdn.example.com/users/10/file.jpg',
+    nullable: true,
+    description: 'Публичный URL',
+  })
+  avatarUrl: string | null;
+
   static mapToView(owner: OwnerViewSource): OwnerViewDto {
     const dto = new OwnerViewDto();
-    dto.firstName = owner.firstName ?? null;
-    dto.lastName = owner.lastName ?? null;
+    dto.ownerId = owner.ownerId;
+    dto.username = owner.username;
+    dto.avatarUrl = owner.avatarUrl;
     return dto;
   }
 }

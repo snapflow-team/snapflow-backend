@@ -7,7 +7,7 @@ export const postInclude = Prisma.validator<Prisma.PostInclude>()({
       username: true,
       profiles: {
         where: { deletedAt: null },
-        select: { id: true, username: true, firstName: true, lastName: true },
+        select: { avatarUrl: true },
       },
     },
   },
