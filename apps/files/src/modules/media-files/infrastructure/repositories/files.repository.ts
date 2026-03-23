@@ -32,7 +32,7 @@ export class FilesRepository {
     });
   }
 
-  // todo: зачем эти методы (findByIdAndUserId, confirmUpload)?
+  // todo(magomed): зачем эти методы (findByIdAndUserId, confirmUpload)?
   async findByIdAndUserId(fileId: string, userId: number): Promise<File | null> {
     return this.prisma.file.findFirst({
       where: { id: fileId, userId, deletedAt: null },
@@ -80,8 +80,12 @@ export class FilesRepository {
     });
   }
 
-  async softDelete(key: string, userId: number): Promise<void> {
-    await this.prisma.file.updateMany({
+  async softDelete(
+    key: string,
+    userId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.file.updateMany({
       where: {
         key,
         userId,
