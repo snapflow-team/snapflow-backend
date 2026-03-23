@@ -3,12 +3,16 @@ import { AuthTestManager } from '../managers/auth.test-manager';
 import { Server } from 'http';
 import { EmailService } from '../../src/modules/emails/services/email.service';
 import { EmailTemplate } from '../../src/modules/emails/templates/types';
-import { RegistrationEmailResendingInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-email-resending.input-dto';
+import {
+  RegistrationEmailResendingInputDto
+} from '../../src/modules/user-accounts/auth/api/input-dto/registration-email-resending.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
 import request from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
-import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import {
+  RegistrationUserInputDto
+} from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { ConfirmationStatus } from '@generated/prisma';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
 
@@ -35,7 +39,7 @@ describe('AuthController registratinEmailResending POST: /auth/registration-emai
     await appTestManager.close();
   });
 
-  // todo: если запускаешь все e2e тесты, то этот тест падает!
+  // todo(magomed): если запускаешь все e2e тесты, то этот тест падает!
   it('должен отправить письмо подтверждения, если emil корректный и пользователь не подтвержден', async () => {
     const registrationDtos: RegistrationUserInputDto[] =
       TestDtoFactory.generateRegistrationUserInputDto(1);
