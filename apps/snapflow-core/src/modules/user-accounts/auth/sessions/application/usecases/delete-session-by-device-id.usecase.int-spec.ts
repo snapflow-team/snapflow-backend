@@ -1,14 +1,12 @@
-import { TestingModule } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../../../../database/prisma.service';
-import { SessionsRepository } from '../../infrastructure/sessions.repository';
 import {
   DeleteSessionByDeviceIdCommand,
   DeleteSessionByDeviceUseCase,
 } from './delete-session-by-device-id.usecase';
-import { Session } from '@generated/prisma';
-import { IntegrationTestModuleHelper } from '../../../../../../../test/helpers/integration-test-module.helper';
-import { DomainExceptionCode } from '../../../../../../../../../libs/exceptions/core/domain-exception-codes';
+import { Session } from '@generated/prisma-snapflow';
 import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
+import { SnapflowCoreModule } from '../../../../../../snapflow-core.module';
 
 describe('DeleteSessionByDeviceUseCase (Интеграция)', () => {
   let module: TestingModule;
@@ -16,21 +14,23 @@ describe('DeleteSessionByDeviceUseCase (Интеграция)', () => {
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    module = await IntegrationTestModuleHelper.createTestingModule([
-      SessionsRepository,
-      DeleteSessionByDeviceUseCase,
-    ]);
+    module = await Test.createTestingModule({
+      imports: [SnapflowCoreModule],
+    }).compile();
 
-    useCase = module.get<DeleteSessionByDeviceUseCase>(DeleteSessionByDeviceUseCase);
-    prisma = module.get<PrismaService>(PrismaService);
+    useCase = module.get(DeleteSessionByDeviceUseCase);
+    prisma = module.get(PrismaService);
   });
 
   afterAll(async () => {
-    await IntegrationTestModuleHelper.close(module, prisma);
+    if (module) {
+      await module.close();
+    }
   });
 
   beforeEach(async () => {
-    await IntegrationTestModuleHelper.clearAuthSessionsData(prisma);
+    await prisma.session.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   const createSession = async (params: { userId: number; deviceId: string }): Promise<Session> => {
@@ -74,7 +74,8 @@ describe('DeleteSessionByDeviceUseCase (Интеграция)', () => {
         }),
       ),
     ).rejects.toMatchObject({
-      code: DomainExceptionCode.BadRequest,
+      code: 'BadRequest',
+      message: 'Cannot terminate the active session you are currently using. Use logout instead',
     });
   });
 
@@ -89,7 +90,8 @@ describe('DeleteSessionByDeviceUseCase (Интеграция)', () => {
         }),
       ),
     ).rejects.toMatchObject({
-      code: DomainExceptionCode.NotFound,
+      code: 'NotFound',
+      message: 'The specified device session could not be found',
     });
   });
 
@@ -106,7 +108,8 @@ describe('DeleteSessionByDeviceUseCase (Интеграция)', () => {
         }),
       ),
     ).rejects.toMatchObject({
-      code: DomainExceptionCode.Forbidden,
+      code: 'Forbidden',
+      message: 'Access denied. You can only manage your own device sessions',
     });
 
     const sessionInDb = await prisma.session.findUnique({ where: { id: ownerSession.id } });

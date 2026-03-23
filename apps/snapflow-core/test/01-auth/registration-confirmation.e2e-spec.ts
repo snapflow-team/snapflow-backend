@@ -13,7 +13,7 @@ import { HttpStatus } from '@nestjs/common';
 import {
   RegistrationUserInputDto
 } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
-import { ConfirmationStatus } from '@generated/prisma';
+import { ConfirmationStatus } from '@generated/prisma-snapflow';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
 
 describe('AuthController registratinEmailResending POST: /auth/registration-email-resending', () => {

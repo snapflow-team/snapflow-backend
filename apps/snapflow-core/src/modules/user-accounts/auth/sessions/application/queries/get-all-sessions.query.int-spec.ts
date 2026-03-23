@@ -1,12 +1,10 @@
-import { TestingModule } from '@nestjs/testing';
+import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../../../../database/prisma.service';
-import { IntegrationTestModuleHelper } from '../../../../../../../test/helpers/integration-test-module.helper';
-import { SessionsRepository } from '../../infrastructure/sessions.repository';
 import { CreateSessionCommand, CreateSessionUseCase } from '../usecases/create-session.usecase';
 import { GetAllSessionsQuery, GetAllSessionsQueryHandler } from './get-all-sessions.query';
-import { SessionQueryRepository } from '../../infrastructure/session.query-repository';
 import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
 import { User } from '@generated/prisma-snapflow';
+import { SnapflowCoreModule } from '../../../../../../snapflow-core.module';
 
 describe('GetAllSessionsQueryHandler (Интеграция)', () => {
   let module: TestingModule;
@@ -15,24 +13,24 @@ describe('GetAllSessionsQueryHandler (Интеграция)', () => {
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    module = await IntegrationTestModuleHelper.createTestingModule([
-      SessionsRepository,
-      SessionQueryRepository,
-      CreateSessionUseCase,
-      GetAllSessionsQueryHandler,
-    ]);
+    module = await Test.createTestingModule({
+      imports: [SnapflowCoreModule],
+    }).compile();
 
-    createSessionUseCase = module.get<CreateSessionUseCase>(CreateSessionUseCase);
-    queryHandler = module.get<GetAllSessionsQueryHandler>(GetAllSessionsQueryHandler);
-    prisma = module.get<PrismaService>(PrismaService);
+    createSessionUseCase = module.get(CreateSessionUseCase);
+    queryHandler = module.get(GetAllSessionsQueryHandler);
+    prisma = module.get(PrismaService);
   });
 
   afterAll(async () => {
-    await IntegrationTestModuleHelper.close(module, prisma);
+    if (module) {
+      await module.close();
+    }
   });
 
   beforeEach(async () => {
-    await IntegrationTestModuleHelper.clearAuthSessionsData(prisma);
+    await prisma.session.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   it('должен возвращать только активные сессии текущего пользователя', async () => {
