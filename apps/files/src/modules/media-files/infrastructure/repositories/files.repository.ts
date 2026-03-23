@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma.service';
-import { File, FileStatus, Prisma } from '@generated/prisma-files';
+import { File, FileStatus, OutboxEventType, Prisma } from '@generated/prisma-files';
 
 @Injectable()
 export class FilesRepository {
@@ -98,7 +98,7 @@ export class FilesRepository {
 
   // todo(vilyamz): после ревью, вынести в отдельный репозиторий
   async createOutboxEvent(
-    type: string,
+    type: OutboxEventType,
     payload: Prisma.InputJsonValue,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<void> {
