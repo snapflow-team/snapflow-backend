@@ -9,10 +9,12 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { HttpStatus } from '@nestjs/common';
 import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
-import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-accounts.config';
 import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';
 import { UserProfile } from '@generated/prisma-snapflow';
+import { ApiSettings } from '../../src/setup/configuration/api-settings';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../src/setup/configuration/configuration';
 
 describe('ProfileController - getProfile() (GET: /users/profile)', () => {
   let appTestManager: AppTestManager;
@@ -25,13 +27,17 @@ describe('ProfileController - getProfile() (GET: /users/profile)', () => {
     appTestManager = new AppTestManager();
     await appTestManager.init((moduleBuilder) =>
       moduleBuilder.overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN).useFactory({
-        factory: (userAccountsConfig: UserAccountsConfig) => {
+        factory: (configService: ConfigService<Configuration, true>) => {
+          const {
+            accessToken: { secret },
+          } = configService.get<ApiSettings>('apiSettings').getJwtOptions();
+
           return new JwtService({
-            secret: userAccountsConfig.accessTokenSecret,
+            secret,
             signOptions: { expiresIn: '2s' },
           });
         },
-        inject: [UserAccountsConfig],
+        inject: [ConfigService],
       }),
     );
 

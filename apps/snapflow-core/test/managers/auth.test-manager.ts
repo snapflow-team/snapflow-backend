@@ -9,6 +9,9 @@ import {
 } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
 import { User } from '@generated/prisma-snapflow';
+import {
+  PasswordRecoveryInputDto
+} from '../../src/modules/user-accounts/auth/api/input-dto/password-recovery.input-dto';
 
 /**
  * 🔐 AuthTestManager
@@ -279,10 +282,10 @@ export class AuthTestManager {
     return expiredRecoveryCode;
   }
 
-  async passwordRecovery(email: string): Promise<void> {
+  async passwordRecovery(dto: PasswordRecoveryInputDto): Promise<void> {
     await request(this.server)
       .post(`/${GLOBAL_PREFIX}/auth/password-recovery`)
-      .send({ email })
+      .send(dto)
       .expect(HttpStatus.NO_CONTENT);
   }
 
@@ -295,7 +298,6 @@ export class AuthTestManager {
    *
    * ❗ Работает напрямую с БД, минуя HTTP-слой.
    */
-  //todo: временное решение пока не появится роут для выборки списка пользователей!
   async getAll(): Promise<User[]> {
     return this.prisma.user.findMany();
   }

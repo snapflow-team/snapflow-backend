@@ -2,25 +2,25 @@ import { Server } from 'http';
 import { EmailTemplate } from '../../src/modules/emails/templates/types';
 import { EmailService } from '../../src/modules/emails/services/email.service';
 import { AuthTestManager } from '../managers/auth.test-manager';
-import { ProfileTestManager } from '../managers/profile.test-manager';
 import { AppTestManager } from '../managers/app.test-manager';
 import request, { Response } from 'supertest';
 import { HttpStatus } from '@nestjs/common';
 import {
   UpdateProfileInputDto
 } from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
-import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
-import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-accounts.config';
 import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../src/setup/configuration/configuration';
+import { ApiSettings } from '../../src/setup/configuration/api-settings';
+import { UserProfile } from '@generated/prisma-snapflow';
 
 describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
   let appTestManager: AppTestManager;
   let authTestManager: AuthTestManager;
-  let profileTestManager: ProfileTestManager;
   let server: Server;
   let sendEmailMock: jest.Mock;
 
@@ -28,20 +28,23 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
     appTestManager = new AppTestManager();
     await appTestManager.init((moduleBuilder) =>
       moduleBuilder.overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN).useFactory({
-        factory: (userAccountsConfig: UserAccountsConfig) => {
+        factory: (configService: ConfigService<Configuration, true>) => {
+          const {
+            accessToken: { secret },
+          } = configService.get<ApiSettings>('apiSettings').getJwtOptions();
+
           return new JwtService({
-            secret: userAccountsConfig.accessTokenSecret,
+            secret,
             signOptions: { expiresIn: '2s' },
           });
         },
-        inject: [UserAccountsConfig],
+        inject: [ConfigService],
       }),
     );
 
     server = appTestManager.getServer();
 
     authTestManager = new AuthTestManager(appTestManager.prisma, server);
-    profileTestManager = new ProfileTestManager(appTestManager.prisma, server);
 
     sendEmailMock = jest
       .spyOn(EmailService.prototype, 'sendEmail')
@@ -84,11 +87,18 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       .expect(HttpStatus.NO_CONTENT);
 
     // 🔻 Проверяем, что профиль обновился в базе
-    const profile: ProfileViewDto = await profileTestManager.findProfileByUserId(userId);
+    const profile: UserProfile | null = await appTestManager.prisma.userProfile.findFirst({
+      where: { userId },
+    });
+
+    if (!profile) {
+      throw new Error('Profile was not created');
+    }
+
     expect(profile.username).toBe(dto.username);
     expect(profile.firstName).toBe(dto.firstName);
     expect(profile.lastName).toBe(dto.lastName);
-    expect(profile.dateOfBirth).toBe(dto.dateOfBirth);
+    expect(profile.dateOfBirth?.toISOString().split('T')[0]).toBe(dto.dateOfBirth);
     expect(profile.country).toBe(dto.country);
     expect(profile.city).toBe(dto.city);
     expect(profile.aboutMe).toBe(dto.aboutMe);
@@ -113,7 +123,14 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       .send(dto)
       .expect(HttpStatus.NO_CONTENT);
 
-    const profile: ProfileViewDto = await profileTestManager.findProfileByUserId(userId);
+    const profile: UserProfile | null = await appTestManager.prisma.userProfile.findFirst({
+      where: { userId },
+    });
+
+    if (!profile) {
+      throw new Error('Profile was not created');
+    }
+
     expect(profile.username).toBe(dto.username);
     expect(profile.firstName).toBe(dto.firstName);
     expect(profile.lastName).toBe(dto.lastName);
@@ -148,7 +165,13 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       .send(dto)
       .expect(HttpStatus.NO_CONTENT);
 
-    const profileBefore: ProfileViewDto = await profileTestManager.findProfileByUserId(userId);
+    const profileBefore: UserProfile | null = await appTestManager.prisma.userProfile.findFirst({
+      where: { userId },
+    });
+
+    if (!profileBefore) {
+      throw new Error('Profile was not created');
+    }
 
     // теперь обновляем только username и city
     const partial_dto: UpdateProfileInputDto = {
@@ -164,7 +187,13 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       .send(partial_dto)
       .expect(HttpStatus.NO_CONTENT);
 
-    const profileAfter: ProfileViewDto = await profileTestManager.findProfileByUserId(userId);
+    const profileAfter: UserProfile | null = await appTestManager.prisma.userProfile.findFirst({
+      where: { userId },
+    });
+
+    if (!profileAfter) {
+      throw new Error('Profile was not created');
+    }
 
     expect(profileAfter?.username).toBe('updated_name');
     expect(profileAfter?.city).toBe('SPB');
@@ -174,7 +203,7 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
     expect(profileAfter?.lastName).toBe(profileBefore?.lastName);
     expect(profileAfter?.country).toBe(profileBefore?.country);
     expect(profileAfter?.aboutMe).toBe(profileBefore?.aboutMe);
-    expect(profileAfter?.dateOfBirth).toBe(profileBefore?.dateOfBirth);
+    expect(profileAfter?.dateOfBirth).toStrictEqual(profileBefore?.dateOfBirth);
   });
 
   it('не должен обновлять профиль и должен вернуть 401, если accessToken не передан', async () => {
@@ -526,7 +555,14 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       .send(dto)
       .expect(HttpStatus.BAD_REQUEST);
 
-    const profile: ProfileViewDto = await profileTestManager.findProfileByUserId(userId);
+    const profile: UserProfile | null = await appTestManager.prisma.userProfile.findFirst({
+      where: { userId },
+    });
+
+    if (!profile) {
+      throw new Error('Profile was not created');
+    }
+
     expect(profile.dateOfBirth).toBeNull();
   });
 

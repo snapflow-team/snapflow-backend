@@ -1,12 +1,11 @@
-import { TestingModule } from '@nestjs/testing';
-import { Session, User } from '@generated/prisma';
+import { Test, TestingModule } from '@nestjs/testing';
+import { Session, User } from '@generated/prisma-snapflow';
 import { PrismaService } from '../../../../../../database/prisma.service';
-import { SessionsRepository } from '../../infrastructure/sessions.repository';
 import { parseUserAgent } from '../../../../../../../../../libs/common/utils/user-agent.parser';
 import { CreateSessionCommand, CreateSessionUseCase } from './create-session.usecase';
 import { CreateSessionDto } from '../../dto/create-session.dto';
-import { IntegrationTestModuleHelper } from '../../../../../../../test/helpers/integration-test-module.helper';
 import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
+import { SnapflowCoreModule } from '../../../../../../snapflow-core.module';
 
 describe('CreateSessionUseCase (Integration)', () => {
   let module: TestingModule;
@@ -14,21 +13,23 @@ describe('CreateSessionUseCase (Integration)', () => {
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    module = await IntegrationTestModuleHelper.createTestingModule([
-      SessionsRepository,
-      CreateSessionUseCase,
-    ]);
+    module = await Test.createTestingModule({
+      imports: [SnapflowCoreModule],
+    }).compile();
 
-    useCase = module.get<CreateSessionUseCase>(CreateSessionUseCase);
-    prisma = module.get<PrismaService>(PrismaService);
+    useCase = module.get(CreateSessionUseCase);
+    prisma = module.get(PrismaService);
   });
 
   afterAll(async () => {
-    await IntegrationTestModuleHelper.close(module, prisma);
+    if (module) {
+      await module.close();
+    }
   });
 
   beforeEach(async () => {
-    await IntegrationTestModuleHelper.clearAuthSessionsData(prisma);
+    await prisma.session.deleteMany();
+    await prisma.user.deleteMany();
   });
 
   it('should persist new session for user with parsed device data', async () => {

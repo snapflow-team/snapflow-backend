@@ -3,21 +3,23 @@ import { PrismaService } from '../../../../database/prisma.service';
 import { SnapflowCoreModule } from '../../../../snapflow-core.module';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { CreatePostUseCase } from '../usecases/create-post-use.case';
-import { TestEntityFactory } from '../../../../../test/helpers/test-entity.factory';
-import { PostStatus } from '@generated/prisma-snapflow';
+import { PostStatus, User } from '@generated/prisma-snapflow';
 import {
   GetProfilePostsQuery,
   GetProfilePostsQueryHandler,
 } from './get-profile-posts.query-handler';
 import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
 import { GetPostsQueryParamsDto, PostSortBy } from '../../api/input-dto/get-posts.query-params.dto';
+import { ProfilesRepository } from '../../../user-accounts/users/profile/infrastructure/profiles.repository';
 
 describe('GetProfilePostsQueryHandler', () => {
   let module: TestingModule;
   let handler: GetProfilePostsQueryHandler;
+  let repo: ProfilesRepository;
+
   let prisma: PrismaService;
   let useCase: CreatePostUseCase;
-  let helper: IntTestHelper;
+  let intTestHelper: IntTestHelper;
 
   const validateFilesMock = jest.fn();
 
@@ -34,7 +36,8 @@ describe('GetProfilePostsQueryHandler', () => {
     useCase = module.get<CreatePostUseCase>(CreatePostUseCase);
     prisma = module.get<PrismaService>(PrismaService);
     handler = module.get<GetProfilePostsQueryHandler>(GetProfilePostsQueryHandler);
-    helper = new IntTestHelper(validateFilesMock, useCase);
+    repo = module.get<ProfilesRepository>(ProfilesRepository);
+    intTestHelper = new IntTestHelper(validateFilesMock, useCase, repo);
   });
 
   afterAll(async () => {
@@ -46,15 +49,20 @@ describe('GetProfilePostsQueryHandler', () => {
   beforeEach(async () => {
     await prisma.postMedia.deleteMany({});
     await prisma.post.deleteMany({});
+    await prisma.userProfile.deleteMany({});
     await prisma.user.deleteMany({});
     validateFilesMock.mockClear();
   });
 
   it('должен вернуть опубликованные посты профиля (DESC)', async () => {
-    const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'user-1' });
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'user-1');
 
-    for (let i = 0; i < 12; i++) {
-      await helper.createPost(user.id, `Post ${i + 1}`, `file-${i + 1}`, PostStatus.PUBLISHED);
+    for (let i = 1; i <= 12; i++) {
+      intTestHelper.mockFileValidation(`file-${i}`);
+    }
+
+    for (let i = 1; i <= 12; i++) {
+      await intTestHelper.createPost(user.id, [`file-${i}`], PostStatus.PUBLISHED, `Post ${i}`);
     }
 
     const dto = new GetPostsQueryParamsDto();
@@ -76,7 +84,7 @@ describe('GetProfilePostsQueryHandler', () => {
   });
 
   it('пустой профиль', async () => {
-    const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'no_posts' });
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'no_posts');
 
     const dto = new GetPostsQueryParamsDto();
     const query = new GetProfilePostsQuery(dto, user.id);
@@ -89,9 +97,9 @@ describe('GetProfilePostsQueryHandler', () => {
   });
 
   it('игнорирует черновики (DRAFT)', async () => {
-    const user = await TestEntityFactory.createTestUser(prisma);
-    await helper.createPost(user.id, 'Published', 'file1', PostStatus.PUBLISHED);
-    await helper.createPost(user.id, 'Draft', 'file2', PostStatus.DRAFT);
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'post_notfound');
+    await intTestHelper.createPost(user.id, ['f1'], PostStatus.PUBLISHED, 'Published');
+    await intTestHelper.createPost(user.id, ['f2'], PostStatus.DRAFT, 'Draft');
 
     const query = new GetProfilePostsQuery(new GetPostsQueryParamsDto(), user.id);
     const result = await handler.execute(query);
@@ -102,9 +110,13 @@ describe('GetProfilePostsQueryHandler', () => {
   });
 
   it('страница 2 возвращает посты 4-11', async () => {
-    const user = await TestEntityFactory.createTestUser(prisma);
-    for (let i = 0; i < 12; i++) {
-      await helper.createPost(user.id, `Post ${i + 1}`, `file-${i + 1}`);
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'post_notfound');
+    for (let i = 1; i <= 12; i++) {
+      intTestHelper.mockFileValidation(`file-${i}`);
+    }
+
+    for (let i = 1; i <= 12; i++) {
+      await intTestHelper.createPost(user.id, [`file-${i}`], PostStatus.PUBLISHED, `Post ${i}`);
     }
 
     const dto = new GetPostsQueryParamsDto();
@@ -120,10 +132,14 @@ describe('GetProfilePostsQueryHandler', () => {
   });
 
   it('должен вернуть без params', async () => {
-    const user = await TestEntityFactory.createTestUser(prisma, { suffix: 'defaults' });
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'defaults');
 
     for (let i = 1; i <= 12; i++) {
-      await helper.createPost(user.id, `Post ${i}`, `file-${i}`, PostStatus.PUBLISHED);
+      intTestHelper.mockFileValidation(`file-${i}`);
+    }
+
+    for (let i = 1; i <= 12; i++) {
+      await intTestHelper.createPost(user.id, [`file-${i}`], PostStatus.PUBLISHED, `Post ${i}`);
     }
 
     const dto = new GetPostsQueryParamsDto();

@@ -5,7 +5,6 @@ import { CreatePostUseCase } from './create-post-use.case';
 import { SnapflowCoreModule } from '../../../../snapflow-core.module';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { Post, PostMedia, PostStatus, User } from '@generated/prisma-snapflow';
-import { TestEntityFactory } from '../../../../../test/helpers/test-entity.factory';
 import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
 import { ProfilesRepository } from '../../../user-accounts/users/profile/infrastructure/profiles.repository';
 
@@ -84,7 +83,7 @@ describe('DeletePostUseCase', () => {
   });
 
   it('должен кинуть NotFound если пост не существует', async () => {
-    const user: User = await TestEntityFactory.createTestUser(prisma, { suffix: 'not_found' });
+    const user: User = await intTestHelper.createUserWithProfile(prisma, 'not_found');
 
     await expect(
       deletePostUseCase.execute(new DeletePostCommand(user.id, 999)),

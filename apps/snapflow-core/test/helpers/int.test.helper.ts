@@ -70,4 +70,17 @@ export class IntTestHelper {
       }),
     );
   }
+
+  async createSession(prisma: PrismaService, userId: number, deviceId: string) {
+    return prisma.session.create({
+      data: {
+        userId,
+        deviceId,
+        deviceName: 'Test Device',
+        ip: '127.0.0.1',
+        iat: new Date(),
+        exp: new Date(Date.now() + 1000 * 60 * 60),
+      },
+    });
+  }
 }

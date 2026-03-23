@@ -36,7 +36,7 @@ model User {
   emailConfirmationCode EmailConfirmationCode?
   sessions              Session[]
   passwordRecoveryCode  PasswordRecoveryCode?
-  // todo: правильно ли так делать? из-за софт делит делать связь один ко многим?
+  // todo(review): правильно ли так делать? из-за софт делит делать связь один ко многим?
   authAcconts           AuthAccount[]
   posts                 Post[]
   profiles              UserProfile[]
@@ -47,7 +47,7 @@ model User {
 model UserProfile {
   id Int @id @default(autoincrement())
 
-  // todo: как быть при софт делит, если пользователь удалил профиль, то у нас не учитываются его данные. Допустим другой пользователь создал профиль с таким же username и затем первый пытается восстановить свой профиль, то у первого выдаст ошибку унакальности.
+  // todo(review): как быть при софт делит, если пользователь удалил профиль, то у нас не учитываются его данные. Допустим другой пользователь создал профиль с таким же username и затем первый пытается восстановить свой профиль, то у первого выдаст ошибку унакальности.
   username  String  @db.VarChar(30)
   firstName String? @map("first_name") @db.VarChar(50)
   lastName  String? @map("last_name") @db.VarChar(50)

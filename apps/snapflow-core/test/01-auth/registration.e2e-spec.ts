@@ -12,16 +12,13 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { TestUtils } from '../helpers/test.utils';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
-import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
-import { ProfileTestManager } from '../managers/profile.test-manager';
 import { ProfilesRepository } from '../../src/modules/user-accounts/users/profile/infrastructure/profiles.repository';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
-import { User } from '@generated/prisma-snapflow';
+import { User, UserProfile } from '@generated/prisma-snapflow';
 
 describe('AuthController - registration() (POST: /auth/registration)', () => {
   let appTestManager: AppTestManager;
   let authTestManager: AuthTestManager;
-  let profileTestManager: ProfileTestManager;
   let server: Server;
   let sendEmailMock: jest.Mock;
 
@@ -32,7 +29,6 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     server = appTestManager.getServer();
 
     authTestManager = new AuthTestManager(appTestManager.prisma, server);
-    profileTestManager = new ProfileTestManager(appTestManager.prisma, server);
 
     sendEmailMock = jest
       .spyOn(EmailService.prototype, 'sendEmail')
@@ -444,14 +440,15 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     expect(createdUser.email).toBe(dto.email);
 
     // 🔻 Получаем профиль пользователя
-    const profile: ProfileViewDto = await profileTestManager.findProfileByUserId(createdUser.id);
+    const profile: UserProfile | null = await appTestManager.prisma.userProfile.findFirst({
+      where: { userId: createdUser.id },
+    });
 
     if (!profile) {
       throw new Error('Profile was not created');
     }
 
     // 🔸 Проверяем профиль
-    expect(typeof profile.id).toBe('string');
     expect(profile.username).toBe(dto.username);
     expect(profile.firstName).toBeNull();
     expect(profile.lastName).toBeNull();
@@ -460,9 +457,6 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     expect(profile.dateOfBirth).toBeNull();
     expect(profile.aboutMe).toBeNull();
     expect(profile.avatarUrl).toBeNull();
-    expect(profile.followersCount).toBe(0);
-    expect(profile.followingCount).toBe(0);
-    expect(profile.postsCount).toBe(0);
 
     // 🔸 Проверяем отправку email
     expect(sendEmailMock).toHaveBeenCalledTimes(1);
