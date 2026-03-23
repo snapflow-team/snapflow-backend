@@ -32,7 +32,7 @@ export class FilesRepository {
     });
   }
 
-  // todo: зачем эти методы (findByIdAndUserId, confirmUpload)?
+  // todo(magomed): зачем эти методы (findByIdAndUserId, confirmUpload)?
   async findByIdAndUserId(fileId: string, userId: number): Promise<File | null> {
     return this.prisma.file.findFirst({
       where: { id: fileId, userId, deletedAt: null },
@@ -96,7 +96,7 @@ export class FilesRepository {
     });
   }
 
-  // todo: после ревью, вынести в отдельный репозиторий
+  // todo(vilyamz): после ревью, вынести в отдельный репозиторий
   async createOutboxEvent(
     type: string,
     payload: Prisma.InputJsonValue,

@@ -6,15 +6,17 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { S3Settings } from '../../../../setup/configuration/s3.settings';
 import { DeleteFileResponse } from '../../../../../../../libs/contracts/files';
+import { PrismaService } from '../../../../database/prisma.service';
 
 export class DeleteFileCommand {
   constructor(public readonly dto: DeleteFileApplicationDto) {}
 }
-// todo: внедрить паттерн Outbox / Cron
+
 @CommandHandler(DeleteFileCommand)
 export class DeleteFileUseCase implements ICommandHandler<DeleteFileCommand> {
   constructor(
     private readonly filesRepository: FilesRepository,
+    private readonly prismaService: PrismaService,
     private readonly storageService: StorageService,
     private readonly configService: ConfigService<Configuration, true>,
   ) {}
@@ -24,9 +26,10 @@ export class DeleteFileUseCase implements ICommandHandler<DeleteFileCommand> {
 
     const key: string = fileUrl.replace(`${publicBaseUrl}/`, '');
 
-    await this.storageService.deleteFile(key);
-
-    await this.filesRepository.softDelete(key, userId);
+    await this.prismaService.$transaction(async (tx) => {
+      await this.filesRepository.softDelete(key, userId, tx);
+      await this.filesRepository.createOutboxEvent('DELETE_S3_FILE', { key }, tx);
+    });
 
     return { success: true };
   }
