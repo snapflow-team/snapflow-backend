@@ -30,9 +30,8 @@ export function swaggerSetup(
     .addCookieAuth(
       'refreshToken',
       {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
+        type: 'apiKey',
+        in: 'cookie',
         description: 'Refresh Token хранится в httpOnly cookie',
       },
       'refresh-token',
@@ -42,9 +41,7 @@ export function swaggerSetup(
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        name: 'JWT',
         description: 'Access Token для обычных пользователей. Отправляется в Authorization header',
-        in: 'header',
       },
       'access-token',
     )
