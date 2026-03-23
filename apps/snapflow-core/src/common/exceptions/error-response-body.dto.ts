@@ -44,6 +44,6 @@ export class ErrorResponseDto implements IErrorResponse<SnapFlowDomainExceptionC
   })
   code: SnapFlowDomainExceptionCodeType;
 
-  @ApiProperty({ isArray: true })
+  @ApiProperty({ type: [ExtensionsDto] })
   extensions: ExtensionsDto[];
 }
