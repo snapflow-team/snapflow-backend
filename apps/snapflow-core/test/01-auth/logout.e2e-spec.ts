@@ -6,14 +6,16 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { EmailService } from '../../src/modules/emails/services/email.service';
 import { EmailTemplate } from '../../src/modules/emails/templates/types';
 import { HttpStatus } from '@nestjs/common';
-import { Session } from '@generated/prisma';
 import { REFRESH_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
-import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-accounts.config';
 import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../src/setup/configuration/configuration';
+import { ApiSettings } from '../../src/setup/configuration/api-settings';
+import { Session } from '@generated/prisma-snapflow';
 
 describe('AuthController - logout() (POST: /auth/logout)', () => {
   let appTestManager: AppTestManager;
@@ -25,13 +27,16 @@ describe('AuthController - logout() (POST: /auth/logout)', () => {
     appTestManager = new AppTestManager();
     await appTestManager.init((moduleBuilder) =>
       moduleBuilder.overrideProvider(REFRESH_TOKEN_STRATEGY_INJECT_TOKEN).useFactory({
-        factory: (userAccountsConfig: UserAccountsConfig) => {
+        factory: (configService: ConfigService<Configuration, true>) => {
+          const {
+            refreshToken: { secret },
+          } = configService.get<ApiSettings>('apiSettings').getJwtOptions();
           return new JwtService({
-            secret: userAccountsConfig.refreshTokenSecret,
+            secret: secret,
             signOptions: { expiresIn: '3s' },
           });
         },
-        inject: [UserAccountsConfig],
+        inject: [ConfigService],
       }),
     );
 
