@@ -17,6 +17,8 @@ export class OutboxProcessorService {
     private readonly configService: ConfigService<Configuration, true>,
   ) {}
 
+  // todo(vilyamz): разрешить вопрос с конкуренцией при нескольких инстансах
+
   @Cron(CronExpression.EVERY_30_MINUTES)
   async processOutboxEvents() {
     const pendingEvents: OutboxEvent[] = await this.outboxRepository.findPendingEvents(50);
