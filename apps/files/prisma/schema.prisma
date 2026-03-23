@@ -18,6 +18,10 @@ enum OutboxEventStatus {
   FAILED
 }
 
+enum OutboxEventType {
+  DELETE_S3_FILE
+}
+
 model File {
   id     String @id @default(uuid())
   userId Int    @map("user_id") // Владелец файла (ID пользователя из core). нельзя прикрепить чужой файл к посту.
@@ -36,7 +40,7 @@ model File {
 
 model OutboxEvent {
   id        String            @id @default(uuid()) @db.Uuid
-  type      String            @db.VarChar(255)
+  type      OutboxEventType
   payload   Json              @db.JsonB
   status    OutboxEventStatus @default(PENDING)
   error     String?           @db.Text
