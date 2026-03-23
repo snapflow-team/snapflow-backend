@@ -43,7 +43,7 @@ export class ApiSettings {
   githubOauthCallbackUrl: string;
 
   @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
-  redirectFrontUrl: string;
+  baseFrontUrl: string;
 
   @IsNotEmpty()
   googleRecaptchaSecretKey: string;
@@ -75,6 +75,18 @@ export class ApiSettings {
   @IsBoolean()
   sendInternalServerErrorDetails: boolean;
 
+  @IsUrl({
+    protocols: ['redis', 'rediss'],
+    require_tld: false,
+  })
+  redisUrl: string;
+
+  @IsString()
+  nextjsRevalidationSecret: string;
+
+  @IsNotEmpty()
+  nextjsRevalidationTokenExpiresIn: string | number;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
@@ -91,7 +103,7 @@ export class ApiSettings {
     this.githubOauthClientSecret = environmentVariables.GITHUB_OAUTH_CLIENT_SECRET;
     this.githubOauthCallbackUrl = environmentVariables.GITHUB_OAUTH_CALLBACK_URL;
 
-    this.redirectFrontUrl = environmentVariables.REDIRECT_FRONT_URL;
+    this.baseFrontUrl = environmentVariables.BASE_FRONT_URL;
 
     this.googleRecaptchaSecretKey = environmentVariables.GOOGLE_RECAPTCHA_SECRET_KEY;
 
@@ -109,6 +121,12 @@ export class ApiSettings {
 
     this.sendInternalServerErrorDetails =
       environmentVariables.SEND_INTERNAL_SERVER_ERROR_DETAILS === 'true';
+
+    this.redisUrl = environmentVariables.REDIS_URL;
+
+    this.nextjsRevalidationSecret = environmentVariables.NEXTJS_REVALIDATION_SECRET;
+    this.nextjsRevalidationTokenExpiresIn =
+      environmentVariables.NEXTJS_REVALIDATION_TOKEN_EXPIRES_IN;
   }
 
   getJwtOptions() {
