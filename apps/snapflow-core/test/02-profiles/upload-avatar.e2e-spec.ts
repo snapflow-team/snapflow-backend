@@ -9,15 +9,16 @@ import { TestUtils } from '../helpers/test.utils';
 
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
-import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-accounts.config';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
 import { UploadFileResponse } from '../../../../libs/contracts/files';
 import { FilesClient } from '../../src/modules/integrations/files/files.client';
 import { EmailService } from '../../src/modules/emails/services/email.service';
 import { EmailTemplate } from '../../src/modules/emails/templates/types';
 import { AVATAR_IMAGE_SIZE } from '../../../../libs/common/constants/image-size.constants';
-import { ProfileTestManager } from '../managers/profile.test-manager';
-import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../src/setup/configuration/configuration';
+import { ApiSettings } from '../../src/setup/configuration/api-settings';
+import { UserProfile } from '@generated/prisma-snapflow';
 
 // 🔻 Фейковые буферы для имитации загрузки файлов
 const validPngBuffer = Buffer.from(
@@ -34,7 +35,6 @@ const tooLargeBuffer = Buffer.alloc(11 * 1024 * 1024, 'a');
 
 describe('ProfileController - uploadAvatar() (POST: /users/profile/avatar)', () => {
   let appTestManager: AppTestManager;
-  let profileTestManager: ProfileTestManager;
   let authTestManager: AuthTestManager;
   let server: Server;
   let uploadFileMock: jest.Mock;
@@ -44,19 +44,22 @@ describe('ProfileController - uploadAvatar() (POST: /users/profile/avatar)', () 
     appTestManager = new AppTestManager();
     await appTestManager.init((moduleBuilder) =>
       moduleBuilder.overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN).useFactory({
-        factory: (userAccountsConfig: UserAccountsConfig) => {
+        factory: (configService: ConfigService<Configuration, true>) => {
+          const {
+            accessToken: { secret },
+          } = configService.get<ApiSettings>('apiSettings').getJwtOptions();
+
           return new JwtService({
-            secret: userAccountsConfig.accessTokenSecret,
+            secret,
             signOptions: { expiresIn: '2s' },
           });
         },
-        inject: [UserAccountsConfig],
+        inject: [ConfigService],
       }),
     );
 
     server = appTestManager.getServer();
     authTestManager = new AuthTestManager(appTestManager.prisma, server);
-    profileTestManager = new ProfileTestManager(appTestManager.prisma, server);
 
     uploadFileMock = jest.spyOn(FilesClient.prototype, 'uploadFile').mockResolvedValue({
       key: 'avatars/fake-uuid.png',
@@ -99,7 +102,14 @@ describe('ProfileController - uploadAvatar() (POST: /users/profile/avatar)', () 
     });
 
     // Проверяем, что URL сохранился в таблице профиля
-    const profile: ProfileViewDto = await profileTestManager.findProfileByUserId(userId);
+    const profile: UserProfile | null = await appTestManager.prisma.userProfile.findFirst({
+      where: { userId },
+    });
+
+    if (!profile) {
+      throw new Error('Profile was not created');
+    }
+
     expect(profile.avatarUrl).toBe(expectedUrl);
 
     // Проверяем, что запрос действительно ушел в микросервис
