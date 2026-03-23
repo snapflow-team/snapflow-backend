@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PayloadRefreshToken } from '../../../apps/snapflow-core/src/modules/user-accounts/auth/application/types/payload-refresh-token.type';
 
+// todo(magomed): почему inject токены тянутся из snapflow-core в lib?
 @Injectable()
 export class AuthTokenService {
   constructor(

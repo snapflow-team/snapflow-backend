@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { randomBytes, randomUUID } from 'node:crypto';
 import * as argon2 from 'argon2';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class CryptoService {
@@ -27,5 +28,13 @@ export class CryptoService {
 
   generateShortId(): string {
     return randomBytes(3).toString('hex');
+  }
+
+  generateJwtToken(
+    payload: Record<string, any>,
+    secret: string,
+    expiresIn: jwt.SignOptions['expiresIn'] = '1m',
+  ): string {
+    return jwt.sign(payload, secret, { expiresIn });
   }
 }

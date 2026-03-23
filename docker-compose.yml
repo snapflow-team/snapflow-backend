@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  postgres:
+    container_name: postgres-sf
+    image: postgres:16-alpine
+    network_mode: "host"
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+    volumes:
+      # Используем стандартное имя тома для проекта
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  redis:
+    container_name: redis-sf
+    image: redis:7-alpine
+    network_mode: "host"
+    restart: always
+
+# Объявляем тома. Docker Compose сам создаст их, если их нет.
+volumes:
+  postgres_data:

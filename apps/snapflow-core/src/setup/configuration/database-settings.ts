@@ -3,7 +3,6 @@ import { EnvironmentVariable } from './configuration';
 import { Prisma } from '@generated/prisma-snapflow';
 
 export class DatabaseSettings {
-  // @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
   @IsString()
   url: string;
 

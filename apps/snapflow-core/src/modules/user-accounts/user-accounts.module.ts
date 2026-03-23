@@ -37,7 +37,6 @@ import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/
 import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
 import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
 import { SessionsController } from './auth/sessions/api/sessions.controller';
-import { PublishPostUseCase } from '../posts/application/usecases/publish-post.use.case';
 import { PostsRepository } from '../posts/infrastructure/posts-repository';
 import { PostsController } from '../posts/api/posts.controller';
 import { PostsQueryRepository } from '../posts/infrastructure/posts.query-repository';
@@ -58,12 +57,16 @@ import { FilesMediaController } from '../integrations/files/api/files-media.cont
 import { MulterModule } from '@nestjs/platform-express';
 import { UploadAvatarUseCase } from './users/profile/application/usecases/upload-avatar.usecase';
 import { DeleteAvatarUseCase } from './users/profile/application/usecases/delete-avatar.usecase';
-import { GetTotalCountRegisteredUsersQueryHandler } from './users/application/queries/get-total-count-registered-users.query-handler';
+import {
+  GetTotalCountRegisteredUsersQueryHandler
+} from './users/application/queries/get-total-count-registered-users.query-handler';
 import { UsersController } from './users/api/users.controller';
 import { GetPublicProfileQueryHandler } from './users/profile/application/queries/get-public-profile.query-handler';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
+import { GetPostsQueryHandler } from '../posts/application/queries/get-posts.query-handler';
+import { GetMyDraftsHandler } from '../posts/application/queries/get-my-drafts.query.handler';
 
 const controllers = [
   AuthController,
@@ -99,7 +102,6 @@ const useCases = [
   DeleteAvatarUseCase,
 
   CreatePostUseCase,
-  PublishPostUseCase,
   EditPostUseCase,
   DeletePostUseCase,
 ];
@@ -114,6 +116,8 @@ const queries = [
   GetAllSessionsQueryHandler,
 
   GetPostQueryHandler,
+  GetPostsQueryHandler,
+  GetMyDraftsHandler,
 ];
 const services = [
   FilesClient,
@@ -139,6 +143,7 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
 @Module({
   imports: [
     EmailModule,
+    // todo(vilyamz): вынести регистрацию FilesClientModule в SnapFlowCoreModule
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({

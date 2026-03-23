@@ -1,50 +1,56 @@
-﻿import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+﻿import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { PostsRepository } from '../../infrastructure/posts-repository';
-import { CreatePostInputDto } from '../../api/input-dto/create-post.input-dto';
 import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
 import { FilesClient } from '../../../integrations/files/files.client';
-import { ValidatedFile, ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
-import { PostStatus } from '@generated/prisma-snapflow';
+import { ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
+import { ProfilesRepository } from '../../../user-accounts/users/profile/infrastructure/profiles.repository';
+import { CreatePostApplicationDto } from '../dto/create-post-application.dto';
+import { PostCreatedEvent } from '../../domain/events/post-created.event';
 
 export class CreatePostCommand {
-  constructor(
-    public readonly dto: CreatePostInputDto,
-    public readonly userId: number,
-    public readonly status: PostStatus,
-  ) {}
+  constructor(public readonly dto: CreatePostApplicationDto) {}
 }
 
 @CommandHandler(CreatePostCommand)
 export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
   constructor(
+    private readonly eventBus: EventBus,
     private readonly filesClient: FilesClient,
     private readonly postsRepository: PostsRepository,
+    private readonly profilesRepository: ProfilesRepository,
   ) {}
 
-  async execute({ dto, userId, status }: CreatePostCommand): Promise<number> {
-    let validatedFiles: ValidatedFile[] = [];
+  async execute({ dto }: CreatePostCommand): Promise<number> {
+    const { userId, status, description, fileIds } = dto;
 
-    if (dto.fileIds?.length > 0) {
-      const response: ValidateFilesResponse = await this.filesClient.validateFiles({
-        userId,
-        fileIds: dto.fileIds,
-      });
-
-      if (!response.valid) {
-        throw new BadRequestException('Another user has some files');
-      }
-
-      validatedFiles = response.files;
-    }
-
-    if (validatedFiles.length === 0) {
+    if (!fileIds || fileIds.length === 0) {
       throw new BadRequestException("You can't publish a post without media");
     }
 
-    return await this.postsRepository.createPostWithMedia({
+    const profile = await this.profilesRepository.findProfileByUserId(userId);
+
+    if (!profile) {
+      throw new BadRequestException('Profile required to create post');
+    }
+    const response: ValidateFilesResponse = await this.filesClient.validateFiles({
       userId,
-      description: dto.description,
-      status: status,
+      fileIds: fileIds,
+    });
+
+    if (!response.valid) {
+      throw new BadRequestException('Some files do not belong to you');
+    }
+
+    const validatedFiles = response.files;
+
+    if (validatedFiles.length === 0) {
+      throw new BadRequestException('Post requires at least one valid media file');
+    }
+
+    const result: number = await this.postsRepository.createPostWithMedia({
+      userId,
+      description: description,
+      status,
       medias: validatedFiles.map((file, index) => ({
         fileId: file.fileId,
         url: file.url,
@@ -53,5 +59,9 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
         position: index,
       })),
     });
+
+    this.eventBus.publish(new PostCreatedEvent());
+
+    return result;
   }
 }

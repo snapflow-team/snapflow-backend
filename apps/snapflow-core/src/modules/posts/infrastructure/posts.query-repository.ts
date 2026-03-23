@@ -1,106 +1,216 @@
 ﻿import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import { PostViewDto } from '../api/view-dto/post.view-dto';
-import { PostsPageViewDto } from '../api/view-dto/posts-page.view-dto';
-import { GetPostQuery } from '../application/queries/get-post.query-handler';
-import { PostVisibility } from '../enums/post-visibility.enum';
 import { PostStatus, Prisma } from '@generated/prisma-snapflow';
-
-const postInclude = Prisma.validator<Prisma.PostInclude>()({
-  user: {
-    select: {
-      id: true,
-      username: true,
-      profiles: {
-        where: { deletedAt: null },
-        select: {
-          id: true,
-        },
-      },
-    },
-  },
-  postMedias: {
-    where: { deletedAt: null },
-    orderBy: { position: 'asc' },
-    select: {
-      id: true,
-      fileId: true,
-      url: true,
-      mimeType: true,
-      size: true,
-      position: true,
-    },
-  },
-});
-
-export type PostWithInclude = Prisma.PostGetPayload<{ include: typeof postInclude }>;
+import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
+import { GetPostsQueryParamsDto } from '../api/input-dto/get-posts.query-params.dto';
+import { SortDirection } from '../../../../../../libs/dto/base-query.params.dto';
+import { PostWithInclude } from '../types/post-with-media.type';
 
 @Injectable()
 export class PostsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // todo: что означает Profile в имени метода?
-  async findProfilePublicPosts(params: {
-    userId: number;
-    pageNumber: number;
-    pageSize: number;
-  }): Promise<PostsPageViewDto> {
-    const { userId, pageNumber, pageSize } = params;
-    const skip = (pageNumber - 1) * pageSize;
-
+  async findProfilePosts(
+    params: GetPostsQueryParamsDto,
+    userId: number,
+  ): Promise<PaginatedViewDto<PostViewDto>> {
     const where: Prisma.PostWhereInput = {
       deletedAt: null,
       status: PostStatus.PUBLISHED,
       userId,
     };
 
-    const [items, totalCount] = await Promise.all([
+    const { pageNumber, pageSize, sortBy, sortDirection } = params;
+
+    const [posts, totalCount] = await Promise.all([
       this.prisma.post.findMany({
         where,
-        include: postInclude,
-        orderBy: { createdAt: 'desc' },
-        skip,
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              profiles: {
+                where: { deletedAt: null },
+                select: { avatarUrl: true },
+              },
+            },
+          },
+          postMedias: {
+            where: { deletedAt: null },
+            orderBy: { position: 'asc' },
+            select: {
+              id: true,
+              fileId: true,
+              url: true,
+            },
+          },
+        },
+        orderBy: {
+          [sortBy]: sortDirection === SortDirection.Descending ? 'desc' : 'asc',
+        },
+        skip: params.calculateSkip(),
         take: pageSize,
       }),
       this.prisma.post.count({ where }),
     ]);
 
-    const pagesCount = Math.ceil(totalCount / pageSize);
-
+    const pagesCount: number = Math.ceil(totalCount / pageSize);
+    const items: PostViewDto[] = posts.map(
+      (p: PostWithInclude): PostViewDto => PostViewDto.mapToView(p),
+    );
     return {
-      pagesCount,
-      page: pageNumber,
       pageSize,
+      page: pageNumber,
       totalCount,
-      items: items.map((post) => PostViewDto.mapToView(post)),
+      pagesCount,
+      items,
     };
   }
 
-  async getPost(query: GetPostQuery): Promise<PostViewDto | null> {
-    const where: Prisma.PostWhereInput = this.buildWhere(query);
+  async findPosts(params: GetPostsQueryParamsDto): Promise<PaginatedViewDto<PostViewDto>> {
+    const where: Prisma.PostWhereInput = {
+      deletedAt: null,
+      status: PostStatus.PUBLISHED,
+    };
 
+    const { pageNumber, pageSize, sortBy, sortDirection } = params;
+
+    const [posts, totalCount] = await Promise.all([
+      this.prisma.post.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              profiles: {
+                where: { deletedAt: null },
+                select: { avatarUrl: true },
+              },
+            },
+          },
+          postMedias: {
+            where: { deletedAt: null },
+            orderBy: { position: 'asc' },
+            select: {
+              id: true,
+              fileId: true,
+              url: true,
+            },
+          },
+        },
+        orderBy: {
+          [sortBy]: sortDirection === SortDirection.Descending ? 'desc' : 'asc',
+        },
+        skip: params.calculateSkip(),
+        take: pageSize,
+      }),
+      this.prisma.post.count({ where }),
+    ]);
+    const pagesCount: number = Math.ceil(totalCount / pageSize);
+
+    const items: PostViewDto[] = posts.map(
+      (post: PostWithInclude): PostViewDto => PostViewDto.mapToView(post),
+    );
+    return {
+      pageSize,
+      page: pageNumber,
+      totalCount,
+      pagesCount,
+      items,
+    };
+  }
+
+  async findPublicPost(postId: number): Promise<PostViewDto | null> {
     const post: PostWithInclude | null = await this.prisma.post.findFirst({
-      where,
-      include: postInclude,
+      where: { id: postId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profiles: {
+              where: { deletedAt: null },
+              select: { avatarUrl: true },
+            },
+          },
+        },
+        postMedias: {
+          where: { deletedAt: null },
+          orderBy: { position: 'asc' },
+          select: {
+            id: true,
+            fileId: true,
+            url: true,
+          },
+        },
+      },
     });
 
     return post ? PostViewDto.mapToView(post) : null;
   }
 
-  private buildWhere(query: GetPostQuery): Prisma.PostWhereInput {
-    if (query.postVisibility === PostVisibility.Owner) {
-      return {
-        id: query.postId,
-        userId: query.userId,
+  async findDraftsByUserId(userId: number): Promise<PostViewDto[]> {
+    const posts = await this.prisma.post.findMany({
+      where: {
+        userId,
+        status: PostStatus.DRAFT,
         deletedAt: null,
-        status: { in: [PostStatus.DRAFT, PostStatus.PUBLISHED] },
-      };
-    }
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profiles: {
+              where: { deletedAt: null },
+              select: { avatarUrl: true },
+            },
+          },
+        },
+        postMedias: {
+          where: { deletedAt: null },
+          orderBy: { position: 'asc' },
+          select: {
+            id: true,
+            fileId: true,
+            url: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
 
-    return {
-      id: query.postId,
-      deletedAt: null,
-      status: PostStatus.PUBLISHED,
-    };
+    return posts.map((post: PostWithInclude) => PostViewDto.mapToView(post));
+  }
+
+  async findPost(postId: number, userId: number): Promise<PostViewDto | null> {
+    const post: PostWithInclude | null = await this.prisma.post.findFirst({
+      where: { id: postId, userId, deletedAt: null },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profiles: {
+              where: { deletedAt: null },
+              select: { avatarUrl: true },
+            },
+          },
+        },
+        postMedias: {
+          where: { deletedAt: null },
+          orderBy: { position: 'asc' },
+          select: {
+            id: true,
+            fileId: true,
+            url: true,
+          },
+        },
+      },
+    });
+    return post ? PostViewDto.mapToView(post) : null;
   }
 }

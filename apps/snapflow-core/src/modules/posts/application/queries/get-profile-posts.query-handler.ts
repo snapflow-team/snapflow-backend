@@ -1,12 +1,13 @@
 ﻿import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PostsPageViewDto } from '../../api/view-dto/posts-page.view-dto';
 import { PostsQueryRepository } from '../../infrastructure/posts.query-repository';
+import { PaginatedViewDto } from '../../../../../../../libs/dto/paginated.view-dto';
+import { PostViewDto } from '../../api/view-dto/post.view-dto';
+import { GetPostsQueryParamsDto } from '../../api/input-dto/get-posts.query-params.dto';
 
 export class GetProfilePostsQuery {
   constructor(
+    public readonly query: GetPostsQueryParamsDto,
     public readonly userId: number,
-    public readonly pageNumber: number,
-    public readonly pageSize: number,
   ) {}
 }
 
@@ -14,15 +15,7 @@ export class GetProfilePostsQuery {
 export class GetProfilePostsQueryHandler implements IQueryHandler<GetProfilePostsQuery> {
   constructor(private readonly postsQueryRepository: PostsQueryRepository) {}
 
-  async execute({
-    userId,
-    pageNumber,
-    pageSize,
-  }: GetProfilePostsQuery): Promise<PostsPageViewDto> {
-    return this.postsQueryRepository.findProfilePublicPosts({
-      userId,
-      pageNumber,
-      pageSize,
-    });
+  async execute({ query, userId }: GetProfilePostsQuery): Promise<PaginatedViewDto<PostViewDto>> {
+    return this.postsQueryRepository.findProfilePosts(query, userId);
   }
 }

@@ -9,6 +9,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ApiSettings } from './setup/configuration/api-settings';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from './setup/configuration/configuration';
+import { NextjsIntegrationModule } from './modules/integrations/nextjs/nextjs-integration.module';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
@@ -16,6 +17,7 @@ import { Configuration } from './setup/configuration/configuration';
     CoreModule,
     PrismaModule,
     UserAccountsModule,
+    NextjsIntegrationModule,
     ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
