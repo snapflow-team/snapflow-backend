@@ -12,7 +12,6 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { TestUtils } from '../helpers/test.utils';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
-import { ProfileTestManager } from '../managers/profile.test-manager';
 import { ProfilesRepository } from '../../src/modules/user-accounts/users/profile/infrastructure/profiles.repository';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
 import { User, UserProfile } from '@generated/prisma-snapflow';
@@ -20,7 +19,6 @@ import { User, UserProfile } from '@generated/prisma-snapflow';
 describe('AuthController - registration() (POST: /auth/registration)', () => {
   let appTestManager: AppTestManager;
   let authTestManager: AuthTestManager;
-  let profileTestManager: ProfileTestManager;
   let server: Server;
   let sendEmailMock: jest.Mock;
 
@@ -31,7 +29,6 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     server = appTestManager.getServer();
 
     authTestManager = new AuthTestManager(appTestManager.prisma, server);
-    profileTestManager = new ProfileTestManager(appTestManager.prisma, server);
 
     sendEmailMock = jest
       .spyOn(EmailService.prototype, 'sendEmail')
