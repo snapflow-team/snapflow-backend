@@ -8,6 +8,8 @@ import { CryptoService } from '../../../../../libs/common/services/crypto.servic
 import { ValidateFilesUseCase } from './application/usecases/validate-files.usecase';
 import { UploadAvatarUseCase } from './application/usecases/upload-avatar.usecase';
 import { DeleteFileUseCase } from './application/usecases/delete-file.usecase';
+import { OutboxProcessorService } from '../../core/outbox/services/outbox-processor.service';
+import { OutboxRepository } from '../../core/outbox/repositories/outbox.repository';
 
 const controllers = [MediaController];
 const useCases = [
@@ -17,12 +19,12 @@ const useCases = [
   UploadAvatarUseCase,
   DeleteFileUseCase,
 ];
-const services = [StorageService, CryptoService];
+const services = [StorageService, CryptoService, OutboxProcessorService];
 
 @Module({
   imports: [],
   controllers: [...controllers],
-  providers: [...useCases, ...services, FilesRepository],
+  providers: [...useCases, ...services, FilesRepository, OutboxRepository],
   exports: [],
 })
 export class MediaModule {}
