@@ -2,7 +2,6 @@ import request, { Response } from 'supertest';
 import { AppTestManager } from '../managers/app.test-manager';
 import { Server } from 'http';
 import { TestUtils } from '../helpers/test.utils';
-import { UserAccountsConfig } from '../../src/modules/user-accounts/config/user-accounts.config';
 import { JwtService } from '@nestjs/jwt';
 import { HttpStatus } from '@nestjs/common';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
@@ -10,6 +9,9 @@ import { AuthTestManager } from '../managers/auth.test-manager';
 import { EmailService } from '../../src/modules/emails/services/email.service';
 import { EmailTemplate } from '../../src/modules/emails/templates/types';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../src/setup/configuration/configuration';
+import { ApiSettings } from '../../src/setup/configuration/api-settings';
 
 describe('AuthController - me() (POST: /auth/me)', () => {
   let appTestManager: AppTestManager;
@@ -21,13 +23,17 @@ describe('AuthController - me() (POST: /auth/me)', () => {
     appTestManager = new AppTestManager();
     await appTestManager.init((moduleBuilder) =>
       moduleBuilder.overrideProvider(ACCESS_TOKEN_STRATEGY_INJECT_TOKEN).useFactory({
-        factory: (userAccountsConfig: UserAccountsConfig) => {
+        factory: (configService: ConfigService<Configuration, true>) => {
+          const {
+            accessToken: { secret },
+          } = configService.get<ApiSettings>('apiSettings').getJwtOptions();
+
           return new JwtService({
-            secret: userAccountsConfig.accessTokenSecret,
+            secret,
             signOptions: { expiresIn: '2s' },
           });
         },
-        inject: [UserAccountsConfig],
+        inject: [ConfigService],
       }),
     );
     server = appTestManager.getServer();
