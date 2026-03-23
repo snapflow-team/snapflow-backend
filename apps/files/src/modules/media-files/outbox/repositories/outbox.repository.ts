@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OutboxEvent, OutboxEventStatus, OutboxEventType, Prisma } from '@generated/prisma-files';
-import { PrismaService } from '../../../database/prisma.service'; // Твой путь к Prisma клиенту
+import { PrismaService } from '../../../../database/prisma.service'; // Твой путь к Prisma клиенту
 
 @Injectable()
 export class OutboxRepository {

@@ -8,8 +8,8 @@ import { CryptoService } from '../../../../../libs/common/services/crypto.servic
 import { ValidateFilesUseCase } from './application/usecases/validate-files.usecase';
 import { UploadAvatarUseCase } from './application/usecases/upload-avatar.usecase';
 import { DeleteFileUseCase } from './application/usecases/delete-file.usecase';
-import { OutboxProcessorService } from '../../core/outbox/services/outbox-processor.service';
-import { OutboxRepository } from '../../core/outbox/repositories/outbox.repository';
+import { OutboxProcessorService } from './outbox/services/outbox-processor.service';
+import { OutboxRepository } from './outbox/repositories/outbox.repository';
 
 const controllers = [MediaController];
 const useCases = [

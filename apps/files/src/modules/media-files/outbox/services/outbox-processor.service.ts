@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { StorageService } from '../../../modules/media-files/infrastructure/storage/storage.service';
+import { StorageService } from '../../infrastructure/storage/storage.service';
 import { OutboxRepository } from '../repositories/outbox.repository';
 import { OutboxEvent, OutboxEventType } from '@generated/prisma-files';
 import { ConfigService } from '@nestjs/config';
-import { Configuration } from '../../../setup/configuration/configuration';
-import { MicroserviceSettings } from '../../../setup/configuration/microservice.settings';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { MicroserviceSettings } from '../../../../setup/configuration/microservice.settings';
 
 @Injectable()
 export class OutboxProcessorService {

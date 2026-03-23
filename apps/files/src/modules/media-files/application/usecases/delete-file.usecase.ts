@@ -7,7 +7,7 @@ import { S3Settings } from '../../../../setup/configuration/s3.settings';
 import { DeleteFileResponse } from '../../../../../../../libs/contracts/files';
 import { PrismaService } from '../../../../database/prisma.service';
 import { OutboxEventType } from '@generated/prisma-files';
-import { OutboxRepository } from '../../../../core/outbox/repositories/outbox.repository';
+import { OutboxRepository } from '../../outbox/repositories/outbox.repository';
 
 export class DeleteFileCommand {
   constructor(public readonly dto: DeleteFileApplicationDto) {}
