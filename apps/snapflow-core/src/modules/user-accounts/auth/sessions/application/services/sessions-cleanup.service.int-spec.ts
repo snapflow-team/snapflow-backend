@@ -1,35 +1,36 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SessionsRepository } from '../../infrastructure/sessions.repository';
 import { SessionsCleanupService } from './sessions-cleanup.service';
-import { UserAccountsConfig } from '../../../../config/user-accounts.config';
 import { PrismaService } from '../../../../../../database/prisma.service';
 import { UsersRepository } from '../../../../users/infrastructure/users.repository';
 import { SnapflowCoreModule } from '../../../../../../snapflow-core.module';
-import { ConfirmationStatus, User } from '@generated/prisma';
+import { ConfirmationStatus, User } from '@generated/prisma-snapflow';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from '../../../../../../setup/configuration/configuration';
+import { BusinessRulesSettings } from '../../../../../../setup/configuration/business-rules-settings';
 
 describe('SessionsCleanupService (Integration, Prisma)', () => {
   let module: TestingModule;
   let cleanupService: SessionsCleanupService;
-  let userAccountsConfig: UserAccountsConfig;
   let prisma: PrismaService;
   let sessionsRepository: SessionsRepository;
+  let configService: ConfigService<Configuration, true>;
+  let retentionDays: number;
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
       imports: [SnapflowCoreModule],
-      providers: [
-        SessionsCleanupService,
-        SessionsRepository,
-        UsersRepository,
-        UserAccountsConfig,
-        PrismaService,
-      ],
+      providers: [SessionsCleanupService, SessionsRepository, UsersRepository, PrismaService],
     }).compile();
 
     cleanupService = module.get<SessionsCleanupService>(SessionsCleanupService);
-    userAccountsConfig = module.get<UserAccountsConfig>(UserAccountsConfig);
     prisma = module.get<PrismaService>(PrismaService);
     sessionsRepository = module.get<SessionsRepository>(SessionsRepository);
+    configService = module.get<ConfigService<Configuration, true>>(ConfigService);
+
+    const businessSettings: BusinessRulesSettings =
+      configService.get<BusinessRulesSettings>('businessRulesSettings');
+    retentionDays = businessSettings.sessionCleanupRetentionDays;
   });
 
   afterAll(async () => {
@@ -90,7 +91,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
   describe('hardDeleteOldSessions() с использованием конфига', () => {
     describe('успешное удаление старых сессий', () => {
       it('должен использовать значение из конфига для удаления старых сессий', async () => {
-        const retentionDays: number = userAccountsConfig.sessionCleanupRetentionDays;
         expect(retentionDays).toBe(90);
 
         const user: User = await createTestUser();
@@ -124,8 +124,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
       });
 
       it('должен удалить несколько старых сессий с использованием конфига', async () => {
-        const retentionDays: number = userAccountsConfig.sessionCleanupRetentionDays;
-
         const user: User = await createTestUser();
 
         const oldDeletedDate = new Date();
@@ -147,8 +145,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
       });
 
       it('не должен удалять активные (не soft-deleted) сессии', async () => {
-        const retentionDays: number = userAccountsConfig.sessionCleanupRetentionDays;
-
         const user: User = await createTestUser();
         const activeSession = await createTestSession(user.id, 'active-device');
 
@@ -167,8 +163,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
       });
 
       it('должен вернуть 0, если нет старых soft-deleted сессий', async () => {
-        const retentionDays: number = userAccountsConfig.sessionCleanupRetentionDays;
-
         const user: User = await createTestUser();
 
         const recentDeletedDate = new Date();
@@ -187,7 +181,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
       });
 
       it('должен удалить старые сессии нескольких пользователей', async () => {
-        const retentionDays: number = userAccountsConfig.sessionCleanupRetentionDays;
         const user1: User = await createTestUser({
           username: 'user1',
           email: 'user1@example.com',
@@ -218,8 +211,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
 
   describe('handleHardDeleteOldSessions() (Cron метод с конфигом)', () => {
     it('должен успешно выполнить Cron задачу с периодом из конфига', async () => {
-      const retentionDays: number = userAccountsConfig.sessionCleanupRetentionDays;
-
       const user: User = await createTestUser();
 
       const oldDeletedDate = new Date();
@@ -246,8 +237,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
     });
 
     it('должен залогировать информацию об использованном периоде из конфига', async () => {
-      const retentionDays: number = userAccountsConfig.sessionCleanupRetentionDays;
-
       const user: User = await createTestUser();
 
       const oldDeletedDate = new Date();
@@ -303,8 +292,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
 
   describe('интеграционные сценарии с конфигом', () => {
     it('должен обработать реалистичный сценарий: смесь активных и удаленных сессий', async () => {
-      const retentionDays = userAccountsConfig.sessionCleanupRetentionDays;
-
       const user1: User = await createTestUser({
         username: 'user1',
         email: 'user1@example.com',
@@ -361,8 +348,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
     });
 
     it('должен корректно работать при повторном запуске (идемпотентность)', async () => {
-      const retentionDays: number = userAccountsConfig.sessionCleanupRetentionDays;
-
       const user: User = await createTestUser();
 
       const oldDate = new Date();
@@ -383,8 +368,6 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
     });
 
     it('должен использовать конфиг в методе handHardDeleteOldSessions', async () => {
-      const retentionDays: number = userAccountsConfig.sessionCleanupRetentionDays;
-
       const user: User = await createTestUser();
 
       const oldDate = new Date();
