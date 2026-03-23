@@ -11,13 +11,13 @@ services:
     volumes:
       # Используем стандартное имя тома для проекта
       - postgres_data:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
 
   redis:
     container_name: redis-sf
     image: redis:7-alpine
     network_mode: "host"
-    restart: always
+    restart: unless-stopped
 
 # Объявляем тома. Docker Compose сам создаст их, если их нет.
 volumes:

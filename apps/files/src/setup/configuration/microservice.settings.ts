@@ -11,10 +11,15 @@ export class MicroserviceSettings {
   @IsBoolean()
   sendInternalServerErrorDetails: boolean;
 
+  @IsNumber()
+  outboxRetentionDays: number;
+
   constructor(private readonly env: EnvironmentVariable) {
     this.host = this.env.FILES_TCP_HOST;
     this.port = Number(this.env.FILES_TCP_PORT);
 
     this.sendInternalServerErrorDetails = env.SEND_INTERNAL_SERVER_ERROR_DETAILS === 'true';
+
+    this.outboxRetentionDays = Number(this.env.OUTBOX_RETENTION_DAYS);
   }
 }

@@ -95,6 +95,11 @@ spec:
                 secretKeyRef:
                   name: snapflow-files-production-config-secret
                   key: S3_AVATARS_MEDIA_KEY_PREFIX
+            - name: OUTBOX_RETENTION_DAYS
+              valueFrom:
+                secretKeyRef:
+                  name: snapflow-files-production-config-secret
+                  key: OUTBOX_RETENTION_DAYS
             - name: NODE_ENV
               valueFrom:
                 secretKeyRef:

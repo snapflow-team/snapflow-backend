@@ -12,6 +12,16 @@ enum FileStatus {
   UPLOADED
 }
 
+enum OutboxEventStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
+enum OutboxEventType {
+  DELETE_S3_FILE
+}
+
 model File {
   id     String @id @default(uuid())
   userId Int    @map("user_id") // Владелец файла (ID пользователя из core). нельзя прикрепить чужой файл к посту.
@@ -26,4 +36,17 @@ model File {
   deletedAt DateTime? @map("deleted_at")
 
   @@map("files")
+}
+
+model OutboxEvent {
+  id        String            @id @default(uuid()) @db.Uuid
+  type      OutboxEventType
+  payload   Json              @db.JsonB
+  status    OutboxEventStatus @default(PENDING)
+  error     String?           @db.Text
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@map("outbox_events")
 }

@@ -53,6 +53,7 @@ export class MediaController {
     return this.commandBus.execute(new ValidateFilesCommand(data));
   }
 
+  // todo: ***РЕВЬЮ*** стоит ли вообще этому сервису знать что то об avatar?
   @MessagePattern({ cmd: FilesRpcCommand.UploadFile })
   async uploadAvatar(
     @Payload()
