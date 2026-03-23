@@ -1,12 +1,12 @@
 import { TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../../../../database/prisma.service';
 import { IntegrationTestModuleHelper } from '../../../../../../../test/helpers/integration-test-module.helper';
-import { User } from '@generated/prisma';
 import { SessionsRepository } from '../../infrastructure/sessions.repository';
 import { CreateSessionCommand, CreateSessionUseCase } from '../usecases/create-session.usecase';
 import { GetAllSessionsQuery, GetAllSessionsQueryHandler } from './get-all-sessions.query';
 import { SessionQueryRepository } from '../../infrastructure/session.query-repository';
 import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
+import { User } from '@generated/prisma-snapflow';
 
 describe('GetAllSessionsQueryHandler (Интеграция)', () => {
   let module: TestingModule;
