@@ -8,6 +8,7 @@ import { S3Settings } from '../../../../setup/configuration/s3.settings';
 import { DeleteFileResponse } from '../../../../../../../libs/contracts/files';
 import { PrismaService } from '../../../../database/prisma.service';
 import { OutboxEventType } from '@generated/prisma-files';
+import { OutboxRepository } from '../../../../common/outbox/repositories/outbox.repository';
 
 export class DeleteFileCommand {
   constructor(public readonly dto: DeleteFileApplicationDto) {}
@@ -17,6 +18,7 @@ export class DeleteFileCommand {
 export class DeleteFileUseCase implements ICommandHandler<DeleteFileCommand> {
   constructor(
     private readonly filesRepository: FilesRepository,
+    private readonly outboxRepository: OutboxRepository,
     private readonly prismaService: PrismaService,
     private readonly storageService: StorageService,
     private readonly configService: ConfigService<Configuration, true>,
@@ -29,7 +31,7 @@ export class DeleteFileUseCase implements ICommandHandler<DeleteFileCommand> {
 
     await this.prismaService.$transaction(async (tx) => {
       await this.filesRepository.softDelete(key, userId, tx);
-      await this.filesRepository.createOutboxEvent(OutboxEventType.DELETE_S3_FILE, { key }, tx);
+      await this.outboxRepository.createOutboxEvent(OutboxEventType.DELETE_S3_FILE, { key }, tx);
     });
 
     return { success: true };
