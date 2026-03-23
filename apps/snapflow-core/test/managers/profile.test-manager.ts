@@ -1,10 +1,10 @@
 import { PrismaService } from '../../src/database/prisma.service';
 import { Server } from 'http';
-import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
 import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
 import { UpdateProfileInputDto } from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
+import { PublicProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/public-profile.view-dto';
 
 export class ProfileTestManager {
   constructor(
@@ -12,12 +12,12 @@ export class ProfileTestManager {
     private readonly server: Server,
   ) {}
 
-  async findProfileByUserId(userId: number): Promise<ProfileViewDto> {
+  async findProfileByProfileId(profileId: number): Promise<PublicProfileViewDto> {
     const res: Response = await request(this.server)
-      .get(`/${GLOBAL_PREFIX}/users/profile/${userId.toString()}`)
+      .get(`/${GLOBAL_PREFIX}/users/profile/${profileId.toString()}`)
       .expect(HttpStatus.OK);
 
-    return res.body as ProfileViewDto;
+    return res.body as PublicProfileViewDto;
   }
 
   async updateProfile(
