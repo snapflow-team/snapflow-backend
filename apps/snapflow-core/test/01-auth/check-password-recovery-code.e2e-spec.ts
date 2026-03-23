@@ -7,10 +7,13 @@ import { EmailTemplate } from '../../src/modules/emails/templates/types';
 import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
-import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import {
+  RegistrationUserInputDto
+} from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
+import { GoogleRecaptchaGuard } from '@nestlab/google-recaptcha';
 
 describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-password-recovery-code)', () => {
   let appTestManager: AppTestManager;
@@ -21,7 +24,11 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
 
   beforeAll(async () => {
     appTestManager = new AppTestManager();
-    await appTestManager.init();
+    await appTestManager.init((moduleBuilder) => {
+      moduleBuilder.overrideGuard(GoogleRecaptchaGuard).useValue({
+        canActivate: () => true,
+      });
+    });
 
     server = appTestManager.getServer();
 
@@ -47,7 +54,6 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
     spyGenerateUUID.mockRestore();
   });
 
-  // todo: падает этот тест!
   it('должен вернуть 204, если код восстановления пароля валиден', async () => {
     // 🔻 Генерируем данные для регистрации одного пользователя
     const dtos: RegistrationUserInputDto[] = TestDtoFactory.generateRegistrationUserInputDto(1);
@@ -56,11 +62,14 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
     await authTestManager.registration(dtos);
 
     // 🔻 Инициируем процесс восстановления пароля (будет вызван generateUUID)
-    await authTestManager.passwordRecovery(dtos[0].email);
+    await authTestManager.passwordRecovery({
+      email: dtos[0].email,
+      recaptchaToken: 'recaptcha-token',
+    });
 
     // 🔸 Берем реально сгенерированный код восстановления из шпиона generateUUID
     const recoveryCode = spyGenerateUUID.mock.results[1].value;
-
+    console.log(recoveryCode);
     // 🔻 Выполняем POST-запрос на проверку recoveryCode
     const resCheckPasswordRecoveryCode: Response = await request(server)
       .post(`/${GLOBAL_PREFIX}/auth/check-password-recovery-code`)
