@@ -9,8 +9,7 @@ jobs:
     if: >
       github.event.issue.pull_request && (
         contains(github.event.comment.body, '/deploy-stage-core') ||
-        contains(github.event.comment.body, '/deploy-stage-files') ||
-        contains(github.event.comment.body, '/deploy-stage')
+        contains(github.event.comment.body, '/deploy-stage-files')
       )
 
     runs-on: ubuntu-latest
@@ -49,12 +48,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Собирается если: /deploy-stage-core ИЛИ /deploy-stage
       - name: Build and push snapflow-core
-        if: >
-          contains(github.event.comment.body, '/deploy-stage-core') ||
-          (contains(github.event.comment.body, '/deploy-stage') &&
-          !contains(github.event.comment.body, '/deploy-stage-files'))
+        if: contains(github.event.comment.body, '/deploy-stage-core')
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -64,12 +59,8 @@ jobs:
           build-args: |
             service=snapflow-core
 
-      # Собирается если: /deploy-stage-files ИЛИ /deploy-stage
       - name: Build and push snapflow-files
-        if: >
-          contains(github.event.comment.body, '/deploy-stage-files') ||
-          (contains(github.event.comment.body, '/deploy-stage') &&
-          !contains(github.event.comment.body, '/deploy-stage-core'))
+        if: contains(github.event.comment.body, '/deploy-stage-files')
         uses: docker/build-push-action@v4
         with:
           context: .
