@@ -22,12 +22,12 @@ async function bootstrap() {
 
   const server: Express = app.getHttpAdapter().getInstance();
   server.set('trust proxy', true);
-
+  // vilyamz: test
   applyAppInitialization(app);
 
   const port: number = apiSettings.port;
   const env: string = environmentSettings.currentEnv;
-  // todo(review)
+
   await app.listen(port, () => {
     console.log(`\n✅ Application is running in ${env} mode`);
     console.log(`📡 Server listening on port ${port}`);
