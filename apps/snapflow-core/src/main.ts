@@ -22,7 +22,7 @@ async function bootstrap() {
 
   const server: Express = app.getHttpAdapter().getInstance();
   server.set('trust proxy', true);
-
+  // vilyamz: test
   applyAppInitialization(app);
 
   const port: number = apiSettings.port;
