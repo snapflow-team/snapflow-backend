@@ -4,6 +4,7 @@ import { ValidateNested, validateSync } from 'class-validator';
 import { ApiSettings } from './api-settings';
 import { ValidationError } from '@nestjs/common';
 import { EnvironmentSettings } from './environment-settings';
+import { DatabaseSettings } from '../../../../snapflow-core/src/setup/configuration/database-settings';
 
 export type EnvironmentVariable = { [key: string]: string };
 
@@ -32,6 +33,9 @@ export class Configuration {
   apiSettings: ApiSettings;
 
   @ValidateNested()
+  databaseSettings: DatabaseSettings;
+
+  @ValidateNested()
   environmentSettings: EnvironmentSettings;
 
   private constructor(configuration: Configuration) {
@@ -41,6 +45,7 @@ export class Configuration {
   static createConfig(environmentVariables: EnvironmentVariable): Configuration {
     return new this({
       apiSettings: new ApiSettings(environmentVariables),
+      databaseSettings: new DatabaseSettings(environmentVariables),
       environmentSettings: new EnvironmentSettings(environmentVariables),
     });
   }
