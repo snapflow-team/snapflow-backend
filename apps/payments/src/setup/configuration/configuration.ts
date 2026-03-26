@@ -5,6 +5,7 @@ import { ApiSettings } from './api-settings';
 import { ValidationError } from '@nestjs/common';
 import { EnvironmentSettings } from './environment-settings';
 import { DatabaseSettings } from './database-settings';
+import { BusinessRulesSettings } from './business-rules-settings';
 
 export type EnvironmentVariable = { [key: string]: string };
 
@@ -36,6 +37,9 @@ export class Configuration {
   databaseSettings: DatabaseSettings;
 
   @ValidateNested()
+  businessRulesSettings: BusinessRulesSettings;
+
+  @ValidateNested()
   environmentSettings: EnvironmentSettings;
 
   private constructor(configuration: Configuration) {
@@ -46,6 +50,7 @@ export class Configuration {
     return new this({
       apiSettings: new ApiSettings(environmentVariables),
       databaseSettings: new DatabaseSettings(environmentVariables),
+      businessRulesSettings: new BusinessRulesSettings(environmentVariables),
       environmentSettings: new EnvironmentSettings(environmentVariables),
     });
   }

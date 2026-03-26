@@ -10,14 +10,14 @@ export interface Plan {
 
 export class BusinessRulesSettings {
   @IsString()
-  stripePriceBusinessMonthly: string;
+  stripePriceIdBusinessMonthly: string;
 
   @IsString()
-  stripePriceBusinessYearly: string;
+  stripePriceIdBusinessYearly: string;
 
   constructor(private readonly environmentVariables: EnvironmentVariable) {
-    this.stripePriceBusinessMonthly = environmentVariables.STRIPE_PRICE_BUSINESS_MONTHLY;
-    this.stripePriceBusinessYearly = environmentVariables.STRIPE_PRICE_BUSINESS_YEARLY;
+    this.stripePriceIdBusinessMonthly = environmentVariables.STRIPE_PRICE_ID_BUSINESS_MONTHLY;
+    this.stripePriceIdBusinessYearly = environmentVariables.STRIPE_PRICE_ID_BUSINESS_YEARLY;
   }
 
   get plans(): Plan[] {
@@ -26,13 +26,13 @@ export class BusinessRulesSettings {
         id: 'business_monthly',
         label: 'Business Monthly',
         priceInCents: 1000,
-        stripePriceId: this.stripePriceBusinessMonthly,
+        stripePriceId: this.stripePriceIdBusinessMonthly,
       },
       {
         id: 'business_yearly',
         label: 'Business Yearly',
         priceInCents: 9000,
-        stripePriceId: this.stripePriceBusinessYearly,
+        stripePriceId: this.stripePriceIdBusinessYearly,
       },
     ];
   }
