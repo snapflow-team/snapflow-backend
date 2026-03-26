@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import configuration, { loadEnv, validate } from '../setup/configuration/configuration';
 import { RedisProvider } from './providers/redis.provider';
 import { REDIS_CLIENT_INJECT_TOKEN } from './providers/provide-tokens/redis-client.inject-token';
+import { PaymentsDomainExceptionCodeMapper } from '../common/exceptions/payments-domain-exception-mapper';
 
 /* Глобальный модуль для провайдеров и модулей необходимых во всех частях приложения (например: LoggerService, CqrsModule, etc...) */
 @Global()
@@ -17,7 +18,7 @@ import { REDIS_CLIENT_INJECT_TOKEN } from './providers/provide-tokens/redis-clie
       envFilePath: loadEnv(),
     }),
   ],
-  providers: [RedisProvider],
-  exports: [CqrsModule, REDIS_CLIENT_INJECT_TOKEN],
+  providers: [PaymentsDomainExceptionCodeMapper, RedisProvider],
+  exports: [CqrsModule, PaymentsDomainExceptionCodeMapper, REDIS_CLIENT_INJECT_TOKEN],
 })
 export class CoreModule {}
