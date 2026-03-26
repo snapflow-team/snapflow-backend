@@ -1,15 +1,12 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsString, IsUrl } from 'class-validator';
+import { IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
 import { EnvironmentVariable } from './configuration';
 
 export class ApiSettings {
   @IsNumber()
   port: number;
 
-  @IsNotEmpty()
-  accessTokenSecret: string;
-
-  @IsNotEmpty()
-  accessTokenExpireIn: string | number;
+  @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
+  coreServiceUrl: string;
 
   @IsString()
   allowedOriginsRaw: string;
@@ -26,8 +23,7 @@ export class ApiSettings {
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
-    this.accessTokenSecret = environmentVariables.JWT_SECRET_AT;
-    this.accessTokenExpireIn = environmentVariables.JWT_EXPIRATION_AT;
+    this.coreServiceUrl = environmentVariables.CORE_SERVICE_URL;
 
     this.allowedOriginsRaw = environmentVariables.ALLOWED_ORIGINS;
 
@@ -35,14 +31,5 @@ export class ApiSettings {
       environmentVariables.SEND_INTERNAL_SERVER_ERROR_DETAILS === 'true';
 
     this.redisUrl = environmentVariables.REDIS_URL;
-  }
-
-  getJwtOptions() {
-    return {
-      accessToken: {
-        secret: this.accessTokenSecret,
-        expiresIn: this.accessTokenExpireIn,
-      },
-    };
   }
 }
