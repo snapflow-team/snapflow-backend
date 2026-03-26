@@ -9,11 +9,9 @@ import { DatabaseSettings } from '../../setup/configuration/database-settings';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private pool: Pool;
+  private readonly logger: Logger = new Logger(PrismaService.name);
 
-  constructor(
-    private readonly configService: ConfigService<Configuration, true>,
-    private readonly logger = new Logger(PrismaService.name),
-  ) {
+  constructor(private readonly configService: ConfigService<Configuration, true>) {
     const databaseSettings: DatabaseSettings =
       configService.get<DatabaseSettings>('databaseSettings');
 
@@ -30,7 +28,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     try {
       await this.$connect();
 
-      this.logger.debug('✅ Database connected successfully');
+      this.logger.log('\x1b[36m✅ Database connected successfully\x1b[0m');
     } catch (error) {
       this.logger.error(`❌ Database connection failed: ${error.message}`, error.stack);
       process.exit(1);
