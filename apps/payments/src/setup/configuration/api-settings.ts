@@ -32,4 +32,11 @@ export class ApiSettings {
 
     this.redisUrl = environmentVariables.REDIS_URL;
   }
+
+  get allowedOrigins(): string[] | boolean {
+    if (this.allowedOriginsRaw === '*' || this.allowedOriginsRaw === 'true') {
+      return true;
+    }
+    return this.allowedOriginsRaw.split(',').map((item) => item.trim());
+  }
 }
