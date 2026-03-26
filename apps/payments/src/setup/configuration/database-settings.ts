@@ -1,5 +1,6 @@
 import { IsBoolean, IsString } from 'class-validator';
 import { EnvironmentVariable } from './configuration';
+import { Prisma } from '@generated/prisma-payments';
 
 export class DatabaseSettings {
   @IsString()
@@ -13,7 +14,7 @@ export class DatabaseSettings {
     this.logQueries = this.environmentVariables.PRISMA_LOG_QUERIES === 'true';
   }
 
-  // getLogLevels(): Prisma.LogLevel[] {
-  //   return this.logQueries ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'];
-  // }
+  getLogLevels(): Prisma.LogLevel[] {
+    return this.logQueries ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'];
+  }
 }
