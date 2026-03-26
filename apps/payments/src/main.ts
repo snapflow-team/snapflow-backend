@@ -5,6 +5,7 @@ import { Configuration } from './setup/configuration/configuration';
 import { ApiSettings } from './setup/configuration/api-settings';
 import { EnvironmentSettings } from './setup/configuration/environment-settings';
 import { Logger } from '@nestjs/common';
+import { applyAppInitialization } from './setup/app-initialization';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -17,6 +18,8 @@ async function bootstrap() {
   const apiSettings: ApiSettings = configService.get<ApiSettings>('apiSettings');
   const environmentSettings: EnvironmentSettings =
     configService.get<EnvironmentSettings>('environmentSettings');
+
+  applyAppInitialization(app);
 
   const port: number = apiSettings.port;
   const env: string = environmentSettings.currentEnv;
