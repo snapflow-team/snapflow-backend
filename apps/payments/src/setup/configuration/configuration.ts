@@ -4,7 +4,7 @@ import { ValidateNested, validateSync } from 'class-validator';
 import { ApiSettings } from './api-settings';
 import { ValidationError } from '@nestjs/common';
 import { EnvironmentSettings } from './environment-settings';
-import { DatabaseSettings } from '../../../../snapflow-core/src/setup/configuration/database-settings';
+import { DatabaseSettings } from './database-settings';
 
 export type EnvironmentVariable = { [key: string]: string };
 
