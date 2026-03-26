@@ -43,6 +43,7 @@
     "prisma:deploy:dev:files": "cross-env NODE_ENV=development npx prisma migrate deploy --config=./apps/files/prisma.config.ts",
     "build:payments": "nest build payments",
     "start:dev:payments": "cross-env NODE_ENV=development nest start payments --watch",
+    "test:e2e:payments": "cross-env NODE_ENV=testing jest --config ./apps/payments/test/jest-e2e.json --runInBand --detectOpenHandles --forceExit",
     "prisma:create-migrate:payments": "cross-env NODE_ENV=development npx prisma migrate dev --create-only --config=./apps/payments/prisma.config.ts",
     "prisma:generate:payments": "cross-env NODE_ENV=development npx prisma generate --schema=./apps/payments/prisma/schema.prisma",
     "prisma:generate:prod:payments": "cross-env NODE_ENV=production npx prisma generate --schema=./apps/payments/prisma/schema.prisma",
