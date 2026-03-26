@@ -44,7 +44,9 @@
     "build:payments": "nest build payments",
     "start:dev:payments": "cross-env NODE_ENV=development nest start payments --watch",
     "prisma:generate:payments": "cross-env NODE_ENV=development npx prisma generate --schema=./apps/payments/prisma/schema.prisma",
-    "prisma:generate:prod:payments": "cross-env NODE_ENV=production npx prisma generate --schema=./apps/payments/prisma/schema.prisma"
+    "prisma:generate:prod:payments": "cross-env NODE_ENV=production npx prisma generate --schema=./apps/payments/prisma/schema.prisma",
+    "prisma:deploy:prod:payments": "cross-env NODE_ENV=production npx prisma migrate deploy --config=./apps/payments/prisma.config.ts",
+    "prisma:deploy:dev:payments": "cross-env NODE_ENV=development npx prisma migrate deploy --config=./apps/payments/prisma.config.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",
