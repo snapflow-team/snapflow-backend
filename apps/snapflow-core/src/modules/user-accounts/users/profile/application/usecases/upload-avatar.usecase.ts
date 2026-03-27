@@ -23,8 +23,10 @@ export class UploadAvatarUseCase implements ICommandHandler<UploadAvatarCommand>
       size,
     };
 
-    const { publicUrl }: UploadFileResponse = await this.filesClient.uploadFile(payload);
+    console.log('payload-UploadAvatarUseCase: ', payload);
 
+    const { publicUrl }: UploadFileResponse = await this.filesClient.uploadFile(payload);
+    console.log(publicUrl);
     await this.profilesRepository.updateAvatarUrl({ userId, publicUrl });
 
     return { publicUrl };

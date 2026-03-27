@@ -59,11 +59,12 @@ export class MediaController {
     @Payload()
     data: UploadFileRequest,
   ): Promise<UploadFileResponse> {
+    console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
     const allowedTypes = Object.values(MimetypeAvatar) as string[];
     const imageBuffer = Buffer.isBuffer(data.buffer)
       ? data.buffer
       : Buffer.from((data.buffer as unknown as SerializedBuffer).data);
-
+    console.log('imageBuffer: ', imageBuffer);
     if (!allowedTypes.includes(data.mimetype)) {
       throw new RpcBadRequestException(
         `Unsupported file type: ${data.mimetype}. Allowed: ${allowedTypes.join(', ')}`,
