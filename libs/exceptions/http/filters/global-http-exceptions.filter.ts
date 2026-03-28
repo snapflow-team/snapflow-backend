@@ -1,11 +1,4 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger, } from '@nestjs/common';
 import { Request, Response } from 'express';
 import type { IServerErrorResponseFactory } from '../../core';
 import { IErrorResponse, serverErrorResponseFactory } from '../../core';
@@ -59,7 +52,8 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
 
     const context = `IP: ${ip} | User-Agent: ${userAgent}`;
 
-    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    if (true) {
+      // if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       const stack = (exception as any)?.stack;
       const cleanStack = stack ? cleanStackTrace(stack) : 'Stack is not available';
 
