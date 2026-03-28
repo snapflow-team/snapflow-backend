@@ -7,8 +7,11 @@ import { EnvironmentSettings } from './setup/configuration/environment-settings'
 import { Configuration } from './setup/configuration/configuration';
 import { Express } from 'express';
 import { applyAppInitialization } from './setup/app-initialization';
+import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
+
   const DynamicAppModule = await initSnapFlowCoreAppModule();
 
   const app = await NestFactory.create<NestExpressApplication>(DynamicAppModule);
@@ -29,9 +32,11 @@ async function bootstrap() {
   const env: string = environmentSettings.currentEnv;
 
   await app.listen(port, () => {
-    console.log(`\n✅ Application is running in ${env} mode`);
-    console.log(`📡 Server listening on port ${port}`);
-    console.log(`🌍 Environment: ${env}\n`);
+    logger.log(`\x1b[35m=========================================\x1b[0m`);
+    logger.log(`\x1b[36m✅ Application is running in ${env} mode\x1b[0m`);
+    logger.log(`\x1b[36m📡 Server listening on port ${port}\x1b[0m`);
+    logger.log(`\x1b[36m🌍 Environment: ${env}\x1b[0m`);
+    logger.log(`\x1b[35m=========================================\x1b[0m`);
   });
 }
 
