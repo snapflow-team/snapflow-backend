@@ -121,6 +121,17 @@ export class UsersRepository {
     });
   }
 
+  async updateUsername(
+    userId: number,
+    username: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.user.update({
+      where: { id: userId },
+      data: { username },
+    });
+  }
+
   // Email confirmation ---------------------------------------------------------
 
   async createEmailConfirmationCodeWithConfirmedStatus(
