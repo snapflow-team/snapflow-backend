@@ -1,14 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { Notification } from '../../../../common/notification/notification';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
+import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-result.type';
+import { PaymentsDomainExceptionCode } from '../../../../common/exceptions/domain-exception-codes';
 
 @Injectable()
 export class StripeService {
   private readonly stripe: Stripe;
   private readonly apiSettings: ApiSettings;
+  private readonly logger: Logger = new Logger(StripeService.name);
 
   constructor(configService: ConfigService<Configuration, true>) {
     this.apiSettings = configService.get<ApiSettings>('apiSettings');
@@ -19,7 +22,7 @@ export class StripeService {
     stripePriceId: string,
     planId: string,
     userId: number,
-  ): Promise<Notification<string>> {
+  ): Promise<Notification<StripeCheckoutSessionResult>> {
     try {
       const session = await this.stripe.checkout.sessions.create({
         mode: 'subscription',
@@ -30,25 +33,39 @@ export class StripeService {
       });
 
       if (!session.url) {
-        return Notification.fail('Stripe did not return a checkout URL', 'stripe');
+        return Notification.fail<StripeCheckoutSessionResult>(
+          PaymentsDomainExceptionCode.InternalServerError,
+          'Internal payment gateway configuration error',
+        );
       }
 
-      return Notification.ok<string>(session.url);
+      return Notification.ok({
+        url: session.url,
+        sessionId: session.id,
+      });
     } catch (error) {
-      return Notification.fail(`Stripe SDK error: ${error.message}`, 'stripe');
+      const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
+      const errorStack = error instanceof Error ? error.stack : '';
+
+      this.logger.error(`Failed to create Stripe checkout session: ${errorMessage}`, errorStack);
+
+      return Notification.fail<StripeCheckoutSessionResult>(
+        PaymentsDomainExceptionCode.InternalServerError,
+        'Failed to communicate with the payment provider',
+      );
     }
   }
 
-  constructWebhookEvent(rawBody: Buffer, signature: string): Notification<Stripe.Event> {
-    try {
-      const event = this.stripe.webhooks.constructEvent(
-        rawBody,
-        signature,
-        this.apiSettings.stripeWebhookSecret,
-      );
-      return Notification.ok(event);
-    } catch (error) {
-      return Notification.fail('Invalid webhook signature');
-    }
-  }
+  // constructWebhookEvent(rawBody: Buffer, signature: string): Notification<Stripe.Event> {
+  //   try {
+  //     const event = this.stripe.webhooks.constructEvent(
+  //       rawBody,
+  //       signature,
+  //       this.apiSettings.stripeWebhookSecret,
+  //     );
+  //     return Notification.ok(event);
+  //   } catch (error) {
+  //     return Notification.fail('Invalid webhook signature');
+  //   }
+  // }
 }
