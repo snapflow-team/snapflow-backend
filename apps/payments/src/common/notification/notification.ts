@@ -1,4 +1,7 @@
-import { PaymentsDomainExceptionCode, PaymentsDomainExceptionCodeType, } from '../exceptions/domain-exception-codes';
+import {
+  PaymentsDomainExceptionCode,
+  PaymentsDomainExceptionCodeType,
+} from '../exceptions/domain-exception-codes';
 import { IExtension } from '../../../../../libs/exceptions/core';
 
 export class Notification<T = null> {
@@ -13,8 +16,11 @@ export class Notification<T = null> {
     return notification;
   }
 
-  static fail(code: PaymentsDomainExceptionCodeType, operationMessage: string): Notification<any> {
-    const notification = new Notification();
+  static fail<T = null>(
+    code: PaymentsDomainExceptionCodeType,
+    operationMessage: string,
+  ): Notification<T> {
+    const notification = new Notification<T>();
     notification._code = code;
     notification._message = operationMessage;
     return notification;
@@ -45,6 +51,11 @@ export class Notification<T = null> {
     return this._extensions;
   }
   get value(): T {
+    if (this.hasErrors) {
+      throw new Error(
+        `Can't get value from failed notification. Code: ${this._code}, Message: ${this._message}`,
+      );
+    }
     return this._data as T;
   }
 }
