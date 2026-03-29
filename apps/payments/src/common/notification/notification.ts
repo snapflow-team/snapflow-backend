@@ -1,56 +1,50 @@
-export class NotificationError {
-  constructor(
-    public readonly message: string,
-    public readonly field?: string,
-  ) {}
-}
+import { PaymentsDomainExceptionCode, PaymentsDomainExceptionCodeType, } from '../exceptions/domain-exception-codes';
+import { IExtension } from '../../../../../libs/exceptions/core';
 
-export class Notification<T = void> {
-  private readonly errors: NotificationError[] = [];
-  private resultValue?: T;
+export class Notification<T = null> {
+  private _data: T | null = null;
+  private _code: PaymentsDomainExceptionCodeType = PaymentsDomainExceptionCode.Success;
+  private _message: string = 'Success';
+  private _extensions: IExtension[] = [];
 
-  private constructor() {}
-
-  // Создает успешный ответ
-  static ok<T>(value?: T): Notification<T> {
+  static ok<T>(data: T): Notification<T> {
     const notification = new Notification<T>();
-    notification.resultValue = value;
+    notification._data = data;
     return notification;
   }
 
-  // Удобный метод для быстрого создания ошибки с одним сообщением
-  static fail<T>(message: string, field?: string): Notification<T> {
-    const notification = new Notification<T>();
-    notification.addError(message, field);
+  static fail(code: PaymentsDomainExceptionCodeType, operationMessage: string): Notification<any> {
+    const notification = new Notification();
+    notification._code = code;
+    notification._message = operationMessage;
     return notification;
   }
 
-  // Создает пустой объект для начала валидации
-  static create<T>(): Notification<T> {
-    return new Notification<T>();
+  addExtension(field: string, message: string) {
+    this._extensions.push({ field, message });
   }
 
-  // Добавляет ошибку в список
-  addError(message: string, field?: string): void {
-    this.errors.push(new NotificationError(message, field));
+  static copyErrors<TSource, TTarget>(source: Notification<TSource>): Notification<TTarget> {
+    const target = new Notification<TTarget>();
+    target._code = source.code;
+    target._message = source.message;
+    target._extensions = [...source.extensions];
+    return target;
   }
 
-  hasErrors(): boolean {
-    return this.errors.length > 0;
+  get hasErrors(): boolean {
+    return this._code !== PaymentsDomainExceptionCode.Success;
   }
-
-  get isSuccess(): boolean {
-    return !this.hasErrors();
+  get code(): PaymentsDomainExceptionCodeType {
+    return this._code;
   }
-
-  get getErrors(): NotificationError[] {
-    return [...this.errors];
+  get message(): string {
+    return this._message;
   }
-
+  get extensions(): IExtension[] {
+    return this._extensions;
+  }
   get value(): T {
-    if (this.hasErrors()) {
-      throw new Error('Cannot get value from a notification with errors');
-    }
-    return this.resultValue as T;
+    return this._data as T;
   }
 }
