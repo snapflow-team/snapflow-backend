@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
-import { UnauthorizedException } from '../../../common/exceptions/domain-exceptions'; // кастомный!
+import { UnauthorizedException } from '../../../common/exceptions/domain-exceptions';
 import { UserContextDto } from './dto/user-context.dto';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
