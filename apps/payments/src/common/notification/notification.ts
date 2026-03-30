@@ -1,12 +1,9 @@
-import {
-  PaymentsDomainExceptionCode,
-  PaymentsDomainExceptionCodeType,
-} from '../exceptions/domain-exception-codes';
 import { IExtension } from '../../../../../libs/exceptions/core';
+import { NotificationResultCode, NotificationResultCodeType } from './notification-result-code';
 
 export class Notification<T = null> {
   private _data: T | null = null;
-  private _code: PaymentsDomainExceptionCodeType = PaymentsDomainExceptionCode.Success;
+  private _code: NotificationResultCodeType = NotificationResultCode.Success;
   private _message: string = 'Success';
   private _extensions: IExtension[] = [];
 
@@ -17,7 +14,7 @@ export class Notification<T = null> {
   }
 
   static fail<T = null>(
-    code: PaymentsDomainExceptionCodeType,
+    code: NotificationResultCodeType,
     operationMessage: string,
   ): Notification<T> {
     const notification = new Notification<T>();
@@ -39,9 +36,9 @@ export class Notification<T = null> {
   }
 
   get hasErrors(): boolean {
-    return this._code !== PaymentsDomainExceptionCode.Success;
+    return this._code !== NotificationResultCode.Success;
   }
-  get code(): PaymentsDomainExceptionCodeType {
+  get code(): NotificationResultCodeType {
     return this._code;
   }
   get message(): string {

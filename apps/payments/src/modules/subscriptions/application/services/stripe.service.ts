@@ -5,7 +5,7 @@ import { Notification } from '../../../../common/notification/notification';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-result.type';
-import { PaymentsDomainExceptionCode } from '../../../../common/exceptions/domain-exception-codes';
+import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 
 @Injectable()
 export class StripeService {
@@ -34,7 +34,7 @@ export class StripeService {
 
       if (!session.url) {
         return Notification.fail<StripeCheckoutSessionResult>(
-          PaymentsDomainExceptionCode.InternalServerError,
+          NotificationResultCode.InternalServerError,
           'Internal payment gateway configuration error',
         );
       }
@@ -50,7 +50,7 @@ export class StripeService {
       this.logger.error(`Failed to create Stripe checkout session: ${errorMessage}`, errorStack);
 
       return Notification.fail<StripeCheckoutSessionResult>(
-        PaymentsDomainExceptionCode.InternalServerError,
+        NotificationResultCode.InternalServerError,
         'Failed to communicate with the payment provider',
       );
     }

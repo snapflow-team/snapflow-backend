@@ -1,7 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
-import type { PaymentsDomainExceptionCodeType } from './domain-exception-codes';
-import { PaymentsDomainExceptionCode } from './domain-exception-codes';
 import { IErrorResponse, IExtension } from '../../../../../libs/exceptions/core';
+import { ApiProperty } from '@nestjs/swagger';
+import type { NotificationResultCodeType } from '../notification/notification-result-code';
+import { NotificationResultCode } from '../notification/notification-result-code';
 
 export class ExtensionsDto implements IExtension {
   @ApiProperty({
@@ -15,7 +15,7 @@ export class ExtensionsDto implements IExtension {
   message: string;
 }
 
-export class ErrorResponseDto implements IErrorResponse<PaymentsDomainExceptionCodeType> {
+export class ErrorResponseDto implements IErrorResponse<NotificationResultCodeType> {
   @ApiProperty({
     example: '2026-02-09T12:34:56.789Z',
   })
@@ -39,10 +39,10 @@ export class ErrorResponseDto implements IErrorResponse<PaymentsDomainExceptionC
   message: string;
 
   @ApiProperty({
-    enum: Object.values(PaymentsDomainExceptionCode),
-    example: PaymentsDomainExceptionCode.ValidationError,
+    enum: Object.values(NotificationResultCode),
+    example: NotificationResultCode.ValidationError,
   })
-  code: PaymentsDomainExceptionCodeType;
+  code: NotificationResultCodeType;
 
   @ApiProperty({ type: [ExtensionsDto] })
   extensions: ExtensionsDto[];

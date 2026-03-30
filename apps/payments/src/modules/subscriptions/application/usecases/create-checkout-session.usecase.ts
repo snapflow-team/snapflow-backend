@@ -10,7 +10,7 @@ import {
 import { CreateCheckoutSessionApplicationDto } from '../dto/create-checkout-session.application-dto';
 import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-result.type';
 import { SubscriptionsRepository } from '../../infrastructure/subscriptions.repository';
-import { PaymentsDomainExceptionCode } from '../../../../common/exceptions/domain-exception-codes';
+import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 
 export class CreateCheckoutSessionCommand {
   constructor(public readonly dto: CreateCheckoutSessionApplicationDto) {}
@@ -35,7 +35,7 @@ export class CreateCheckoutSessionUseCase
 
     if (!plan) {
       const notification: Notification<string> = Notification.fail<string>(
-        PaymentsDomainExceptionCode.BadRequest,
+        NotificationResultCode.BadRequest,
         'Failed to initiate payment for the order',
       );
 
