@@ -97,7 +97,7 @@ describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId
     } = await authTestManager.loginAndGetAuthTokens();
 
     // 🔻 2. Создаем посты
-    await postTestManager.createPost(userId, [], 5);
+    await postTestManager.createPublishedPost(userId, [], 5);
 
     const profile: UserProfile | null = await appTestManager.prisma.userProfile.findFirst({
       where: { userId },
@@ -143,7 +143,7 @@ describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId
     } = await authTestManager.loginAndGetAuthTokens();
 
     // 🔻 2. Создаем 5 постов (метод ничего не возвращает)
-    await postTestManager.createPost(userId, [], 5);
+    await postTestManager.createPublishedPost(userId, [], 5);
 
     // 🔻 3. Достаем 2 любых поста этого пользователя из БД напрямую
     const postsToDelete = await appTestManager.prisma.post.findMany({
@@ -195,6 +195,55 @@ describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId
         followingCount: 0,
         followersCount: 0,
         publicationsCount: 3, // 5 создали - 2 удалили = 3
+      },
+    });
+  });
+
+  it.only('не должен учитывать в publicationsCount черновики постов (status = DRAFT)', async () => {
+    // 🔻 1. Регистрируем пользователя
+    const {
+      accessToken,
+      createdUser: { id: userId },
+    } = await authTestManager.loginAndGetAuthTokens();
+
+    // 🔻 2. Создаем 5 опубликованных постов (метод ничего не возвращает)
+    await postTestManager.createPublishedPost(userId, [], 5);
+
+    // 🔻 2. Создаем 1 черновик поста (метод ничего не возвращает)
+    await postTestManager.createDraftPost(userId, [], 1);
+
+    const profile: UserProfile | null = await appTestManager.prisma.userProfile.findFirst({
+      where: { userId },
+    });
+
+    // 🔻 4. Обновляем профиль
+    const updateDto = {
+      username: 'updatedUsername',
+      firstName: 'Jane',
+      lastName: 'Doe',
+      dateOfBirth: '1995-05-05',
+      country: 'France',
+      city: 'Paris',
+      aboutMe: 'Testing soft deletes',
+    };
+
+    await profileTestManager.updateProfile(accessToken, updateDto);
+
+    // 🔻 5. Делаем GET запрос для получения профиля
+    const response: Response = await request(server)
+      .get(`/${GLOBAL_PREFIX}/users/profile/${profile!.id}`)
+      .expect(HttpStatus.OK);
+
+    // 🔻 6. Проверяем, что вернулось 5 поста, а не 6 (так как 1 черновик)
+    expect(response.body).toEqual<PublicProfileViewDto>({
+      id: profile!.id.toString(),
+      username: updateDto.username,
+      avatarUrl: null,
+      aboutMe: updateDto.aboutMe,
+      userMetadata: {
+        followingCount: 0,
+        followersCount: 0,
+        publicationsCount: 5,
       },
     });
   });
