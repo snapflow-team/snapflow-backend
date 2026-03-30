@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { GetPlansQuery } from '../application/queries/get-plans.query-handler';
 import { PlanViewDto } from './view-dto/plan.view-dto';
 import { RemoteAuthGuard } from '../../auth/guards/remote-auth.guard';
@@ -14,7 +14,7 @@ import { NotificationExceptionMapper } from '../../../common/notification/notifi
 export class SubscriptionsController {
   constructor(
     private readonly queryBus: QueryBus,
-    private readonly commandBus: QueryBus,
+    private readonly commandBus: CommandBus,
   ) {}
 
   @Get('plans')

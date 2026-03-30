@@ -32,12 +32,15 @@ export class RemoteAuthGuard implements CanActivate {
 
     try {
       const response = await lastValueFrom(
-        this.httpService.get<{ id: number }>(`${this.coreUrl}/api/v1/auth/me`, {
-          headers: { Authorization: authHeader },
-        }),
+        this.httpService.get<{ userId: string; email: string; username: string }>(
+          `${this.coreUrl}/api/v1/auth/me`,
+          {
+            headers: { Authorization: authHeader },
+          },
+        ),
       );
 
-      user = { id: response.data.id };
+      user = { id: +response.data.userId };
     } catch (error) {
       this.logger.warn(`Error fetching user from core service: ${error.message}`);
       throw new UnauthorizedException('Invalid or expired token');
