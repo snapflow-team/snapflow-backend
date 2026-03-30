@@ -6,7 +6,7 @@ import { PostStatus } from '@generated/prisma-snapflow';
 export class PostTestManager {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createPost(
+  async createPublishedPost(
     userId: number,
     inputDtos: CreatePostInputDto[] = [],
     count: number = 1,
@@ -20,6 +20,25 @@ export class PostTestManager {
           userId,
           description: dto.description,
           status: PostStatus.PUBLISHED,
+        },
+      });
+    }
+  }
+
+  async createDraftPost(
+    userId: number,
+    inputDtos: CreatePostInputDto[] = [],
+    count: number = 1,
+  ): Promise<void> {
+    const dtos: CreatePostInputDto[] =
+      inputDtos.length > 0 ? inputDtos : TestDtoFactory.generateCreatePostInputDto(count);
+
+    for (const dto of dtos) {
+      await this.prisma.post.create({
+        data: {
+          userId,
+          description: dto.description,
+          status: PostStatus.DRAFT,
         },
       });
     }
