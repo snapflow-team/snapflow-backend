@@ -199,7 +199,7 @@ describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId
     });
   });
 
-  it.only('не должен учитывать в publicationsCount черновики постов (status = DRAFT)', async () => {
+  it('не должен учитывать в publicationsCount черновики постов (status = DRAFT)', async () => {
     // 🔻 1. Регистрируем пользователя
     const {
       accessToken,
