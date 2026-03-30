@@ -11,11 +11,11 @@ import { lastValueFrom } from 'rxjs';
 @Injectable()
 export class RemoteAuthGuard implements CanActivate {
   private readonly coreUrl: string;
+  private readonly logger: Logger = new Logger(RemoteAuthGuard.name);
 
   constructor(
     private readonly configService: ConfigService<Configuration, true>,
     private readonly httpService: HttpService,
-    private readonly logger: Logger = new Logger(RemoteAuthGuard.name),
   ) {
     this.coreUrl = this.configService.get<ApiSettings>('apiSettings').coreServiceUrl;
   }
