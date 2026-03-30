@@ -10,7 +10,9 @@ import { applyAppInitialization } from './setup/app-initialization';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
-  const app = await NestFactory.create(PaymentsModule);
+  const app = await NestFactory.create(PaymentsModule, {
+    rawBody: true,
+  });
 
   const configService: ConfigService<Configuration, true> = app.get(
     ConfigService<Configuration, true>,
