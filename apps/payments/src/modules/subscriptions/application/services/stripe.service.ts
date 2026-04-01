@@ -45,7 +45,7 @@ export class StripeService {
       });
     } catch (error) {
       const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
-      const errorStack = error instanceof Error ? error.stack : '';
+      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
 
       this.logger.error(`Failed to create Stripe checkout session: ${errorMessage}`, errorStack);
 
@@ -58,22 +58,20 @@ export class StripeService {
 
   constructEvent(rawBody: Buffer, signature: string): Notification<Stripe.Event> {
     try {
-      const event = this.stripe.webhooks.constructEvent(
+      const event: Stripe.Event = this.stripe.webhooks.constructEvent(
         rawBody,
         signature,
         this.apiSettings.stripeWebhookSecret,
       );
+
       return Notification.ok(event);
     } catch (error) {
       const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
-      const errorStack = error instanceof Error ? error.stack : '';
+      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
 
       this.logger.error(`Webhook signature verification failed: ${errorMessage}`, errorStack);
 
-      return Notification.fail(
-        NotificationResultCode.InternalServerError,
-        'Invalid webhook signature',
-      );
+      return Notification.fail(NotificationResultCode.BadRequest, 'Invalid webhook signature');
     }
   }
 }
