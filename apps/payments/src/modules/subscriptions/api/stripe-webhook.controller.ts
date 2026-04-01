@@ -1,8 +1,11 @@
-import { Controller, Headers, Post, RawBodyRequest, Req } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
+import { Controller, Headers, Post, Req } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Request } from 'express';
 import { BadRequestException } from '../../../common/exceptions/domain-exceptions';
 import { HandleStripeWebhookCommand } from '../application/usecases/handle-stripe-webhook.usecase';
+import { NotificationExceptionMapper } from '../../../common/notification/notification-exception.mapper';
+import { Notification } from '../../../common/notification/notification';
 
 @Controller('api/v1/payments/stripe')
 export class StripeWebhookController {
@@ -21,12 +24,12 @@ export class StripeWebhookController {
       throw new BadRequestException('Raw body is not available');
     }
 
-    const command = new HandleStripeWebhookCommand(req.rawBody, signature);
-    const result = await this.commandBus.execute(command);
+    const result: Notification = await this.commandBus.execute(
+      new HandleStripeWebhookCommand({ rawBody: req.rawBody, signature: signature }),
+    );
 
-    // Stripe ожидает статус 200 OK. Если мы вернем ошибку, Stripe будет повторять отправку вебхука.
     if (result.hasErrors) {
-      throw new BadRequestException(result.errors.join(', '));
+      NotificationExceptionMapper.throw(result);
     }
 
     return { received: true };
