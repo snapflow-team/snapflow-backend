@@ -13,7 +13,7 @@ export function GetPostByIdSwagger() {
   return applyDecorators(
     ApiBearerAuth('access-token'),
     ApiOperation({ summary: 'Получить свой пост (черновик или опубликованный)' }),
-    ApiParam({ name: 'id', type: Number, description: 'Идентификатор поста' }),
+    ApiParam({ name: 'id', type: String, description: 'Идентификатор поста' }),
     ApiOkResponse({ description: 'Пост найден', type: PostViewDto }),
     ApiNotFoundResponse({ description: 'Пост не найден' }),
     ApiUnauthorizedResponse({ description: 'Пользователь не авторизован' }),
@@ -23,7 +23,7 @@ export function GetPostByIdSwagger() {
 export function GetPublicPostSwagger() {
   return applyDecorators(
     ApiOperation({ summary: 'Получить публичный пост по id' }),
-    ApiParam({ name: 'id', type: Number, description: 'Идентификатор поста' }),
+    ApiParam({ name: 'id', type: String, description: 'Идентификатор поста' }),
     ApiOkResponse({ description: 'Пост найден', type: PostViewDto }),
     ApiNotFoundResponse({ description: 'Пост не найден' }),
   );

@@ -1,7 +1,7 @@
 ﻿import { applyDecorators } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiBody,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -15,7 +15,7 @@ export function EditPostSwagger() {
   return applyDecorators(
     ApiBearerAuth('access-token'),
     ApiOperation({ summary: 'Редактировать описание поста' }),
-    ApiParam({ name: 'id', type: Number, description: 'Идентификатор поста' }),
+    ApiParam({ name: 'id', type: String, description: 'Идентификатор поста' }),
     ApiBody({ type: UpdatePostInputDto }),
     ApiNoContentResponse({ description: 'Пост успешно обновлён' }),
     ApiNotFoundResponse({ description: 'Пост не найден' }),
