@@ -2,15 +2,18 @@
 import { PostMediaViewDto } from './post-media.view-dto';
 import { PostWithInclude } from '../../types/post-with-media.type';
 import { OwnerViewDto } from './owner.view-dto';
+import { PostStatus } from '@generated/prisma-snapflow';
 
 export class PostViewDto {
   @ApiProperty({
+    type: String,
     example: 101,
     description: 'Post identifier',
   })
-  id: number;
+  id: string;
 
   @ApiProperty({
+    type: String,
     example: 'My new post',
     nullable: true,
     description: 'Post description',
@@ -18,13 +21,16 @@ export class PostViewDto {
   description: string | null;
 
   @ApiProperty({
+    type: PostStatus,
+    enumName: 'PostStatus',
     example: 'PUBLISHED',
-    enum: ['DRAFT', 'PUBLISHED'],
+    enum: PostStatus,
     description: 'Post status',
   })
-  status: 'DRAFT' | 'PUBLISHED';
+  status: PostStatus;
 
   @ApiProperty({
+    type: String,
     example: '2026-02-15T18:59:28.562Z',
     description: 'Post creation date in ISO format',
   })
@@ -42,7 +48,7 @@ export class PostViewDto {
   static mapToView(post: PostWithInclude): PostViewDto {
     const dto = new PostViewDto();
 
-    dto.id = post.id;
+    dto.id = post.id.toString();
     dto.description = post.description;
     dto.status = post.status;
     dto.createdAt = post.createdAt.toISOString();
