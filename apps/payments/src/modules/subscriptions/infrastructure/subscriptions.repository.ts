@@ -5,7 +5,7 @@ import { CreatePendingOrderInfrastructureDto } from './types/create-pending-orde
 
 @Injectable()
 export class SubscriptionsRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async createPendingOrder(
     data: CreatePendingOrderInfrastructureDto,
@@ -28,23 +28,19 @@ export class SubscriptionsRepository {
     });
   }
 
-  // async completeOrder(externalId: string, stripeSubId: string, tx: any = this.prisma) {
-  //   const payment = await tx.payment.findFirst({ where: { externalId } });
-  //   if (!payment) throw new Error(`Payment with externalId ${externalId} not found`);
-  //
-  //   await tx.payment.update({
-  //     where: { id: payment.id },
-  //     data: { status: 'PAID' },
-  //   });
-  //
-  //   return tx.subscription.update({
-  //     where: { id: payment.subscriptionId },
-  //     data: {
-  //       status: 'ACTIVE',
-  //       stripeSubId,
-  //       currentPeriodStart: new Date(),
-  //       currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // + 30 дней (упрощенно)
-  //     },
-  //   });
-  // }
+  async activateSubscription(
+    subscriptionId: number,
+    stripeSubId: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ) {
+    return tx.subscription.update({
+      where: { id: subscriptionId },
+      data: {
+        status: SubscriptionStatus.ACTIVE,
+        stripeSubId,
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      },
+    });
+  }
 }
