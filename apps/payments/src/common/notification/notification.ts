@@ -7,7 +7,7 @@ export class Notification<T = null> {
   private _message: string = 'Success';
   private _extensions: IExtension[] = [];
 
-  static ok<T>(data: T): Notification<T> {
+  static ok<T = null>(data: T | null = null): Notification<T> {
     const notification = new Notification<T>();
     notification._data = data;
     return notification;
