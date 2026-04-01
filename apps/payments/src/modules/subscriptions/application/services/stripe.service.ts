@@ -56,16 +56,24 @@ export class StripeService {
     }
   }
 
-  // constructWebhookEvent(rawBody: Buffer, signature: string): Notification<Stripe.Event> {
-  //   try {
-  //     const event = this.stripe.webhooks.constructEvent(
-  //       rawBody,
-  //       signature,
-  //       this.apiSettings.stripeWebhookSecret,
-  //     );
-  //     return Notification.ok(event);
-  //   } catch (error) {
-  //     return Notification.fail('Invalid webhook signature');
-  //   }
-  // }
+  constructEvent(rawBody: Buffer, signature: string): Notification<Stripe.Event> {
+    try {
+      const event = this.stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        this.apiSettings.stripeWebhookSecret,
+      );
+      return Notification.ok(event);
+    } catch (error) {
+      const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
+      const errorStack = error instanceof Error ? error.stack : '';
+
+      this.logger.error(`Webhook signature verification failed: ${errorMessage}`, errorStack);
+
+      return Notification.fail(
+        NotificationResultCode.InternalServerError,
+        'Invalid webhook signature',
+      );
+    }
+  }
 }
