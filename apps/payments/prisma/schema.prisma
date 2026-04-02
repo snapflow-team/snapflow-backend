@@ -37,6 +37,7 @@ enum OutboxEventType {
 
 enum OutboxEventStatus {
   PENDING
+  PROCESSING
   PROCESSED
   FAILED
 }
