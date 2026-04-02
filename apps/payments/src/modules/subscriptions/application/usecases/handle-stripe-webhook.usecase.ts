@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject, Logger } from '@nestjs/common';
 import { SubscriptionsRepository } from '../../infrastructure/subscriptions.repository';
 import { PrismaService } from '../../../database/prisma.service';
-import { OutboxEventType, Payment } from '@generated/prisma-payments';
+import { OutboxEventType, Payment, Subscription } from '@generated/prisma-payments';
 import { Redis } from 'ioredis';
 import { HandleStripeWebhookApplicationDto } from '../dto/handele-stripe-webhook.application-dto';
 import { StripeService } from '../services/stripe.service';
@@ -51,41 +51,41 @@ export class HandleStripeWebhookUseCase
       return Notification.ok();
     }
 
-    const session = event.data.object;
-
     const lockKey = `stripe_webhook_processed:${event.id}`;
-    const isProcessed: string | null = await this.redis.get(lockKey);
 
+    const isProcessed: string | null = await this.redis.get(lockKey);
     if (isProcessed) {
       this.logger.warn(`Event ${event.id} already processed. Skipping.`);
       return Notification.ok();
     }
 
+    const session = event.data.object;
+
+    const externalId: string = session.id;
+    const stripeSubscriptionId: string | undefined =
+      typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
+
+    if (!externalId || !stripeSubscriptionId) {
+      return Notification.fail(
+        NotificationResultCode.BadRequest,
+        `Stripe session ${externalId} is missing critical IDs`,
+      );
+    }
+
+    const payment: Payment | null = await this.paymentsRepository.findByExternalId(externalId);
+
+    if (!payment) {
+      return Notification.fail(
+        NotificationResultCode.NotFound,
+        `Payment with externalId ${externalId} not found`,
+      );
+    }
+
     try {
       await this.prisma.$transaction(async (tx) => {
-        const externalId: string = session.id;
-        const stripeSubscriptionId: string | undefined =
-          typeof session.subscription === 'string'
-            ? session.subscription
-            : session.subscription?.id;
-
-        if (!externalId || !stripeSubscriptionId) {
-          throw new Error(`Stripe session ${externalId} is missing critical IDs`);
-        }
-
-        const payment: Payment | null = await this.paymentsRepository.findByExternalId(
-          externalId,
-          tx,
-        );
-
-        if (!payment) {
-          // vilyamz: использовать Notification, а не просто throw new Error!
-          throw new Error(`Payment with externalId ${externalId} not found`);
-        }
-
         await this.paymentsRepository.markAsPaid(payment.id, tx);
 
-        const subscription = await this.subscriptionsRepository.activateSubscription(
+        const subscription: Subscription = await this.subscriptionsRepository.activateSubscription(
           payment.subscriptionId,
           stripeSubscriptionId,
           tx,
@@ -113,7 +113,7 @@ export class HandleStripeWebhookUseCase
 
       return Notification.fail(
         NotificationResultCode.InternalServerError,
-        'Internal database error during webhook processing.',
+        'Internal database error during webhook processing',
       );
     }
   }

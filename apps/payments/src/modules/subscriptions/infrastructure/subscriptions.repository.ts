@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { PaymentStatus, Prisma, SubscriptionStatus } from '@generated/prisma-payments';
+import {
+  PaymentStatus,
+  Prisma,
+  Subscription,
+  SubscriptionStatus,
+} from '@generated/prisma-payments';
 import { CreatePendingOrderInfrastructureDto } from './types/create-pending-order.infrastructure-dto';
 
 @Injectable()
@@ -32,7 +37,7 @@ export class SubscriptionsRepository {
     subscriptionId: number,
     stripeSubId: string,
     tx: Prisma.TransactionClient = this.prisma,
-  ) {
+  ): Promise<Subscription> {
     return tx.subscription.update({
       where: { id: subscriptionId },
       data: {
