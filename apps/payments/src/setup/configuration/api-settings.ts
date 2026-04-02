@@ -20,6 +20,12 @@ export class ApiSettings {
   })
   redisUrl: string;
 
+  @IsUrl({
+    protocols: ['amqp', 'amqps'],
+    require_tld: false,
+  })
+  rebbitMqUrl: string;
+
   @IsString()
   stripeSecretKey: string;
 
@@ -43,6 +49,8 @@ export class ApiSettings {
       environmentVariables.SEND_INTERNAL_SERVER_ERROR_DETAILS === 'true';
 
     this.redisUrl = environmentVariables.REDIS_URL;
+
+    this.rebbitMqUrl = environmentVariables.RABBITMQ_URL;
 
     this.stripeSecretKey = environmentVariables.STRIPE_SECRET_KEY;
     this.stripeWebhookSecret = environmentVariables.STRIPE_WEBHOOK_SECRET;
