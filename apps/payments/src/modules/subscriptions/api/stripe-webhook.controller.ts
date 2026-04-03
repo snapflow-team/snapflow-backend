@@ -1,5 +1,6 @@
 import type { RawBodyRequest } from '@nestjs/common';
 import { Controller, Headers, Post, Req } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { Request } from 'express';
 import { BadRequestException } from '../../../common/exceptions/domain-exceptions';
@@ -7,6 +8,7 @@ import { HandleStripeWebhookCommand } from '../application/usecases/handle-strip
 import { NotificationExceptionMapper } from '../../../common/notification/notification-exception.mapper';
 import { Notification } from '../../../common/notification/notification';
 
+@ApiExcludeController()
 @Controller('api/v1/payments/stripe')
 export class StripeWebhookController {
   constructor(private readonly commandBus: CommandBus) {}
