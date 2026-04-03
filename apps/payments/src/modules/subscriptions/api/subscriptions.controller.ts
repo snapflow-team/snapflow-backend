@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ApiTags } from '@nestjs/swagger';
 import { GetPlansQuery } from '../application/queries/get-plans.query-handler';
 import { PlanViewDto } from './view-dto/plan.view-dto';
 import { RemoteAuthGuard } from '../../auth/guards/remote-auth.guard';
@@ -10,6 +11,7 @@ import { Notification } from '../../../common/notification/notification';
 import { CreateCheckoutSessionCommand } from '../application/usecases/create-checkout-session.usecase';
 import { NotificationExceptionMapper } from '../../../common/notification/notification-exception.mapper';
 
+@ApiTags('Subscriptions')
 @Controller('subscriptions')
 export class SubscriptionsController {
   constructor(
