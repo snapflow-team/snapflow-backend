@@ -6,6 +6,7 @@ import { ValidationError } from '@nestjs/common';
 import { EnvironmentSettings } from './environment-settings';
 import { DatabaseSettings } from './database-settings';
 import { BusinessRulesSettings } from './business-rules-settings';
+import { SwaggerSettings } from './swagger-settings';
 
 export type EnvironmentVariable = { [key: string]: string };
 
@@ -42,6 +43,9 @@ export class Configuration {
   @ValidateNested()
   environmentSettings: EnvironmentSettings;
 
+  @ValidateNested()
+  swaggerSettings: SwaggerSettings;
+
   private constructor(configuration: Configuration) {
     Object.assign(this, configuration);
   }
@@ -52,6 +56,7 @@ export class Configuration {
       databaseSettings: new DatabaseSettings(environmentVariables),
       businessRulesSettings: new BusinessRulesSettings(environmentVariables),
       environmentSettings: new EnvironmentSettings(environmentVariables),
+      swaggerSettings: new SwaggerSettings(environmentVariables),
     });
   }
 }
