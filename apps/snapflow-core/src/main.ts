@@ -31,6 +31,8 @@ async function bootstrap() {
   const port: number = apiSettings.port;
   const env: string = environmentSettings.currentEnv;
 
+  // vilyamz: deploy
+
   await app.listen(port, () => {
     logger.log(`\x1b[35m=========================================\x1b[0m`);
     logger.log(`\x1b[36m✅ Application is running in ${env} mode\x1b[0m`);
