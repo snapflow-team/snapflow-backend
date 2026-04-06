@@ -9,7 +9,7 @@ import { NotificationExceptionMapper } from '../../../common/notification/notifi
 import { Notification } from '../../../common/notification/notification';
 
 @ApiExcludeController()
-@Controller('api/v1/payments/stripe')
+@Controller('payments/stripe')
 export class StripeWebhookController {
   constructor(private readonly commandBus: CommandBus) {}
 
