@@ -15,6 +15,7 @@ import { PaymentsRepository } from '../../infrastructure/payments.repository';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 import { BillingPeriod } from '../types/billing-period.type';
 import { isCheckoutSessionObject, isInvoiceObject, } from '../type-guards/stripe-webhook.type-guards';
+import { PaymentCompletedEvent, PaymentFailedEvent, } from '../../../../../../../libs/contracts/payments';
 
 const SUPPORTED_WEBHOOK_EVENTS: ReadonlySet<string> = new Set([
   StripeEvents.CheckoutSessionCompleted,
@@ -163,7 +164,7 @@ export class HandleStripeWebhookUseCase
           planId: subscription.planId,
           subscriptionId: subscription.id,
           currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() ?? null,
-        },
+        } satisfies PaymentCompletedEvent,
         tx,
       );
     });
@@ -218,7 +219,7 @@ export class HandleStripeWebhookUseCase
           : new Date(payload.next_payment_attempt * 1000).toISOString(),
       failureCode,
       failureMessage,
-    });
+    } satisfies PaymentFailedEvent);
 
     return Notification.ok();
   }
