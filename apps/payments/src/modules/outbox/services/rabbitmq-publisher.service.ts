@@ -4,7 +4,7 @@ import amqp, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-man
 import { Configuration } from '../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
 import { ConfirmChannel } from 'amqplib';
-import { RabbitMqExchanges } from '../constants/rabbitmq.constants';
+import { PAYMENTS_EXCHANGE } from '../../../../../../libs/contracts/payments';
 
 @Injectable()
 export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {
@@ -39,7 +39,7 @@ export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {
     this.channelWrapper = this.connection.createChannel({
       json: true,
       setup: async (channel: ConfirmChannel) => {
-        await channel.assertExchange(RabbitMqExchanges.PAYMENTS, 'topic', { durable: true });
+        await channel.assertExchange(PAYMENTS_EXCHANGE, 'topic', { durable: true });
       },
     });
   }
