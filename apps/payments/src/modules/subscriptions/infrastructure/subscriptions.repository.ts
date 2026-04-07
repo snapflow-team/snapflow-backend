@@ -48,6 +48,10 @@ export class SubscriptionsRepository {
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         currentPeriodEnd: currentPeriod.end,
+      },
+    });
+  }
+
   async findByStripeSubscriptionId(
     stripeSubId: string,
     tx: Prisma.TransactionClient = this.prisma,
