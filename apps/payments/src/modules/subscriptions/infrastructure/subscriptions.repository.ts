@@ -7,6 +7,7 @@ import {
   SubscriptionStatus,
 } from '@generated/prisma-payments';
 import { CreatePendingOrderInfrastructureDto } from './types/create-pending-order.infrastructure-dto';
+import { BillingPeriod } from '../application/types/billing-period.type';
 
 @Injectable()
 export class SubscriptionsRepository {
@@ -36,6 +37,7 @@ export class SubscriptionsRepository {
   async activateSubscription(
     subscriptionId: number,
     stripeSubId: string,
+    currentPeriod: BillingPeriod,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription> {
     return tx.subscription.update({
@@ -45,6 +47,7 @@ export class SubscriptionsRepository {
         stripeSubId,
         currentPeriodStart: new Date(),
         currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        currentPeriodEnd: currentPeriod.end,
       },
     });
   }
