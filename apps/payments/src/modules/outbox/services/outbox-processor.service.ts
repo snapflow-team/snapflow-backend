@@ -3,8 +3,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { OutboxRepository } from '../repositories/outbox.repository';
 import { OutboxEvent } from '@generated/prisma-payments';
 import { OutboxProcessing } from '../constants/outbox.constants';
-import { RabbitMqExchanges } from '../constants/rabbitmq.constants';
 import { RabbitMQPublisherService } from './rabbitmq-publisher.service';
+import { PAYMENTS_EXCHANGE } from '../../../../../../libs/contracts/payments';
 
 @Injectable()
 export class OutboxProcessorService {
@@ -32,7 +32,7 @@ export class OutboxProcessorService {
 
       for (const event of eventsToProcess) {
         try {
-          await this.rabbitPublisher.publish(RabbitMqExchanges.PAYMENTS, event.type, event.payload);
+          await this.rabbitPublisher.publish(PAYMENTS_EXCHANGE, event.type, event.payload);
 
           await this.outboxRepository.markAsProcessed(event.id);
         } catch (error) {
