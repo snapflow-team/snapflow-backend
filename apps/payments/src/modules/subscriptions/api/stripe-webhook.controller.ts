@@ -1,5 +1,5 @@
 import type { RawBodyRequest } from '@nestjs/common';
-import { Controller, Headers, Post, Req } from '@nestjs/common';
+import { Controller, Headers, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { Request } from 'express';
@@ -14,6 +14,7 @@ export class StripeWebhookController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post('webhook')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async handleWebhook(
     @Headers('stripe-signature') signature: string,
     @Req() req: RawBodyRequest<Request>,
@@ -33,7 +34,5 @@ export class StripeWebhookController {
     if (result.hasErrors) {
       NotificationExceptionMapper.throw(result);
     }
-
-    return { received: true };
   }
 }
