@@ -7,7 +7,11 @@ import { OutboxProcessing } from '../constants/outbox.constants';
 export class OutboxRepository {
   constructor(private prisma: PrismaService) {}
 
-  async saveEvent(type: OutboxEventType, payload: any, tx: Prisma.TransactionClient = this.prisma) {
+  async saveEvent(
+    type: OutboxEventType,
+    payload: any,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<OutboxEvent> {
     return tx.outboxEvent.create({
       data: {
         type,
