@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import { Notification } from '../../../../common/notification/notification';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
+import { BillingPeriod } from '../types/billing-period.type';
 import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-result.type';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 
@@ -52,6 +53,49 @@ export class StripeService {
       return Notification.fail<StripeCheckoutSessionResult>(
         NotificationResultCode.InternalServerError,
         'Failed to communicate with the payment provider',
+      );
+    }
+  }
+
+  // vilyamz: не нужно ли этот метод сделать приватным?
+  getBillingPeriodFromSubscriptionObject(sub: Stripe.Subscription): Notification<BillingPeriod> {
+    const item: Stripe.SubscriptionItem | undefined = sub.items.data[0];
+
+    if (!item) {
+      return Notification.fail(
+        NotificationResultCode.BadRequest,
+        'Subscription has no subscription items to read billing period from',
+      );
+    }
+
+    return Notification.ok({
+      start: new Date(item.current_period_start * 1000),
+      end: new Date(item.current_period_end * 1000),
+    });
+  }
+
+  async retrieveSubscriptionBillingPeriod(
+    stripeSubscriptionId: string,
+  ): Promise<Notification<BillingPeriod>> {
+    try {
+      const sub: Stripe.Subscription = await this.stripe.subscriptions.retrieve(
+        stripeSubscriptionId,
+        { expand: ['items.data'] },
+      );
+
+      return this.getBillingPeriodFromSubscriptionObject(sub);
+    } catch (error) {
+      const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
+      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
+
+      this.logger.error(
+        `Failed to retrieve Stripe subscription ${stripeSubscriptionId}: ${errorMessage}`,
+        errorStack,
+      );
+
+      return Notification.fail(
+        NotificationResultCode.InternalServerError,
+        'Failed to retrieve subscription from the payment provider',
       );
     }
   }
