@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import {
-  PaymentStatus,
-  Prisma,
-  Subscription,
-  SubscriptionStatus,
-} from '@generated/prisma-payments';
+import { PaymentStatus, Prisma, Subscription, SubscriptionStatus, } from '@generated/prisma-payments';
 import { CreatePendingOrderInfrastructureDto } from './types/create-pending-order.infrastructure-dto';
 import { BillingPeriod } from '../application/types/billing-period.type';
 
@@ -45,8 +40,7 @@ export class SubscriptionsRepository {
       data: {
         status: SubscriptionStatus.ACTIVE,
         stripeSubId,
-        currentPeriodStart: new Date(),
-        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        currentPeriodStart: currentPeriod.start,
         currentPeriodEnd: currentPeriod.end,
       },
     });
@@ -58,9 +52,6 @@ export class SubscriptionsRepository {
   ): Promise<Subscription | null> {
     return tx.subscription.findFirst({
       where: { stripeSubId, deletedAt: null },
-    });
-  }
-      },
     });
   }
 }
