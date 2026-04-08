@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { EnvironmentSettings } from '../../../setup/configuration/environment-settings';
 
+//todo(refactor) нужен ли этот класс вообще , может быть лучше удалить его и унести в emailService?
 @Injectable()
 export class EmailTemplates {
   private readonly baseUrl: string;
@@ -16,7 +17,7 @@ export class EmailTemplates {
       ? 'https://snapflow.cc'
       : 'http://localhost:3000';
   }
-
+  //todo(vitaliy) rename methods to verbs
   registrationEmail(code: string): EmailTemplate {
     return {
       subject: 'Confirmation of registration',

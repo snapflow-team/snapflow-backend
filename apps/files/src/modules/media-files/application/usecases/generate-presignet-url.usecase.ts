@@ -26,6 +26,7 @@ export class GeneratedUploadUrlUseCase implements ICommandHandler<GeneratedUploa
   }: GeneratedUploadUrlCommand): Promise<GenerateUploadUrlResponse[]> {
     const { postsMediaKeyPrefix }: S3Settings = this.configService.get<S3Settings>('s3Settings');
 
+    //TODO (vitaliy) refactor нужно отделить логику getPresignedPutUrl от createPending, потому что при ошибке у нас запишутся грязные данные
     return Promise.all(
       files.map(async ({ mimeType, size }) => {
         const fileId: string = this.cryptoService.generateUUID();

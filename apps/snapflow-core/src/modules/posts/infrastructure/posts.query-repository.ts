@@ -69,6 +69,7 @@ export class PostsQueryRepository {
     };
   }
 
+  //todo(vitaliy) rename params to query
   async findPosts(params: GetPostsQueryParamsDto): Promise<PaginatedViewDto<PostViewDto>> {
     const where: Prisma.PostWhereInput = {
       deletedAt: null,
@@ -123,6 +124,7 @@ export class PostsQueryRepository {
     };
   }
 
+  //todo(vitaliy) здесь нужно получить публичный пост, однако проверки на опубликованность нет
   async findPublicPost(postId: number): Promise<PostViewDto | null> {
     const post: PostWithInclude | null = await this.prisma.post.findFirst({
       where: { id: postId },
@@ -185,7 +187,7 @@ export class PostsQueryRepository {
 
     return posts.map((post: PostWithInclude) => PostViewDto.mapToView(post));
   }
-
+  //TODO(vitaliy) rename to findPostById
   async findPost(postId: number, userId: number): Promise<PostViewDto | null> {
     const post: PostWithInclude | null = await this.prisma.post.findFirst({
       where: { id: postId, userId, deletedAt: null },
