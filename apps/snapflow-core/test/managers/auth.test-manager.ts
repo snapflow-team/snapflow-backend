@@ -4,14 +4,10 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { HttpStatus } from '@nestjs/common';
 import { Server } from 'http';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
-import {
-  RegistrationUserInputDto
-} from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
 import { User } from '@generated/prisma-snapflow';
-import {
-  PasswordRecoveryInputDto
-} from '../../src/modules/user-accounts/auth/api/input-dto/password-recovery.input-dto';
+import { PasswordRecoveryInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/password-recovery.input-dto';
 
 // vilyamz: вынести в либу этот менеджер
 /**
