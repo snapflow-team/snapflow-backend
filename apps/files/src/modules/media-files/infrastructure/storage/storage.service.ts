@@ -14,7 +14,7 @@ export class StorageService {
   constructor(private readonly configService: ConfigService<Configuration, true>) {
     this.bucket = configService.get<S3Settings>('s3Settings').bucket;
     this.publicBaseUrl = configService.get<S3Settings>('s3Settings').publicBaseUrl;
-
+    //TODO(vitaliy) как правильно работать с клиентом, нужно ли его создавать каждый раз?
     this.s3 = new S3Client(configService.get<S3Settings>('s3Settings').getS3ClientConfig());
   }
 
@@ -29,7 +29,7 @@ export class StorageService {
 
     return getSignedUrl(this.s3, command, { expiresIn });
   }
-
+  //TODO(vitaliy) rename to isObjectExists
   async objectExists(key: string): Promise<boolean> {
     try {
       //HeadObjectCommand команда «проверить, существует ли файл»
