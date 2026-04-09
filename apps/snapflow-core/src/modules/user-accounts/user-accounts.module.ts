@@ -37,20 +37,13 @@ import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/
 import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
 import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
 import { SessionsController } from './auth/sessions/api/sessions.controller';
-import { PostsRepository } from '../posts/infrastructure/posts-repository';
 import { PostsController } from '../posts/api/posts.controller';
-import { PostsQueryRepository } from '../posts/infrastructure/posts.query-repository';
-import { GetPostQueryHandler } from '../posts/application/queries/get-post.query-handler';
-import { GetProfilePostsQueryHandler } from '../posts/application/queries/get-profile-posts.query-handler';
-import { CreatePostUseCase } from '../posts/application/usecases/create-post-use.case';
 import { UpdateProfileUseCase } from './users/profile/application/usecases/update-profile.usecase';
 import { ProfileController } from './users/profile/api/profile.controller';
 import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
 import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
 import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
 import { EmailModule } from '../emails/email-module';
-import { EditPostUseCase } from '../posts/application/usecases/edit-post.use.case';
-import { DeletePostUseCase } from '../posts/application/usecases/delete-post.use.case';
 import { FilesClientModule } from '../integrations/files/files-client.module';
 import { FilesClient } from '../integrations/files/files.client';
 import { FilesMediaController } from '../integrations/files/api/files-media.controller';
@@ -63,8 +56,6 @@ import { GetPublicProfileQueryHandler } from './users/profile/application/querie
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
-import { GetPostsQueryHandler } from '../posts/application/queries/get-posts.query-handler';
-import { GetMyDraftsHandler } from '../posts/application/queries/get-my-drafts.query.handler';
 
 const controllers = [
   AuthController,
@@ -98,27 +89,17 @@ const useCases = [
   UpdateProfileUseCase,
   UploadAvatarUseCase,
   DeleteAvatarUseCase,
-
-  CreatePostUseCase,
-  EditPostUseCase,
-  DeletePostUseCase,
 ];
 const queries = [
   GetMeQueryHandler,
   GetTotalCountRegisteredUsersQueryHandler,
 
-  GetProfilePostsQueryHandler,
   GetProfileQueryHandler,
   GetPublicProfileQueryHandler,
 
   GetAllSessionsQueryHandler,
-
-  GetPostQueryHandler,
-  GetPostsQueryHandler,
-  GetMyDraftsHandler,
 ];
 const services = [
-  FilesClient,
   DateService,
   CryptoService,
   UserUtilsService,
@@ -131,8 +112,6 @@ const repositories = [
   UsersQueryRepository,
   SessionsRepository,
   SessionQueryRepository,
-  PostsRepository,
-  PostsQueryRepository,
   ProfilesRepository,
   ProfilesQueryRepository,
 ];
@@ -164,6 +143,6 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
     ...repositories,
     ...strategies,
   ],
-  exports: [UsersRepository],
+  exports: [ProfilesRepository, UsersRepository],
 })
 export class UserAccountsModule {}

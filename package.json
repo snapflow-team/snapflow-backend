@@ -27,7 +27,7 @@
     "prisma:create-migrate:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate dev --create-only --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:generate:snapflow-core": "cross-env NODE_ENV=development npx prisma generate --schema=./apps/snapflow-core/prisma/schema.prisma",
     "prisma:generate:prod:snapflow-core": "cross-env NODE_ENV=production npx prisma generate --schema=./apps/snapflow-core/prisma/schema.prisma",
-    "prisma:studio:snapflow-core": "cross-env NODE_ENV=development npx prisma studio --schema=./apps/snapflow-core/prisma/schema.prisma",
+    "prisma:studio:snapflow-core": "cross-env NODE_ENV=development npx prisma studio --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:reset:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate reset --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:deploy:prod:snapflow-core": "cross-env NODE_ENV=production npx prisma migrate deploy --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:deploy:dev:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate deploy --config=./apps/snapflow-core/prisma.config.ts",
@@ -163,6 +163,14 @@
     ],
     "moduleNameMapper": {
       "^@libs/common(|/.*)$": "<rootDir>/libs/common/src/$1"
-    }
+    },
+    "projects": [
+      "<rootDir>/apps/snapflow-core/test/jest-unit.json",
+      "<rootDir>/apps/snapflow-core/test/jest-int.json",
+      "<rootDir>/apps/snapflow-core/test/jest-e2e.json",
+      "<rootDir>/apps/files/test/jest-unit.json",
+      "<rootDir>/apps/files/test/jest-int.json",
+      "<rootDir>/libs/common/jest-unit.json"
+    ]
   }
 }
