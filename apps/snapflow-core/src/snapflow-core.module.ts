@@ -10,6 +10,7 @@ import { ApiSettings } from './setup/configuration/api-settings';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from './setup/configuration/configuration';
 import { NextjsIntegrationModule } from './modules/integrations/nextjs/nextjs-integration.module';
+import { PaymentsEventsModule } from './modules/integrations/payments/payments-events.module';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
@@ -18,6 +19,7 @@ import { NextjsIntegrationModule } from './modules/integrations/nextjs/nextjs-in
     PrismaModule,
     UserAccountsModule,
     NextjsIntegrationModule,
+    PaymentsEventsModule,
     ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
