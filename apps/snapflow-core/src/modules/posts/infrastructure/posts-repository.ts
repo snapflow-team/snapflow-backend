@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
-import { UpdatePostInputDto } from '../api/input-dto/update-post.input.dto';
 import { Prisma } from '@generated/prisma-snapflow';
 import { CreateMediaInput, PostWithMedia } from '../types/create-media.type';
 import { CreatePostWithMediaRepositoryDto } from './dto/create-post-with-media.repository-dto';
@@ -38,6 +37,7 @@ export class PostsRepository {
     });
   }
 
+  //TODO(vitaliy) добавить transaction client для возможных транзакций(по примеру usersRepository)
   async updatePost(dto: UpdatePostRepositoryDto): Promise<boolean> {
     const result: BatchPayload = await this.prisma.post.updateMany({
       where: { id: dto.postId, userId: dto.userId, deletedAt: null },

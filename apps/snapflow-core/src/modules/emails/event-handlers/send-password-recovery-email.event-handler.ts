@@ -9,7 +9,7 @@ export class SendPasswordRecoveryEmailEventHandler
   implements IEventHandler<UserPasswordRecoveryEvent>
 {
   constructor(
-    private emailService: EmailService,
+    private readonly emailService: EmailService,
     private readonly templates: EmailTemplates,
   ) {}
 
