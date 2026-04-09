@@ -4,6 +4,7 @@ import { SERVICES } from '../../../../../../libs/contracts/services.tokens';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { ExternalServicesSettings } from '../../../setup/configuration/external-services-settings';
+import { FilesClient } from './files.client';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ExternalServicesSettings } from '../../../setup/configuration/external-
       },
     ]),
   ],
-  exports: [ClientsModule],
+  providers: [FilesClient],
+  exports: [ClientsModule, FilesClient],
 })
 export class FilesClientModule {}

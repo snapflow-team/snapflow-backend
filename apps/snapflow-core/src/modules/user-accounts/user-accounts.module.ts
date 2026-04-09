@@ -100,7 +100,6 @@ const queries = [
   GetAllSessionsQueryHandler,
 ];
 const services = [
-  FilesClient,
   DateService,
   CryptoService,
   UserUtilsService,

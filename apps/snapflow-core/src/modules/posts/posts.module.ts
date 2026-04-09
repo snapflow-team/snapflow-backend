@@ -4,7 +4,6 @@ import { CreatePostUseCase } from './application/usecases/create-post-use.case';
 import { GetMyDraftsHandler } from './application/queries/get-my-drafts.query.handler';
 import { GetPostsQueryHandler } from './application/queries/get-posts.query-handler';
 import { GetPostQueryHandler } from './application/queries/get-post.query-handler';
-import { FilesClient } from '../integrations/files/files.client';
 import { PostsRepository } from './infrastructure/posts-repository';
 import { PostsQueryRepository } from './infrastructure/posts.query-repository';
 import { Module } from '@nestjs/common';
@@ -20,7 +19,7 @@ const queries = [
   GetMyDraftsHandler,
   GetProfilePostsQueryHandler,
 ];
-const services = [FilesClient];
+const services = [];
 const repositories = [PostsRepository, PostsQueryRepository];
 
 @Module({
