@@ -3,6 +3,7 @@ import { PrismaService } from '../../../../database/prisma.service';
 import { UserWithEmailConfirmation } from '../types/user-with-confirmation.type';
 import { UserWithPasswordRecoveryCode } from '../types/user-with-password-recovery.type';
 import { AuthAccount, ConfirmationStatus, OAuthProvider, Prisma, User, } from '@generated/prisma-snapflow';
+import { UpdateAccountTypeInfrastructureDto } from './dto/update-account-type.infrastructure-dto';
 
 @Injectable()
 export class UsersRepository {
@@ -114,6 +115,22 @@ export class UsersRepository {
     await tx.user.update({
       where: { id: userId },
       data: { username },
+    });
+  }
+
+  async updateAccountType(
+    { userId: id, accountType, subscriptionActiveUntil }: UpdateAccountTypeInfrastructureDto,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.user.updateMany({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      data: {
+        accountType,
+        subscriptionActiveUntil,
+      },
     });
   }
 
