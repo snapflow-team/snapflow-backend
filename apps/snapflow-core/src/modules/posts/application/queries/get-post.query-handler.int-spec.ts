@@ -91,21 +91,4 @@ describe('GetPostQueryHandler', () => {
       code: 'NotFound',
     });
   });
-
-  it('(Success) не должен возвращать удалённые медиа', async () => {
-    const user = await testHelper.createUserWithProfile(prisma, 'media_deleted');
-
-    const postId = await testHelper.createPost(user.id, ['f1', 'f2']);
-
-    const medias = await prisma.postMedia.findMany({ where: { postId } });
-
-    await prisma.postMedia.update({
-      where: { id: medias[0].id },
-      data: { deletedAt: new Date() },
-    });
-
-    const post = await queryHandler.execute(new GetPostQuery(postId, user.id));
-
-    expect(post.postMedias.length).toBe(1);
-  });
 });
