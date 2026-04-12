@@ -11,6 +11,7 @@ import { PostWithInclude } from '../types/post-with-media.type';
 export class PostsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  // vilyamz: выяснить зачем нам этот метод?
   async findProfilePosts(
     params: GetPostsQueryParamsDto,
     userId: number,
