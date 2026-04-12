@@ -192,32 +192,4 @@ export class PostsQueryRepository {
 
     return posts.map((post: PostWithInclude) => PostViewDto.mapToView(post));
   }
-  //TODO(vitaliy) rename to findPostById
-  async findPost(postId: number, userId: number): Promise<PostViewDto | null> {
-    const post: PostWithInclude | null = await this.prisma.post.findFirst({
-      where: { id: postId, userId, deletedAt: null },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            profiles: {
-              where: { deletedAt: null },
-              select: { avatarUrl: true },
-            },
-          },
-        },
-        postMedias: {
-          where: { deletedAt: null },
-          orderBy: { position: 'asc' },
-          select: {
-            id: true,
-            fileId: true,
-            url: true,
-          },
-        },
-      },
-    });
-    return post ? PostViewDto.mapToView(post) : null;
-  }
 }
