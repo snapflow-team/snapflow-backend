@@ -125,10 +125,14 @@ export class PostsQueryRepository {
     };
   }
 
-  //todo(vitaliy) здесь нужно получить публичный пост, однако проверки на опубликованность нет
-  async findPublicPost(postId: number): Promise<PostViewDto | null> {
-    const post: PostWithInclude | null = await this.prisma.post.findFirst({
-      where: { id: postId },
+  async findPostById(postId: number): Promise<PostViewDto | null> {
+    const post: PostWithMediaAndUserMetadata | null = await this.prisma.post.findFirst({
+      where: {
+        id: postId,
+        status: PostStatus.PUBLISHED,
+        deletedAt: null,
+        user: { deletedAt: null },
+      },
       include: {
         user: {
           select: {
