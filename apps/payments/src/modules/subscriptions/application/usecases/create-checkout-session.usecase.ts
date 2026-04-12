@@ -3,10 +3,7 @@ import { StripeService } from '../services/stripe.service';
 import { Notification } from '../../../../common/notification/notification';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../../setup/configuration/configuration';
-import {
-  BusinessRulesSettings,
-  Plan,
-} from '../../../../setup/configuration/business-rules-settings';
+import { BusinessRulesSettings, Plan, } from '../../../../setup/configuration/business-rules-settings';
 import { CreateCheckoutSessionApplicationDto } from '../dto/create-checkout-session.application-dto';
 import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-result.type';
 import { SubscriptionsRepository } from '../../infrastructure/subscriptions.repository';
@@ -53,6 +50,7 @@ export class CreateCheckoutSessionUseCase
     if (stripeResult.hasErrors)
       return Notification.copyErrors<StripeCheckoutSessionResult, string>(stripeResult);
 
+    // vilyamz: что если репозиторий вернет ошибку?
     await this.subscriptionsRepository.createPendingOrder({
       userId,
       planId,
