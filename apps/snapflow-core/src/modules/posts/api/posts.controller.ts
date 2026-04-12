@@ -22,7 +22,7 @@ import { CreatePostInputDto } from './input-dto/create-post.input-dto';
 import { GetPostQuery } from '../application/queries/get-post.query-handler';
 import { CreatePostCommand } from '../application/usecases/create-post-use.case';
 import { PostViewDto } from './view-dto/post.view-dto';
-import { CreatePublishPostSwagger } from './swagger/create-post.swagger';
+import { CreateDraftPostSwagger, CreatePublishPostSwagger } from './swagger/create-post.swagger';
 import { EditPostSwagger } from './swagger/edit-post.swagger';
 import { DeletePostSwagger } from './swagger/delete-post.swagger';
 import { GetProfilePostsSwagger } from './swagger/get-profile-posts.swagger';
@@ -66,6 +66,7 @@ export class PostsController {
     return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
   }
 
+  // todo: этот метод не работает!!!
   @Post('draft')
   @CreateDraftPostSwagger()
   async createDraft(
@@ -80,7 +81,7 @@ export class PostsController {
         fileIds: dto.fileIds,
       }),
     );
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
+    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
   }
 
   @Patch(':id')
