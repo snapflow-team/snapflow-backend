@@ -4,14 +4,14 @@
     "json",
     "ts"
   ],
-  "rootDir": "../../..",
+  "rootDir": "../",
   "testEnvironment": "node",
-  "testRegex": "\\\\.unit-spec\\\\.ts$",
+  "testRegex": ".unit-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "modulePaths": [
-    "<rootDir>/libs",
-    "<rootDir>/apps"
-  ]
+  "moduleNameMapper": {
+    "@/dbModule/(.*)$": "<rootDir>/modules/database/$1",
+    "^@generated/(.*)$": "<rootDir>/../../generated/$1"
+  }
 }
