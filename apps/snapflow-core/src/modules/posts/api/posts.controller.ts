@@ -13,18 +13,20 @@
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ExtractUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
+import {
+  ExtractUserFromRequest
+} from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../user-accounts/auth/domain/guards/dto/user-context.dto';
 import { JwtAuthGuard } from '../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
 import { CreatePostInputDto } from './input-dto/create-post.input-dto';
 import { GetPostQuery } from '../application/queries/get-post.query-handler';
 import { CreatePostCommand } from '../application/usecases/create-post-use.case';
 import { PostViewDto } from './view-dto/post.view-dto';
-import { CreateDraftPostSwagger, CreatePublishPostSwagger } from './swagger/create-post.swagger';
+import { CreatePublishPostSwagger } from './swagger/create-post.swagger';
 import { EditPostSwagger } from './swagger/edit-post.swagger';
 import { DeletePostSwagger } from './swagger/delete-post.swagger';
 import { GetProfilePostsSwagger } from './swagger/get-profile-posts.swagger';
-import { GetPostByIdSwagger, GetPublicPostSwagger } from './swagger/get-post.swagger';
+import { GetPostByIdSwagger } from './swagger/get-post.swagger';
 import { Public } from '../../user-accounts/decorators/public.decorator';
 import { EditPostCommand } from '../application/usecases/edit-post.use.case';
 import { DeletePostCommand } from '../application/usecases/delete-post.use.case';
@@ -38,7 +40,6 @@ import { GetPublicPostsSwagger } from './swagger/get-public-posts.swagger';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
 import { GetMyDraftsQuery } from '../application/queries/get-my-drafts.query.handler';
 import { GetDraftPostsSwagger } from './swagger/get-draft-posts.swagger';
-import { GetPublicPostQuery } from '../application/queries/get-public-post.query-handler';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -62,7 +63,7 @@ export class PostsController {
         fileIds: dto.fileIds,
       }),
     );
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
+    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
   }
 
   @Post('draft')
@@ -126,13 +127,6 @@ export class PostsController {
   @Public()
   async getPostById(@Param('id', ParseIntPipe) postId: number): Promise<PostViewDto> {
     return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
-  }
-
-  @Get(':id/public')
-  @Public()
-  @GetPublicPostSwagger()
-  async getPublicPost(@Param('id', ParseIntPipe) postId: number): Promise<PostViewDto> {
-    return this.queryBus.execute<GetPublicPostQuery, PostViewDto>(new GetPublicPostQuery(postId));
   }
 
   @Get()
