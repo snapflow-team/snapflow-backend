@@ -123,11 +123,9 @@ export class PostsController {
 
   @Get(':id')
   @GetPostByIdSwagger()
-  async getPostById(
-    @Param('id', ParseIntPipe) postId: number,
-    @ExtractUserFromRequest() user: UserContextDto,
-  ): Promise<PostViewDto> {
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
+  @Public()
+  async getPostById(@Param('id', ParseIntPipe) postId: number): Promise<PostViewDto> {
+    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
   }
 
   @Get(':id/public')
