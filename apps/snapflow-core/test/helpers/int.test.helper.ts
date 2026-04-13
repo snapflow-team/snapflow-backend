@@ -69,7 +69,7 @@ export class IntTestHelper {
    * @example
    * await appTestManager.cleanupDb(['migrations']);
    */
-  async cleanupDb(excludedTables: string[] = ['_prisma_migrations_']) {
+  async cleanupDb(excludedTables: string[] = ['_prisma_migrations']) {
     const prisma = this.get<PrismaService>(PrismaService);
 
     const tables: { tablename: string }[] = await prisma.$queryRawUnsafe(`

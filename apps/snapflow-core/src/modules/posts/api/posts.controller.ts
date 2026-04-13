@@ -13,7 +13,9 @@
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ExtractUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
+import {
+  ExtractUserFromRequest
+} from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../user-accounts/auth/domain/guards/dto/user-context.dto';
 import { JwtAuthGuard } from '../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
 import { CreatePostInputDto } from './input-dto/create-post.input-dto';
@@ -24,7 +26,7 @@ import { CreateDraftPostSwagger, CreatePublishPostSwagger } from './swagger/crea
 import { EditPostSwagger } from './swagger/edit-post.swagger';
 import { DeletePostSwagger } from './swagger/delete-post.swagger';
 import { GetProfilePostsSwagger } from './swagger/get-profile-posts.swagger';
-import { GetPostByIdSwagger, GetPublicPostSwagger } from './swagger/get-post.swagger';
+import { GetPostByIdSwagger } from './swagger/get-post.swagger';
 import { Public } from '../../user-accounts/decorators/public.decorator';
 import { EditPostCommand } from '../application/usecases/edit-post.use.case';
 import { DeletePostCommand } from '../application/usecases/delete-post.use.case';
@@ -36,9 +38,9 @@ import { PostStatus } from '@generated/prisma-snapflow';
 import { GetPostsQuery } from '../application/queries/get-posts.query-handler';
 import { GetPublicPostsSwagger } from './swagger/get-public-posts.swagger';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
-import { GetMyDraftsQuery } from '../application/queries/get-my-drafts.query.handler';
+import { GetDraftQuery } from '../application/queries/get-draft.query-handler';
 import { GetDraftPostsSwagger } from './swagger/get-draft-posts.swagger';
-import { GetPublicPostQuery } from '../application/queries/get-public-post.query-handler';
+import { SaveDraftCommand } from '../application/usecases/save-draft.usecase';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -58,28 +60,27 @@ export class PostsController {
       new CreatePostCommand({
         userId: user.id,
         status: PostStatus.PUBLISHED,
-        description: dto.description,
+        description: dto.description ?? null,
         fileIds: dto.fileIds,
       }),
     );
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
+    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
   }
 
   @Post('draft')
   @CreateDraftPostSwagger()
-  async createDraft(
+  async saveDraft(
     @Body() dto: CreatePostInputDto,
-    @ExtractUserFromRequest() user: UserContextDto,
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
   ): Promise<PostViewDto> {
-    const postId: number = await this.commandBus.execute<CreatePostCommand, number>(
-      new CreatePostCommand({
-        userId: user.id,
-        status: PostStatus.DRAFT,
-        description: dto.description,
+    await this.commandBus.execute<SaveDraftCommand, number>(
+      new SaveDraftCommand({
+        userId,
+        description: dto.description ?? null,
         fileIds: dto.fileIds,
       }),
     );
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
+    return this.queryBus.execute<GetDraftQuery, PostViewDto>(new GetDraftQuery(userId));
   }
 
   @Patch(':id')
@@ -105,10 +106,10 @@ export class PostsController {
     await this.commandBus.execute<DeletePostCommand, void>(new DeletePostCommand(user.id, postId));
   }
 
-  @Get('drafts')
+  @Get('draft')
   @GetDraftPostsSwagger()
-  async getMyDrafts(@ExtractUserFromRequest() user: UserContextDto): Promise<PostViewDto[]> {
-    return this.queryBus.execute(new GetMyDraftsQuery(user.id));
+  async getDraft(@ExtractUserFromRequest() { id: userId }: UserContextDto): Promise<PostViewDto> {
+    return this.queryBus.execute<GetDraftQuery, PostViewDto>(new GetDraftQuery(userId));
   }
 
   @Get('user/:userId')
@@ -123,18 +124,9 @@ export class PostsController {
 
   @Get(':id')
   @GetPostByIdSwagger()
-  async getPostById(
-    @Param('id', ParseIntPipe) postId: number,
-    @ExtractUserFromRequest() user: UserContextDto,
-  ): Promise<PostViewDto> {
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, user.id));
-  }
-
-  @Get(':id/public')
   @Public()
-  @GetPublicPostSwagger()
-  async getPublicPost(@Param('id', ParseIntPipe) postId: number): Promise<PostViewDto> {
-    return this.queryBus.execute<GetPublicPostQuery, PostViewDto>(new GetPublicPostQuery(postId));
+  async getPostById(@Param('id', ParseIntPipe) postId: number): Promise<PostViewDto> {
+    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
   }
 
   @Get()
