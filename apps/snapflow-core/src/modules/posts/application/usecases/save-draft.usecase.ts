@@ -40,6 +40,7 @@ export class SaveDraftUseCase implements ICommandHandler<SaveDraftCommand> {
       await this.commandBus.execute(new DeletePostCommand(userId, draft.id));
     }
 
+    // vilyamz: добиться атомарности при удалении старого черновика и создания нового
     return this.postsRepository.createPostWithMedia({
       userId,
       description,
