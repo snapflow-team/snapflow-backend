@@ -1,6 +1,6 @@
 ﻿import { ApiProperty } from '@nestjs/swagger';
 import { PostMediaViewDto } from './post-media.view-dto';
-import { PostWithInclude } from '../../types/post-with-media.type';
+import { PostWithMediaAndUserMetadata } from '../../infrastructure/types/post-with-media-and-user-metadata.type';
 import { OwnerViewDto } from './owner.view-dto';
 import { PostStatus } from '@generated/prisma-snapflow';
 
@@ -45,7 +45,7 @@ export class PostViewDto {
   @ApiProperty({ type: OwnerViewDto })
   owner: OwnerViewDto;
 
-  static mapToView(post: PostWithInclude): PostViewDto {
+  static mapToView(post: PostWithMediaAndUserMetadata): PostViewDto {
     const dto = new PostViewDto();
 
     dto.id = post.id.toString();
