@@ -4,6 +4,6 @@ import { CreateMediaInput } from '../../types/create-media.type';
 export class CreatePostWithMediaRepositoryDto {
   userId: number;
   status: PostStatus;
-  description?: string;
+  description: string | null;
   medias: CreateMediaInput[];
 }
