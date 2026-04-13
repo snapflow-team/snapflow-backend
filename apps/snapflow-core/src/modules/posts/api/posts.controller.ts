@@ -38,7 +38,7 @@ import { PostStatus } from '@generated/prisma-snapflow';
 import { GetPostsQuery } from '../application/queries/get-posts.query-handler';
 import { GetPublicPostsSwagger } from './swagger/get-public-posts.swagger';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
-import { GetMyDraftQuery } from '../application/queries/get-my-draft.query.handler';
+import { GetDraftQuery } from '../application/queries/get-draft.query-handler';
 import { GetDraftPostsSwagger } from './swagger/get-draft-posts.swagger';
 import { SaveDraftCommand } from '../application/usecases/save-draft.usecase';
 
@@ -80,7 +80,7 @@ export class PostsController {
         fileIds: dto.fileIds,
       }),
     );
-    return this.queryBus.execute<GetMyDraftQuery, PostViewDto>(new GetMyDraftQuery(userId));
+    return this.queryBus.execute<GetDraftQuery, PostViewDto>(new GetDraftQuery(userId));
   }
 
   @Patch(':id')
@@ -109,7 +109,7 @@ export class PostsController {
   @Get('draft')
   @GetDraftPostsSwagger()
   async getDraft(@ExtractUserFromRequest() { id: userId }: UserContextDto): Promise<PostViewDto> {
-    return this.queryBus.execute<GetMyDraftQuery, PostViewDto>(new GetMyDraftQuery(userId));
+    return this.queryBus.execute<GetDraftQuery, PostViewDto>(new GetDraftQuery(userId));
   }
 
   @Get('user/:userId')

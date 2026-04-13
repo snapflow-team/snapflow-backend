@@ -1,7 +1,7 @@
 import { DeletePostUseCase } from './application/usecases/delete-post.use.case';
 import { EditPostUseCase } from './application/usecases/edit-post.use.case';
 import { CreatePostUseCase } from './application/usecases/create-post-use.case';
-import { GetMyDraftHandler } from './application/queries/get-my-draft.query.handler';
+import { GetDraftQueryHandler } from './application/queries/get-draft.query-handler';
 import { GetPostsQueryHandler } from './application/queries/get-posts.query-handler';
 import { GetPostQueryHandler } from './application/queries/get-post.query-handler';
 import { PostsRepository } from './infrastructure/posts-repository';
@@ -17,7 +17,7 @@ const useCases = [CreatePostUseCase, EditPostUseCase, DeletePostUseCase, SaveDra
 const queries = [
   GetPostQueryHandler,
   GetPostsQueryHandler,
-  GetMyDraftHandler,
+  GetDraftQueryHandler,
   GetProfilePostsQueryHandler,
 ];
 const services = [];

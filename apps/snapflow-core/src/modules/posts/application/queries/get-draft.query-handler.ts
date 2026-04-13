@@ -3,15 +3,15 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PostsQueryRepository } from '../../infrastructure/posts.query-repository';
 import { NotFoundException } from '../../../../common/exceptions/domain-exceptions';
 
-export class GetMyDraftQuery {
+export class GetDraftQuery {
   constructor(public readonly userId: number) {}
 }
 
-@QueryHandler(GetMyDraftQuery)
-export class GetMyDraftHandler implements IQueryHandler<GetMyDraftQuery> {
+@QueryHandler(GetDraftQuery)
+export class GetDraftQueryHandler implements IQueryHandler<GetDraftQuery> {
   constructor(private readonly postsQueryRepository: PostsQueryRepository) {}
 
-  async execute({ userId }: GetMyDraftQuery): Promise<PostViewDto> {
+  async execute({ userId }: GetDraftQuery): Promise<PostViewDto> {
     const draft: PostViewDto | null = await this.postsQueryRepository.findDraftByUserId(userId);
 
     if (!draft) {
