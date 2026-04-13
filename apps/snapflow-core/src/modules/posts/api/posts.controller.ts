@@ -38,8 +38,9 @@ import { PostStatus } from '@generated/prisma-snapflow';
 import { GetPostsQuery } from '../application/queries/get-posts.query-handler';
 import { GetPublicPostsSwagger } from './swagger/get-public-posts.swagger';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
-import { GetMyDraftsQuery } from '../application/queries/get-my-drafts.query.handler';
+import { GetDraftQuery } from '../application/queries/get-draft.query-handler';
 import { GetDraftPostsSwagger } from './swagger/get-draft-posts.swagger';
+import { SaveDraftCommand } from '../application/usecases/save-draft.usecase';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -59,29 +60,27 @@ export class PostsController {
       new CreatePostCommand({
         userId: user.id,
         status: PostStatus.PUBLISHED,
-        description: dto.description,
+        description: dto.description ?? null,
         fileIds: dto.fileIds,
       }),
     );
     return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
   }
 
-  // todo: этот метод не работает!!!
   @Post('draft')
   @CreateDraftPostSwagger()
-  async createDraft(
+  async saveDraft(
     @Body() dto: CreatePostInputDto,
-    @ExtractUserFromRequest() user: UserContextDto,
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
   ): Promise<PostViewDto> {
-    const postId: number = await this.commandBus.execute<CreatePostCommand, number>(
-      new CreatePostCommand({
-        userId: user.id,
-        status: PostStatus.DRAFT,
-        description: dto.description,
+    await this.commandBus.execute<SaveDraftCommand, number>(
+      new SaveDraftCommand({
+        userId,
+        description: dto.description ?? null,
         fileIds: dto.fileIds,
       }),
     );
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
+    return this.queryBus.execute<GetDraftQuery, PostViewDto>(new GetDraftQuery(userId));
   }
 
   @Patch(':id')
@@ -107,10 +106,10 @@ export class PostsController {
     await this.commandBus.execute<DeletePostCommand, void>(new DeletePostCommand(user.id, postId));
   }
 
-  @Get('drafts')
+  @Get('draft')
   @GetDraftPostsSwagger()
-  async getMyDrafts(@ExtractUserFromRequest() user: UserContextDto): Promise<PostViewDto[]> {
-    return this.queryBus.execute(new GetMyDraftsQuery(user.id));
+  async getDraft(@ExtractUserFromRequest() { id: userId }: UserContextDto): Promise<PostViewDto> {
+    return this.queryBus.execute<GetDraftQuery, PostViewDto>(new GetDraftQuery(userId));
   }
 
   @Get('user/:userId')

@@ -161,8 +161,8 @@ export class PostsQueryRepository {
     return post ? PostViewDto.mapToView(post) : null;
   }
 
-  async findDraftsByUserId(userId: number): Promise<PostViewDto[]> {
-    const posts: PostWithMediaAndUserMetadata[] = await this.prisma.post.findMany({
+  async findDraftByUserId(userId: number): Promise<PostViewDto | null> {
+    const post: PostWithMediaAndUserMetadata | null = await this.prisma.post.findFirst({
       where: {
         userId,
         status: PostStatus.DRAFT,
@@ -192,6 +192,6 @@ export class PostsQueryRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return posts.map((post: PostWithMediaAndUserMetadata) => PostViewDto.mapToView(post));
+    return post ? PostViewDto.mapToView(post) : null;
   }
 }

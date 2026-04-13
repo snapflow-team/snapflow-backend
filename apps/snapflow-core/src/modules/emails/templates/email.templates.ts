@@ -13,9 +13,9 @@ export class EmailTemplates {
     const environmentSettings = this.configService.get<EnvironmentSettings>('environmentSettings');
 
     // Определяем базовый URL один раз при инициализации сервиса
-    this.baseUrl = environmentSettings.isProduction
-      ? 'https://snapflow.cc'
-      : 'http://localhost:3000';
+    if (environmentSettings.isProduction) this.baseUrl = 'https://snapflow.cc';
+    if (environmentSettings.isStaging) this.baseUrl = 'https://stage-snapflow.vercel.app';
+    if (environmentSettings.isDevelopment) this.baseUrl = 'http://localhost:3000';
   }
   //todo(vitaliy) rename methods to verbs
   registrationEmail(code: string): EmailTemplate {
