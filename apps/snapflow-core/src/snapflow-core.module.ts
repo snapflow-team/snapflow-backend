@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from './setup/configuration/configuration';
 import { NextjsIntegrationModule } from './modules/integrations/nextjs/nextjs-integration.module';
 import { PostsModule } from './modules/posts/posts.module';
+import { PaymentsEventsModule } from './modules/integrations/payments/payments-events.module';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
@@ -20,6 +21,7 @@ import { PostsModule } from './modules/posts/posts.module';
     UserAccountsModule,
     PostsModule,
     NextjsIntegrationModule,
+    PaymentsEventsModule,
     ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],

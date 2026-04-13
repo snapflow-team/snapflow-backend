@@ -6,6 +6,7 @@ import { PrismaService } from '../../../../database/prisma.service'; // Твой
 export class OutboxRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  // refactor: избавиться от хардкода (status: 'PENDING')
   async createOutboxEvent(
     type: OutboxEventType,
     payload: Prisma.InputJsonValue,

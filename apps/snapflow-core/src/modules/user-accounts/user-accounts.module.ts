@@ -143,6 +143,6 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
     ...repositories,
     ...strategies,
   ],
-  exports: [ProfilesRepository],
+  exports: [ProfilesRepository, UsersRepository],
 })
 export class UserAccountsModule {}
