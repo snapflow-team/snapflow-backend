@@ -1,60 +1,44 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../../../../database/prisma.service';
-import { CreatePostUseCase } from './create-post-use.case';
-import { SnapflowCoreModule } from '../../../../snapflow-core.module';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { Post, PostStatus, User } from '@generated/prisma-snapflow';
 import { EditPostCommand, EditPostUseCase } from './edit-post.use.case';
 import { UpdatePostInputDto } from '../../api/input-dto/update-post.input.dto';
 import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
-import { ProfilesRepository } from '../../../user-accounts/users/profile/infrastructure/profiles.repository';
 
-describe('EditPostUseCase (Int)', () => {
-  let module: TestingModule;
+describe('EditPostUseCase (Интеграционные тесты)', () => {
   let prisma: PrismaService;
-  let editPostUseCase: EditPostUseCase;
-  let createPostUseCase: CreatePostUseCase;
-  let intTestHelper: IntTestHelper;
+  let testHelper: IntTestHelper;
+  let useCase: EditPostUseCase;
 
   const validateFilesMock = jest.fn();
 
   beforeAll(async () => {
-    module = await Test.createTestingModule({
-      imports: [SnapflowCoreModule],
-    })
-      .overrideProvider(FilesClient)
-      .useValue({
-        validateFiles: validateFilesMock,
-      })
-      .compile();
+    testHelper = new IntTestHelper();
+    await testHelper.createTestingModule([
+      {
+        provide: FilesClient,
+        useValue: { validateFiles: validateFilesMock },
+      },
+    ]);
 
-    editPostUseCase = module.get<EditPostUseCase>(EditPostUseCase);
-    createPostUseCase = module.get<CreatePostUseCase>(CreatePostUseCase);
-    prisma = module.get<PrismaService>(PrismaService);
-
-    const profilesRepo = module.get<ProfilesRepository>(ProfilesRepository);
-    intTestHelper = new IntTestHelper(validateFilesMock, createPostUseCase, profilesRepo);
+    useCase = testHelper.get<EditPostUseCase>(EditPostUseCase);
+    prisma = testHelper.get<PrismaService>(PrismaService);
   });
 
   afterAll(async () => {
-    if (module) {
-      await module.close();
-    }
+    await testHelper.close();
   });
 
   beforeEach(async () => {
-    await prisma.postMedia.deleteMany({});
-    await prisma.post.deleteMany({});
-    await prisma.userProfile.deleteMany({});
-    await prisma.user.deleteMany({});
-    await prisma.userProfile.deleteMany({});
+    await testHelper.cleanupDb();
     validateFilesMock.mockClear();
+    validateFilesMock.mockReset();
   });
 
-  it('должен обновить пост', async () => {
-    const user = await intTestHelper.createUserWithProfile(prisma, 'post_draft');
+  it('(Success) должен обновить пост', async () => {
+    const user = await testHelper.createUserWithProfile(prisma, 'post_draft');
 
-    const postId = await intTestHelper.createPost(
+    const postId = await testHelper.createPost(
       user.id,
       ['f1'],
       PostStatus.DRAFT,
@@ -64,22 +48,33 @@ describe('EditPostUseCase (Int)', () => {
     const updateDto: UpdatePostInputDto = {
       description: 'Updated description',
     };
-    await editPostUseCase.execute(
-      new EditPostCommand({ userId: user.id, postId, description: updateDto.description }),
+    await useCase.execute(
+      new EditPostCommand({
+        userId: user.id,
+        postId,
+        description: updateDto.description,
+      }),
     );
 
-    const updatedPost = await prisma.post.findFirst({ where: { id: postId } });
+    const updatedPost = await prisma.post.findFirst({
+      where: { id: postId },
+    });
     expect(updatedPost).not.toBeNull();
     expect(updatedPost!.description).toBe('Updated description');
   });
 
-  it('должен выбросить NotFoundException если пост не найден или чужой', async () => {
-    const user: User = await intTestHelper.createUserWithProfile(prisma, 'post_notfound');
+  it('(NotFound) должен выбросить NotFoundException если пост не найден', async () => {
+    const user: User = await testHelper.createUserWithProfile(prisma, 'post_notfound');
 
     const updateDto: UpdatePostInputDto = { description: 'test' };
+    const incorrectPostId = 0;
     await expect(
-      editPostUseCase.execute(
-        new EditPostCommand({ userId: user.id, postId: 999, description: updateDto.description }),
+      useCase.execute(
+        new EditPostCommand({
+          userId: user.id,
+          postId: incorrectPostId,
+          description: updateDto.description,
+        }),
       ),
     ).rejects.toMatchObject({
       code: 'NotFound',
@@ -88,5 +83,32 @@ describe('EditPostUseCase (Int)', () => {
 
     const posts: Post[] = await prisma.post.findMany();
     expect(posts).toHaveLength(0);
+  });
+  it('(NotFound) должен выбросить NotFoundException если пост для другого юзера', async () => {
+    const user: User = await testHelper.createUserWithProfile(prisma, 'post_notfound');
+    const postId = await testHelper.createPost(
+      user.id,
+      ['f1'],
+      PostStatus.DRAFT,
+      'Original description',
+    );
+
+    const updateDto: UpdatePostInputDto = { description: 'test' };
+    const incorrectUserId = 0;
+    await expect(
+      useCase.execute(
+        new EditPostCommand({
+          userId: incorrectUserId,
+          postId: postId,
+          description: updateDto.description,
+        }),
+      ),
+    ).rejects.toMatchObject({
+      code: 'NotFound',
+      message: 'The post was not found',
+    });
+
+    const posts: Post[] = await prisma.post.findMany();
+    expect(posts).toHaveLength(1);
   });
 });

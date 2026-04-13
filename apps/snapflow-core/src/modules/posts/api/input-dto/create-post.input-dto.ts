@@ -11,7 +11,9 @@ import {
 import { Transform, TransformFnParams } from 'class-transformer';
 
 export class CreatePostInputDto {
+  //todo(vitaliy) убрать магические числа, вынести их в отдельные файлы
   @ApiPropertyOptional({
+    type: String,
     example: 'Пост с публикацией',
     maxLength: 500,
     description: 'Текст поста (необязательно)',
@@ -22,9 +24,9 @@ export class CreatePostInputDto {
   description?: string;
 
   @ApiProperty({
+    type: [String],
     example: ['550e8400-e29b-41d4-a716-446655440000'],
     description: 'Список fileId для публикации поста',
-    type: [String],
     minItems: 1,
     maxItems: 10,
   })

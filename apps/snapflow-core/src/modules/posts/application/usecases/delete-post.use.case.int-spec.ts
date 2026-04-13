@@ -1,61 +1,50 @@
 import { PrismaService } from '../../../../database/prisma.service';
-import { Test, TestingModule } from '@nestjs/testing';
 import { DeletePostCommand, DeletePostUseCase } from './delete-post.use.case';
-import { CreatePostUseCase } from './create-post-use.case';
-import { SnapflowCoreModule } from '../../../../snapflow-core.module';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { Post, PostMedia, PostStatus, User } from '@generated/prisma-snapflow';
 import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
-import { ProfilesRepository } from '../../../user-accounts/users/profile/infrastructure/profiles.repository';
 
 describe('DeletePostUseCase', () => {
-  let module: TestingModule;
   let prisma: PrismaService;
-  let useCase: CreatePostUseCase;
-  let repo: ProfilesRepository;
-  let deletePostUseCase: DeletePostUseCase;
-  let intTestHelper: IntTestHelper;
+  let useCase: DeletePostUseCase;
+  let testHelper: IntTestHelper;
 
   const validateFilesMock = jest.fn();
   const deleteFileMock = jest.fn();
 
   beforeAll(async () => {
-    module = await Test.createTestingModule({
-      imports: [SnapflowCoreModule],
-    })
-      .overrideProvider(FilesClient)
-      .useValue({
-        validateFiles: validateFilesMock,
-        deleteFile: deleteFileMock,
-      })
-      .compile();
-
-    deletePostUseCase = module.get<DeletePostUseCase>(DeletePostUseCase);
-    prisma = module.get<PrismaService>(PrismaService);
-    useCase = module.get<CreatePostUseCase>(CreatePostUseCase);
-    repo = module.get<ProfilesRepository>(ProfilesRepository);
-    intTestHelper = new IntTestHelper(validateFilesMock, useCase, repo);
+    testHelper = new IntTestHelper();
+    await testHelper.createTestingModule([
+      {
+        provide: FilesClient,
+        useValue: {
+          validateFiles: validateFilesMock,
+          deleteFile: deleteFileMock,
+        },
+      },
+    ]);
+    prisma = testHelper.get<PrismaService>(PrismaService);
+    useCase = testHelper.get<DeletePostUseCase>(DeletePostUseCase);
   });
 
   afterAll(async () => {
-    if (module) await module.close();
+    await testHelper.close();
   });
 
   beforeEach(async () => {
-    await prisma.postMedia.deleteMany({});
-    await prisma.post.deleteMany({});
-    await prisma.userProfile.deleteMany({});
-    await prisma.user.deleteMany({});
+    await testHelper.cleanupDb();
     validateFilesMock.mockClear();
+    validateFilesMock.mockReset();
     deleteFileMock.mockReset();
+    deleteFileMock.mockClear();
   });
 
-  it('должен soft-delete опубликованный пост', async () => {
-    const user: User = await intTestHelper.createUserWithProfile(prisma, 'del_ok');
+  it('(Success) должен быть soft-delete опубликованного поста', async () => {
+    const user: User = await testHelper.createUserWithProfile(prisma, 'del_ok');
     const fileId = '22222222-2222-4222-8222-222222222222';
     const fileUrl = `https://cdn.test/files/${fileId}`;
 
-    const postId: number = await intTestHelper.createPost(
+    const postId: number = await testHelper.createPost(
       user.id,
       [fileId],
       PostStatus.PUBLISHED,
@@ -64,7 +53,7 @@ describe('DeletePostUseCase', () => {
 
     deleteFileMock.mockResolvedValueOnce({});
 
-    await deletePostUseCase.execute(new DeletePostCommand(user.id, postId));
+    await useCase.execute(new DeletePostCommand(user.id, postId));
 
     const deletedPost: Post | null = await prisma.post.findUnique({ where: { id: postId } });
     expect(deletedPost).not.toBeNull();
@@ -82,11 +71,11 @@ describe('DeletePostUseCase', () => {
     });
   });
 
-  it('должен кинуть NotFound если пост не существует', async () => {
-    const user: User = await intTestHelper.createUserWithProfile(prisma, 'not_found');
-
+  it('(NotFound) должен выбросить ошибку если пост не существует', async () => {
+    const user: User = await testHelper.createUserWithProfile(prisma, 'not_found');
+    const invalidPostId = 0;
     await expect(
-      deletePostUseCase.execute(new DeletePostCommand(user.id, 999)),
+      useCase.execute(new DeletePostCommand(user.id, invalidPostId)),
     ).rejects.toMatchObject({
       code: 'NotFound',
       message: 'Post not found',

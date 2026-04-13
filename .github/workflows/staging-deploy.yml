@@ -9,7 +9,8 @@ jobs:
     if: >
       github.event.issue.pull_request && (
         contains(github.event.comment.body, '/deploy-stage-core') ||
-        contains(github.event.comment.body, '/deploy-stage-files')
+        contains(github.event.comment.body, '/deploy-stage-files') ||
+        contains(github.event.comment.body, '/deploy-stage-payments')
       )
 
     runs-on: ubuntu-latest
@@ -69,6 +70,17 @@ jobs:
           tags: snapflow365/snapflow-files:stage
           build-args: |
             service=files
+
+      - name: Build and push snapflow-payments
+        if: contains(github.event.comment.body, '/deploy-stage-payments')
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./apps/payments/Dockerfile
+          push: true
+          tags: snapflow365/snapflow-payments:stage
+          build-args: |
+            service=payments
 
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.0

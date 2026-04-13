@@ -23,7 +23,7 @@ export class FilesClient {
     @Inject(SERVICES.FILES) private readonly client: ClientProxy,
     private readonly exceptionMapper: SnapFlowDomainExceptionCodeMapper,
   ) {}
-
+  // vilyamz: прочитать про firstValueFrom
   async generateUploadUrl(
     payload: GenerateUploadUrlsRequest,
   ): Promise<GenerateUploadUrlResponse[]> {

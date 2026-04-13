@@ -2,28 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma.service';
 import { UserWithEmailConfirmation } from '../types/user-with-confirmation.type';
 import { UserWithPasswordRecoveryCode } from '../types/user-with-password-recovery.type';
-import {
-  AuthAccount,
-  ConfirmationStatus,
-  OAuthProvider,
-  Prisma,
-  User,
-} from '@generated/prisma-snapflow';
+import { AuthAccount, ConfirmationStatus, OAuthProvider, Prisma, User, } from '@generated/prisma-snapflow';
+import { UpdateAccountTypeInfrastructureDto } from './dto/update-account-type.infrastructure-dto';
 
 @Injectable()
 export class UsersRepository {
   constructor(public readonly prisma: PrismaService) {}
 
   // User ---------------------------------------------------------
-
-  async findUserById(id: number, tx: Prisma.TransactionClient = this.prisma): Promise<User | null> {
-    return tx.user.findFirst({
-      where: {
-        id,
-        deletedAt: null,
-      },
-    });
-  }
 
   async findUserByEmail(
     email: string,
@@ -117,6 +103,33 @@ export class UsersRepository {
       data,
       include: {
         emailConfirmationCode: true,
+      },
+    });
+  }
+
+  async updateUsername(
+    userId: number,
+    username: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.user.update({
+      where: { id: userId },
+      data: { username },
+    });
+  }
+
+  async updateAccountType(
+    { userId: id, accountType, subscriptionActiveUntil }: UpdateAccountTypeInfrastructureDto,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.user.updateMany({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      data: {
+        accountType,
+        subscriptionActiveUntil,
       },
     });
   }
@@ -220,6 +233,8 @@ export class UsersRepository {
       },
     });
   }
+
+  // Account oauth ---------------------------------------------------------
 
   async findAccountByProviderAccountIdAndProvider(
     providerAccountId: string,

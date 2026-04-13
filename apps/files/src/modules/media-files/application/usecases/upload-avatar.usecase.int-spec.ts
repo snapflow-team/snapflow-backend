@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from '../../../../database/prisma.service'; // Подставь свой путь
+import { PrismaService } from '../../../../database/prisma.service';
 import { UploadAvatarCommand, UploadAvatarUseCase } from './upload-avatar.usecase';
 import { StorageService } from '../../infrastructure/storage/storage.service';
 import { CryptoService } from '../../../../../../../libs/common/services/crypto.service';

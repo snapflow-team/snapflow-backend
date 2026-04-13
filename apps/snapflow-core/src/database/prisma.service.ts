@@ -1,4 +1,4 @@
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +9,7 @@ import { PrismaClient } from '@generated/prisma-snapflow';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private pool: Pool;
+  private readonly logger: Logger = new Logger(PrismaService.name);
 
   constructor(private readonly configService: ConfigService<Configuration, true>) {
     const databaseSettings: DatabaseSettings =
@@ -27,9 +28,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     try {
       await this.$connect();
 
-      console.log('✅ Database connected successfully');
+      this.logger.log('\x1b[36m✅ Database connected successfully\x1b[0m');
     } catch (error) {
-      console.error('❌ Database connection failed:', error.message);
+      this.logger.error(`❌ Database connection failed: ${error.message}`, error.stack);
+
       process.exit(1);
     }
   }

@@ -10,6 +10,7 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "build:snapflow-core": "nest build snapflow-core",
     "start:dev:snapflow-core": "cross-env NODE_ENV=development nest start snapflow-core --watch",
+    "start:stage:snapflow-core": "cross-env NODE_ENV=staging node ./dist/apps/snapflow-core/main.js",
     "start:prod:snapflow-core": "cross-env NODE_ENV=production node ./dist/apps/snapflow-core/main.js",
     "start:debug:snapflow-core": "cross-env NODE_ENV=development nest start snapflow-core --debug --watch",
     "test:snapflow-core": "cross-env NODE_ENV=testing jest --forceExit",
@@ -26,12 +27,13 @@
     "prisma:create-migrate:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate dev --create-only --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:generate:snapflow-core": "cross-env NODE_ENV=development npx prisma generate --schema=./apps/snapflow-core/prisma/schema.prisma",
     "prisma:generate:prod:snapflow-core": "cross-env NODE_ENV=production npx prisma generate --schema=./apps/snapflow-core/prisma/schema.prisma",
-    "prisma:studio:snapflow-core": "cross-env NODE_ENV=development npx prisma studio --schema=./apps/snapflow-core/prisma/schema.prisma",
+    "prisma:studio:snapflow-core": "cross-env NODE_ENV=development npx prisma studio --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:reset:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate reset --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:deploy:prod:snapflow-core": "cross-env NODE_ENV=production npx prisma migrate deploy --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:deploy:dev:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate deploy --config=./apps/snapflow-core/prisma.config.ts",
     "build:files": "nest build files",
     "start:dev:files": "cross-env NODE_ENV=development nest start files --watch",
+    "start:stage:files": "cross-env NODE_ENV=staging node ./dist/apps/files/main.js",
     "start:prod:files": "cross-env NODE_ENV=production node ./dist/apps/files/main.js",
     "start:debug:files": "cross-env NODE_ENV=development nest start files --debug --watch",
     "prisma:create-migrate:files": "cross-env NODE_ENV=development npx prisma migrate dev --create-only --config=./apps/files/prisma.config.ts",
@@ -40,7 +42,20 @@
     "prisma:studio:files": "cross-env NODE_ENV=development npx prisma studio --config=./apps/files/prisma.config.ts",
     "prisma:reset:files": "cross-env NODE_ENV=development npx prisma migrate reset --config=./apps/files/prisma.config.ts",
     "prisma:deploy:prod:files": "cross-env NODE_ENV=production npx prisma migrate deploy --config=./apps/files/prisma.config.ts",
-    "prisma:deploy:dev:files": "cross-env NODE_ENV=development npx prisma migrate deploy --config=./apps/files/prisma.config.ts"
+    "prisma:deploy:dev:files": "cross-env NODE_ENV=development npx prisma migrate deploy --config=./apps/files/prisma.config.ts",
+    "build:payments": "nest build payments",
+    "start:dev:payments": "cross-env NODE_ENV=development nest start payments --watch",
+    "start:stage:payments": "cross-env NODE_ENV=staging node ./dist/apps/payments/main.js",
+    "start:prod:payments": "cross-env NODE_ENV=production node ./dist/apps/payments/main.js",
+    "test:e2e:payments": "cross-env NODE_ENV=testing jest --config ./apps/payments/test/jest-e2e.json --runInBand --detectOpenHandles --forceExit",
+    "test:int:payments": "cross-env NODE_ENV=testing jest --config ./apps/payments/test/jest-int.json --runInBand --detectOpenHandles --forceExit",
+    "test:unit:payments": "cross-env NODE_ENV=testing jest --config ./apps/payments/test/jest-unit.json --runInBand --detectOpenHandles --forceExit",
+    "prisma:create-migrate:payments": "cross-env NODE_ENV=development npx prisma migrate dev --create-only --config=./apps/payments/prisma.config.ts",
+    "prisma:generate:payments": "cross-env NODE_ENV=development npx prisma generate --schema=./apps/payments/prisma/schema.prisma",
+    "prisma:generate:prod:payments": "cross-env NODE_ENV=production npx prisma generate --schema=./apps/payments/prisma/schema.prisma",
+    "prisma:deploy:prod:payments": "cross-env NODE_ENV=production npx prisma migrate deploy --config=./apps/payments/prisma.config.ts",
+    "prisma:deploy:dev:payments": "cross-env NODE_ENV=development npx prisma migrate deploy --config=./apps/payments/prisma.config.ts",
+    "prisma:deploy:test:payments": "cross-env NODE_ENV=testing npx prisma migrate deploy --config=./apps/payments/prisma.config.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.888.0",
@@ -62,6 +77,8 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "@prisma/client-runtime-utils": "^7.3.0",
+    "amqp-connection-manager": "^5.0.0",
+    "amqplib": "^0.10.9",
     "argon2": "^0.44.0",
     "class-transformer": "^0.5.1",
     "class-validator": "0.14.3",
@@ -80,6 +97,7 @@
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.1",
     "sharp": "^0.34.5",
+    "stripe": "^20.4.1",
     "swagger-ui-express": "^5.0.1",
     "ua-parser-js": "2.0.3"
   },
@@ -90,6 +108,7 @@
     "@nestjs/schematics": "11.0.0",
     "@nestjs/testing": "11.0.1",
     "@prisma/config": "^7.3.0",
+    "@types/amqplib": "^0.10.8",
     "@types/cookie-parser": "1.4.10",
     "@types/express": "5.0.0",
     "@types/jest": "30.0.0",
@@ -146,6 +165,14 @@
     ],
     "moduleNameMapper": {
       "^@libs/common(|/.*)$": "<rootDir>/libs/common/src/$1"
-    }
+    },
+    "projects": [
+      "<rootDir>/apps/snapflow-core/test/jest-unit.json",
+      "<rootDir>/apps/snapflow-core/test/jest-int.json",
+      "<rootDir>/apps/snapflow-core/test/jest-e2e.json",
+      "<rootDir>/apps/files/test/jest-unit.json",
+      "<rootDir>/apps/files/test/jest-int.json",
+      "<rootDir>/libs/common/jest-unit.json"
+    ]
   }
 }

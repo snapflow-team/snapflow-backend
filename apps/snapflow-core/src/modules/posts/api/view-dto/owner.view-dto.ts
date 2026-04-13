@@ -7,15 +7,17 @@ type OwnerViewSource = {
 };
 export class OwnerViewDto {
   @ApiProperty({
+    type: String,
     example: 1,
     description: 'Идентификатор юзера',
   })
-  ownerId: number;
+  ownerId: string;
 
   @ApiProperty({ example: 'John', description: 'Имя юзера' })
   username: string;
 
   @ApiProperty({
+    type: String,
     example: 'https://cdn.example.com/users/10/file.jpg',
     nullable: true,
     description: 'Публичный URL',
@@ -24,7 +26,7 @@ export class OwnerViewDto {
 
   static mapToView(owner: OwnerViewSource): OwnerViewDto {
     const dto = new OwnerViewDto();
-    dto.ownerId = owner.ownerId;
+    dto.ownerId = owner.ownerId.toString();
     dto.username = owner.username;
     dto.avatarUrl = owner.avatarUrl;
     return dto;

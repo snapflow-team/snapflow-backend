@@ -30,5 +30,6 @@ export class DeletePostUseCase implements ICommandHandler<DeletePostCommand> {
       }),
     );
     await Promise.allSettled(deletePromises); // чтобы удалить все даже если 1 упал
+    //todo(vitaliy) refactor нужно изменить логику удаления из S3, чтобы не случился рассинхрон
   }
 }

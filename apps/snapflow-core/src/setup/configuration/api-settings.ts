@@ -87,6 +87,15 @@ export class ApiSettings {
   @IsNotEmpty()
   nextjsRevalidationTokenExpiresIn: string | number;
 
+  @IsUrl({
+    protocols: ['amqp', 'amqps'],
+    require_tld: false,
+  })
+  rabbitMqUrl: string;
+
+  @IsString()
+  paymentsEventsQueueName: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
@@ -127,6 +136,10 @@ export class ApiSettings {
     this.nextjsRevalidationSecret = environmentVariables.NEXTJS_REVALIDATION_SECRET;
     this.nextjsRevalidationTokenExpiresIn =
       environmentVariables.NEXTJS_REVALIDATION_TOKEN_EXPIRES_IN;
+
+    this.rabbitMqUrl = environmentVariables.RABBITMQ_URL;
+
+    this.paymentsEventsQueueName = environmentVariables.PAYMENTS_EVENTS_QUEUE_NAME;
   }
 
   getJwtOptions() {

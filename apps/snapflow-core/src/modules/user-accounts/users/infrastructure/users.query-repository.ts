@@ -16,6 +16,7 @@ export class UsersQueryRepository {
         id: true,
         username: true,
         email: true,
+        accountType: true,
       },
     });
 

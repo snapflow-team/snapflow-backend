@@ -19,6 +19,20 @@ services:
     network_mode: "host"
     restart: unless-stopped
 
+  rabbitmq:
+    container_name: rabbitmq-sf
+    image: rabbitmq:3-management-alpine
+    network_mode: "host"
+    ports:
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:-guest}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+
 # Объявляем тома. Docker Compose сам создаст их, если их нет.
 volumes:
   postgres_data:
+  rabbitmq_data:
