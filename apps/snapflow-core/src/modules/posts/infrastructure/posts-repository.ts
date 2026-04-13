@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
-import { Prisma } from '@generated/prisma-snapflow';
+import { PostStatus, Prisma } from '@generated/prisma-snapflow';
 import { CreateMediaInput, PostWithMedia } from '../types/create-media.type';
 import { CreatePostWithMediaRepositoryDto } from './dto/create-post-with-media.repository-dto';
-import BatchPayload = Prisma.BatchPayload;
 import { UpdatePostRepositoryDto } from './dto/update-post.repository-dto';
+import BatchPayload = Prisma.BatchPayload;
 
 @Injectable()
 export class PostsRepository {
@@ -34,6 +34,21 @@ export class PostsRepository {
     return this.prisma.post.findFirst({
       where: { id: postId, userId, deletedAt: null },
       include: { postMedias: { where: { deletedAt: null }, orderBy: { position: 'asc' } } },
+    });
+  }
+
+  async findDraftByUserId(userId: number): Promise<PostWithMedia | null> {
+    return this.prisma.post.findFirst({
+      where: {
+        userId,
+        status: PostStatus.DRAFT,
+        deletedAt: null,
+      },
+      include: {
+        postMedias: {
+          where: { deletedAt: null },
+        },
+      },
     });
   }
 
