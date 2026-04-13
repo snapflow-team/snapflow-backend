@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiBody,
   ApiCreatedResponse,
   ApiOperation,
@@ -27,10 +27,10 @@ export function CreatePublishPostSwagger() {
 export function CreateDraftPostSwagger() {
   return applyDecorators(
     ApiBearerAuth('access-token'),
-    ApiOperation({ summary: 'Создать черновик поста' }),
+    ApiOperation({ summary: 'Сохранить черновик поста' }),
     ApiBody({ type: CreatePostInputDto }),
     ApiCreatedResponse({
-      description: 'Черновик успешно создан',
+      description: 'Черновик успешно сохранен',
       type: PostViewDto,
     }),
     ApiBadRequestResponse({ description: 'Невалидные данные или недоступные файлы' }),
