@@ -23,6 +23,7 @@ export class ValidateFilesUseCase implements ICommandHandler<ValidateFilesComman
       fileIds,
     );
 
+    // vilyamz: при таком ответе в snapflow не понятно почему "valid: false"
     if (files.length !== fileIds.length) {
       return { valid: false, files: [] };
     }
