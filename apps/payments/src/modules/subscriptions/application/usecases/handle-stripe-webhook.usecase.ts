@@ -102,6 +102,7 @@ export class HandleStripeWebhookUseCase
       return result;
     }
 
+    // review: почему idempotencyKey  записывается тут а не в транзакции и как решить гонку за данными?
     await this.redis.set(idempotencyKey, '1', 'EX', 86400);
 
     return Notification.ok();

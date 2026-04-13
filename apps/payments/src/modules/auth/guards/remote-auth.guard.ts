@@ -31,6 +31,7 @@ export class RemoteAuthGuard implements CanActivate {
     let user: UserContextDto;
 
     try {
+      // review: вывести отдельный роут!!!
       const response = await lastValueFrom(
         this.httpService.get<{ userId: string; email: string; username: string }>(
           `${this.coreUrl}/api/v1/auth/me`,
