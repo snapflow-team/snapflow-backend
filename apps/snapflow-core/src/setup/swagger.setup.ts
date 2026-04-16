@@ -73,5 +73,6 @@ export function swaggerSetup(
     explorer: Boolean(swaggerSettings.paymentsSwaggerUrl),
     swaggerOptions,
     customSiteTitle: 'Snapflow Documentation',
+    customCss: '.swagger-ui .info .url { display: none !important; }',
   });
 }
