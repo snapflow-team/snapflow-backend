@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { GetPlansQuery } from '../application/queries/get-plans.query-handler';
@@ -10,6 +10,7 @@ import { ExtractUserFromRequest } from '../../auth/guards/decorators/extract-use
 import { Notification } from '../../../common/notification/notification';
 import { CreateCheckoutSessionCommand } from '../application/usecases/create-checkout-session.usecase';
 import { NotificationExceptionMapper } from '../../../common/notification/notification-exception.mapper';
+import { PrismaService } from '../../database/prisma.service';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -17,6 +18,7 @@ export class SubscriptionsController {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Get('plans')
@@ -24,21 +26,35 @@ export class SubscriptionsController {
     return this.queryBus.execute(new GetPlansQuery());
   }
 
-  @UseGuards(RemoteAuthGuard)
+  //@UseGuards(RemoteAuthGuard)
   @Post('stripe/checkout-session')
   async createCheckoutSession(
     @Body() { planId }: CreateCheckoutSessionInputDto,
-    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+    //@ExtractUserFromRequest() { id: userId }: UserContextDto,
   ) {
     const notification: Notification<string> = await this.commandBus.execute<
       CreateCheckoutSessionCommand,
       Notification<string>
-    >(new CreateCheckoutSessionCommand({ userId, planId }));
+    >(new CreateCheckoutSessionCommand({ userId: 1, planId }));
 
     if (notification.hasErrors) {
       NotificationExceptionMapper.throw(notification);
     }
 
     return { url: notification.value };
+  }
+  @Delete('deleteData')
+  async deleteData() {
+    return await this.prisma.$executeRawUnsafe(`
+     TRUNCATE TABLE subscriptions
+        RESTART IDENTITY
+        CASCADE;
+      TRUNCATE TABLE payments
+        RESTART IDENTITY
+        CASCADE;
+        TRUNCATE TABLE outbox_events
+        RESTART IDENTITY
+        CASCADE;
+     `);
   }
 }

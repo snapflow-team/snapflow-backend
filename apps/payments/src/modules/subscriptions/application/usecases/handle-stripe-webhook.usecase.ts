@@ -14,12 +14,19 @@ import { StripeEvents } from '../constants/stripe-events.constants';
 import { PaymentsRepository } from '../../infrastructure/payments.repository';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 import { BillingPeriod } from '../types/billing-period.type';
-import { isCheckoutSessionObject, isInvoiceObject, } from '../type-guards/stripe-webhook.type-guards';
-import { PaymentCompletedEvent, PaymentFailedEvent, } from '../../../../../../../libs/contracts/payments';
+import {
+  isCheckoutSessionObject,
+  isInvoiceObject,
+} from '../type-guards/stripe-webhook.type-guards';
+import {
+  PaymentCompletedEvent,
+  PaymentFailedEvent,
+} from '../../../../../../../libs/contracts/payments';
 
 const SUPPORTED_WEBHOOK_EVENTS: ReadonlySet<string> = new Set([
   StripeEvents.CheckoutSessionCompleted,
   StripeEvents.InvoicePaymentFailed,
+  StripeEvents.CheckoutSessionExpired,
 ]);
 
 export class HandleStripeWebhookCommand {
@@ -48,11 +55,11 @@ export class HandleStripeWebhookUseCase
       rawBody,
       signature,
     );
-
+    console.log(stripeResult.value);
     if (stripeResult.hasErrors) {
       return Notification.copyErrors(stripeResult);
     }
-
+    return Notification.ok();
     const event: Stripe.Event = stripeResult.value;
 
     if (!SUPPORTED_WEBHOOK_EVENTS.has(event.type)) {
@@ -77,11 +84,14 @@ export class HandleStripeWebhookUseCase
 
     try {
       switch (event.type) {
-        case StripeEvents.CheckoutSessionCompleted:
+        case StripeEvents.CheckoutSessionCompleted: //Чекаут завершился успехом, подписка оплачена todo(vitaliy) этот ивент может срабатывать если пользователь оформил подписку снова через чекаут
           result = await this.handleCheckoutSessionCompleted(event);
           break;
+        case StripeEvents.CheckoutSessionExpired:
+          result = await this.handleCheckoutSessionExpired(event); //Нашу чекаут сессию не оплатили, поэтому нам надо ее завершить провалом
+          break;
         case StripeEvents.InvoicePaymentFailed:
-          result = await this.handleInvoicePaymentFailed(event);
+          result = await this.handleInvoicePaymentFailed(event); //Платеж по автопродлению не прошел
           break;
         default:
           result = Notification.ok();
@@ -120,6 +130,7 @@ export class HandleStripeWebhookUseCase
 
     const { id: externalId, subscription } = payload;
 
+    //todo(vitaliy) по доке в чекаут обжект хранится id подписки в виде строки, а не она сама
     const stripeSubscriptionId: string | undefined =
       typeof subscription === 'string' ? subscription : subscription?.id;
 
@@ -221,6 +232,60 @@ export class HandleStripeWebhookUseCase
       failureCode,
       failureMessage,
     } satisfies PaymentFailedEvent);
+
+    return Notification.ok();
+  }
+  private async handleCheckoutSessionExpired(event: Stripe.Event): Promise<Notification<void>> {
+    const payload = event.data.object;
+
+    if (!isCheckoutSessionObject(payload)) {
+      return Notification.fail(
+        NotificationResultCode.BadRequest,
+        'Webhook payload is not a checkout.session object',
+      );
+    }
+
+    const { id: externalId, subscription } = payload;
+
+    const stripeSubscriptionId: string | undefined =
+      typeof subscription === 'string' ? subscription : subscription?.id;
+
+    if (!stripeSubscriptionId) {
+      return Notification.fail(
+        NotificationResultCode.BadRequest,
+        `Stripe checkout session ${externalId} does not contain subscription id`,
+      );
+    }
+
+    const payment: Payment | null = await this.paymentsRepository.findByExternalId(externalId);
+
+    if (!payment) {
+      return Notification.fail(
+        NotificationResultCode.NotFound,
+        `Payment with externalId ${externalId} not found`,
+      );
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.paymentsRepository.markAsFailed(payment.id, tx);
+
+      const subscription: Subscription = await this.subscriptionsRepository.expireSubscription(
+        payment.subscriptionId,
+        stripeSubscriptionId,
+        tx,
+      );
+
+      //todo нужно ли нам создать ивент на протухание чекаут сессии
+      await this.outboxRepository.saveEvent(
+        OutboxEventType.PAYMENT_FAILED,
+        {
+          userId: subscription.userId,
+          planId: subscription.planId,
+          error: 'checkout session expired', //todo error тут временная
+        },
+        tx, //todo типизировать с satisfies
+      );
+    });
 
     return Notification.ok();
   }

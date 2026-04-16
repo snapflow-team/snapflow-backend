@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { PaymentStatus, Prisma, Subscription, SubscriptionStatus, } from '@generated/prisma-payments';
+import {
+  PaymentStatus,
+  Prisma,
+  Subscription,
+  SubscriptionStatus,
+} from '@generated/prisma-payments';
 import { CreatePendingOrderInfrastructureDto } from './types/create-pending-order.infrastructure-dto';
 import { BillingPeriod } from '../application/types/billing-period.type';
 
@@ -42,6 +47,21 @@ export class SubscriptionsRepository {
         stripeSubId,
         currentPeriodStart: currentPeriod.start,
         currentPeriodEnd: currentPeriod.end,
+      },
+    });
+  }
+
+  //todo(vitaliy) придумать более хорошее название методу который делает подписку протухшей после того как чекаут сессия протухла
+  async expireSubscription(
+    subscriptionId: number,
+    stripeSubId: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription> {
+    return tx.subscription.update({
+      where: { id: subscriptionId },
+      data: {
+        status: SubscriptionStatus.EXPIRED,
+        stripeSubId,
       },
     });
   }

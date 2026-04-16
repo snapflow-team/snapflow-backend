@@ -16,7 +16,7 @@ export class OutboxProcessorService {
     private readonly rabbitPublisher: RabbitMQPublisherService,
   ) {}
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_MINUTE)
   async processOutboxEvents() {
     if (this.isProcessing) return;
     this.isProcessing = true;

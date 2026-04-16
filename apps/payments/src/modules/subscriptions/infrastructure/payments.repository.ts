@@ -21,4 +21,10 @@ export class PaymentsRepository {
       data: { status: PaymentStatus.PAID },
     });
   }
+  async markAsFailed(paymentId: number, tx: Prisma.TransactionClient = this.prisma) {
+    return tx.payment.update({
+      where: { id: paymentId },
+      data: { status: PaymentStatus.FAILED },
+    });
+  }
 }
