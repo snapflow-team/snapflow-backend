@@ -10,6 +10,9 @@ import { ExtractUserFromRequest } from '../../auth/guards/decorators/extract-use
 import { Notification } from '../../../common/notification/notification';
 import { CreateCheckoutSessionCommand } from '../application/usecases/create-checkout-session.usecase';
 import { NotificationExceptionMapper } from '../../../common/notification/notification-exception.mapper';
+import { GetPlansSwagger } from './swagger/get-plans.swagger';
+import { CreateCheckoutSessionSwagger } from './swagger/create-checkout-session.swagger';
+import { CheckoutSessionUrlViewDto } from './view-dto/checkout-session-url.view-dto';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -20,16 +23,18 @@ export class SubscriptionsController {
   ) {}
 
   @Get('plans')
+  @GetPlansSwagger()
   async getPlans(): Promise<PlanViewDto[]> {
     return this.queryBus.execute(new GetPlansQuery());
   }
 
   @UseGuards(RemoteAuthGuard)
   @Post('stripe/checkout-session')
+  @CreateCheckoutSessionSwagger()
   async createCheckoutSession(
     @Body() { planId }: CreateCheckoutSessionInputDto,
     @ExtractUserFromRequest() { id: userId }: UserContextDto,
-  ) {
+  ): Promise<CheckoutSessionUrlViewDto> {
     const notification: Notification<string> = await this.commandBus.execute<
       CreateCheckoutSessionCommand,
       Notification<string>
