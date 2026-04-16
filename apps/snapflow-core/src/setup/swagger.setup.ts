@@ -50,18 +50,28 @@ export function swaggerSetup(
     .addTag('Profile', 'Управление профилями пользователей')
     .addTag('Sessions', 'Управление сессиями на разных устройствах');
 
-  const document: OpenAPIObject = SwaggerModule.createDocument(app, config.build());
-  SwaggerModule.setup(fullSwaggerPath, app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-      filter: true,
-      tagsSorter: 'alpha',
-      operationsSorter: 'alpha',
-      deepLinking: true,
-      tryItOutEnabled: true,
-      displayOperationId: false,
-      displayRequestDuration: true,
-    },
+  const coreDocument: OpenAPIObject = SwaggerModule.createDocument(app, config.build());
+  const swaggerOptions: Record<string, unknown> = {
+    persistAuthorization: true,
+    filter: true,
+    tagsSorter: 'alpha',
+    operationsSorter: 'alpha',
+    deepLinking: true,
+    tryItOutEnabled: true,
+    displayOperationId: false,
+    displayRequestDuration: true,
+  };
+  if (swaggerSettings.paymentsSwaggerUrl) {
+    swaggerOptions.urls = [
+      { url: `/${GLOBAL_PREFIX}/${swaggerPath}-json`, name: 'SnapFlow Core' },
+      { url: swaggerSettings.paymentsSwaggerUrl, name: 'Payments' },
+    ];
+    swaggerOptions['urls.primaryName'] = 'SnapFlow Core';
+  }
+
+  SwaggerModule.setup(fullSwaggerPath, app, coreDocument, {
+    explorer: Boolean(swaggerSettings.paymentsSwaggerUrl),
+    swaggerOptions,
     customSiteTitle: 'Snapflow Documentation',
   });
 }
