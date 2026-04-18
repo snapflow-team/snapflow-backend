@@ -54,14 +54,13 @@ export class SubscriptionsRepository {
   //todo(vitaliy) придумать более хорошее название методу который делает подписку протухшей после того как чекаут сессия протухла
   async expireSubscription(
     subscriptionId: number,
-    stripeSubId: string,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription> {
     return tx.subscription.update({
       where: { id: subscriptionId },
       data: {
         status: SubscriptionStatus.EXPIRED,
-        stripeSubId,
+        autoRenewal: false,
       },
     });
   }

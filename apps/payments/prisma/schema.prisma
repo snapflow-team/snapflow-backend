@@ -31,9 +31,9 @@ enum PaymentStatus {
 }
 
 enum OutboxEventType {
-  // refactor: переименовать PAYMENT_COMPLETED в SUBSCRIPTION_ACTIVATED
-  PAYMENT_COMPLETED
-  PAYMENT_FAILED
+  SUBSCRIPTION_ACTIVATED
+  CHECKOUT_SESSION_EXPIRED
+  SUBSCRIPTION_RENEWAL_FAILED
 }
 
 enum OutboxEventStatus {

@@ -19,9 +19,10 @@ import {
   isInvoiceObject,
 } from '../type-guards/stripe-webhook.type-guards';
 import {
-  PaymentCompletedEvent,
-  PaymentFailedEvent,
+  SubscriptionActivatedEvent,
+  SubscriptionRenewalFailedEvent,
 } from '../../../../../../../libs/contracts/payments';
+import { CheckoutSessionExpiredEvent } from '../../../../../../../libs/contracts/payments/payments-checkout-sesion-expired.event';
 
 const SUPPORTED_WEBHOOK_EVENTS: ReadonlySet<string> = new Set([
   StripeEvents.CheckoutSessionCompleted,
@@ -55,11 +56,11 @@ export class HandleStripeWebhookUseCase
       rawBody,
       signature,
     );
-    console.log(stripeResult.value);
+    //console.log(stripeResult.value);
     if (stripeResult.hasErrors) {
       return Notification.copyErrors(stripeResult);
     }
-    return Notification.ok();
+
     const event: Stripe.Event = stripeResult.value;
 
     if (!SUPPORTED_WEBHOOK_EVENTS.has(event.type)) {
@@ -170,13 +171,13 @@ export class HandleStripeWebhookUseCase
       );
 
       await this.outboxRepository.saveEvent(
-        OutboxEventType.PAYMENT_COMPLETED,
+        OutboxEventType.SUBSCRIPTION_ACTIVATED,
         {
           userId: subscription.userId,
           planId: subscription.planId,
           subscriptionId: subscription.id,
           currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() ?? null,
-        } satisfies PaymentCompletedEvent,
+        } satisfies SubscriptionActivatedEvent,
         tx,
       );
     });
@@ -219,7 +220,7 @@ export class HandleStripeWebhookUseCase
 
     const { failureCode, failureMessage } = this.extractInvoiceFailureDetails(payload);
 
-    await this.outboxRepository.saveEvent(OutboxEventType.PAYMENT_FAILED, {
+    await this.outboxRepository.saveEvent(OutboxEventType.SUBSCRIPTION_RENEWAL_FAILED, {
       userId: localSubscription.userId,
       planId: localSubscription.planId,
       subscriptionId: localSubscription.id,
@@ -231,7 +232,7 @@ export class HandleStripeWebhookUseCase
           : new Date(payload.next_payment_attempt * 1000).toISOString(),
       failureCode,
       failureMessage,
-    } satisfies PaymentFailedEvent);
+    } satisfies SubscriptionRenewalFailedEvent);
 
     return Notification.ok();
   }
@@ -245,17 +246,8 @@ export class HandleStripeWebhookUseCase
       );
     }
 
-    const { id: externalId, subscription } = payload;
-
-    const stripeSubscriptionId: string | undefined =
-      typeof subscription === 'string' ? subscription : subscription?.id;
-
-    if (!stripeSubscriptionId) {
-      return Notification.fail(
-        NotificationResultCode.BadRequest,
-        `Stripe checkout session ${externalId} does not contain subscription id`,
-      );
-    }
+    //Нам здесь нужен только externalId чекаут сессии, так как подписка не будет оформлена и не будет id подписки
+    const { id: externalId } = payload;
 
     const payment: Payment | null = await this.paymentsRepository.findByExternalId(externalId);
 
@@ -271,19 +263,17 @@ export class HandleStripeWebhookUseCase
 
       const subscription: Subscription = await this.subscriptionsRepository.expireSubscription(
         payment.subscriptionId,
-        stripeSubscriptionId,
         tx,
       );
 
-      //todo нужно ли нам создать ивент на протухание чекаут сессии
       await this.outboxRepository.saveEvent(
-        OutboxEventType.PAYMENT_FAILED,
+        OutboxEventType.CHECKOUT_SESSION_EXPIRED,
         {
           userId: subscription.userId,
           planId: subscription.planId,
-          error: 'checkout session expired', //todo error тут временная
-        },
-        tx, //todo типизировать с satisfies
+          description: 'checkout session expired',
+        } satisfies CheckoutSessionExpiredEvent,
+        tx,
       );
     });
 
