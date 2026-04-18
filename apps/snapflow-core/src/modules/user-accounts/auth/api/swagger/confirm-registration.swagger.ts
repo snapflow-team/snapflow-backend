@@ -16,9 +16,10 @@ export function ConfirmRegistrationSwagger(): MethodDecorator {
     }),
     ApiBody({ type: ConfirmationEmailCodeInputDto }),
     ApiNoContentResponse({
-      description: 'Если код подтверждения неверен, просрочен или уже применён',
+      description: 'Электронная почта была подтверждена. Аккаунт был активирован',
     }),
     ApiBadRequestResponse({
+      description: 'Если код подтверждения неверен, просрочен или уже применён',
       type: ErrorResponseDto,
     }),
     ApiTooManyRequestsResponse({
