@@ -45,10 +45,6 @@ enum OutboxEventStatus {
 
 model Subscription {
   id                 Int                @id @default(autoincrement())
-  /// ВНИМАНИЕ: Поле userId имеет уникальное ограничение в БД только для активных записей (Soft Delete).
-  /// @unique убран из схемы намеренно, чтобы можно было создавать новую подписку после удаления старой.
-  /// Добавлено в миграции: 20260326091256_init_payments_schema
-  userId             Int                @map("user_id")
   planId             String             @map("plan_id")
   stripeSubId        String?            @map("stripe_sub_id")
   accountType        AccountType        @default(PERSONAL) @map("account_type")
@@ -63,15 +59,15 @@ model Subscription {
 
   payments Payment[]
 
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId Int      @map("customer_id")
+
   @@map("subscriptions")
 }
 
 model Payment {
   id         Int             @id @default(autoincrement())
   planId     String          @map("plan_id")
-  /// ВНИМАНИЕ: Поле externalId имеет уникальное ограничение в БД только для активных записей (Soft Delete).
-  /// @unique убран из схемы намеренно, чтобы отмененные/удаленные платежи не блокировали новые с тем же ID.
-  /// Добавлено в миграции: 20260326091256_init_payments_schema
   externalId String          @map("external_id")
   provider   PaymentProvider @default(STRIPE)
   amount     Int
@@ -100,4 +96,19 @@ model OutboxEvent {
 
   @@index([status, createdAt])
   @@map("outbox_events")
+}
+
+model Customer {
+  id          Int    @id @default(autoincrement())
+  stripeCusId String @map("stripe_cus_id")
+  userId      Int    @map("user_id")
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  subscription Subscription[]
+
+  @@index([userId])
+  @@map("customers")
 }
