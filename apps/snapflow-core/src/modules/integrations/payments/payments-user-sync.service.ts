@@ -1,12 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AccountType } from '@generated/prisma-snapflow';
 import {
-  PaymentCompletedEvent,
   PaymentsRoutingKey,
+  SubscriptionActivatedEvent,
 } from '../../../../../../libs/contracts/payments';
 import {
-  isPaymentCompletedEvent,
-  isPaymentFailedEvent,
+  isCheckoutSessionExpiredEvent,
+  isSubscriptionActivatedEvent,
+  isSubscriptionRenewalFailedEvent,
 } from './type-guards/payments-events.type-guards';
 import { UsersRepository } from '../../user-accounts/users/infrastructure/users.repository';
 
@@ -18,17 +19,17 @@ export class PaymentsUserSyncService {
 
   async applyRoutingKey(routingKey: PaymentsRoutingKey, payload: unknown): Promise<void> {
     switch (routingKey) {
-      case PaymentsRoutingKey.PaymentCompleted:
-        if (!isPaymentCompletedEvent(payload)) {
+      case PaymentsRoutingKey.SubscriptionActivated:
+        if (!isSubscriptionActivatedEvent(payload)) {
           this.logger.warn(`Invalid ${routingKey} payload`);
 
           return;
         }
-
+        this.logger.warn(`Invalid ${payload.planId} payload`);
         await this.upsertBusinessSubscription(payload);
         break;
-      case PaymentsRoutingKey.PaymentFailed: {
-        if (!isPaymentFailedEvent(payload)) {
+      case PaymentsRoutingKey.SubscriptionRenewalFailed: {
+        if (!isSubscriptionRenewalFailedEvent(payload)) {
           this.logger.warn(`Invalid ${routingKey} payload`);
 
           return;
@@ -38,12 +39,23 @@ export class PaymentsUserSyncService {
         );
         break;
       }
+      case PaymentsRoutingKey.CheckoutSessionExpired: {
+        if (!isCheckoutSessionExpiredEvent(payload)) {
+          this.logger.warn(`Invalid ${routingKey} payload`);
+
+          return;
+        }
+        this.logger.warn(
+          `Checkout session expired for user ${payload.userId}, plan: ${payload.planId}, description: ${payload.description}`,
+        );
+        break;
+      }
       default:
         this.logger.warn(`Unhandled routing key: ${routingKey}`);
     }
   }
 
-  private async upsertBusinessSubscription(data: PaymentCompletedEvent): Promise<void> {
+  private async upsertBusinessSubscription(data: SubscriptionActivatedEvent): Promise<void> {
     const subscriptionActiveUntil: Date | null =
       data.currentPeriodEnd !== undefined
         ? data.currentPeriodEnd === null

@@ -2,16 +2,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
 import { AccountType } from '@generated/prisma-snapflow';
 import {
-  PaymentCompletedEvent,
-  PaymentFailedEvent,
+  SubscriptionActivatedEvent,
+  SubscriptionRenewalFailedEvent,
   PaymentsRoutingKey,
 } from '../../../../../../libs/contracts/payments';
 import { PaymentsUserSyncService } from './payments-user-sync.service';
 import { UsersRepository } from '../../user-accounts/users/infrastructure/users.repository';
 
 function createPaymentCompletedPayload(
-  overrides: Partial<PaymentCompletedEvent> = {},
-): PaymentCompletedEvent {
+  overrides: Partial<SubscriptionActivatedEvent> = {},
+): SubscriptionActivatedEvent {
   return {
     userId: 1,
     planId: 'plan-1',
@@ -22,8 +22,8 @@ function createPaymentCompletedPayload(
 }
 
 function createPaymentFailedPayload(
-  overrides: Partial<PaymentFailedEvent> = {},
-): PaymentFailedEvent {
+  overrides: Partial<SubscriptionRenewalFailedEvent> = {},
+): SubscriptionRenewalFailedEvent {
   return {
     userId: 1,
     planId: 'plan-1',
@@ -64,14 +64,14 @@ describe('PaymentsUserSyncService (unit)', () => {
     jest.clearAllMocks();
   });
 
-  describe('applyRoutingKey() — PaymentCompleted', () => {
+  describe('applyRoutingKey() — SubscriptionActivated', () => {
     describe('позитивные сценарии', () => {
       it('currentPeriodEnd = строка ISO -> updateAccountType с new Date(...)', async () => {
-        const payload: PaymentCompletedEvent = createPaymentCompletedPayload({
+        const payload: SubscriptionActivatedEvent = createPaymentCompletedPayload({
           currentPeriodEnd: '2026-05-01T00:00:00Z',
         });
 
-        await service.applyRoutingKey(PaymentsRoutingKey.PaymentCompleted, payload);
+        await service.applyRoutingKey(PaymentsRoutingKey.SubscriptionActivated, payload);
 
         expect(usersRepositoryMock.updateAccountType).toHaveBeenCalledTimes(1);
         expect(usersRepositoryMock.updateAccountType).toHaveBeenCalledWith({
@@ -83,11 +83,11 @@ describe('PaymentsUserSyncService (unit)', () => {
       });
 
       it('currentPeriodEnd = null -> updateAccountType с subscriptionActiveUntil = null', async () => {
-        const payload: PaymentCompletedEvent = createPaymentCompletedPayload({
+        const payload: SubscriptionActivatedEvent = createPaymentCompletedPayload({
           currentPeriodEnd: null,
         });
 
-        await service.applyRoutingKey(PaymentsRoutingKey.PaymentCompleted, payload);
+        await service.applyRoutingKey(PaymentsRoutingKey.SubscriptionActivated, payload);
 
         expect(usersRepositoryMock.updateAccountType).toHaveBeenCalledTimes(1);
         expect(usersRepositoryMock.updateAccountType).toHaveBeenCalledWith({
@@ -100,7 +100,7 @@ describe('PaymentsUserSyncService (unit)', () => {
 
     describe('валидация payload', () => {
       it('невалидный payload -> logger.warn, updateAccountType не вызван', async () => {
-        await service.applyRoutingKey(PaymentsRoutingKey.PaymentCompleted, {
+        await service.applyRoutingKey(PaymentsRoutingKey.SubscriptionActivated, {
           userId: 'not-a-number',
         });
 
@@ -113,9 +113,9 @@ describe('PaymentsUserSyncService (unit)', () => {
   describe('applyRoutingKey() — PaymentFailed', () => {
     describe('позитивные сценарии', () => {
       it('валидный payload -> logger.warn с userId, subscriptionId и остальными полями', async () => {
-        const payload: PaymentFailedEvent = createPaymentFailedPayload();
+        const payload: SubscriptionRenewalFailedEvent = createPaymentFailedPayload();
 
-        await service.applyRoutingKey(PaymentsRoutingKey.PaymentFailed, payload);
+        await service.applyRoutingKey(PaymentsRoutingKey.SubscriptionRenewalFailed, payload);
 
         expect(Logger.prototype.warn).toHaveBeenCalledTimes(1);
         const warnMessage = (Logger.prototype.warn as jest.Mock).mock.calls[0][0] as string;
@@ -130,13 +130,13 @@ describe('PaymentsUserSyncService (unit)', () => {
       });
 
       it('опциональные поля null -> logger.warn с "n/a"', async () => {
-        const payload: PaymentFailedEvent = createPaymentFailedPayload({
+        const payload: SubscriptionRenewalFailedEvent = createPaymentFailedPayload({
           failureCode: null,
           failureMessage: null,
           nextPaymentAttempt: null,
         });
 
-        await service.applyRoutingKey(PaymentsRoutingKey.PaymentFailed, payload);
+        await service.applyRoutingKey(PaymentsRoutingKey.SubscriptionRenewalFailed, payload);
 
         expect(Logger.prototype.warn).toHaveBeenCalledTimes(1);
         const warnMessage = (Logger.prototype.warn as jest.Mock).mock.calls[0][0] as string;
@@ -146,7 +146,7 @@ describe('PaymentsUserSyncService (unit)', () => {
 
     describe('валидация payload', () => {
       it('невалидный payload -> logger.warn, без побочных эффектов', async () => {
-        await service.applyRoutingKey(PaymentsRoutingKey.PaymentFailed, {});
+        await service.applyRoutingKey(PaymentsRoutingKey.SubscriptionRenewalFailed, {});
 
         expect(Logger.prototype.warn).toHaveBeenCalledWith(expect.stringContaining('Invalid'));
         expect(usersRepositoryMock.updateAccountType).not.toHaveBeenCalled();

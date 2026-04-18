@@ -1,9 +1,10 @@
 import {
   ALL_PAYMENTS_ROUTING_KEYS,
-  PaymentCompletedEvent,
-  PaymentFailedEvent,
+  SubscriptionRenewalFailedEvent,
   PaymentsRoutingKey,
+  SubscriptionActivatedEvent,
 } from '../../../../../../../libs/contracts/payments';
+import { CheckoutSessionExpiredEvent } from '../../../../../../../libs/contracts/payments/payments-checkout-sesion-expired.event';
 
 function isRecord(payload: unknown): payload is Record<string, unknown> {
   return typeof payload === 'object' && payload !== null;
@@ -17,7 +18,9 @@ export function parsePaymentsRoutingKey(routingKey: string): PaymentsRoutingKey 
   return isPaymentsRoutingKey(routingKey) ? routingKey : null;
 }
 
-export function isPaymentCompletedEvent(payload: unknown): payload is PaymentCompletedEvent {
+export function isSubscriptionActivatedEvent(
+  payload: unknown,
+): payload is SubscriptionActivatedEvent {
   return (
     isRecord(payload) &&
     typeof payload.userId === 'number' &&
@@ -27,7 +30,9 @@ export function isPaymentCompletedEvent(payload: unknown): payload is PaymentCom
   );
 }
 
-export function isPaymentFailedEvent(payload: unknown): payload is PaymentFailedEvent {
+export function isSubscriptionRenewalFailedEvent(
+  payload: unknown,
+): payload is SubscriptionRenewalFailedEvent {
   return (
     isRecord(payload) &&
     typeof payload.userId === 'number' &&
@@ -38,5 +43,15 @@ export function isPaymentFailedEvent(payload: unknown): payload is PaymentFailed
     (typeof payload.nextPaymentAttempt === 'string' || payload.nextPaymentAttempt === null) &&
     (typeof payload.failureCode === 'string' || payload.failureCode === null) &&
     (typeof payload.failureMessage === 'string' || payload.failureMessage === null)
+  );
+}
+export function isCheckoutSessionExpiredEvent(
+  payload: unknown,
+): payload is CheckoutSessionExpiredEvent {
+  return (
+    isRecord(payload) &&
+    typeof payload.userId === 'number' &&
+    typeof payload.planId === 'string' &&
+    typeof payload.description === 'string'
   );
 }
