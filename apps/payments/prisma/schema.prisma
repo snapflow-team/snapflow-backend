@@ -68,6 +68,9 @@ model Subscription {
 model Payment {
   id         Int             @id @default(autoincrement())
   planId     String          @map("plan_id")
+  /// ВНИМАНИЕ: Поле externalId имеет уникальное ограничение в БД только для активных записей (Soft Delete).
+  /// @unique убран из схемы намеренно, чтобы можно было создавать новую подписку после удаления старой.
+  /// Добавлено в миграции: 20260326091256_init_payments_schema
   externalId String          @map("external_id")
   provider   PaymentProvider @default(STRIPE)
   amount     Int
