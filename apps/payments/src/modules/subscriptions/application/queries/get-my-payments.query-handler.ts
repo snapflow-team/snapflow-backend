@@ -18,6 +18,6 @@ export class GetMyPaymentsQueryHandler
   constructor(private readonly paymentsQueryRepository: PaymentsQueryRepository) {}
 
   execute({ userId, queryParams }: GetMyPaymentsQuery): Promise<PaginatedViewDto<PaymentViewDto>> {
-    return this.paymentsQueryRepository.getPaymentsForUser(userId, queryParams);
+    return this.paymentsQueryRepository.findPaymentsForUser(userId, queryParams);
   }
 }
