@@ -17,6 +17,7 @@ import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto'
 import { GetPaymentsQueryParams } from './input-dto/get-payments-query-params.input-dto';
 import { PaymentViewDto } from './view-dto/payment.view-dto';
 import { GetMyPaymentsQuery } from '../application/queries/get-my-payments.query-handler';
+import { GetMyPaymentsSwagger } from './swagger/get-my-payments.swagger';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -34,6 +35,7 @@ export class SubscriptionsController {
 
   @Get('my-payments')
   @UseGuards(RemoteAuthGuard)
+  @GetMyPaymentsSwagger()
   async getMyPayments(
     @ExtractUserFromRequest() { id: userId }: UserContextDto,
     @Query() query: GetPaymentsQueryParams,
