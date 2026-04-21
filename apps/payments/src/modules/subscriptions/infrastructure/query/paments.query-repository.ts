@@ -1,0 +1,43 @@
+import { PrismaService } from '../../../database/prisma.service';
+import { GetPaymentsQueryParams } from '../../api/input-dto/get-payments-query-params.input-dto';
+import { PaginatedViewDto } from '../../../../common/dto/paginated.view-dto';
+import { PaymentViewDto } from '../../api/view-dto/payment.view-dto';
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class PaymentsQueryRepository {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findPaymentsForUser(
+    userId: number,
+    queryParams: GetPaymentsQueryParams,
+  ): Promise<PaginatedViewDto<PaymentViewDto>> {
+    const { pageNumber, pageSize, sortDirection, sortBy }: GetPaymentsQueryParams = queryParams;
+    const where = {
+      deletedAt: null,
+      subscription: {
+        userId,
+        deletedAt: null,
+      },
+    };
+
+    const [payments, totalCount] = await Promise.all([
+      this.prisma.payment.findMany({
+        where,
+        include: { subscription: true },
+        orderBy: { [sortBy]: sortDirection },
+        skip: queryParams.calculateSkip(),
+        take: pageSize,
+      }),
+      this.prisma.payment.count({ where }),
+    ]);
+
+    return {
+      pageSize,
+      page: pageNumber,
+      totalCount,
+      pagesCount: Math.ceil(totalCount / pageSize),
+      items: payments.map((p) => PaymentViewDto.mapToView(p)),
+    };
+  }
+}
