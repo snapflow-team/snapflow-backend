@@ -12,9 +12,13 @@ import { PaymentsModule } from '../../../../payments.module';
 import { PrismaService } from '../../../database/prisma.service';
 import { StripeService } from '../services/stripe.service';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
-import { HandleStripeWebhookCommand, HandleStripeWebhookUseCase, } from './handle-stripe-webhook.usecase';
+import {
+  HandleStripeWebhookCommand,
+  HandleStripeWebhookUseCase,
+} from './handle-stripe-webhook.usecase';
 import { StripeEvents } from '../constants/stripe-events.constants';
 import { BillingPeriod } from '../types/billing-period.type';
+import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 
 describe('HandleStripeWebhookUseCase (Integration)', () => {
   let module: TestingModule;
@@ -25,8 +29,8 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
   const retrieveSubscriptionBillingPeriodMock = jest.fn();
 
   const redisMock = {
-    get: jest.fn<Promise<string | null>, [string]>(),
-    set: jest.fn<Promise<'OK' | null>, [string, string, string, number]>(),
+    set: jest.fn<Promise<'OK' | null>, [string, string, string, number, string]>(),
+    del: jest.fn<Promise<number>, [string]>(),
   };
 
   beforeAll(async () => {
@@ -55,9 +59,10 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
 
     constructEventMock.mockReset();
     retrieveSubscriptionBillingPeriodMock.mockReset();
-    redisMock.get.mockReset();
     redisMock.set.mockReset();
-    redisMock.get.mockResolvedValue(null);
+    redisMock.del.mockReset();
+    redisMock.set.mockResolvedValue('OK');
+    redisMock.del.mockResolvedValue(1);
   });
 
   afterAll(async () => {
@@ -247,6 +252,7 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
       '1',
       'EX',
       86400,
+      'NX',
     );
   });
 
@@ -277,6 +283,73 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
       '1',
       'EX',
       86400,
+      'NX',
     );
+  });
+
+  it('если lock в redis не получен: пропускает обработку и возвращает ok', async () => {
+    redisMock.set.mockResolvedValueOnce(null);
+
+    constructEventMock.mockReturnValue(
+      Notification.ok(makeCheckoutCompletedEvent('cs_test_locked', 'sub_test_locked')),
+    );
+
+    const result: Notification<void> = await useCase.execute(
+      new HandleStripeWebhookCommand({ rawBody: Buffer.from('{}'), signature: 'sig' }),
+    );
+
+    expect(result.hasErrors).toBe(false);
+    expect(retrieveSubscriptionBillingPeriodMock).not.toHaveBeenCalled();
+    expect(redisMock.del).not.toHaveBeenCalled();
+  });
+
+  it('при бизнес-ошибке: удаляет idempotency key, чтобы разрешить retry', async () => {
+    const event = makeCheckoutCompletedEvent('cs_missing_payment', 'sub_missing_payment');
+    constructEventMock.mockReturnValue(Notification.ok(event));
+    retrieveSubscriptionBillingPeriodMock.mockResolvedValue(
+      Notification.ok({
+        start: new Date('2026-01-01T00:00:00.000Z'),
+        end: new Date('2026-02-01T00:00:00.000Z'),
+      }),
+    );
+
+    const result: Notification<void> = await useCase.execute(
+      new HandleStripeWebhookCommand({ rawBody: Buffer.from('{}'), signature: 'sig' }),
+    );
+
+    expect(result.hasErrors).toBe(true);
+    expect(redisMock.del).toHaveBeenCalledWith('stripe_webhook_processed:evt_test_1');
+  });
+
+  it('при неожиданном исключении: удаляет idempotency key и возвращает internal error', async () => {
+    await prisma.subscription.create({
+      data: {
+        userId: 777,
+        planId: 'business_monthly',
+        status: SubscriptionStatus.PENDING,
+        payments: {
+          create: {
+            planId: 'business_monthly',
+            externalId: 'cs_throw',
+            amount: 1000,
+            status: PaymentStatus.PENDING,
+          },
+        },
+      },
+    });
+
+    const event = makeCheckoutCompletedEvent('cs_throw', 'sub_throw');
+    constructEventMock.mockReturnValue(Notification.ok(event));
+    retrieveSubscriptionBillingPeriodMock.mockImplementationOnce(() => {
+      throw new Error('stripe dependency down');
+    });
+
+    const result: Notification<void> = await useCase.execute(
+      new HandleStripeWebhookCommand({ rawBody: Buffer.from('{}'), signature: 'sig' }),
+    );
+
+    expect(result.hasErrors).toBe(true);
+    expect(result.code).toBe(NotificationResultCode.InternalServerError);
+    expect(redisMock.del).toHaveBeenCalledWith('stripe_webhook_processed:evt_test_1');
   });
 });

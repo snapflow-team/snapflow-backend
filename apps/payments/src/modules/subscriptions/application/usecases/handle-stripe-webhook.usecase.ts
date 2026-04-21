@@ -14,8 +14,14 @@ import { StripeEvents } from '../constants/stripe-events.constants';
 import { PaymentsRepository } from '../../infrastructure/payments.repository';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 import { BillingPeriod } from '../types/billing-period.type';
-import { isCheckoutSessionObject, isInvoiceObject, } from '../type-guards/stripe-webhook.type-guards';
-import { PaymentCompletedEvent, PaymentFailedEvent, } from '../../../../../../../libs/contracts/payments';
+import {
+  isCheckoutSessionObject,
+  isInvoiceObject,
+} from '../type-guards/stripe-webhook.type-guards';
+import {
+  PaymentCompletedEvent,
+  PaymentFailedEvent,
+} from '../../../../../../../libs/contracts/payments';
 
 const SUPPORTED_WEBHOOK_EVENTS: ReadonlySet<string> = new Set([
   StripeEvents.CheckoutSessionCompleted,
@@ -63,13 +69,14 @@ export class HandleStripeWebhookUseCase
       return Notification.ok();
     }
 
+    // review: показать на ревью текущию реализацию идемпотентности через редис!
+
     const idempotencyKey: string = `stripe_webhook_processed:${event.id}`;
 
-    const isProcessed: string | null = await this.redis.get(idempotencyKey);
+    const locked: string | null = await this.redis.set(idempotencyKey, '1', 'EX', 86400, 'NX');
 
-    if (isProcessed) {
+    if (!locked) {
       this.logger.warn(`Event ${event.id} already processed. Skipping.`);
-
       return Notification.ok();
     }
 
@@ -92,6 +99,8 @@ export class HandleStripeWebhookUseCase
 
       this.logger.error(`Failed: ${errorMessage}`, errorStack);
 
+      await this.redis.del(idempotencyKey);
+
       return Notification.fail(
         NotificationResultCode.InternalServerError,
         'Internal database error during webhook processing',
@@ -99,11 +108,10 @@ export class HandleStripeWebhookUseCase
     }
 
     if (result.hasErrors) {
+      await this.redis.del(idempotencyKey);
+
       return result;
     }
-
-    // review: почему idempotencyKey  записывается тут а не в транзакции и как решить гонку за данными?
-    await this.redis.set(idempotencyKey, '1', 'EX', 86400);
 
     return Notification.ok();
   }
