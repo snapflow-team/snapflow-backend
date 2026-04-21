@@ -14,8 +14,14 @@ import { StripeEvents } from '../constants/stripe-events.constants';
 import { PaymentsRepository } from '../../infrastructure/payments.repository';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 import { BillingPeriod } from '../types/billing-period.type';
-import { isCheckoutSessionObject, isInvoiceObject, } from '../type-guards/stripe-webhook.type-guards';
-import { PaymentCompletedEvent, PaymentFailedEvent, } from '../../../../../../../libs/contracts/payments';
+import {
+  isCheckoutSessionObject,
+  isInvoiceObject,
+} from '../type-guards/stripe-webhook.type-guards';
+import {
+  PaymentCompletedEvent,
+  PaymentFailedEvent,
+} from '../../../../../../../libs/contracts/payments';
 
 const SUPPORTED_WEBHOOK_EVENTS: ReadonlySet<string> = new Set([
   StripeEvents.CheckoutSessionCompleted,
@@ -62,6 +68,8 @@ export class HandleStripeWebhookUseCase
 
       return Notification.ok();
     }
+
+    // review: показать на ревью текущию реализацию идемпотентности через редис!
 
     const idempotencyKey: string = `stripe_webhook_processed:${event.id}`;
 
