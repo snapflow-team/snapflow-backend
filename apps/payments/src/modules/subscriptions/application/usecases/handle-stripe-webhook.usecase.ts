@@ -23,6 +23,7 @@ import {
   SubscriptionRenewalFailedEvent,
 } from '../../../../../../../libs/contracts/payments';
 import { CheckoutSessionExpiredEvent } from '../../../../../../../libs/contracts/payments/payments-checkout-sesion-expired.event';
+import { CustomersRepository } from '../../infrastructure/customers.repository';
 
 const SUPPORTED_WEBHOOK_EVENTS: ReadonlySet<string> = new Set([
   StripeEvents.CheckoutSessionCompleted,
@@ -44,6 +45,7 @@ export class HandleStripeWebhookUseCase
     private readonly stripeService: StripeService,
     private readonly paymentsRepository: PaymentsRepository,
     private readonly subscriptionsRepository: SubscriptionsRepository,
+    private readonly customersRepository: CustomersRepository,
     private readonly outboxRepository: OutboxRepository,
     private readonly prisma: PrismaService,
     @Inject(REDIS_CLIENT_INJECT_TOKEN) private readonly redis: Redis,
@@ -56,7 +58,7 @@ export class HandleStripeWebhookUseCase
       rawBody,
       signature,
     );
-
+    //console.log(stripeResult.value);
     if (stripeResult.hasErrors) {
       return Notification.copyErrors(stripeResult);
     }
@@ -162,6 +164,7 @@ export class HandleStripeWebhookUseCase
 
     const currentPeriod: BillingPeriod = periodResult.value;
 
+    //todo надо ли обернуть в try catch, чтобы отдавать Notification?
     await this.prisma.$transaction(async (tx) => {
       await this.paymentsRepository.markAsPaid(payment.id, tx);
 
@@ -171,11 +174,18 @@ export class HandleStripeWebhookUseCase
         currentPeriod,
         tx,
       );
+      const user = await this.customersRepository.findById(subscription.customerId);
 
+      if (!user) {
+        return Notification.fail(
+          NotificationResultCode.InternalServerError,
+          `Customer with id ${subscription.customerId} not found`,
+        );
+      }
       await this.outboxRepository.saveEvent(
         OutboxEventType.SUBSCRIPTION_ACTIVATED,
         {
-          userId: subscription.userId,
+          userId: user.id,
           planId: subscription.planId,
           subscriptionId: subscription.id,
           currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() ?? null,
@@ -219,11 +229,19 @@ export class HandleStripeWebhookUseCase
 
       return Notification.ok();
     }
+    const user = await this.customersRepository.findById(localSubscription.customerId);
+
+    if (!user) {
+      return Notification.fail(
+        NotificationResultCode.InternalServerError,
+        `Customer with id ${localSubscription.customerId} not found`,
+      );
+    }
 
     const { failureCode, failureMessage } = this.extractInvoiceFailureDetails(payload);
 
     await this.outboxRepository.saveEvent(OutboxEventType.SUBSCRIPTION_RENEWAL_FAILED, {
-      userId: localSubscription.userId,
+      userId: user.userId,
       planId: localSubscription.planId,
       subscriptionId: localSubscription.id,
       stripeInvoiceId: payload.id,
@@ -267,11 +285,18 @@ export class HandleStripeWebhookUseCase
         payment.subscriptionId,
         tx,
       );
+      const user = await this.customersRepository.findById(subscription.customerId);
 
+      if (!user) {
+        return Notification.fail(
+          NotificationResultCode.InternalServerError,
+          `Customer with id ${subscription.customerId} not found`,
+        );
+      }
       await this.outboxRepository.saveEvent(
         OutboxEventType.CHECKOUT_SESSION_EXPIRED,
         {
-          userId: subscription.userId,
+          userId: user.id,
           planId: subscription.planId,
           description: 'checkout session expired',
         } satisfies CheckoutSessionExpiredEvent,

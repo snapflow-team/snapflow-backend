@@ -25,7 +25,6 @@ export class PaymentsUserSyncService {
 
           return;
         }
-        this.logger.warn(`Invalid ${payload.planId} payload`);
         await this.upsertBusinessSubscription(payload);
         break;
       case PaymentsRoutingKey.SubscriptionRenewalFailed: {

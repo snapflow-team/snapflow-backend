@@ -1,5 +1,5 @@
 export type CreatePendingOrderInfrastructureDto = {
-  userId: number;
+  customerId: number;
   planId: string;
   amount: number;
   externalId: string;

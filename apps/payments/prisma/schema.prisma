@@ -43,6 +43,7 @@ enum OutboxEventStatus {
   FAILED
 }
 
+//todo как продлить подписку
 model Subscription {
   id                 Int                @id @default(autoincrement())
   planId             String             @map("plan_id")
