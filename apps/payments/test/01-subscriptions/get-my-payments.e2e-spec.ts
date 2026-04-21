@@ -204,6 +204,34 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
     expect(body.items.some((item) => item.userId === '2')).toBe(false);
   });
 
+  it('должен возвращать только платежи со статусом PAID', async () => {
+    const paidSubscription = await createSubscriptionWithPayment({
+      userId: TEST_USER_ID,
+      planId: 'business_monthly',
+    });
+
+    await prisma.payment.create({
+      data: {
+        subscriptionId: paidSubscription.id,
+        planId: 'business_monthly',
+        provider: PaymentProvider.STRIPE,
+        amount: 1500,
+        status: PaymentStatus.PENDING,
+        externalId: `ext_pending_${TEST_USER_ID}_${Date.now()}`,
+      },
+    });
+
+    const res: Response = await request(server)
+      .get(`/${GLOBAL_PREFIX}/subscriptions/my-payments`)
+      .set('Authorization', 'Bearer valid-token')
+      .expect(HttpStatus.OK);
+
+    const body = res.body as PaginatedViewDto<PaymentViewDto>;
+    expect(body.items).toHaveLength(1);
+    expect(body.totalCount).toBe(1);
+    expect(body.items[0]?.price).toBe(1000);
+  });
+
   // vilyamz: тест заработает после удаления partial index на userId
   it.skip('не должен возвращать платежи с payment.deletedAt != null', async () => {
     await createSubscriptionWithPayment({

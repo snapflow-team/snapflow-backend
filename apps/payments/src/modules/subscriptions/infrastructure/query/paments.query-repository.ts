@@ -3,6 +3,7 @@ import { GetPaymentsQueryParams } from '../../api/input-dto/get-payments-query-p
 import { PaginatedViewDto } from '../../../../common/dto/paginated.view-dto';
 import { PaymentViewDto } from '../../api/view-dto/payment.view-dto';
 import { Injectable } from '@nestjs/common';
+import { PaymentStatus } from '@generated/prisma-payments';
 
 @Injectable()
 export class PaymentsQueryRepository {
@@ -15,6 +16,7 @@ export class PaymentsQueryRepository {
     const { pageNumber, pageSize, sortDirection, sortBy }: GetPaymentsQueryParams = queryParams;
     const where = {
       deletedAt: null,
+      status: PaymentStatus.PAID,
       subscription: {
         userId,
         deletedAt: null,
