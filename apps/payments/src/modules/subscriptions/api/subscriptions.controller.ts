@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { GetPlansQuery } from '../application/queries/get-plans.query-handler';
@@ -13,6 +13,10 @@ import { NotificationExceptionMapper } from '../../../common/notification/notifi
 import { GetPlansSwagger } from './swagger/get-plans.swagger';
 import { CreateCheckoutSessionSwagger } from './swagger/create-checkout-session.swagger';
 import { CheckoutSessionUrlViewDto } from './view-dto/checkout-session-url.view-dto';
+import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
+import { GetPaymentsQueryParams } from './input-dto/get-payments-query-params.input-dto';
+import { PaymentViewDto } from './view-dto/payment.view-dto';
+import { GetMyPaymentsQuery } from '../application/queries/get-my-payments.query-handler';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -26,6 +30,17 @@ export class SubscriptionsController {
   @GetPlansSwagger()
   async getPlans(): Promise<PlanViewDto[]> {
     return this.queryBus.execute(new GetPlansQuery());
+  }
+
+  @Get('my-payments')
+  @UseGuards(RemoteAuthGuard)
+  async getMyPayments(
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+    @Query() query: GetPaymentsQueryParams,
+  ): Promise<PaginatedViewDto<PaymentViewDto>> {
+    return this.queryBus.execute<GetMyPaymentsQuery, PaginatedViewDto<PaymentViewDto>>(
+      new GetMyPaymentsQuery(userId, query),
+    );
   }
 
   @UseGuards(RemoteAuthGuard)
