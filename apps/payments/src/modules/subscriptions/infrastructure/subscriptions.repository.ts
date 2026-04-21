@@ -19,7 +19,7 @@ export class SubscriptionsRepository {
   ) {
     return tx.subscription.create({
       data: {
-        userId: data.userId,
+        customerId: data.customerId,
         planId: data.planId,
         status: SubscriptionStatus.PENDING,
         payments: {

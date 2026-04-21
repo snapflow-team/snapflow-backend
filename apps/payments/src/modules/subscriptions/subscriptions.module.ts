@@ -9,12 +9,13 @@ import { SubscriptionsRepository } from './infrastructure/subscriptions.reposito
 import { StripeWebhookController } from './api/stripe-webhook.controller';
 import { HandleStripeWebhookUseCase } from './application/usecases/handle-stripe-webhook.usecase';
 import { PaymentsRepository } from './infrastructure/payments.repository';
+import { CustomersRepository } from './infrastructure/customers.repository';
 
 const controllers = [SubscriptionsController, StripeWebhookController];
 const useCases = [CreateCheckoutSessionUseCase, HandleStripeWebhookUseCase];
 const queries = [GetPlansQueryHandler];
 const services = [StripeService];
-const repositories = [SubscriptionsRepository, PaymentsRepository];
+const repositories = [SubscriptionsRepository, PaymentsRepository, CustomersRepository];
 const guards = [RemoteAuthGuard];
 
 @Module({

@@ -7,6 +7,7 @@ import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { BillingPeriod } from '../types/billing-period.type';
 import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-result.type';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
+import { CreateCheckoutSessionDTO } from './types/CreateCheckoutSessionDTO';
 
 @Injectable()
 export class StripeService {
@@ -20,29 +21,39 @@ export class StripeService {
   }
 
   async createCheckoutSession(
-    stripePriceId: string,
-    planId: string,
-    userId: number,
+    dto: CreateCheckoutSessionDTO,
   ): Promise<Notification<StripeCheckoutSessionResult>> {
     try {
       const session = await this.stripe.checkout.sessions.create({
+        //todo вынести subscription в enum
         mode: 'subscription',
-        line_items: [{ price: stripePriceId, quantity: 1 }],
+        line_items: [{ price: dto.stripePriceId, quantity: 1 }],
         success_url: `${this.apiSettings.stripeSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: this.apiSettings.stripeCancelUrl,
-        metadata: { userId: String(userId), planId },
+        metadata: { userId: String(dto.userId), planId: dto.planId },
+        //Если у нас покупатель не прилетел в дто, то этот параметр в дто обратится в undefined и страйп сам создаст нового покупателя
+        customer: dto.stripeCusId,
       });
 
-      if (!session.url) {
+      if (!session.url || !session.customer) {
+        this.logger.error(`Failed to create Stripe checkout session: ${session.id}`);
         return Notification.fail<StripeCheckoutSessionResult>(
           NotificationResultCode.InternalServerError,
-          'Internal payment gateway configuration error',
+          'Failed to create new subscription with payments provider',
         );
       }
-
+      const customerId = this.extractCustomerId(session.customer);
+      if (!customerId) {
+        this.logger.error(`Failed to extract customerId: ${customerId}`);
+        return Notification.fail<StripeCheckoutSessionResult>(
+          NotificationResultCode.InternalServerError,
+          'Failed to create new subscription with payments provider',
+        );
+      }
       return Notification.ok({
         url: session.url,
         sessionId: session.id,
+        stripeCusId: customerId,
       });
     } catch (error) {
       const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
@@ -117,5 +128,12 @@ export class StripeService {
 
       return Notification.fail(NotificationResultCode.BadRequest, 'Invalid webhook signature');
     }
+  }
+  private extractCustomerId(
+    customer: string | Stripe.Customer | Stripe.DeletedCustomer,
+  ): string | null {
+    if (typeof customer === 'string') return customer;
+    if (typeof customer === 'object' && customer && 'id' in customer) return customer.id;
+    return null;
   }
 }
