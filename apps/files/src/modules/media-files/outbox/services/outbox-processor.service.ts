@@ -19,7 +19,7 @@ export class OutboxProcessorService {
 
   // todo(vilyamz): разрешить вопрос с конкуренцией при нескольких инстансах
 
-  @Cron(CronExpression.EVERY_30_MINUTES)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async processOutboxEvents() {
     const pendingEvents: OutboxEvent[] = await this.outboxRepository.findPendingEvents(50);
 
