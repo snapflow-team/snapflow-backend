@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { OutboxEvent, OutboxEventStatus, OutboxEventType, Prisma } from '@generated/prisma-files';
-import { PrismaService } from '../../../../database/prisma.service'; // Твой путь к Prisma клиенту
+import { PrismaService } from '../../../../database/prisma.service';
 
 @Injectable()
 export class OutboxRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // refactor: избавиться от хардкода (status: 'PENDING')
   async createOutboxEvent(
     type: OutboxEventType,
     payload: Prisma.InputJsonValue,
@@ -16,7 +15,7 @@ export class OutboxRepository {
       data: {
         type,
         payload,
-        status: 'PENDING',
+        status: OutboxEventStatus.PENDING,
       },
     });
   }
