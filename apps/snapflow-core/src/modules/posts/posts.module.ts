@@ -12,6 +12,8 @@ import { UserAccountsModule } from '../user-accounts/user-accounts.module';
 import { FilesClientModule } from '../integrations/files/files-client.module';
 import { GetProfilePostsQueryHandler } from './application/queries/get-profile-posts.query-handler';
 import { SaveDraftUseCase } from './application/usecases/save-draft.usecase';
+import { OutboxRepository } from './outbox/repositories/outbox.repository';
+import { OutboxProcessorService } from './outbox/services/outbox-processor.service';
 
 const useCases = [CreatePostUseCase, EditPostUseCase, DeletePostUseCase, SaveDraftUseCase];
 const queries = [
@@ -20,8 +22,8 @@ const queries = [
   GetDraftQueryHandler,
   GetProfilePostsQueryHandler,
 ];
-const services = [];
-const repositories = [PostsRepository, PostsQueryRepository];
+const services = [OutboxProcessorService];
+const repositories = [PostsRepository, PostsQueryRepository, OutboxRepository];
 
 @Module({
   imports: [UserAccountsModule, FilesClientModule],
