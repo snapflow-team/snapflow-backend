@@ -6,10 +6,12 @@ import { OutboxEvent, OutboxEventType } from '@generated/prisma-files';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { MicroserviceSettings } from '../../../../setup/configuration/microservice.settings';
+import { OutboxProcessing } from '../constants/outbox.constants';
 
 @Injectable()
 export class OutboxProcessorService {
   private readonly logger: Logger = new Logger(OutboxProcessorService.name);
+  private isProcessing: boolean = false;
 
   constructor(
     private readonly storageService: StorageService,
@@ -17,30 +19,58 @@ export class OutboxProcessorService {
     private readonly configService: ConfigService<Configuration, true>,
   ) {}
 
-  // todo(vilyamz): разрешить вопрос с конкуренцией при нескольких инстансах
-
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_5_SECONDS)
   async processOutboxEvents() {
-    const pendingEvents: OutboxEvent[] = await this.outboxRepository.findPendingEvents(50);
+    if (this.isProcessing) return;
+    this.isProcessing = true;
 
-    if (pendingEvents.length === 0) return;
+    try {
+      const eventsToProcess: OutboxEvent[] = await this.outboxRepository.lockEventsForProcessing(
+        OutboxProcessing.LOCK_BATCH_SIZE,
+      );
 
-    this.logger.log(`Found ${pendingEvents.length} pending outbox events. Processing...`);
+      if (eventsToProcess.length === 0) return;
 
-    for (const event of pendingEvents) {
-      try {
-        const payload = event.payload as { key: string };
+      this.logger.log(`Found ${eventsToProcess.length} pending outbox events. Processing...`);
 
-        if (event.type === OutboxEventType.DELETE_S3_FILE) {
-          await this.storageService.deleteFile(payload.key);
+      for (const event of eventsToProcess) {
+        try {
+          const payload = event.payload as { key: string };
+
+          if (event.type === OutboxEventType.DELETE_S3_FILE) {
+            await this.storageService.deleteFile(payload.key);
+          }
+
+          await this.outboxRepository.markAsProcessed(event.id);
+        } catch (error) {
+          const errorMessage: string = error instanceof Error ? error.message : 'Unknown S3 error';
+          this.logger.error(`Failed to process event ${event.id}: ${errorMessage}`);
+
+          await this.outboxRepository.releaseToPending(event.id, errorMessage);
         }
-
-        await this.outboxRepository.markAsProcessed(event.id);
-      } catch (error: any) {
-        this.logger.error(`Failed to process event ${event.id}: ${error.message}`);
-
-        await this.outboxRepository.updateWithError(event.id, error.message || 'Unknown S3 error');
       }
+    } catch (error) {
+      this.logger.error(
+        'Critical failure in outbox processor loop',
+        error instanceof Error ? error.stack : '',
+      );
+    } finally {
+      this.isProcessing = false;
+    }
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleStaleEvents() {
+    try {
+      const recoveredCount: number = await this.outboxRepository.recoverStaleEvents(
+        OutboxProcessing.STALE_THRESHOLD_MINUTES,
+      );
+
+      if (recoveredCount > 0) {
+        this.logger.warn(`Recovery: ${recoveredCount} stale events moved back to PENDING.`);
+      }
+    } catch (error) {
+      this.logger.error('Failed to recover stale events', error);
     }
   }
 
