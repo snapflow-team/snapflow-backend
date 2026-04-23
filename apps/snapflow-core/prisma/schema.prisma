@@ -29,6 +29,7 @@ enum AccountType {
 
 enum OutboxEventStatus {
   PENDING
+  PROCESSING
   PROCESSED
   FAILED
 }
