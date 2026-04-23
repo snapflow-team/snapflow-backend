@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { OutboxProcessorService } from './outbox-processor.service';
 import { OutboxRepository } from '../repositories/outbox.repository';
 import { FilesClient } from '../../../integrations/files/files.client';
+import { OutboxProcessing } from '../constants/outbox.constants';
 import {
   OutboxEvent,
   OutboxEventStatus,
@@ -32,9 +33,10 @@ describe('OutboxProcessorService (Unit)', () => {
     } as any;
 
     outboxRepositoryMock = {
-      findPendingEvents: jest.fn(),
+      lockEventsForProcessing: jest.fn(),
       markAsProcessed: jest.fn(),
-      updateWithError: jest.fn(),
+      releaseToPending: jest.fn(),
+      recoverStaleEvents: jest.fn(),
       deleteProcessedEventsOlderThan: jest.fn(),
       createOutboxEvent: jest.fn(),
     } as any;
@@ -56,6 +58,7 @@ describe('OutboxProcessorService (Unit)', () => {
 
     jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
     jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -64,11 +67,13 @@ describe('OutboxProcessorService (Unit)', () => {
 
   describe('processOutboxEvents()', () => {
     it('должен завершиться без действий, если pending-событий нет', async () => {
-      outboxRepositoryMock.findPendingEvents.mockResolvedValue([]);
+      outboxRepositoryMock.lockEventsForProcessing.mockResolvedValue([]);
 
       await service.processOutboxEvents();
 
-      expect(outboxRepositoryMock.findPendingEvents).toHaveBeenCalledWith(50);
+      expect(outboxRepositoryMock.lockEventsForProcessing).toHaveBeenCalledWith(
+        OutboxProcessing.LOCK_BATCH_SIZE,
+      );
       expect(filesClientMock.deleteFile).not.toHaveBeenCalled();
       expect(outboxRepositoryMock.markAsProcessed).not.toHaveBeenCalled();
     });
@@ -81,12 +86,12 @@ describe('OutboxProcessorService (Unit)', () => {
           userId: 1,
           fileUrl: 'https://cdn.test/files/11111111-1111-4111-8111-111111111111',
         } as Prisma.JsonObject,
-        status: OutboxEventStatus.PENDING,
+        status: OutboxEventStatus.PROCESSING,
         error: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      outboxRepositoryMock.findPendingEvents.mockResolvedValue([event]);
+      outboxRepositoryMock.lockEventsForProcessing.mockResolvedValue([event]);
       filesClientMock.deleteFile.mockResolvedValue({ success: true });
 
       await service.processOutboxEvents();
@@ -96,7 +101,7 @@ describe('OutboxProcessorService (Unit)', () => {
         fileUrl: 'https://cdn.test/files/11111111-1111-4111-8111-111111111111',
       });
       expect(outboxRepositoryMock.markAsProcessed).toHaveBeenCalledWith('event-1');
-      expect(outboxRepositoryMock.updateWithError).not.toHaveBeenCalled();
+      expect(outboxRepositoryMock.releaseToPending).not.toHaveBeenCalled();
     });
 
     it('должен сохранить ошибку, если deleteFile завершился исключением', async () => {
@@ -107,19 +112,19 @@ describe('OutboxProcessorService (Unit)', () => {
           userId: 2,
           fileUrl: 'https://cdn.test/files/22222222-2222-4222-8222-222222222222',
         } as Prisma.JsonObject,
-        status: OutboxEventStatus.PENDING,
+        status: OutboxEventStatus.PROCESSING,
         error: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      outboxRepositoryMock.findPendingEvents.mockResolvedValue([event]);
+      outboxRepositoryMock.lockEventsForProcessing.mockResolvedValue([event]);
       filesClientMock.deleteFile.mockRejectedValue(new Error('RPC timeout'));
 
       await service.processOutboxEvents();
 
       expect(filesClientMock.deleteFile).toHaveBeenCalled();
       expect(outboxRepositoryMock.markAsProcessed).not.toHaveBeenCalled();
-      expect(outboxRepositoryMock.updateWithError).toHaveBeenCalledWith('event-2', 'RPC timeout');
+      expect(outboxRepositoryMock.releaseToPending).toHaveBeenCalledWith('event-2', 'RPC timeout');
     });
 
     it('должен ретраить pending событие: после падения files затем успешно обработать', async () => {
@@ -130,13 +135,13 @@ describe('OutboxProcessorService (Unit)', () => {
           userId: 7,
           fileUrl: 'https://cdn.test/files/77777777-7777-4777-8777-777777777777',
         } as Prisma.JsonObject,
-        status: OutboxEventStatus.PENDING,
+        status: OutboxEventStatus.PROCESSING,
         error: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      outboxRepositoryMock.findPendingEvents
+      outboxRepositoryMock.lockEventsForProcessing
         .mockResolvedValueOnce([event]) // files service down
         .mockResolvedValueOnce([event]); // files service recovered
 
@@ -148,7 +153,7 @@ describe('OutboxProcessorService (Unit)', () => {
       await service.processOutboxEvents();
 
       expect(filesClientMock.deleteFile).toHaveBeenCalledTimes(2);
-      expect(outboxRepositoryMock.updateWithError).toHaveBeenCalledWith(
+      expect(outboxRepositoryMock.releaseToPending).toHaveBeenCalledWith(
         'event-retry',
         'Files service unavailable',
       );
@@ -160,21 +165,100 @@ describe('OutboxProcessorService (Unit)', () => {
         id: 'event-3',
         type: OutboxEventType.DELETE_POST_MEDIA_FILE,
         payload: { userId: 'not-number', fileUrl: 123 } as Prisma.JsonObject,
-        status: OutboxEventStatus.PENDING,
+        status: OutboxEventStatus.PROCESSING,
         error: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      outboxRepositoryMock.findPendingEvents.mockResolvedValue([event]);
+      outboxRepositoryMock.lockEventsForProcessing.mockResolvedValue([event]);
 
       await service.processOutboxEvents();
 
       expect(filesClientMock.deleteFile).not.toHaveBeenCalled();
       expect(outboxRepositoryMock.markAsProcessed).not.toHaveBeenCalled();
-      expect(outboxRepositoryMock.updateWithError).toHaveBeenCalledWith(
+      expect(outboxRepositoryMock.releaseToPending).toHaveBeenCalledWith(
         'event-3',
         `Invalid payload for event type ${OutboxEventType.DELETE_POST_MEDIA_FILE}`,
       );
+    });
+
+    it('при параллельном вызове второй выходит сразу, lockEventsForProcessing вызывается один раз', async () => {
+      let releaseLock!: (events: OutboxEvent[]) => void;
+      const lockPromise = new Promise<OutboxEvent[]>((resolve) => {
+        releaseLock = resolve;
+      });
+      outboxRepositoryMock.lockEventsForProcessing.mockReturnValue(lockPromise);
+
+      const firstRun = service.processOutboxEvents();
+      const secondRun = service.processOutboxEvents();
+
+      await secondRun;
+
+      expect(outboxRepositoryMock.lockEventsForProcessing).toHaveBeenCalledTimes(1);
+
+      releaseLock([]);
+      await firstRun;
+    });
+
+    it('после критической ошибки lockEventsForProcessing повторный вызов снова работает', async () => {
+      const event: OutboxEvent = {
+        id: 'event-after-critical',
+        type: OutboxEventType.DELETE_POST_MEDIA_FILE,
+        payload: {
+          userId: 9,
+          fileUrl: 'https://cdn.test/files/99999999-9999-4999-8999-999999999999',
+        } as Prisma.JsonObject,
+        status: OutboxEventStatus.PROCESSING,
+        error: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      outboxRepositoryMock.lockEventsForProcessing
+        .mockRejectedValueOnce(new Error('DB down'))
+        .mockResolvedValueOnce([event]);
+      filesClientMock.deleteFile.mockResolvedValue({ success: true });
+
+      await service.processOutboxEvents();
+      await service.processOutboxEvents();
+
+      expect(outboxRepositoryMock.lockEventsForProcessing).toHaveBeenCalledTimes(2);
+      expect(filesClientMock.deleteFile).toHaveBeenCalledTimes(1);
+      expect(outboxRepositoryMock.markAsProcessed).toHaveBeenCalledWith('event-after-critical');
+    });
+  });
+
+  describe('handleStaleEvents()', () => {
+    it('при ненулевом recoveredCount логирует warn', async () => {
+      outboxRepositoryMock.recoverStaleEvents.mockResolvedValue(3);
+
+      await service.handleStaleEvents();
+
+      expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
+        OutboxProcessing.STALE_THRESHOLD_MINUTES,
+      );
+      expect(Logger.prototype.warn).toHaveBeenCalledWith(
+        expect.stringContaining('3 stale events'),
+      );
+    });
+
+    it('при нулевом recoveredCount не логирует warn', async () => {
+      outboxRepositoryMock.recoverStaleEvents.mockResolvedValue(0);
+
+      await service.handleStaleEvents();
+
+      expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
+        OutboxProcessing.STALE_THRESHOLD_MINUTES,
+      );
+      expect(Logger.prototype.warn).not.toHaveBeenCalled();
+    });
+
+    it('при ошибке recoverStaleEvents не пробрасывает исключение', async () => {
+      const repoError = new Error('DB connection lost');
+      outboxRepositoryMock.recoverStaleEvents.mockRejectedValue(repoError);
+
+      await expect(service.handleStaleEvents()).resolves.toBeUndefined();
+
+      expect(Logger.prototype.error).toHaveBeenCalledWith('Failed to recover stale events', repoError);
     });
   });
 
