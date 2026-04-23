@@ -16,7 +16,7 @@ export class EditPostUseCase implements ICommandHandler<EditPostCommand> {
   constructor(private readonly postsRepository: PostsRepository) {}
   async execute({ dto }: EditPostCommand): Promise<void> {
     const { userId, postId, description } = dto;
-    const post: PostWithMedia | null = await this.postsRepository.findByIdAndUser(postId, userId);
+    const post: PostWithMedia | null = await this.postsRepository.findByIdAndUserId(postId, userId);
 
     if (!post) {
       throw new NotFoundException('The post was not found');
