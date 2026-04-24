@@ -5,6 +5,20 @@ import { OutboxProcessorService } from './outbox-processor.service';
 import { OutboxRepository } from '../repositories/outbox.repository';
 import { StorageService } from '../../infrastructure/storage/storage.service';
 import { OutboxEvent, OutboxEventStatus, OutboxEventType } from '@generated/prisma-files';
+import { OutboxProcessing } from '../constants/outbox.constants';
+
+function createMockEvent(overrides: Partial<OutboxEvent> = {}): OutboxEvent {
+  return {
+    id: 'uuid-1',
+    type: OutboxEventType.DELETE_S3_FILE,
+    payload: { key: 'avatars/user-1/file.png' },
+    status: OutboxEventStatus.PENDING,
+    error: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides,
+  };
+}
 
 describe('OutboxProcessorService (Unit)', () => {
   let service: OutboxProcessorService;
@@ -28,9 +42,10 @@ describe('OutboxProcessorService (Unit)', () => {
     } as any;
 
     outboxRepositoryMock = {
-      findPendingEvents: jest.fn(),
+      lockEventsForProcessing: jest.fn(),
       markAsProcessed: jest.fn(),
-      updateWithError: jest.fn(),
+      releaseToPending: jest.fn(),
+      recoverStaleEvents: jest.fn(),
       deleteProcessedEventsOlderThan: jest.fn(),
       createOutboxEvent: jest.fn(),
     };
@@ -53,6 +68,7 @@ describe('OutboxProcessorService (Unit)', () => {
     // Мокаем Logger, чтобы он не спамил в консоль во время успешных тестов
     jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
     jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -61,48 +77,37 @@ describe('OutboxProcessorService (Unit)', () => {
 
   describe('processOutboxEvents()', () => {
     it('должен прервать выполнение и не вызывать другие сервисы, если нет pending событий', async () => {
-      outboxRepositoryMock.findPendingEvents.mockResolvedValue([]);
+      outboxRepositoryMock.lockEventsForProcessing.mockResolvedValue([]);
 
       await service.processOutboxEvents();
 
-      expect(outboxRepositoryMock.findPendingEvents).toHaveBeenCalledWith(50);
+      expect(outboxRepositoryMock.lockEventsForProcessing).toHaveBeenCalledWith(
+        OutboxProcessing.LOCK_BATCH_SIZE,
+      );
       expect(storageServiceMock.deleteFile).not.toHaveBeenCalled();
       expect(outboxRepositoryMock.markAsProcessed).not.toHaveBeenCalled();
     });
 
     it('должен успешно удалить файл из S3 и отметить событие как PROCESSED, если тип DELETE_S3_FILE', async () => {
-      const mockEvent: OutboxEvent = {
-        id: 'uuid-1',
-        type: OutboxEventType.DELETE_S3_FILE,
-        payload: { key: 'avatars/user-1/file.png' },
-        status: OutboxEventStatus.PENDING,
-        error: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const mockEvent: OutboxEvent = createMockEvent();
 
-      outboxRepositoryMock.findPendingEvents.mockResolvedValue([mockEvent]);
+      outboxRepositoryMock.lockEventsForProcessing.mockResolvedValue([mockEvent]);
       storageServiceMock.deleteFile.mockResolvedValue(undefined);
 
       await service.processOutboxEvents();
 
       expect(storageServiceMock.deleteFile).toHaveBeenCalledWith('avatars/user-1/file.png');
       expect(outboxRepositoryMock.markAsProcessed).toHaveBeenCalledWith('uuid-1');
-      expect(outboxRepositoryMock.updateWithError).not.toHaveBeenCalled();
+      expect(outboxRepositoryMock.releaseToPending).not.toHaveBeenCalled();
     });
 
-    it('должен перехватить ошибку от StorageService и сохранить её в БД (updateWithError)', async () => {
-      const mockEvent: OutboxEvent = {
+    it('должен ретраить pending событие и сохранять ошибку через releaseToPending', async () => {
+      const mockEvent: OutboxEvent = createMockEvent({
         id: 'uuid-2',
-        type: OutboxEventType.DELETE_S3_FILE,
         payload: { key: 'avatars/user-2/error.png' },
-        status: OutboxEventStatus.PENDING,
-        error: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
-      outboxRepositoryMock.findPendingEvents.mockResolvedValue([mockEvent]);
+      outboxRepositoryMock.lockEventsForProcessing.mockResolvedValue([mockEvent]);
       // Имитируем падение AWS S3
       storageServiceMock.deleteFile.mockRejectedValue(new Error('AWS S3 Timeout'));
 
@@ -111,22 +116,21 @@ describe('OutboxProcessorService (Unit)', () => {
       expect(storageServiceMock.deleteFile).toHaveBeenCalledWith('avatars/user-2/error.png');
       // Событие НЕ должно быть отмечено как успешное
       expect(outboxRepositoryMock.markAsProcessed).not.toHaveBeenCalled();
-      // Ошибка должна быть записана в базу для этого события
-      expect(outboxRepositoryMock.updateWithError).toHaveBeenCalledWith('uuid-2', 'AWS S3 Timeout');
+      // Ошибка должна быть записана, а статус возвращен в PENDING
+      expect(outboxRepositoryMock.releaseToPending).toHaveBeenCalledWith(
+        'uuid-2',
+        'AWS S3 Timeout',
+      );
     });
 
     it('должен просто отметить событие как PROCESSED, если передан неизвестный тип события', async () => {
-      const mockEvent: OutboxEvent = {
+      const mockEvent: OutboxEvent = createMockEvent({
         id: 'uuid-3',
         type: 'SOME_UNKNOWN_TYPE' as any, // Эмулируем старое или неизвестное событие
         payload: { key: 'unknown' },
-        status: OutboxEventStatus.PENDING,
-        error: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      });
 
-      outboxRepositoryMock.findPendingEvents.mockResolvedValue([mockEvent]);
+      outboxRepositoryMock.lockEventsForProcessing.mockResolvedValue([mockEvent]);
 
       await service.processOutboxEvents();
 
@@ -134,6 +138,39 @@ describe('OutboxProcessorService (Unit)', () => {
       expect(storageServiceMock.deleteFile).not.toHaveBeenCalled();
       // Но событие должно закрыться, чтобы не висеть вечно в PENDING
       expect(outboxRepositoryMock.markAsProcessed).toHaveBeenCalledWith('uuid-3');
+    });
+
+    it('должен не запускать второй цикл при параллельном вызове (isProcessing guard)', async () => {
+      let releaseLock!: (events: OutboxEvent[]) => void;
+      const lockPending = new Promise<OutboxEvent[]>((resolve) => {
+        releaseLock = resolve;
+      });
+      outboxRepositoryMock.lockEventsForProcessing.mockReturnValue(lockPending);
+
+      const firstRun: Promise<void> = service.processOutboxEvents();
+      const secondRun: Promise<void> = service.processOutboxEvents();
+
+      await secondRun;
+      expect(outboxRepositoryMock.lockEventsForProcessing).toHaveBeenCalledTimes(1);
+
+      releaseLock([]);
+      await firstRun;
+      expect(outboxRepositoryMock.lockEventsForProcessing).toHaveBeenCalledTimes(1);
+    });
+
+    it('должен сбрасывать isProcessing в finally после критической ошибки lockEventsForProcessing', async () => {
+      outboxRepositoryMock.lockEventsForProcessing
+        .mockRejectedValueOnce(new Error('DB down'))
+        .mockResolvedValueOnce([]);
+
+      await service.processOutboxEvents();
+      await service.processOutboxEvents();
+
+      expect(outboxRepositoryMock.lockEventsForProcessing).toHaveBeenCalledTimes(2);
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        'Critical failure in outbox processor loop',
+        expect.stringContaining('DB down'),
+      );
     });
   });
 
@@ -151,6 +188,39 @@ describe('OutboxProcessorService (Unit)', () => {
       expect(outboxRepositoryMock.deleteProcessedEventsOlderThan).toHaveBeenCalledWith(
         expectedThreshold,
       );
+    });
+  });
+
+  describe('handleStaleEvents()', () => {
+    it('при ненулевом recoverStaleEvents логирует warn', async () => {
+      outboxRepositoryMock.recoverStaleEvents.mockResolvedValue(3);
+
+      await service.handleStaleEvents();
+
+      expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
+        OutboxProcessing.STALE_THRESHOLD_MINUTES,
+      );
+      expect(Logger.prototype.warn).toHaveBeenCalledWith(expect.stringContaining('3'));
+    });
+
+    it('при нулевом recoverStaleEvents не логирует warn', async () => {
+      outboxRepositoryMock.recoverStaleEvents.mockResolvedValue(0);
+
+      await service.handleStaleEvents();
+
+      expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
+        OutboxProcessing.STALE_THRESHOLD_MINUTES,
+      );
+      expect(Logger.prototype.warn).not.toHaveBeenCalled();
+    });
+
+    it('при ошибке recoverStaleEvents не пробрасывает исключение', async () => {
+      const repoError = new Error('DB connection lost');
+      outboxRepositoryMock.recoverStaleEvents.mockRejectedValue(repoError);
+
+      await expect(service.handleStaleEvents()).resolves.toBeUndefined();
+
+      expect(Logger.prototype.error).toHaveBeenCalledWith('Failed to recover stale events', repoError);
     });
   });
 });
