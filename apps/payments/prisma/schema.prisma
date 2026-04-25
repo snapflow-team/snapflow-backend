@@ -15,7 +15,7 @@ enum AccountType {
 enum SubscriptionStatus {
   ACTIVE
   CANCELLED
-  EXPIRED
+  PAST_DUE //Этот статус значит, что подписка уже истекла, но страйп будет делать попытки ее оплатить
   PENDING
 }
 
@@ -72,7 +72,7 @@ model Payment {
   /// ВНИМАНИЕ: Поле externalId имеет уникальное ограничение в БД только для активных записей (Soft Delete).
   /// @unique убран из схемы намеренно, чтобы можно было создавать новую подписку после удаления старой.
   /// Добавлено в миграции: 20260326091256_init_payments_schema
-  externalId String          @map("external_id")
+  externalId String?         @map("external_id")
   provider   PaymentProvider @default(STRIPE)
   amount     Int
   currency   String          @default("usd")

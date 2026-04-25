@@ -8,6 +8,9 @@ import { BillingPeriod } from '../types/billing-period.type';
 import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-result.type';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 import { CreateCheckoutSessionDTO } from './types/CreateCheckoutSessionDTO';
+import { $Enums, PaymentProvider } from '@generated/prisma-payments';
+import PaymentStatus = $Enums.PaymentStatus;
+import { extractCustomerId } from '../webhook/handlers/utils/extract-customer-id';
 
 @Injectable()
 export class StripeService {
@@ -42,7 +45,7 @@ export class StripeService {
           'Failed to create new subscription with payments provider',
         );
       }
-      const customerId = this.extractCustomerId(session.customer);
+      const customerId = extractCustomerId(session.customer);
       if (!customerId) {
         this.logger.error(`Failed to extract customerId: ${customerId}`);
         return Notification.fail<StripeCheckoutSessionResult>(
@@ -110,7 +113,59 @@ export class StripeService {
       );
     }
   }
+  async retrieveSucceededPaymentFromInvoice(
+    stripeInvoiceId: string,
+  ): Promise<Notification<InvoicePayment>> {
+    try {
+      const invoice: Stripe.Invoice = await this.stripe.invoices.retrieve(stripeInvoiceId, {
+        expand: ['payments'],
+      });
+      const res = this.retrievePayment(invoice);
+      return res;
+    } catch (error) {
+      const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
+      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
 
+      this.logger.error(
+        `Failed to retrieve Stripe invoice ${stripeInvoiceId}: ${errorMessage}`,
+        errorStack,
+      );
+
+      return Notification.fail(
+        NotificationResultCode.InternalServerError,
+        'Failed to retrieve subscription from the payment provider',
+      );
+    }
+  }
+  private retrievePayment(invoice: Stripe.Invoice): Notification<InvoicePayment> {
+    const items: Stripe.InvoicePayment[] | undefined = invoice.payments?.data;
+    if (!items) {
+      return Notification.fail(NotificationResultCode.BadRequest, 'This invoice have no payments');
+    }
+    const succeededPayment: Stripe.InvoicePayment | undefined = items.find(
+      (payment) => payment.status === 'paid',
+    );
+    if (!succeededPayment) {
+      return Notification.fail(
+        NotificationResultCode.BadRequest,
+        `This invoice ${invoice.id} have no succeeded payments`,
+      );
+    }
+    if (!succeededPayment.amount_paid) {
+      return Notification.fail(
+        NotificationResultCode.BadRequest,
+        'This succeeded payment has no amount_paid',
+      );
+    }
+    //todo убрать заглушку
+    return Notification.ok({
+      amount: succeededPayment.amount_paid,
+      currency: succeededPayment.currency,
+      planId: 'заглушка, надо подумать откуда взять планid',
+      status: PaymentStatus.PAID,
+      provider: PaymentProvider.STRIPE,
+    });
+  }
   constructEvent(rawBody: Buffer, signature: string): Notification<Stripe.Event> {
     try {
       const event: Stripe.Event = this.stripe.webhooks.constructEvent(
@@ -129,11 +184,11 @@ export class StripeService {
       return Notification.fail(NotificationResultCode.BadRequest, 'Invalid webhook signature');
     }
   }
-  private extractCustomerId(
-    customer: string | Stripe.Customer | Stripe.DeletedCustomer,
-  ): string | null {
-    if (typeof customer === 'string') return customer;
-    if (typeof customer === 'object' && customer && 'id' in customer) return customer.id;
-    return null;
-  }
 }
+export type InvoicePayment = {
+  amount: number;
+  currency: string;
+  planId: string;
+  status: PaymentStatus;
+  provider: PaymentProvider;
+};

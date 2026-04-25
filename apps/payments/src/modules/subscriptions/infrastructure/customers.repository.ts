@@ -2,8 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Customer, Prisma } from '@generated/prisma-payments';
 import { CreateCustomerInfrastructureDto } from './types/create-customer.infrastructure-dto';
-import { DomainException } from '../../../../../../libs/exceptions/core';
-import { NotFoundException } from '../../../../../snapflow-core/src/common/exceptions/domain-exceptions';
 
 @Injectable()
 export class CustomersRepository {
@@ -21,6 +19,12 @@ export class CustomersRepository {
     return tx.customer.findFirst({
       where: { id },
     });
+  }
+  async findByStripeCustomerId(
+    stripeCusId: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Customer | null> {
+    return tx.customer.findFirst({ where: { stripeCusId } });
   }
   async createCustomer(
     data: CreateCustomerInfrastructureDto,

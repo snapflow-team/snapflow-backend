@@ -3,6 +3,7 @@ import { AccountType } from '@generated/prisma-snapflow';
 import {
   PaymentsRoutingKey,
   SubscriptionActivatedEvent,
+  SubscriptionRenewalFailedEvent,
 } from '../../../../../../libs/contracts/payments';
 import {
   isCheckoutSessionExpiredEvent,
@@ -36,6 +37,7 @@ export class PaymentsUserSyncService {
         this.logger.warn(
           `Payment failed for user ${payload.userId} (subscription=${payload.subscriptionId}, invoice=${payload.stripeInvoiceId}, code=${payload.failureCode ?? 'n/a'}, message=${payload.failureMessage ?? 'n/a'}, attempts=${payload.attemptCount ?? 'n/a'}, nextAttempt=${payload.nextPaymentAttempt ?? 'n/a'})`,
         );
+        await this.deleteBusinessSubscription(payload);
         break;
       }
       case PaymentsRoutingKey.CheckoutSessionExpired: {
@@ -66,6 +68,18 @@ export class PaymentsUserSyncService {
       userId: data.userId,
       accountType: AccountType.BUSINESS,
       subscriptionActiveUntil,
+    });
+  }
+  private async deleteBusinessSubscription(data: SubscriptionRenewalFailedEvent): Promise<void> {
+    const user = await this.usersRepository.findUserById(data.userId);
+    if (!user) {
+      this.logger.error(`User ${data.userId} not found for deleting business subscription status`);
+      return;
+    }
+    await this.usersRepository.updateAccountType({
+      userId: user.id,
+      accountType: AccountType.PERSONAL,
+      subscriptionActiveUntil: null,
     });
   }
 }
