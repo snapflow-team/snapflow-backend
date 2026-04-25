@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { OutboxEvent, OutboxEventStatus, OutboxEventType, Prisma } from '@generated/prisma-files';
 import { PrismaService } from '../../../../database/prisma.service';
+import {
+  OutboxEvent,
+  OutboxEventStatus,
+  OutboxEventType,
+  Prisma,
+} from '@generated/prisma-snapflow';
 import { OutboxProcessing } from '../constants/outbox.constants';
 
 @Injectable()
@@ -40,8 +45,8 @@ export class OutboxRepository {
     `;
   }
 
-  async markAsProcessed(id: string): Promise<void> {
-    await this.prisma.outboxEvent.update({
+  async markAsProcessed(id: string, tx: Prisma.TransactionClient = this.prisma): Promise<void> {
+    await tx.outboxEvent.update({
       where: { id },
       data: {
         status: OutboxEventStatus.PROCESSED,
@@ -67,7 +72,7 @@ export class OutboxRepository {
       UPDATE "outbox_events"
       SET "status" = ${OutboxEventStatus.PENDING}
       WHERE "status" = ${OutboxEventStatus.PROCESSING}
-      AND "updated_at" < NOW() - make_interval(mins => ${staleThresholdMinutes});
+        AND "updated_at" < NOW() - make_interval(mins => ${staleThresholdMinutes});
     `;
   }
 

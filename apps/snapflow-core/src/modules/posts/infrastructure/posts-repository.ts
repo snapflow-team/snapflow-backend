@@ -30,7 +30,7 @@ export class PostsRepository {
     return post.id;
   }
 
-  async findByIdAndUser(postId: number, userId: number): Promise<PostWithMedia | null> {
+  async findByIdAndUserId(postId: number, userId: number): Promise<PostWithMedia | null> {
     return this.prisma.post.findFirst({
       where: { id: postId, userId, deletedAt: null },
       include: { postMedias: { where: { deletedAt: null }, orderBy: { position: 'asc' } } },
@@ -52,7 +52,6 @@ export class PostsRepository {
     });
   }
 
-  //TODO(vitaliy) добавить transaction client для возможных транзакций(по примеру usersRepository)
   async updatePost(dto: UpdatePostRepositoryDto): Promise<boolean> {
     const result: BatchPayload = await this.prisma.post.updateMany({
       where: { id: dto.postId, userId: dto.userId, deletedAt: null },
@@ -61,19 +60,25 @@ export class PostsRepository {
     return result.count === 1;
   }
 
-  async deletePost(id: number, userId: number): Promise<boolean> {
+  async softDeletePostWithMedia(
+    id: number,
+    userId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<boolean> {
     const now = new Date();
 
-    const result = await this.prisma.post.updateMany({
+    const result: BatchPayload = await tx.post.updateMany({
       where: { id, userId, deletedAt: null },
       data: { deletedAt: now },
     });
 
-    await this.prisma.postMedia.updateMany({
+    if (result.count !== 1) return false;
+
+    await tx.postMedia.updateMany({
       where: { postId: id, deletedAt: null },
       data: { deletedAt: now },
     });
 
-    return result.count === 1;
+    return true;
   }
 }

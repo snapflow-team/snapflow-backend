@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { StorageService } from '../../infrastructure/storage/storage.service';
+import { OutboxEvent, OutboxEventType } from '@generated/prisma-snapflow';
 import { OutboxRepository } from '../repositories/outbox.repository';
-import { OutboxEvent, OutboxEventType } from '@generated/prisma-files';
+import { FilesClient } from '../../../integrations/files/files.client';
+import { isDeletePostMediaFilePayload } from '../type-guards/outbox.type-guards';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../../setup/configuration/configuration';
-import { MicroserviceSettings } from '../../../../setup/configuration/microservice.settings';
+import { BusinessRulesSettings } from '../../../../setup/configuration/business-rules-settings';
 import { OutboxProcessing } from '../constants/outbox.constants';
 
 @Injectable()
@@ -14,8 +15,8 @@ export class OutboxProcessorService {
   private isProcessing: boolean = false;
 
   constructor(
-    private readonly storageService: StorageService,
     private readonly outboxRepository: OutboxRepository,
+    private readonly filesClient: FilesClient,
     private readonly configService: ConfigService<Configuration, true>,
   ) {}
 
@@ -25,28 +26,33 @@ export class OutboxProcessorService {
     this.isProcessing = true;
 
     try {
-      const eventsToProcess: OutboxEvent[] = await this.outboxRepository.lockEventsForProcessing(
+      const pendingEvents: OutboxEvent[] = await this.outboxRepository.lockEventsForProcessing(
         OutboxProcessing.LOCK_BATCH_SIZE,
       );
 
-      if (eventsToProcess.length === 0) return;
+      if (pendingEvents.length === 0) return;
 
-      this.logger.log(`Found ${eventsToProcess.length} pending outbox events. Processing...`);
+      this.logger.debug(`Found ${pendingEvents.length} pending outbox events. Processing...`);
 
-      for (const event of eventsToProcess) {
+      for (const event of pendingEvents) {
         try {
-          const payload = event.payload as { key: string };
+          if (event.type === OutboxEventType.DELETE_POST_MEDIA_FILE) {
+            if (!isDeletePostMediaFilePayload(event.payload)) {
+              throw new Error(`Invalid payload for event type ${event.type}`);
+            }
 
-          if (event.type === OutboxEventType.DELETE_S3_FILE) {
-            await this.storageService.deleteFile(payload.key);
+            await this.filesClient.deleteFile({
+              userId: event.payload.userId,
+              fileUrl: event.payload.fileUrl,
+            });
           }
 
           await this.outboxRepository.markAsProcessed(event.id);
         } catch (error) {
-          const errorMessage: string = error instanceof Error ? error.message : 'Unknown S3 error';
-          this.logger.error(`Failed to process event ${event.id}: ${errorMessage}`);
+          const message = error instanceof Error ? error.message : 'Unknown files service error';
+          this.logger.error(`Failed to process event ${event.id}: ${message}`);
 
-          await this.outboxRepository.releaseToPending(event.id, errorMessage);
+          await this.outboxRepository.releaseToPending(event.id, message);
         }
       }
     } catch (error) {
@@ -77,7 +83,7 @@ export class OutboxProcessorService {
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async cleanupProcessedEvents() {
     const { outboxRetentionDays } =
-      this.configService.get<MicroserviceSettings>('microserviceSettings');
+      this.configService.get<BusinessRulesSettings>('businessRulesSettings');
 
     const dateThreshold = new Date();
     dateThreshold.setDate(dateThreshold.getDate() - outboxRetentionDays);
