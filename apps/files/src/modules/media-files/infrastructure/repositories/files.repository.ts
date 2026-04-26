@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma.service';
 import { File, FileStatus, Prisma } from '@generated/prisma-files';
+import { CreateManyPendingFile } from './types/create-many-pending-file.type';
 
 @Injectable()
 export class FilesRepository {
@@ -16,6 +17,19 @@ export class FilesRepository {
         size: data.size,
         status: FileStatus.PENDING,
       },
+    });
+  }
+
+  async createManyPending(items: CreateManyPendingFile[]): Promise<void> {
+    await this.prisma.file.createMany({
+      data: items.map((item) => ({
+        id: item.id,
+        userId: item.userId,
+        key: item.key,
+        mimeType: item.mimeType,
+        size: item.size,
+        status: FileStatus.PENDING,
+      })),
     });
   }
 
