@@ -7,19 +7,6 @@ import { CreateManyPendingFile } from './types/create-many-pending-file.type';
 export class FilesRepository {
   constructor(public readonly prisma: PrismaService) {}
 
-  async createPending(data: Prisma.FileCreateInput): Promise<void> {
-    await this.prisma.file.create({
-      data: {
-        id: data.id,
-        userId: data.userId,
-        key: data.key,
-        mimeType: data.mimeType,
-        size: data.size,
-        status: FileStatus.PENDING,
-      },
-    });
-  }
-
   async createManyPending(items: CreateManyPendingFile[]): Promise<void> {
     await this.prisma.file.createMany({
       data: items.map((item) => ({
@@ -46,20 +33,6 @@ export class FilesRepository {
     });
   }
 
-  // todo(magomed): зачем эти методы (findByIdAndUserId, confirmUpload)?
-  async findByIdAndUserId(fileId: string, userId: number): Promise<File | null> {
-    return this.prisma.file.findFirst({
-      where: { id: fileId, userId, deletedAt: null },
-    });
-  }
-
-  async confirmUpload(fileId: string): Promise<File | null> {
-    return this.prisma.file.update({
-      where: { id: fileId },
-      data: { status: FileStatus.UPLOADED },
-    });
-  }
-
   async confirmManyUploads(fileIds: string[]): Promise<void> {
     await this.prisma.file.updateMany({
       where: {
@@ -70,20 +43,6 @@ export class FilesRepository {
       data: {
         status: FileStatus.UPLOADED,
       },
-    });
-  }
-
-  async findStalePending(thresholdMinutes: number, limit: number): Promise<File[]> {
-    const staleThresholdDate = new Date(Date.now() - thresholdMinutes * 60_000);
-
-    return this.prisma.file.findMany({
-      where: {
-        status: FileStatus.PENDING,
-        createdAt: { lt: staleThresholdDate },
-        deletedAt: null,
-      },
-      orderBy: { createdAt: 'asc' },
-      take: limit,
     });
   }
 
