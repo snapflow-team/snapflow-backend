@@ -13,9 +13,7 @@
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import {
-  ExtractUserFromRequest
-} from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
+import { ExtractUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../user-accounts/auth/domain/guards/dto/user-context.dto';
 import { JwtAuthGuard } from '../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
 import { CreatePostInputDto } from './input-dto/create-post.input-dto';
@@ -31,7 +29,7 @@ import { Public } from '../../user-accounts/decorators/public.decorator';
 import { EditPostCommand } from '../application/usecases/edit-post.use.case';
 import { DeletePostCommand } from '../application/usecases/delete-post.use.case';
 import { UpdatePostInputDto } from './input-dto/update-post.input.dto';
-import { GetProfilePostsQuery } from '../application/queries/get-profile-posts.query-handler';
+import { GetUserPostsQuery } from '../application/queries/get-user-posts.query-handler';
 import { GetPostsQueryParamsDto } from './input-dto/get-posts.query-params.dto';
 import { PostsPageViewDto } from './view-dto/posts-page.view-dto';
 import { PostStatus } from '@generated/prisma-snapflow';
@@ -119,7 +117,7 @@ export class PostsController {
     @Param('userId', ParseIntPipe) userId: number,
     @Query() dto: GetPostsQueryParamsDto,
   ): Promise<PaginatedViewDto<PostsPageViewDto>> {
-    return this.queryBus.execute(new GetProfilePostsQuery(dto, userId));
+    return this.queryBus.execute(new GetUserPostsQuery(dto, userId));
   }
 
   @Get(':id')

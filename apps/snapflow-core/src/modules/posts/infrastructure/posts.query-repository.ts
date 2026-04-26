@@ -11,8 +11,7 @@ import { PostWithMediaAndUserMetadata } from './types/post-with-media-and-user-m
 export class PostsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // vilyamz: выяснить зачем нам этот метод?
-  async findProfilePosts(
+  async findUserPosts(
     params: GetPostsQueryParamsDto,
     userId: number,
   ): Promise<PaginatedViewDto<PostViewDto>> {

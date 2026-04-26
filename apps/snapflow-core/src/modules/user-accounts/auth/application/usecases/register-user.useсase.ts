@@ -67,7 +67,6 @@ export class RegisterUserUseCase implements ICommandHandler<RegisterUserCommand>
       await this.profilesRepository.createProfile(
         {
           userId: id,
-          username,
         },
         tx,
       );
