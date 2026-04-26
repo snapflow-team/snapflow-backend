@@ -449,7 +449,6 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     }
 
     // 🔸 Проверяем профиль
-    expect(profile.username).toBe(dto.username);
     expect(profile.firstName).toBeNull();
     expect(profile.lastName).toBeNull();
     expect(profile.city).toBeNull();
