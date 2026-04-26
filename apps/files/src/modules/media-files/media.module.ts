@@ -10,6 +10,7 @@ import { UploadAvatarUseCase } from './application/usecases/upload-avatar.usecas
 import { DeleteFileUseCase } from './application/usecases/delete-file.usecase';
 import { OutboxProcessorService } from './outbox/services/outbox-processor.service';
 import { OutboxRepository } from './outbox/repositories/outbox.repository';
+import { PendingFilesCleanupService } from './application/services/pending-files-cleanup.service';
 
 const controllers = [MediaController];
 const useCases = [
@@ -19,7 +20,12 @@ const useCases = [
   UploadAvatarUseCase,
   DeleteFileUseCase,
 ];
-const services = [StorageService, CryptoService, OutboxProcessorService];
+const services = [
+  StorageService,
+  CryptoService,
+  OutboxProcessorService,
+  PendingFilesCleanupService,
+];
 
 @Module({
   imports: [],

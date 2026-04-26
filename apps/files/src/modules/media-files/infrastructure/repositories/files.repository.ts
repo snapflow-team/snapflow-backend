@@ -73,6 +73,74 @@ export class FilesRepository {
     });
   }
 
+  async findStalePending(thresholdMinutes: number, limit: number): Promise<File[]> {
+    const staleThresholdDate = new Date(Date.now() - thresholdMinutes * 60_000);
+
+    return this.prisma.file.findMany({
+      where: {
+        status: FileStatus.PENDING,
+        createdAt: { lt: staleThresholdDate },
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'asc' },
+      take: limit,
+    });
+  }
+
+  async lockStalePendingForCleanup(thresholdMinutes: number, limit: number): Promise<File[]> {
+    return this.prisma.$queryRaw<File[]>`
+      UPDATE "files"
+      SET
+        "status" = ${FileStatus.PENDING_CLEANUP},
+        "updated_at" = NOW()
+      WHERE "id" IN (
+        SELECT "id"
+        FROM "files"
+        WHERE "status" = ${FileStatus.PENDING}
+          AND "deleted_at" IS NULL
+          AND "created_at" < NOW() - make_interval(mins => ${thresholdMinutes})
+        ORDER BY "created_at" ASC
+        LIMIT ${limit}
+        FOR UPDATE SKIP LOCKED
+      )
+      RETURNING *;
+    `;
+  }
+
+  async releaseManyToPending(fileIds: string[]): Promise<void> {
+    await this.prisma.file.updateMany({
+      where: {
+        id: {
+          in: fileIds,
+        },
+      },
+      data: {
+        status: FileStatus.PENDING,
+      },
+    });
+  }
+
+  async recoverStaleProcessing(staleThresholdMinutes: number): Promise<number> {
+    return this.prisma.$executeRaw`
+      UPDATE "files"
+      SET "status" = ${FileStatus.PENDING}
+      WHERE "status" = ${FileStatus.PENDING_CLEANUP}
+        AND "updated_at" < NOW() - make_interval(mins => ${staleThresholdMinutes});
+    `;
+  }
+
+  async deleteByIds(ids: string[]): Promise<number> {
+    const result = await this.prisma.file.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    return result.count;
+  }
+
   async findManyByIdsAndUserId(userId: number, fileIds: string[]): Promise<File[]> {
     return this.prisma.file.findMany({
       where: {
