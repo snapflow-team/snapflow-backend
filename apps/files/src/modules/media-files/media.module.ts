@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MediaController } from './api/media.controller';
-import { GeneratedUploadUrlUseCase } from './application/usecases/generate-presignet-url.usecase';
+import { GeneratedUploadUrlUseCase } from './application/usecases/generate-presigned-url.usecase';
 import { ConfirmUploadUseCase } from './application/usecases/comfirm-upload.usecase';
 import { StorageService } from './infrastructure/storage/storage.service';
 import { FilesRepository } from './infrastructure/repositories/files.repository';
