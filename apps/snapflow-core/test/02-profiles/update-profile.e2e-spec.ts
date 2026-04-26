@@ -201,7 +201,10 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       throw new Error('Profile was not created');
     }
 
-    expect(profileAfter?.username).toBe('updated_name');
+    const userAfter: User | null = await appTestManager.prisma.user.findFirst({
+      where: { id: userId },
+    });
+    expect(userAfter?.username).toBe('updated_name');
     expect(profileAfter?.city).toBe('SPB');
 
     // не должны поменяться:
