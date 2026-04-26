@@ -28,7 +28,7 @@ export class StripeService {
   ): Promise<Notification<StripeCheckoutSessionResult>> {
     try {
       const session = await this.stripe.checkout.sessions.create({
-        //todo вынести subscription в enum
+        //vitaliy[payments:refactor]: вынести subscription в enum
         mode: 'subscription',
         line_items: [{ price: dto.stripePriceId, quantity: 1 }],
         success_url: `${this.apiSettings.stripeSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`,

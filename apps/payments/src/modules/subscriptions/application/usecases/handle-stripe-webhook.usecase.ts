@@ -73,6 +73,7 @@ export class HandleStripeWebhookUseCase
       //Подбираем нужный хэндлер под конкретный ивент
       const handler = this.handlers.find((handler) => handler.supports(event));
       if (!handler) {
+        // vitaliy[payments]: добавить логирование о том, что у нас внутренний рассинхрон: тип события в SUPPORTED_WEBHOOK_EVENTS есть, а соответствующий handler не зарегистрирован.
         return Notification.ok();
       }
       result = await handler.handle(event);
