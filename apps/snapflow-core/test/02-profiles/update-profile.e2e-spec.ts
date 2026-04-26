@@ -16,7 +16,7 @@ import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../src/setup/configuration/configuration';
 import { ApiSettings } from '../../src/setup/configuration/api-settings';
-import { UserProfile } from '@generated/prisma-snapflow';
+import { User, UserProfile } from '@generated/prisma-snapflow';
 
 describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
   let appTestManager: AppTestManager;
@@ -95,7 +95,10 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       throw new Error('Profile was not created');
     }
 
-    expect(profile.username).toBe(dto.username);
+    const user: User | null = await appTestManager.prisma.user.findFirst({
+      where: { id: userId },
+    });
+    expect(user?.username).toBe(dto.username);
     expect(profile.firstName).toBe(dto.firstName);
     expect(profile.lastName).toBe(dto.lastName);
     expect(profile.dateOfBirth?.toISOString().split('T')[0]).toBe(dto.dateOfBirth);
@@ -131,7 +134,10 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       throw new Error('Profile was not created');
     }
 
-    expect(profile.username).toBe(dto.username);
+    const user: User | null = await appTestManager.prisma.user.findFirst({
+      where: { id: userId },
+    });
+    expect(user?.username).toBe(dto.username);
     expect(profile.firstName).toBe(dto.firstName);
     expect(profile.lastName).toBe(dto.lastName);
 
@@ -195,7 +201,10 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       throw new Error('Profile was not created');
     }
 
-    expect(profileAfter?.username).toBe('updated_name');
+    const userAfter: User | null = await appTestManager.prisma.user.findFirst({
+      where: { id: userId },
+    });
+    expect(userAfter?.username).toBe('updated_name');
     expect(profileAfter?.city).toBe('SPB');
 
     // не должны поменяться:

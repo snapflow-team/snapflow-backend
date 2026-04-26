@@ -5,7 +5,7 @@ import { CryptoService } from '../../../../../../../../libs/common/services/cryp
 import { PayloadRefreshToken } from '../types/payload-refresh-token.type';
 import { CreateSessionDto } from '../../sessions/dto/create-session.dto';
 import { CreateSessionCommand } from '../../sessions/application/usecases/create-session.usecase';
-import { AuthTokenService } from '../../../../../../../../libs/common/services/auth-token.service';
+import { AuthTokenService } from '../services/auth-token.service';
 
 export class LoginUserCommand {
   constructor(public readonly dto: LoginUserApplicationDto) {}

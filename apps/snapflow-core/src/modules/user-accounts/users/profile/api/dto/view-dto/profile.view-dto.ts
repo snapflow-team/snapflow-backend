@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserProfile } from '@generated/prisma-snapflow';
+import { ProfileWithUsername } from '../../../infrastructure/types/profile-with-username.type';
 
 export class ProfileViewDto {
   @ApiProperty({
@@ -70,11 +70,11 @@ export class ProfileViewDto {
   })
   aboutMe: string | null;
 
-  static mapToView(profile: UserProfile): ProfileViewDto {
+  static mapToView(profile: ProfileWithUsername): ProfileViewDto {
     const dto = new this();
 
     dto.id = profile.id.toString();
-    dto.username = profile.username;
+    dto.username = profile.user.username;
     dto.firstName = profile.firstName;
     dto.lastName = profile.lastName;
     dto.dateOfBirth = profile.dateOfBirth ? profile.dateOfBirth.toISOString().split('T')[0] : null;
