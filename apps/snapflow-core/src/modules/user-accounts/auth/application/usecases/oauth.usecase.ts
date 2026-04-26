@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
-import { AuthTokenService } from '../../../../../../../../libs/common/services/auth-token.service';
+import { AuthTokenService } from '../services/auth-token.service';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { UserUtilsService } from '../../../users/application/services/user-utils.service';
 import { AuthTokens } from '../../domain/types/auth-tokens.type';
