@@ -5,7 +5,6 @@ import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { EmailService } from '../../src/modules/emails/services/email.service';
 import { EmailTemplate } from '../../src/modules/emails/templates/types';
-import { RegistrationEmailResendingInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-email-resending.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
 import { HttpStatus } from '@nestjs/common';
 import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
