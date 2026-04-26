@@ -9,8 +9,8 @@ import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-re
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 import { CreateCheckoutSessionDTO } from './types/CreateCheckoutSessionDTO';
 import { $Enums, PaymentProvider } from '@generated/prisma-payments';
-import PaymentStatus = $Enums.PaymentStatus;
 import { extractCustomerId } from '../webhook/handlers/utils/extract-customer-id';
+import PaymentStatus = $Enums.PaymentStatus;
 
 @Injectable()
 export class StripeService {
@@ -70,7 +70,9 @@ export class StripeService {
       );
     }
   }
-
+  async getSubscription(stripeSubId: string): Promise<Stripe.Subscription> {
+    return this.stripe.subscriptions.retrieve(stripeSubId);
+  }
   // vilyamz: не нужно ли этот метод сделать приватным?
   getBillingPeriodFromSubscriptionObject(sub: Stripe.Subscription): Notification<BillingPeriod> {
     const item: Stripe.SubscriptionItem | undefined = sub.items.data[0];
@@ -120,8 +122,7 @@ export class StripeService {
       const invoice: Stripe.Invoice = await this.stripe.invoices.retrieve(stripeInvoiceId, {
         expand: ['payments'],
       });
-      const res = this.retrievePayment(invoice);
-      return res;
+      return this.retrievePayment(invoice);
     } catch (error) {
       const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
       const errorStack: string | undefined = error instanceof Error ? error.stack : '';
