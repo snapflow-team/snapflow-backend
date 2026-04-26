@@ -19,7 +19,7 @@ export class ConfirmationEmailUseCase implements ICommandHandler<ConfirmationEma
   async execute({ confirmationCode }: ConfirmationEmailCommand) {
     const user: UserWithEmailConfirmation | null =
       await this.userRepository.findUserByConfirmationCode(confirmationCode);
-    //TODO(vitaliy) refactor вынести if и выбрасывание ошибки в отдельный приватный метод или зарефакторить в этом
+
     if (!user) {
       throw new ValidationException([{ field: 'code', message: 'Confirmation code is invalid' }]);
     }

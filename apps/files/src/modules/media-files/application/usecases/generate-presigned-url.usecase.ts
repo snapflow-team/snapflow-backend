@@ -26,25 +26,28 @@ export class GeneratedUploadUrlUseCase implements ICommandHandler<GeneratedUploa
   }: GeneratedUploadUrlCommand): Promise<GenerateUploadUrlResponse[]> {
     const { postsMediaKeyPrefix }: S3Settings = this.configService.get<S3Settings>('s3Settings');
 
-    //TODO (vitaliy) refactor нужно отделить логику getPresignedPutUrl от createPending, потому что при ошибке у нас запишутся грязные данные
-    return Promise.all(
-      files.map(async ({ mimeType, size }) => {
-        const fileId: string = this.cryptoService.generateUUID();
-        const ext: string = mimeType.split('/')[1];
-        const key: string = `${postsMediaKeyPrefix}/${userId}/${fileId}.${ext}`;
+    const pendingFiles = files.map(({ mimeType, size }) => {
+      const fileId: string = this.cryptoService.generateUUID();
+      const ext: string = mimeType.split('/')[1];
+      const key: string = `${postsMediaKeyPrefix}/${userId}/${fileId}.${ext}`;
 
-        const uploadUrl: string = await this.storageService.getPresignedPutUrl(key, mimeType, size);
+      return {
+        id: fileId,
+        userId,
+        key,
+        mimeType,
+        size,
+      };
+    });
 
-        await this.filesRepository.createPending({
-          id: fileId,
-          userId,
-          key,
-          mimeType,
-          size,
-        });
-
-        return { fileId, uploadUrl };
-      }),
+    const uploadUrls: string[] = await Promise.all(
+      pendingFiles.map(({ key, mimeType, size }) =>
+        this.storageService.getPresignedPutUrl(key, mimeType, size),
+      ),
     );
+
+    await this.filesRepository.createManyPending(pendingFiles);
+
+    return pendingFiles.map(({ id }, index) => ({ fileId: id, uploadUrl: uploadUrls[index] }));
   }
 }

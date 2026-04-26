@@ -9,7 +9,6 @@ import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users
 import { User } from '@generated/prisma-snapflow';
 import { PasswordRecoveryInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/password-recovery.input-dto';
 
-// vilyamz: вынести в либу этот менеджер
 /**
  * 🔐 AuthTestManager
  *
