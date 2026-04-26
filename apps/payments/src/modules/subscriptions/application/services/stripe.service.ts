@@ -28,7 +28,7 @@ export class StripeService {
   ): Promise<Notification<StripeCheckoutSessionResult>> {
     try {
       const session = await this.stripe.checkout.sessions.create({
-        //todo вынести subscription в enum
+        //vitaliy[payments:refactor]: вынести subscription в enum
         mode: 'subscription',
         line_items: [{ price: dto.stripePriceId, quantity: 1 }],
         success_url: `${this.apiSettings.stripeSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`,
@@ -70,10 +70,11 @@ export class StripeService {
       );
     }
   }
+  // vitaliy[sf-payments:refactor]: удалить этот метод если он не нужен
   async getSubscription(stripeSubId: string): Promise<Stripe.Subscription> {
     return this.stripe.subscriptions.retrieve(stripeSubId);
   }
-  // vilyamz: не нужно ли этот метод сделать приватным?
+  // vitaliy[sf-payments:refactor]: если этот метод по окончанию написания логики будет использоваться только в рамках этого usecase, то сделать его приватным или вообще объединить два метода 'getBillingPeriodFromSubscriptionObject', 'retrieveSubscriptionBillingPeriod' если этот метоб будет использоваться только в методе 'retrieveSubscriptionBillingPeriod'.
   getBillingPeriodFromSubscriptionObject(sub: Stripe.Subscription): Notification<BillingPeriod> {
     const item: Stripe.SubscriptionItem | undefined = sub.items.data[0];
 
@@ -186,6 +187,7 @@ export class StripeService {
     }
   }
 }
+// vitaliy[payments:refactor]: вынести этот тип из usecase
 export type InvoicePayment = {
   amount: number;
   currency: string;
