@@ -74,7 +74,7 @@ export class StripeService {
   async getSubscription(stripeSubId: string): Promise<Stripe.Subscription> {
     return this.stripe.subscriptions.retrieve(stripeSubId);
   }
-  // vitaliy[payments:refactor]: если этот метод по окончанию написания логики будет использоваться только в рамках этого usecase, то сделать его приватным.
+  // vitaliy[payments:refactor]: если этот метод по окончанию написания логики будет использоваться только в рамках этого usecase, то сделать его приватным или вообще объединить два метода 'getBillingPeriodFromSubscriptionObject', 'retrieveSubscriptionBillingPeriod' если этот метоб будет использоваться только в методе 'retrieveSubscriptionBillingPeriod'.
   getBillingPeriodFromSubscriptionObject(sub: Stripe.Subscription): Notification<BillingPeriod> {
     const item: Stripe.SubscriptionItem | undefined = sub.items.data[0];
 
