@@ -1,6 +1,5 @@
 export class UpdateProfileInfrastructureDto {
   profileId: number;
-  username: string;
   firstName: string;
   lastName: string;
   dateOfBirth?: Date | null;

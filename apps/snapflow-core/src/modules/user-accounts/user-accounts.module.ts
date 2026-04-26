@@ -21,7 +21,7 @@ import { NewPasswordUseCase } from './auth/application/usecases/new-password.use
 import { GetMeQueryHandler } from './auth/application/queries/get-me.query-handler';
 import { JwtStrategy } from './auth/domain/guards/bearer/jwt.strategy';
 import { UsersQueryRepository } from './users/infrastructure/users.query-repository';
-import { AuthTokenService } from '../../../../../libs/common/services/auth-token.service';
+import { AuthTokenService } from './auth/application/services/auth-token.service';
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';

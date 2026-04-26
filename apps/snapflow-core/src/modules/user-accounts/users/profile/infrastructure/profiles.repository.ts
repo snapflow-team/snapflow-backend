@@ -33,14 +33,13 @@ export class ProfilesRepository {
     dto: UpdateProfileInfrastructureDto,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<void> {
-    const { profileId, username, firstName, lastName, dateOfBirth, country, city, aboutMe } = dto;
+    const { profileId, firstName, lastName, dateOfBirth, country, city, aboutMe } = dto;
 
     await tx.userProfile.update({
       where: {
         id: profileId,
       },
       data: {
-        username,
         firstName,
         lastName,
         ...(dateOfBirth !== undefined && { dateOfBirth }),

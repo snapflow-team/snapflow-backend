@@ -40,7 +40,7 @@ export class PublicProfileViewDto {
     const dto = new this();
 
     dto.id = profile.id.toString();
-    dto.username = profile.username;
+    dto.username = profile.user.username;
     dto.avatarUrl = profile.avatarUrl;
     dto.aboutMe = profile.aboutMe;
     dto.userMetadata = {
