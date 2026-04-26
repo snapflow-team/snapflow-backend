@@ -13,6 +13,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { extractSubscriptionId } from './utils/extract-subscription-id';
 import { extractInvoiceFailureDetails } from './utils/extract-invoice-failure-details';
 import { extractCustomerId } from './utils/extract-customer-id';
+import { checkIsOldEvent } from './utils/check-is-old-event';
+import { extractEventDate } from './utils/extract-date-from-event-created';
 
 @Injectable()
 export class InvoicePaymentFailedHandler implements WebhookHandler {
@@ -58,6 +60,9 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
       this.logger.warn(`No local subscription for Stripe subscription ${stripeSubscriptionId}`);
       return Notification.ok();
     }
+    if (checkIsOldEvent(event, localSubscription)) {
+      return Notification.ok();
+    }
     //Проверяем протухла ли подписка в нашей локальной бд
     //todo(vitaliy) возможно нам стоит учитывать это протухание
     if (
@@ -66,7 +71,7 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
     ) {
       this.logger.warn(`Subscription: ${stripeSubscriptionId} have not been expired yet`);
     }
-    await this.subscriptionsRepository.setToPastDue(localSubscription.id);
+    await this.subscriptionsRepository.setToPastDue(localSubscription.id, extractEventDate(event));
     const stripeCusId = extractCustomerId(payload.customer);
     if (!stripeCusId) {
       this.logger.warn(`No customer in invoice: ${payload.id}`);

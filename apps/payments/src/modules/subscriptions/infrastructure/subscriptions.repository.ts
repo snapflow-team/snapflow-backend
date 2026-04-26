@@ -39,8 +39,15 @@ export class SubscriptionsRepository {
     subscriptionId: number,
     stripeSubId: string,
     currentPeriod: BillingPeriod,
+    lastStripeEventAt: Date,
     tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<Subscription> {
+  ): Promise<Subscription | null> {
+    const subscription = await tx.subscription.findUnique({
+      where: { id: subscriptionId },
+    });
+    if (!subscription) {
+      return null;
+    }
     return tx.subscription.update({
       where: { id: subscriptionId },
       data: {
@@ -48,20 +55,28 @@ export class SubscriptionsRepository {
         stripeSubId,
         currentPeriodStart: currentPeriod.start,
         currentPeriodEnd: currentPeriod.end,
+        lastStripeEventAt,
       },
     });
   }
 
-  //todo(vitaliy) придумать более хорошее название методу который делает подписку протухшей после того как чекаут сессия протухла
   async cancelSubscription(
     subscriptionId: number,
+    lastStripeEventAt: Date,
     tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<Subscription> {
+  ): Promise<Subscription | null> {
+    const subscription = await tx.subscription.findUnique({
+      where: { id: subscriptionId },
+    });
+    if (!subscription) {
+      return null;
+    }
     return tx.subscription.update({
       where: { id: subscriptionId },
       data: {
         status: SubscriptionStatus.CANCELLED,
         autoRenewal: false,
+        lastStripeEventAt,
       },
     });
   }
@@ -74,12 +89,45 @@ export class SubscriptionsRepository {
       where: { stripeSubId, deletedAt: null },
     });
   }
-  async setToPastDue(id: number, tx: Prisma.TransactionClient = this.prisma) {
+  async setToPastDue(
+    subscriptionId: number,
+    lastStripeEventAt: Date,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription | null> {
+    const subscription = await tx.subscription.findUnique({
+      where: { id: subscriptionId },
+    });
+    if (!subscription) {
+      return null;
+    }
     return tx.subscription.update({
-      where: { id },
+      where: { id: subscriptionId },
       data: {
         status: SubscriptionStatus.PAST_DUE,
         accountType: AccountType.PERSONAL,
+        lastStripeEventAt,
+      },
+    });
+  }
+  async renewSubscription(
+    subscriptionId: number,
+    period: BillingPeriod,
+    lastStripeEventAt: Date,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription | null> {
+    const subscription = await tx.subscription.findUnique({
+      where: { id: subscriptionId },
+    });
+    if (!subscription) {
+      return null;
+    }
+    return tx.subscription.update({
+      where: { id: subscriptionId },
+      data: {
+        status: SubscriptionStatus.ACTIVE,
+        currentPeriodStart: period.start,
+        currentPeriodEnd: period.end,
+        lastStripeEventAt,
       },
     });
   }

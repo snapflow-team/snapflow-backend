@@ -3,7 +3,6 @@ import Stripe from 'stripe';
 import { StripeEvents } from '../../constants/stripe-events.constants';
 import { isCheckoutSessionObject } from '../../type-guards/stripe-webhook.type-guards';
 import { NotificationResultCode } from '../../../../../common/notification/notification-result-code';
-import { StripeService } from '../../services/stripe.service';
 import { PaymentsRepository } from '../../../infrastructure/payments.repository';
 import { OutboxEventType, Payment, Subscription } from '@generated/prisma-payments';
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
@@ -13,6 +12,7 @@ import { PrismaService } from '../../../../database/prisma.service';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
 import { CheckoutSessionExpiredEvent } from '../../../../../../../../libs/contracts/payments/payments-checkout-sesion-expired.event';
 import { Injectable } from '@nestjs/common';
+import { extractEventDate } from './utils/extract-date-from-event-created';
 
 @Injectable()
 export class CheckoutSessionExpiredHandler implements WebhookHandler {
@@ -51,10 +51,18 @@ export class CheckoutSessionExpiredHandler implements WebhookHandler {
     await this.prisma.$transaction(async (tx) => {
       await this.paymentsRepository.markAsFailed(payment.id, tx);
 
-      const subscription: Subscription = await this.subscriptionsRepository.cancelSubscription(
-        payment.subscriptionId,
-        tx,
-      );
+      const subscription: Subscription | null =
+        await this.subscriptionsRepository.cancelSubscription(
+          payment.subscriptionId,
+          extractEventDate(event),
+          tx,
+        );
+      if (!subscription) {
+        return Notification.fail(
+          NotificationResultCode.InternalServerError,
+          `Subscription with id ${payment.subscriptionId} not found`,
+        );
+      }
       const user = await this.customersRepository.findById(subscription.customerId);
 
       if (!user) {
