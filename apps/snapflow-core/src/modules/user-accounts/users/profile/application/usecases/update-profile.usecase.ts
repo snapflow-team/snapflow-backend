@@ -2,8 +2,11 @@ import { UpdateProfileApplicationDto } from '../dto/update-profile.application-d
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ProfilesRepository } from '../../infrastructure/profiles.repository';
 import { DateService } from '../../../../../../../../../libs/common/services/date.service';
-import { BadRequestException, InternalServerException, } from '../../../../../../common/exceptions/domain-exceptions';
-import { User, UserProfile } from '@generated/prisma-snapflow';
+import {
+  BadRequestException,
+  InternalServerException,
+} from '../../../../../../common/exceptions/domain-exceptions';
+import { Prisma, User, UserProfile } from '@generated/prisma-snapflow';
 import { UsersRepository } from '../../../infrastructure/users.repository';
 import { PrismaService } from '../../../../../../database/prisma.service';
 
@@ -35,35 +38,57 @@ export class UpdateProfileUseCase implements ICommandHandler<UpdateProfileComman
       throw new InternalServerException('User profile is missing. Registration invariant violated');
     }
 
-    if (data.username) {
-      const userWithSameUsername: User | null = await this.usersRepository.findUserByUsername(
-        data.username,
-      );
+    const userWithSameUsername: User | null = await this.usersRepository.findUserByUsername(
+      data.username,
+    );
 
-      if (userWithSameUsername && userWithSameUsername.id !== userId) {
+    if (userWithSameUsername && userWithSameUsername.id !== userId) {
+      throw new BadRequestException('This username is already taken');
+    }
+
+    try {
+      await this.prismaService.$transaction(async (tx) => {
+        await this.usersRepository.updateUsername(userId, data.username, tx);
+        await this.profilesRepository.updateProfile(
+          {
+            profileId: profile.id,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            country: data.country,
+            city: data.city,
+            aboutMe: data.aboutMe,
+            dateOfBirth: this.mapOptionalDate(data.dateOfBirth),
+          },
+          tx,
+        );
+      });
+    } catch (error) {
+      if (this.isUsernameUniqueConstraintError(error)) {
         throw new BadRequestException('This username is already taken');
       }
-    }
-    // vilyamz: избавиться от денормализации (оставить username только в таблице users)
-    await this.prismaService.$transaction(async (tx) => {
-      await this.profilesRepository.updateProfile(
-        {
-          profileId: profile.id,
-          ...data,
-          dateOfBirth: this.mapOptionalDate(data.dateOfBirth),
-        },
-        tx,
-      );
 
-      if (data.username) {
-        await this.usersRepository.updateUsername(userId, data.username, tx);
-      }
-    });
+      throw error;
+    }
   }
 
   private mapOptionalDate(value: string | null | undefined): Date | null | undefined {
     if (value === undefined) return undefined;
     if (value === null) return null;
     return new Date(value);
+  }
+
+  private isUsernameUniqueConstraintError(error: unknown): boolean {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+      return false;
+    }
+
+    const target = error.meta?.['target'];
+    if (!target) {
+      return false;
+    }
+
+    return Array.isArray(target)
+      ? target.includes('username')
+      : typeof target === 'string' && target.includes('username');
   }
 }
