@@ -4,18 +4,18 @@ import { PaginatedViewDto } from '../../../../../../../libs/dto/paginated.view-d
 import { PostViewDto } from '../../api/view-dto/post.view-dto';
 import { GetPostsQueryParamsDto } from '../../api/input-dto/get-posts.query-params.dto';
 
-export class GetProfilePostsQuery {
+export class GetUserPostsQuery {
   constructor(
     public readonly query: GetPostsQueryParamsDto,
     public readonly userId: number,
   ) {}
 }
 
-@QueryHandler(GetProfilePostsQuery)
-export class GetProfilePostsQueryHandler implements IQueryHandler<GetProfilePostsQuery> {
+@QueryHandler(GetUserPostsQuery)
+export class GetUserPostsQueryHandler implements IQueryHandler<GetUserPostsQuery> {
   constructor(private readonly postsQueryRepository: PostsQueryRepository) {}
 
-  async execute({ query, userId }: GetProfilePostsQuery): Promise<PaginatedViewDto<PostViewDto>> {
-    return this.postsQueryRepository.findProfilePosts(query, userId);
+  async execute({ query, userId }: GetUserPostsQuery): Promise<PaginatedViewDto<PostViewDto>> {
+    return this.postsQueryRepository.findUserPosts(query, userId);
   }
 }
