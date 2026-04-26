@@ -70,10 +70,11 @@ export class StripeService {
       );
     }
   }
+  // vitaliy[payments:refactor]: удалить этот метод если он не нужен
   async getSubscription(stripeSubId: string): Promise<Stripe.Subscription> {
     return this.stripe.subscriptions.retrieve(stripeSubId);
   }
-  // vilyamz: не нужно ли этот метод сделать приватным?
+  // vitaliy[payments:refactor]: если этот метод по окончанию написания логики будет использоваться только в рамках этого usecase, то сделать его приватным.
   getBillingPeriodFromSubscriptionObject(sub: Stripe.Subscription): Notification<BillingPeriod> {
     const item: Stripe.SubscriptionItem | undefined = sub.items.data[0];
 
@@ -186,6 +187,7 @@ export class StripeService {
     }
   }
 }
+// vitaliy[payments:refactor]: вынести этот тип из usecase
 export type InvoicePayment = {
   amount: number;
   currency: string;
