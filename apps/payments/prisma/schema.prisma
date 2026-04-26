@@ -34,6 +34,7 @@ enum OutboxEventType {
   SUBSCRIPTION_ACTIVATED
   CHECKOUT_SESSION_EXPIRED
   SUBSCRIPTION_RENEWAL_FAILED
+  SUBSCRIPTION_CANCELLED
 }
 
 enum OutboxEventStatus {
@@ -53,6 +54,7 @@ model Subscription {
   autoRenewal        Boolean            @default(true) @map("auto_renewal")
   currentPeriodStart DateTime?          @map("current_period_start")
   currentPeriodEnd   DateTime?          @map("current_period_end")
+  lastStripeEventAt  DateTime?          @map("last_stripe_event_at")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -75,6 +77,7 @@ model Payment {
   externalId String?         @map("external_id")
   provider   PaymentProvider @default(STRIPE)
   amount     Int
+  //todo(vitaliy) убрать дефолт и сделать enum из доступных currency
   currency   String          @default("usd")
   status     PaymentStatus
 

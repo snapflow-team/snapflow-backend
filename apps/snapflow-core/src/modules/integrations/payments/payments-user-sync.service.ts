@@ -8,9 +8,11 @@ import {
 import {
   isCheckoutSessionExpiredEvent,
   isSubscriptionActivatedEvent,
+  isSubscriptionCancelledEvent,
   isSubscriptionRenewalFailedEvent,
 } from './type-guards/payments-events.type-guards';
 import { UsersRepository } from '../../user-accounts/users/infrastructure/users.repository';
+import { SubscriptionCancelledEvent } from '../../../../../../libs/contracts/payments/payments-subscription-cancelled.event';
 
 @Injectable()
 export class PaymentsUserSyncService {
@@ -51,6 +53,14 @@ export class PaymentsUserSyncService {
         );
         break;
       }
+      case PaymentsRoutingKey.SubscriptionCancelled: {
+        if (!isSubscriptionCancelledEvent(payload)) {
+          this.logger.warn(`Invalid ${routingKey} payload`);
+          return;
+        }
+        await this.deleteBusinessSubscription(payload);
+        break;
+      }
       default:
         this.logger.warn(`Unhandled routing key: ${routingKey}`);
     }
@@ -70,7 +80,9 @@ export class PaymentsUserSyncService {
       subscriptionActiveUntil,
     });
   }
-  private async deleteBusinessSubscription(data: SubscriptionRenewalFailedEvent): Promise<void> {
+  private async deleteBusinessSubscription(
+    data: SubscriptionRenewalFailedEvent | SubscriptionCancelledEvent,
+  ): Promise<void> {
     const user = await this.usersRepository.findUserById(data.userId);
     if (!user) {
       this.logger.error(`User ${data.userId} not found for deleting business subscription status`);
