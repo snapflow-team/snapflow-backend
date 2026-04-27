@@ -8,7 +8,7 @@ import { PostsRepository } from '../../infrastructure/posts-repository';
 import { PostWithMedia } from '../../types/create-media.type';
 import { ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
 import { FilesClient } from '../../../integrations/files/files.client';
-import { OutboxEventType, PostStatus } from '@generated/prisma-snapflow';
+import { OutboxEventType, PostStatus, Prisma } from '@generated/prisma-snapflow';
 import { PrismaService } from '../../../../database/prisma.service';
 import { OutboxRepository } from '../../outbox/repositories/outbox.repository';
 
@@ -43,44 +43,84 @@ export class SaveDraftUseCase implements ICommandHandler<SaveDraftCommand> {
       throw new BadRequestException('Post requires at least one valid media file');
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      const draft: PostWithMedia | null = await this.postsRepository.findDraftByUserId(userId, tx);
-
-      if (draft) {
-        const wasDeleted: boolean = await this.postsRepository.softDeletePostWithMedia(
-          draft.id,
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const draft: PostWithMedia | null = await this.postsRepository.findDraftByUserId(
           userId,
           tx,
         );
 
-        if (!wasDeleted) {
-          throw new InternalServerException('Failed to delete existing draft');
-        }
-
-        for (const media of draft.postMedias) {
-          await this.outboxRepository.createOutboxEvent(
-            OutboxEventType.DELETE_POST_MEDIA_FILE,
-            { userId, fileUrl: media.url },
+        if (draft) {
+          const wasDeleted: boolean = await this.postsRepository.softDeletePostWithMedia(
+            draft.id,
+            userId,
             tx,
           );
+
+          if (!wasDeleted) {
+            throw new InternalServerException('Failed to delete existing draft');
+          }
+
+          for (const media of draft.postMedias) {
+            await this.outboxRepository.createOutboxEvent(
+              OutboxEventType.DELETE_POST_MEDIA_FILE,
+              { userId, fileUrl: media.url },
+              tx,
+            );
+          }
         }
+
+        await this.postsRepository.createPostWithMedia(
+          {
+            userId,
+            description,
+            status: PostStatus.DRAFT,
+            medias: files.map((file, index) => ({
+              fileId: file.fileId,
+              url: file.url,
+              mimeType: file.mimeType,
+              size: file.size,
+              position: index,
+            })),
+          },
+          tx,
+        );
+      });
+    } catch (error) {
+      if (this.isDraftUniqueConstraintError(error)) {
+        throw new BadRequestException(
+          'Another draft save is already in progress, please try again',
+        );
       }
 
-      await this.postsRepository.createPostWithMedia(
-        {
-          userId,
-          description,
-          status: PostStatus.DRAFT,
-          medias: files.map((file, index) => ({
-            fileId: file.fileId,
-            url: file.url,
-            mimeType: file.mimeType,
-            size: file.size,
-            position: index,
-          })),
-        },
-        tx,
-      );
-    });
+      throw error;
+    }
+  }
+
+  private isDraftUniqueConstraintError(error: unknown): boolean {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+      return false;
+    }
+
+    const meta = error.meta;
+    if (!meta) {
+      return false;
+    }
+
+    if (meta['modelName'] === 'Post') {
+      return true;
+    }
+
+    const target = meta['target'];
+    if (!target) {
+      return false;
+    }
+
+    const matchesDraftIndex = (value: string): boolean =>
+      value.includes('idx_posts_user_draft_active') || value.includes('user_id');
+
+    return Array.isArray(target)
+      ? target.some(matchesDraftIndex)
+      : typeof target === 'string' && matchesDraftIndex(target);
   }
 }
