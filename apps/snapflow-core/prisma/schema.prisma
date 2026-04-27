@@ -175,6 +175,9 @@ model Post {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  /// ВНИМАНИЕ: Поле userId имеет уникальное ограничение в БД только для активных DRAFT-постов (Soft Delete).
+  /// @unique не добавляется в схему намеренно, так как уникальность реализована partial unique index.
+  /// Добавлено в миграции: 20260427085100_add_partial_unique_index_user_draft_post
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int         @map("user_id")
   postMedias PostMedia[]
