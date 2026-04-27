@@ -2,8 +2,12 @@ import { ArgumentsHost, Catch, ExceptionFilter, Logger } from '@nestjs/common';
 import { IRpcErrorResponse, rpcServerErrorResponseFactory } from '../rpc-exception-response';
 import { TcpContext } from '@nestjs/microservices';
 import { Observable, throwError } from 'rxjs';
-import { EnvironmentSettings } from '../../../../apps/files/src/setup/configuration/environment-settings';
 import { cleanStackTrace } from '../../core/utils/clean-stack-trace';
+
+interface RpcEnvironmentSettings {
+  readonly isDevelopment: boolean;
+  readonly isProduction: boolean;
+}
 
 @Catch()
 export class GlobalRpcExceptionFilter implements ExceptionFilter {
@@ -11,7 +15,7 @@ export class GlobalRpcExceptionFilter implements ExceptionFilter {
 
   constructor(
     private readonly serviceName: string,
-    private readonly environmentSettings: EnvironmentSettings,
+    private readonly environmentSettings: RpcEnvironmentSettings,
   ) {}
 
   catch(exception: Error, host: ArgumentsHost): Observable<any> | any {
