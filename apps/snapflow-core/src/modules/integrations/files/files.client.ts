@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SERVICES } from '../../../../../../libs/contracts/services.tokens';
 import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
 import {
   ConfirmUploadRequest,
   ConfirmUploadResponse,
@@ -16,83 +15,63 @@ import {
   ValidateFilesResponse,
 } from '../../../../../../libs/contracts/files';
 import { SnapFlowDomainExceptionCodeMapper } from '../../../common/exceptions/snapflow-domain-exception-mapper';
+import { RpcCaller } from '../../../../../../libs/exceptions/rpc/rpc-caller';
 
 @Injectable()
 export class FilesClient {
+  private readonly rpcCaller: RpcCaller;
+
   constructor(
     @Inject(SERVICES.FILES) private readonly client: ClientProxy,
-    private readonly exceptionMapper: SnapFlowDomainExceptionCodeMapper,
-  ) {}
-  // vilyamz: прочитать про firstValueFrom
+    exceptionMapper: SnapFlowDomainExceptionCodeMapper,
+  ) {
+    this.rpcCaller = new RpcCaller(exceptionMapper);
+  }
+
   async generateUploadUrl(
     payload: GenerateUploadUrlsRequest,
   ): Promise<GenerateUploadUrlResponse[]> {
-    try {
-      return firstValueFrom(
-        this.client.send<GenerateUploadUrlResponse[]>(
-          { cmd: FilesRpcCommand.GenerateUploadUrl },
-          payload,
-        ),
-      );
-    } catch (error) {
-      if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error);
-      }
-      throw error;
-    }
+    return this.rpcCaller.send<GenerateUploadUrlResponse[], GenerateUploadUrlsRequest>(
+      this.client,
+      { cmd: FilesRpcCommand.GenerateUploadUrl },
+      payload,
+      { serviceName: SERVICES.FILES },
+    );
   }
 
   async confirmUpload(payload: ConfirmUploadRequest): Promise<ConfirmUploadResponse> {
-    try {
-      return firstValueFrom(
-        this.client.send<ConfirmUploadResponse>({ cmd: FilesRpcCommand.ConfirmUpload }, payload),
-      );
-    } catch (error) {
-      if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error);
-      }
-      throw error;
-    }
+    return this.rpcCaller.send<ConfirmUploadResponse, ConfirmUploadRequest>(
+      this.client,
+      { cmd: FilesRpcCommand.ConfirmUpload },
+      payload,
+      { serviceName: SERVICES.FILES },
+    );
   }
 
   async validateFiles(payload: ValidateFilesRequest): Promise<ValidateFilesResponse> {
-    try {
-      return firstValueFrom(
-        this.client.send<ValidateFilesResponse>({ cmd: FilesRpcCommand.ValidateFiles }, payload),
-      );
-    } catch (error) {
-      if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error);
-      }
-      throw error;
-    }
+    return this.rpcCaller.send<ValidateFilesResponse, ValidateFilesRequest>(
+      this.client,
+      { cmd: FilesRpcCommand.ValidateFiles },
+      payload,
+      { serviceName: SERVICES.FILES },
+    );
   }
 
   async uploadFile(payload: UploadFileRequest): Promise<UploadFileResponse> {
-    try {
-      return firstValueFrom<UploadFileResponse>(
-        this.client.send({ cmd: FilesRpcCommand.UploadFile }, payload),
-      );
-    } catch (error) {
-      if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error);
-      }
-      throw error;
-    }
+    return this.rpcCaller.send<UploadFileResponse, UploadFileRequest>(
+      this.client,
+      { cmd: FilesRpcCommand.UploadFile },
+      payload,
+      { serviceName: SERVICES.FILES },
+    );
   }
 
   async deleteFile(data: DeleteFileRequest): Promise<DeleteFileResponse> {
-    try {
-      return await lastValueFrom(this.client.send({ cmd: FilesRpcCommand.DeleteFile }, data));
-    } catch (error) {
-      if (this.isRpcError(error)) {
-        throw this.exceptionMapper.mapRpcToDomainException(error);
-      }
-      throw error;
-    }
-  }
-
-  private isRpcError(error: any): boolean {
-    return error?.service === SERVICES.FILES;
+    return this.rpcCaller.send<DeleteFileResponse, DeleteFileRequest>(
+      this.client,
+      { cmd: FilesRpcCommand.DeleteFile },
+      data,
+      { serviceName: SERVICES.FILES },
+    );
   }
 }

@@ -141,6 +141,6 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
     ...repositories,
     ...strategies,
   ],
-  exports: [ProfilesRepository, UsersRepository],
+  exports: [ProfilesRepository, UsersRepository, FilesClientModule],
 })
 export class UserAccountsModule {}
