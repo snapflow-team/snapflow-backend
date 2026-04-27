@@ -71,13 +71,14 @@ export class PostsController {
     @Body() dto: CreatePostInputDto,
     @ExtractUserFromRequest() { id: userId }: UserContextDto,
   ): Promise<PostViewDto> {
-    await this.commandBus.execute<SaveDraftCommand, number>(
+    await this.commandBus.execute<SaveDraftCommand, void>(
       new SaveDraftCommand({
         userId,
         description: dto.description ?? null,
         fileIds: dto.fileIds,
       }),
     );
+
     return this.queryBus.execute<GetDraftQuery, PostViewDto>(new GetDraftQuery(userId));
   }
 
