@@ -5,6 +5,7 @@ import {
   Post,
   PostMedia,
   PostStatus,
+  Prisma,
   User,
 } from '@generated/prisma-snapflow';
 import { PrismaService } from '../../../../database/prisma.service';
@@ -318,5 +319,117 @@ describe('SaveDraftUseCase (Интеграционные тесты)', () => {
     });
     expect(activeDrafts).toHaveLength(1);
     expect(activeDrafts[0].id).toBe(oldDraftId);
+  });
+
+  it('(UniqueIndex) partial unique index запрещает два активных DRAFT для одного пользователя', async () => {
+    const user: User = await testHelper.createUserWithProfile(prisma, 'dr_unique');
+
+    await prisma.post.create({
+      data: { userId: user.id, status: PostStatus.DRAFT, description: 'first draft' },
+    });
+
+    await expect(
+      prisma.post.create({
+        data: { userId: user.id, status: PostStatus.DRAFT, description: 'second draft' },
+      }),
+    ).rejects.toMatchObject({ code: 'P2002' });
+  });
+
+  it('(UniqueIndex) partial unique index не препятствует созданию DRAFT после soft-delete предыдущего', async () => {
+    const user: User = await testHelper.createUserWithProfile(prisma, 'dr_aft_del');
+
+    const previous: Post = await prisma.post.create({
+      data: { userId: user.id, status: PostStatus.DRAFT, description: 'will be soft-deleted' },
+    });
+
+    await prisma.post.update({
+      where: { id: previous.id },
+      data: { deletedAt: new Date() },
+    });
+
+    await expect(
+      prisma.post.create({
+        data: { userId: user.id, status: PostStatus.DRAFT, description: 'new draft' },
+      }),
+    ).resolves.toBeDefined();
+  });
+
+  it('(Race) при гонке должен бросать BadRequestException с понятным сообщением', async () => {
+    const user: User = await testHelper.createUserWithProfile(prisma, 'dr_race');
+    const fileIds = ['a1111111-1111-4111-8111-111111111111'];
+
+    await prisma.post.create({
+      data: {
+        userId: user.id,
+        status: PostStatus.DRAFT,
+        description: 'pre-existing draft',
+      },
+    });
+
+    const findDraftSpy = jest
+      .spyOn(postsRepository, 'findDraftByUserId')
+      .mockResolvedValueOnce(null);
+
+    validateFilesMock.mockResolvedValueOnce({
+      valid: true,
+      files: fileIds.map((fileId) => ({
+        fileId,
+        url: `https://cdn.test/files/${fileId}`,
+        mimeType: 'image/jpeg',
+        size: 4000,
+      })),
+    });
+
+    await expect(
+      useCase.execute(
+        new SaveDraftCommand({
+          userId: user.id,
+          description: 'racing draft',
+          fileIds,
+        }),
+      ),
+    ).rejects.toMatchObject({
+      code: 'BadRequest',
+      message: 'Another draft save is already in progress, please try again',
+    });
+
+    findDraftSpy.mockRestore();
+  });
+
+  it('(Race) при ошибке P2002 не на partial unique index пробрасывает исходную ошибку', async () => {
+    const user: User = await testHelper.createUserWithProfile(prisma, 'dr_race_other');
+    const fileIds = ['a2222222-2222-4222-8222-222222222222'];
+
+    validateFilesMock.mockResolvedValueOnce({
+      valid: true,
+      files: fileIds.map((fileId) => ({
+        fileId,
+        url: `https://cdn.test/files/${fileId}`,
+        mimeType: 'image/jpeg',
+        size: 5000,
+      })),
+    });
+
+    const unrelatedP2002 = new Prisma.PrismaClientKnownRequestError('Unique violation', {
+      code: 'P2002',
+      clientVersion: 'test',
+      meta: { target: ['some_other_unique_index'] },
+    });
+
+    const createSpy = jest
+      .spyOn(postsRepository, 'createPostWithMedia')
+      .mockRejectedValueOnce(unrelatedP2002);
+
+    await expect(
+      useCase.execute(
+        new SaveDraftCommand({
+          userId: user.id,
+          description: 'unrelated p2002',
+          fileIds,
+        }),
+      ),
+    ).rejects.toBe(unrelatedP2002);
+
+    createSpy.mockRestore();
   });
 });
