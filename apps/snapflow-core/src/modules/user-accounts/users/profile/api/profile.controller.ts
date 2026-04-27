@@ -23,7 +23,6 @@ import { GetProfileQuery } from '../application/queries/get-profile.query-handle
 import { ApiTags } from '@nestjs/swagger';
 import { ApiUpdateProfile } from './swagger/update-profile.swagger';
 import { ApiGetProfile } from './swagger/get-profile.swagger';
-import { FilesClient } from '../../../../integrations/files/files.client';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AvatarFile } from '../pipes/avatar-file.pipe';
 import { UploadAvatarApplicationDto } from '../application/dto/apload-avatar.application-dto';
@@ -42,7 +41,6 @@ import { ApiGetPublicProfile } from './swagger/get-public-profile.swagger';
 @Controller('users/profile')
 export class ProfileController {
   constructor(
-    private filesClient: FilesClient,
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
   ) {}

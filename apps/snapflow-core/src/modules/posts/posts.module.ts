@@ -9,7 +9,6 @@ import { PostsQueryRepository } from './infrastructure/posts.query-repository';
 import { Module } from '@nestjs/common';
 import { PostsController } from './api/posts.controller';
 import { UserAccountsModule } from '../user-accounts/user-accounts.module';
-import { FilesClientModule } from '../integrations/files/files-client.module';
 import { GetUserPostsQueryHandler } from './application/queries/get-user-posts.query-handler';
 import { SaveDraftUseCase } from './application/usecases/save-draft.usecase';
 import { OutboxRepository } from './outbox/repositories/outbox.repository';
@@ -26,7 +25,7 @@ const services = [OutboxProcessorService];
 const repositories = [PostsRepository, PostsQueryRepository, OutboxRepository];
 
 @Module({
-  imports: [UserAccountsModule, FilesClientModule],
+  imports: [UserAccountsModule],
   controllers: [PostsController],
   providers: [...useCases, ...queries, ...services, ...repositories],
   exports: [],
