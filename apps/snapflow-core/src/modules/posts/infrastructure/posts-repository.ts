@@ -9,8 +9,11 @@ import BatchPayload = Prisma.BatchPayload;
 @Injectable()
 export class PostsRepository {
   constructor(private readonly prisma: PrismaService) {}
-  async createPostWithMedia(dto: CreatePostWithMediaRepositoryDto): Promise<number> {
-    const post: { id: number } = await this.prisma.post.create({
+  async createPostWithMedia(
+    dto: CreatePostWithMediaRepositoryDto,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<number> {
+    const post: { id: number } = await tx.post.create({
       data: {
         userId: dto.userId,
         description: dto.description,
@@ -37,8 +40,11 @@ export class PostsRepository {
     });
   }
 
-  async findDraftByUserId(userId: number): Promise<PostWithMedia | null> {
-    return this.prisma.post.findFirst({
+  async findDraftByUserId(
+    userId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<PostWithMedia | null> {
+    return tx.post.findFirst({
       where: {
         userId,
         status: PostStatus.DRAFT,
