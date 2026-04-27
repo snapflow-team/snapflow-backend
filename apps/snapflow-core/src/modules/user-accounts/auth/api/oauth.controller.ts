@@ -63,7 +63,6 @@ export class OAuthController {
   @GithubAuthSwagger()
   async githubAuth() {}
 
-  //todo(vitaliy) необходимо типизировать все квери и комманды в контроллерах
   @Get('github/callback')
   @UseGuards(GithubAuthGuard)
   @GithubCallbackSwagger()

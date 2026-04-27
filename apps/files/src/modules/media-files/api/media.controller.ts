@@ -14,7 +14,7 @@ import type {
 } from '../../../../../../libs/contracts/files';
 import { FilesRpcCommand } from '../../../../../../libs/contracts/files';
 import { CommandBus } from '@nestjs/cqrs';
-import { GeneratedUploadUrlCommand } from '../application/usecases/generate-presignet-url.usecase';
+import { GeneratedUploadUrlCommand } from '../application/usecases/generate-presigned-url.usecase';
 import { ConfirmUploadCommand } from '../application/usecases/comfirm-upload.usecase';
 import { ValidateFilesCommand } from '../application/usecases/validate-files.usecase';
 import { MimetypeAvatar } from '../../../../../../libs/contracts/files/mimetype-avatar.enum';

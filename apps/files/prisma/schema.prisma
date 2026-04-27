@@ -9,6 +9,7 @@ datasource db {
 
 enum FileStatus {
   PENDING
+  PENDING_CLEANUP
   UPLOADED
 }
 

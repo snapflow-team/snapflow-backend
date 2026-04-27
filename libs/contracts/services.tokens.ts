@@ -1,3 +1,3 @@
 export const SERVICES = {
-  FILES: Symbol('FILES_SERVICE'),
+  FILES: 'FILES_SERVICE',
 };
