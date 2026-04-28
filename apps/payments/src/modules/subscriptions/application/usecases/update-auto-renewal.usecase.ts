@@ -27,7 +27,7 @@ export class UpdateAutoRenewalUseCase
       await this.subscriptionsRepository.findActiveOrPastDueByUserId(userId);
     if (!localSubscription) {
       return Notification.fail(
-        NotificationResultCode.NotFound,
+        NotificationResultCode.BadRequest,
         'User does not have any active subscriptions',
       );
     }

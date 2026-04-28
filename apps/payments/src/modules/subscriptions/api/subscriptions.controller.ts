@@ -15,6 +15,7 @@ import { CreateCheckoutSessionSwagger } from './swagger/create-checkout-session.
 import { CheckoutSessionUrlViewDto } from './view-dto/checkout-session-url.view-dto';
 import { UpdateAutoRenewalInputDto } from './input-dto/update-auto-renewal.input-dto';
 import { UpdateAutoRenewalCommand } from '../application/usecases/update-auto-renewal.usecase';
+import { UpdateAutoRenewalSwagger } from './swagger/update-auto-renewal.swagger';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -52,6 +53,7 @@ export class SubscriptionsController {
   @UseGuards(RemoteAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Put(`stripe/auto-renewal`)
+  @UpdateAutoRenewalSwagger()
   async updateAutoRenewal(
     @Body() { autoRenewal }: UpdateAutoRenewalInputDto,
     @ExtractUserFromRequest() { id: userId }: UserContextDto,
