@@ -44,7 +44,6 @@ enum OutboxEventStatus {
   FAILED
 }
 
-//todo как продлить подписку
 model Subscription {
   id                 Int                @id @default(autoincrement())
   planId             String             @map("plan_id")
@@ -106,9 +105,9 @@ model OutboxEvent {
 }
 
 model Customer {
-  id          Int    @id @default(autoincrement())
-  stripeCusId String @map("stripe_cus_id")
-  userId      Int    @map("user_id")
+  id          Int     @id @default(autoincrement())
+  stripeCusId String? @map("stripe_cus_id")
+  userId      Int     @map("user_id")
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
