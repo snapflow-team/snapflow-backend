@@ -9,10 +9,31 @@ import {
 } from '@generated/prisma-payments';
 import { CreatePendingOrderInfrastructureDto } from './types/create-pending-order.infrastructure-dto';
 import { BillingPeriod } from '../application/types/billing-period.type';
+import { ActivateSubscriptionDto } from '../application/dto/activate-subscription-webhook.application-dto';
 
 @Injectable()
 export class SubscriptionsRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findByStripeSubscriptionId(
+    stripeSubId: string,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription | null> {
+    return tx.subscription.findFirst({
+      where: { stripeSubId, deletedAt: null },
+    });
+  }
+
+  async findActiveOrPastDueByUserId(userId: number, tx: Prisma.TransactionClient = this.prisma) {
+    return tx.subscription.findFirst({
+      where: {
+        customer: {
+          userId,
+        },
+        OR: [{ status: SubscriptionStatus.ACTIVE }, { status: SubscriptionStatus.PAST_DUE }],
+      },
+    });
+  }
 
   async createPendingOrder(
     data: CreatePendingOrderInfrastructureDto,
@@ -35,27 +56,44 @@ export class SubscriptionsRepository {
     });
   }
 
-  async activateSubscription(
+  async updateAutoRenewal(
     subscriptionId: number,
-    stripeSubId: string,
-    currentPeriod: BillingPeriod,
-    lastStripeEventAt: Date,
+    autoRenewal: boolean,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription> {
+    return tx.subscription.update({
+      where: { id: subscriptionId },
+      data: {
+        autoRenewal: autoRenewal,
+      },
+    });
+  }
+
+  async activateSubscription(
+    dto: ActivateSubscriptionDto,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription | null> {
     const subscription = await tx.subscription.findUnique({
-      where: { id: subscriptionId },
+      where: { id: dto.subscriptionId },
     });
     if (!subscription) {
       return null;
     }
     return tx.subscription.update({
-      where: { id: subscriptionId },
+      where: { id: dto.subscriptionId },
       data: {
+        accountType: AccountType.BUSINESS,
         status: SubscriptionStatus.ACTIVE,
-        stripeSubId,
-        currentPeriodStart: currentPeriod.start,
-        currentPeriodEnd: currentPeriod.end,
-        lastStripeEventAt,
+        stripeSubId: dto.stripeSubId,
+        currentPeriodStart: dto.currentPeriod.start,
+        currentPeriodEnd: dto.currentPeriod.end,
+        lastStripeEventAt: dto.lastStripeEventAt,
+
+        customer: {
+          update: {
+            stripeCusId: dto.stripeCusId,
+          },
+        },
       },
     });
   }
@@ -81,14 +119,6 @@ export class SubscriptionsRepository {
     });
   }
 
-  async findByStripeSubscriptionId(
-    stripeSubId: string,
-    tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<Subscription | null> {
-    return tx.subscription.findFirst({
-      where: { stripeSubId, deletedAt: null },
-    });
-  }
   async setToPastDue(
     subscriptionId: number,
     lastStripeEventAt: Date,
@@ -109,6 +139,7 @@ export class SubscriptionsRepository {
       },
     });
   }
+
   async renewSubscription(
     subscriptionId: number,
     period: BillingPeriod,

@@ -15,14 +15,21 @@ import { CheckoutSessionExpiredHandler } from './application/webhook/handlers/ch
 import { InvoicePaymentSucceededHandler } from './application/webhook/handlers/invoice-payment-succeeded-handler';
 import { InvoicePaymentFailedHandler } from './application/webhook/handlers/invoice-payment-failed-handler';
 import { WEBHOOK_HANDLERS } from '../../core/providers/provide-tokens/webhook-handlers.inject-token';
+import { CustomerSubscriptionDeletedHandler } from './application/webhook/handlers/customer-subscription-deleted-handler';
+import { UpdateAutoRenewalUseCase } from './application/usecases/update-auto-renewal.usecase';
 
 const controllers = [SubscriptionsController, StripeWebhookController];
-const useCases = [CreateCheckoutSessionUseCase, HandleStripeWebhookUseCase];
+const useCases = [
+  CreateCheckoutSessionUseCase,
+  HandleStripeWebhookUseCase,
+  UpdateAutoRenewalUseCase,
+];
 const webhookHandlers = [
   CheckoutSessionCompletedHandler,
   CheckoutSessionExpiredHandler,
   InvoicePaymentSucceededHandler,
   InvoicePaymentFailedHandler,
+  CustomerSubscriptionDeletedHandler,
 ];
 const queries = [GetPlansQueryHandler];
 const services = [StripeService];
@@ -47,17 +54,20 @@ const guards = [RemoteAuthGuard];
         CheckoutSessionExpired: CheckoutSessionExpiredHandler,
         InvoicePaymentSucceeded: InvoicePaymentSucceededHandler,
         InvoicePaymentFailed: InvoicePaymentFailedHandler,
+        CustomerSubscriptionDeleted: CustomerSubscriptionDeletedHandler,
       ) => [
         CheckoutSessionCompleted,
         CheckoutSessionExpired,
         InvoicePaymentSucceeded,
         InvoicePaymentFailed,
+        CustomerSubscriptionDeleted,
       ],
       inject: [
         CheckoutSessionCompletedHandler,
         CheckoutSessionExpiredHandler,
         InvoicePaymentSucceededHandler,
         InvoicePaymentFailedHandler,
+        CustomerSubscriptionDeletedHandler,
       ],
     },
   ],

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Payment, PaymentStatus, Prisma } from '@generated/prisma-payments';
+import { CreateSucceededPaymentInfrastructureDto } from './types/create-succeeded-payment.infrastructure-dto';
 
 @Injectable()
 export class PaymentsRepository {
@@ -15,26 +16,8 @@ export class PaymentsRepository {
     });
   }
 
-  async markAsPaid(
-    paymentId: number,
-    tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<Payment> {
-    return tx.payment.update({
-      where: { id: paymentId },
-      data: { status: PaymentStatus.PAID },
-    });
-  }
-  async markAsFailed(
-    paymentId: number,
-    tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<Payment> {
-    return tx.payment.update({
-      where: { id: paymentId },
-      data: { status: PaymentStatus.FAILED },
-    });
-  }
   async createSucceededPayment(
-    dto: CreatePaymentDto,
+    dto: CreateSucceededPaymentInfrastructureDto,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Payment> {
     return tx.payment.create({
@@ -46,9 +29,24 @@ export class PaymentsRepository {
       },
     });
   }
+
+  async markAsPaid(
+    paymentId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Payment> {
+    return tx.payment.update({
+      where: { id: paymentId },
+      data: { status: PaymentStatus.PAID },
+    });
+  }
+
+  async markAsFailed(
+    paymentId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Payment> {
+    return tx.payment.update({
+      where: { id: paymentId },
+      data: { status: PaymentStatus.FAILED },
+    });
+  }
 }
-export type CreatePaymentDto = {
-  amount: number;
-  planId: string;
-  subscriptionId: number;
-};

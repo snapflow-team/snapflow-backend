@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Customer, Prisma } from '@generated/prisma-payments';
-import { CreateCustomerInfrastructureDto } from './types/create-customer.infrastructure-dto';
 
 @Injectable()
 export class CustomersRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findById(id: number, tx: Prisma.TransactionClient = this.prisma): Promise<Customer | null> {
+    return tx.customer.findFirst({
+      where: { id },
+    });
+  }
 
   async findByUserId(
     userId: number,
@@ -15,25 +20,22 @@ export class CustomersRepository {
       where: { userId },
     });
   }
-  async findById(id: number, tx: Prisma.TransactionClient = this.prisma): Promise<Customer | null> {
-    return tx.customer.findFirst({
-      where: { id },
-    });
-  }
+
   async findByStripeCustomerId(
     stripeCusId: string,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Customer | null> {
     return tx.customer.findFirst({ where: { stripeCusId } });
   }
-  async createCustomer(
-    data: CreateCustomerInfrastructureDto,
+
+  //Это метод для создания кастомера, который еще не имеет stripeCusId, так как еще пока не был создан в страйп
+  async createPartialCustomer(
+    userId: number,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Customer> {
     return tx.customer.create({
       data: {
-        stripeCusId: data.stripeCusId,
-        userId: data.userId,
+        userId,
       },
     });
   }
