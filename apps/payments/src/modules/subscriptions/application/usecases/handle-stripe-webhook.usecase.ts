@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
-import { HandleStripeWebhookApplicationDto } from '../dto/handele-stripe-webhook.application-dto';
+import { HandleStripeWebhookApplicationDto } from '../dto/handle-stripe-webhook.application-dto';
 import { StripeService } from '../services/stripe.service';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
 import { Notification } from '../../../../common/notification/notification';
@@ -16,6 +16,7 @@ const SUPPORTED_WEBHOOK_EVENTS: ReadonlySet<string> = new Set([
   StripeEvents.CheckoutSessionExpired,
   StripeEvents.InvoicePaymentFailed,
   StripeEvents.InvoicePaymentSucceeded,
+  StripeEvents.SubscriptionDeleted,
 ]);
 
 export class HandleStripeWebhookCommand {
@@ -72,8 +73,11 @@ export class HandleStripeWebhookUseCase
     try {
       //Подбираем нужный хэндлер под конкретный ивент
       const handler = this.handlers.find((handler) => handler.supports(event));
+      this.logger.debug(`We handling event ${event.type}`);
       if (!handler) {
-        // vitaliy[payments]: добавить логирование о том, что у нас внутренний рассинхрон: тип события в SUPPORTED_WEBHOOK_EVENTS есть, а соответствующий handler не зарегистрирован.
+        this.logger.warn(
+          `Suitable handler for this event ${event.type} not found, despite we support this event`,
+        );
         return Notification.ok();
       }
       result = await handler.handle(event);

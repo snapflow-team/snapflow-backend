@@ -15,6 +15,8 @@ import { extractInvoiceFailureDetails } from './utils/extract-invoice-failure-de
 import { extractCustomerId } from './utils/extract-customer-id';
 import { checkIsOldEvent } from './utils/check-is-old-event';
 import { extractEventDate } from './utils/extract-date-from-event-created';
+import { PrismaService } from '../../../../database/prisma.service';
+import { isSubscriptionRenewal } from './utils/check-is-subscription-renewal';
 
 @Injectable()
 export class InvoicePaymentFailedHandler implements WebhookHandler {
@@ -23,6 +25,7 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
     private customersRepository: CustomersRepository,
     private outboxRepository: OutboxRepository,
     private subscriptionsRepository: SubscriptionsRepository,
+    private prisma: PrismaService,
   ) {}
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.InvoicePaymentFailed;
@@ -36,7 +39,8 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
         'Webhook payload is not an invoice object',
       );
     }
-    if (!this.isSubscriptionRenewal(payload)) {
+
+    if (!isSubscriptionRenewal(payload)) {
       //Если ивент не для продления подписки, то пропускаем его
       return Notification.ok();
     }
@@ -55,14 +59,16 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
 
     const localSubscription: Subscription | null =
       await this.subscriptionsRepository.findByStripeSubscriptionId(stripeSubscriptionId);
-
     if (!localSubscription) {
       this.logger.warn(`No local subscription for Stripe subscription ${stripeSubscriptionId}`);
       return Notification.ok();
     }
+
     if (checkIsOldEvent(event, localSubscription)) {
+      this.logger.log(`This event is old ${event.type}, skipping.`);
       return Notification.ok();
     }
+
     //Проверяем протухла ли подписка в нашей локальной бд
     //todo(vitaliy) возможно нам стоит учитывать это протухание
     if (
@@ -71,39 +77,43 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
     ) {
       this.logger.warn(`Subscription: ${stripeSubscriptionId} have not been expired yet`);
     }
-    await this.subscriptionsRepository.setToPastDue(localSubscription.id, extractEventDate(event));
-    const stripeCusId = extractCustomerId(payload.customer);
-    if (!stripeCusId) {
-      this.logger.warn(`No customer in invoice: ${payload.id}`);
-      return Notification.ok();
-    }
-    const customer = await this.customersRepository.findByStripeCustomerId(stripeCusId);
 
-    if (!customer) {
-      this.logger.warn(`No local customer found by stripeCusId : ${stripeCusId}`);
-      return Notification.ok();
-    }
+    await this.prisma.$transaction(async (tx) => {
+      await this.subscriptionsRepository.setToPastDue(
+        localSubscription.id,
+        extractEventDate(event),
+        tx,
+      );
 
-    const { failureCode, failureMessage } = extractInvoiceFailureDetails(payload);
+      const stripeCusId = extractCustomerId(payload.customer);
+      if (!stripeCusId) {
+        this.logger.warn(`No customer in invoice: ${payload.id}`);
+        return Notification.fail(NotificationResultCode.InternalServerError, 'some error occurred');
+      }
 
-    await this.outboxRepository.saveEvent(OutboxEventType.SUBSCRIPTION_RENEWAL_FAILED, {
-      userId: customer.userId,
-      planId: localSubscription.planId,
-      subscriptionId: localSubscription.id,
-      stripeInvoiceId: payload.id,
-      attemptCount: payload.attempt_count,
-      nextPaymentAttempt:
-        payload.next_payment_attempt === null
-          ? null
-          : new Date(payload.next_payment_attempt * 1000).toISOString(),
-      failureCode,
-      failureMessage,
-    } satisfies SubscriptionRenewalFailedEvent);
+      const customer = await this.customersRepository.findByStripeCustomerId(stripeCusId);
+      if (!customer) {
+        this.logger.warn(`No local customer found by stripeCusId : ${stripeCusId}`);
+        return Notification.fail(NotificationResultCode.InternalServerError, 'some error occurred');
+      }
+
+      const { failureCode, failureMessage } = extractInvoiceFailureDetails(payload);
+
+      await this.outboxRepository.saveEvent(OutboxEventType.SUBSCRIPTION_RENEWAL_FAILED, {
+        userId: customer.userId,
+        planId: localSubscription.planId,
+        subscriptionId: localSubscription.id,
+        stripeInvoiceId: payload.id,
+        attemptCount: payload.attempt_count,
+        nextPaymentAttempt:
+          payload.next_payment_attempt === null
+            ? null
+            : new Date(payload.next_payment_attempt * 1000).toISOString(),
+        failureCode,
+        failureMessage,
+      } satisfies SubscriptionRenewalFailedEvent);
+    });
 
     return Notification.ok();
-  }
-  //Этот метод нужен для определения поступил ли этот ивент к нам при продлении подписки. Потому что этот ивент может прийти и при создании подписки и мы не должны учитывать его
-  private isSubscriptionRenewal(invoice: Stripe.Invoice): boolean {
-    return invoice.billing_reason === 'subscription_cycle';
   }
 }

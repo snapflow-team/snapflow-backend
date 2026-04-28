@@ -41,23 +41,27 @@ export class CustomerSubscriptionDeletedHandler implements WebhookHandler {
     const stripeSubId = extractSubscriptionId(payload.id);
     if (!stripeSubId) {
       this.logger.warn(`Failed to extract subscription for event ${event.id}`);
-      return Notification.ok();
+      return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred');
     }
+
     const localSubscription =
       await this.subscriptionsRepository.findByStripeSubscriptionId(stripeSubId);
     if (!localSubscription) {
       this.logger.warn(`Subscription with id ${stripeSubId} not found`);
-      return Notification.ok();
+      return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred');
     }
+
     if (checkIsOldEvent(event, localSubscription)) {
       this.logger.warn(`This event is old ${event.id}, skipping`);
-      return Notification.ok();
+      return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred');
     }
+
     const cancelledAt = extractCancelledAt(payload.canceled_at);
     if (!cancelledAt) {
       this.logger.warn(`This subscription have no canceled_at value ${stripeSubId}`);
-      return Notification.ok();
+      return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred');
     }
+
     await this.prisma.$transaction(async (tx) => {
       const subscription: Subscription | null =
         await this.subscriptionsRepository.cancelSubscription(
@@ -71,18 +75,19 @@ export class CustomerSubscriptionDeletedHandler implements WebhookHandler {
           `Subscription with id ${localSubscription.id} not found`,
         );
       }
-      const user = await this.customersRepository.findById(subscription.customerId);
 
-      if (!user) {
+      const customer = await this.customersRepository.findById(subscription.customerId);
+      if (!customer) {
         return Notification.fail(
           NotificationResultCode.InternalServerError,
           `Customer with id ${subscription.customerId} not found`,
         );
       }
+
       await this.outboxRepository.saveEvent(
         OutboxEventType.SUBSCRIPTION_CANCELLED,
         {
-          userId: user.id,
+          userId: customer.id,
           planId: subscription.planId,
           subscriptionId: subscription.id,
           cancelledAt: cancelledAt,

@@ -49,6 +49,7 @@ export class CheckoutSessionExpiredHandler implements WebhookHandler {
     }
 
     await this.prisma.$transaction(async (tx) => {
+      //todo(vitaliy) нужно ли нам фэйлить платеж?
       await this.paymentsRepository.markAsFailed(payment.id, tx);
 
       const subscription: Subscription | null =
@@ -63,9 +64,9 @@ export class CheckoutSessionExpiredHandler implements WebhookHandler {
           `Subscription with id ${payment.subscriptionId} not found`,
         );
       }
-      const user = await this.customersRepository.findById(subscription.customerId);
+      const customer = await this.customersRepository.findById(subscription.customerId);
 
-      if (!user) {
+      if (!customer) {
         return Notification.fail(
           NotificationResultCode.InternalServerError,
           `Customer with id ${subscription.customerId} not found`,
@@ -74,7 +75,7 @@ export class CheckoutSessionExpiredHandler implements WebhookHandler {
       await this.outboxRepository.saveEvent(
         OutboxEventType.CHECKOUT_SESSION_EXPIRED,
         {
-          userId: user.id,
+          userId: customer.id,
           planId: subscription.planId,
           description: 'checkout session expired',
         } satisfies CheckoutSessionExpiredEvent,
