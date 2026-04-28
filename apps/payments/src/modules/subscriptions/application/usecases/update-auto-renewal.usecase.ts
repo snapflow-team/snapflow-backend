@@ -50,7 +50,14 @@ export class UpdateAutoRenewalUseCase
       return Notification.copyErrors(stripeResult);
     }
 
-    await this.subscriptionsRepository.updateAutoRenewal(localSubscription.id, autoRenewal);
+    try {
+      await this.subscriptionsRepository.updateAutoRenewal(localSubscription.id, autoRenewal);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'Some error occurred';
+
+      this.logger.warn(`AutoRenewal in db was failed for subscription: ${localSubscription.id}`);
+      return Notification.fail(NotificationResultCode.InternalServerError, errorMessage);
+    }
 
     return Notification.ok();
   }
