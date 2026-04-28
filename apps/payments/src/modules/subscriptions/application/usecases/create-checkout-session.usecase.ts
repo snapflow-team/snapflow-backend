@@ -87,6 +87,7 @@ export class CreateCheckoutSessionUseCase
       this.logger.warn(
         `Saving to db checkout session with id ${stripeResult.value.sessionId} FAILED`,
       );
+
       return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred');
     }
 
