@@ -15,6 +15,8 @@ import { CustomersRepository } from '../../infrastructure/customers.repository';
 import { Customer } from '@generated/prisma-payments';
 import { PrismaService } from '../../../database/prisma.service';
 import { CreateCheckoutSessionDTO } from '../services/types/CreateCheckoutSessionDTO';
+import { Logger } from '@nestjs/common';
+import { extractStripeCustomerId } from '../utils/extract-stripe-customer-id';
 
 export class CreateCheckoutSessionCommand {
   constructor(public readonly dto: CreateCheckoutSessionApplicationDto) {}
@@ -24,6 +26,7 @@ export class CreateCheckoutSessionCommand {
 export class CreateCheckoutSessionUseCase
   implements ICommandHandler<CreateCheckoutSessionCommand, Notification<string>>
 {
+  private readonly logger = new Logger(CreateCheckoutSessionUseCase.name);
   constructor(
     private readonly stripeService: StripeService,
     private readonly subscriptionsRepository: SubscriptionsRepository,
@@ -52,25 +55,39 @@ export class CreateCheckoutSessionUseCase
 
       return notification;
     }
+
+    const activeSubscription =
+      await this.subscriptionsRepository.findActiveOrPastDueByUserId(userId);
+    if (activeSubscription) {
+      return Notification.fail(
+        NotificationResultCode.BadRequest,
+        'User already have active subscription',
+      );
+    }
+
     const customer: Customer | null = await this.customersRepository.findByUserId(userId);
+
+    const stripeCusId: string | undefined = extractStripeCustomerId(customer);
+
     const dto: CreateCheckoutSessionDTO = {
       userId,
       planId: plan.id,
       stripePriceId: plan.stripePriceId,
       //Если у нас покупатель есть, то цепляем его, если нет то undefined
-      stripeCusId: customer?.stripeCusId,
+      stripeCusId: stripeCusId,
     };
+
     const stripeResult = await this.stripeService.createCheckoutSession(dto);
     if (stripeResult.hasErrors)
       return Notification.copyErrors<StripeCheckoutSessionResult, string>(stripeResult);
 
     try {
-      await this.saveCheckoutSession(customer, stripeResult.value, plan, userId);
+      await this.saveCheckoutSession(customer, stripeResult.value.sessionId, plan, userId);
     } catch {
-      return Notification.fail(
-        NotificationResultCode.InternalServerError,
-        'Something went wrong with saving data',
+      this.logger.warn(
+        `Saving to db checkout session with id ${stripeResult.value.sessionId} FAILED`,
       );
+      return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred');
     }
 
     return Notification.ok(stripeResult.value.url);
@@ -78,29 +95,26 @@ export class CreateCheckoutSessionUseCase
 
   private async saveCheckoutSession(
     customer: Customer | null,
-    stripeResult: StripeCheckoutSessionResult,
+    sessionId: string,
     plan: Plan,
     userId: number,
   ) {
     await this.prisma.$transaction(async (tx) => {
       let customerId: number;
+
       if (!customer) {
-        //Если у нас новый покупатель, то мы его создаем оборачивая в транзакцию с последующим созданием платежа и подписки
-        const stripeCusId = stripeResult.stripeCusId;
-        const createdCustomer = await this.customersRepository.createCustomer(
-          { stripeCusId, userId },
-          tx,
-        );
+        const createdCustomer = await this.customersRepository.createPartialCustomer(userId, tx);
         customerId = createdCustomer.id;
       } else {
         customerId = customer.id;
       }
+
       await this.subscriptionsRepository.createPendingOrder(
         {
           customerId,
           planId: plan.id,
           amount: plan.priceInCents,
-          externalId: stripeResult.sessionId,
+          externalId: sessionId,
         },
         tx,
       );

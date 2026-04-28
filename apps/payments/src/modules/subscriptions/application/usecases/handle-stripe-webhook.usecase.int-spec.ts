@@ -144,7 +144,8 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
 
     const subscription: Subscription = await prisma.subscription.create({
       data: {
-        userId: 42,
+        //todo(vitaliy) временная заглушка, надо ее убрать
+        customerId: 1,
         planId: 'business_monthly',
         status: SubscriptionStatus.PENDING,
         payments: {
@@ -183,7 +184,7 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
     expect(updated?.currentPeriodEnd?.toISOString()).toBe(periodEnd.toISOString());
 
     const outbox = await prisma.outboxEvent.findFirst({
-      where: { type: OutboxEventType.PAYMENT_COMPLETED },
+      where: { type: OutboxEventType.SUBSCRIPTION_ACTIVATED },
     });
 
     expect(outbox).toBeDefined();
@@ -204,7 +205,9 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
 
     const subscription: Subscription = await prisma.subscription.create({
       data: {
-        userId: 7,
+        //userId: 7,
+        //todo(vitaliy) это временная заглушка, убрать ее
+        customerId: 1,
         planId: 'business_monthly',
         status: SubscriptionStatus.ACTIVE,
         stripeSubId,
@@ -231,7 +234,7 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
     expect(result.hasErrors).toBe(false);
 
     const outbox: OutboxEvent | null = await prisma.outboxEvent.findFirst({
-      where: { type: OutboxEventType.PAYMENT_FAILED },
+      where: { type: OutboxEventType.SUBSCRIPTION_RENEWAL_FAILED },
     });
 
     expect(outbox?.payload).toEqual(
@@ -274,7 +277,7 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
     expect(result.hasErrors).toBe(false);
 
     const outbox: OutboxEvent[] = await prisma.outboxEvent.findMany({
-      where: { type: OutboxEventType.PAYMENT_FAILED },
+      where: { type: OutboxEventType.SUBSCRIPTION_RENEWAL_FAILED },
     });
     expect(outbox).toHaveLength(0);
 
@@ -324,7 +327,9 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
   it('при неожиданном исключении: удаляет idempotency key и возвращает internal error', async () => {
     await prisma.subscription.create({
       data: {
-        userId: 777,
+        //todo(vitaliy) это временная заглушка, убрать ее
+        //userId: 777,
+        customerId: 777,
         planId: 'business_monthly',
         status: SubscriptionStatus.PENDING,
         payments: {
