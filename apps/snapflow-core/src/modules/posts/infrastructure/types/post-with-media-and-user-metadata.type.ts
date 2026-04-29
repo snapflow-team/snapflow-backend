@@ -8,7 +8,7 @@ export type PostWithMediaAndUserMetadata = Prisma.PostGetPayload<{
         username: true;
         profiles: {
           where: { deletedAt: null };
-          select: { avatarUrl: true };
+          select: { id: true; avatarUrl: true };
         };
       };
     };
