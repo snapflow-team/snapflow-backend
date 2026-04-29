@@ -64,6 +64,14 @@ describe('GetPostQueryHandler (INT)', () => {
       'Пост #3',
       'Пост #4',
     ]);
+    expect(result.items[0].owner).toEqual(
+      expect.objectContaining({
+        userId: expect.any(String),
+        profileId: expect.any(String),
+        username: expect.any(String),
+      }),
+    );
+    expect(result.items[0].owner).not.toHaveProperty('ownerId');
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(4);
     expect(result.totalCount).toBe(10);
