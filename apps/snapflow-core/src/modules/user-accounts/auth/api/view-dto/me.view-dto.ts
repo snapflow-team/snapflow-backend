@@ -6,6 +6,9 @@ export class MeViewDto {
   @ApiProperty({ example: '1', description: 'ID пользователя' })
   userId: string;
 
+  @ApiProperty({ example: '15', description: 'Идентификатор профиля пользователя' })
+  profileId: string;
+
   @ApiProperty({ example: 'example@example.dev', description: 'Email пользователя' })
   email: string;
 
@@ -19,6 +22,7 @@ export class MeViewDto {
     const dto = new this();
 
     dto.userId = user.id.toString();
+    dto.profileId = user.profiles[0].id.toString();
     dto.email = user.email;
     dto.username = user.username;
     dto.accountType = user.accountType;
