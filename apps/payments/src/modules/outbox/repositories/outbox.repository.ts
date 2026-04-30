@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { OutboxEvent, OutboxEventStatus, OutboxEventType, Prisma, } from '@generated/prisma-payments';
+import {
+  OutboxEvent,
+  OutboxEventStatus,
+  OutboxEventType,
+  Prisma,
+} from '@generated/prisma-payments';
 import { PrismaService } from '../../database/prisma.service';
 import { OutboxProcessing } from '../constants/outbox.constants';
 

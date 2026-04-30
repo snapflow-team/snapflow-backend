@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import { PaymentStatus, Prisma, Subscription, SubscriptionStatus, } from '@generated/prisma-payments';
+import {
+  PaymentStatus,
+  Prisma,
+  Subscription,
+  SubscriptionStatus,
+} from '@generated/prisma-payments';
 import { CreatePendingOrderInfrastructureDto } from './types/create-pending-order.infrastructure-dto';
 import { BillingPeriod } from '../application/types/billing-period.type';
 

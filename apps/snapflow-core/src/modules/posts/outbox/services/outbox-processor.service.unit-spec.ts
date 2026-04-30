@@ -236,9 +236,7 @@ describe('OutboxProcessorService (Unit)', () => {
       expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
         OutboxProcessing.STALE_THRESHOLD_MINUTES,
       );
-      expect(Logger.prototype.warn).toHaveBeenCalledWith(
-        expect.stringContaining('3 stale events'),
-      );
+      expect(Logger.prototype.warn).toHaveBeenCalledWith(expect.stringContaining('3 stale events'));
     });
 
     it('при нулевом recoveredCount не логирует warn', async () => {
@@ -258,7 +256,10 @@ describe('OutboxProcessorService (Unit)', () => {
 
       await expect(service.handleStaleEvents()).resolves.toBeUndefined();
 
-      expect(Logger.prototype.error).toHaveBeenCalledWith('Failed to recover stale events', repoError);
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        'Failed to recover stale events',
+        repoError,
+      );
     });
   });
 
