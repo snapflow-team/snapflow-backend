@@ -220,7 +220,10 @@ describe('OutboxProcessorService (Unit)', () => {
 
       await expect(service.handleStaleEvents()).resolves.toBeUndefined();
 
-      expect(Logger.prototype.error).toHaveBeenCalledWith('Failed to recover stale events', repoError);
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        'Failed to recover stale events',
+        repoError,
+      );
     });
   });
 });

@@ -1,7 +1,5 @@
 import { IsUUID, Matches } from 'class-validator';
-import {
-  IsStringWithTrim
-} from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
+import { IsStringWithTrim } from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
 import { ApiProperty } from '@nestjs/swagger';
 import { passwordConstraints } from './registration-user.input-dto';
 

@@ -1,4 +1,4 @@
-﻿import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { PostMediaViewDto } from './post-media.view-dto';
 import { PostWithMediaAndUserMetadata } from '../../infrastructure/types/post-with-media-and-user-metadata.type';
 import { OwnerViewDto } from './owner.view-dto';
@@ -54,7 +54,8 @@ export class PostViewDto {
     dto.createdAt = post.createdAt.toISOString();
     dto.postMedias = post.postMedias.map((m) => PostMediaViewDto.mapToView(m));
     dto.owner = OwnerViewDto.mapToView({
-      ownerId: post.user.id,
+      userId: post.user.id,
+      profileId: post.user.profiles[0].id,
       username: post.user.username,
       avatarUrl: post.user.profiles[0]?.avatarUrl ?? null,
     });

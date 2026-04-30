@@ -43,6 +43,13 @@ describe('GetPostQueryHandler', () => {
     expect(foundPost).not.toBeNull();
     expect(foundPost.description).toBe('Public post');
     expect(foundPost.status).toBe(PostStatus.PUBLISHED);
+    expect(foundPost.owner).toEqual({
+      userId: user.id.toString(),
+      profileId: expect.any(String),
+      username: expect.any(String),
+      avatarUrl: null,
+    });
+    expect(foundPost.owner).not.toHaveProperty('ownerId');
   });
 
   it('(NotFound) должен выбросить ошибку для несуществующего поста', async () => {

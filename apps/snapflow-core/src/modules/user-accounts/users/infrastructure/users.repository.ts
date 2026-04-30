@@ -2,7 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../database/prisma.service';
 import { UserWithEmailConfirmation } from '../types/user-with-confirmation.type';
 import { UserWithPasswordRecoveryCode } from '../types/user-with-password-recovery.type';
-import { AuthAccount, ConfirmationStatus, OAuthProvider, Prisma, User, } from '@generated/prisma-snapflow';
+import {
+  AuthAccount,
+  ConfirmationStatus,
+  OAuthProvider,
+  Prisma,
+  User,
+} from '@generated/prisma-snapflow';
 import { UpdateAccountTypeInfrastructureDto } from './dto/update-account-type.infrastructure-dto';
 
 @Injectable()

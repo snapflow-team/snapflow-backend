@@ -1,17 +1,25 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 type OwnerViewSource = {
-  ownerId: number;
+  userId: number;
+  profileId: number;
   username: string;
   avatarUrl: string | null;
 };
 export class OwnerViewDto {
   @ApiProperty({
     type: String,
-    example: 1,
-    description: 'Идентификатор юзера',
+    example: '1',
+    description: 'Идентификатор пользователя',
   })
-  ownerId: string;
+  userId: string;
+
+  @ApiProperty({
+    type: String,
+    example: '42',
+    description: 'Идентификатор профиля пользователя',
+  })
+  profileId: string;
 
   @ApiProperty({ example: 'John', description: 'Имя юзера' })
   username: string;
@@ -26,7 +34,8 @@ export class OwnerViewDto {
 
   static mapToView(owner: OwnerViewSource): OwnerViewDto {
     const dto = new OwnerViewDto();
-    dto.ownerId = owner.ownerId.toString();
+    dto.userId = owner.userId.toString();
+    dto.profileId = owner.profileId.toString();
     dto.username = owner.username;
     dto.avatarUrl = owner.avatarUrl;
     return dto;
