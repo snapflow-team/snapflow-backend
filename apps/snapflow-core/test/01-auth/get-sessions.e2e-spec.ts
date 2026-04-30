@@ -50,6 +50,7 @@ describe('SessionsController - getAllSessions() (GET: /sessions)', () => {
           deviceName: expect.any(String),
           ip: expect.any(String),
           lastVisit: expect.any(String),
+          isCurrent: true,
         }),
       ]),
     );
@@ -80,5 +81,7 @@ describe('SessionsController - getAllSessions() (GET: /sessions)', () => {
 
     expect(response2.body).toHaveLength(2);
     expect(response2.body[0].deviceId).not.toBe(response2.body[1].deviceId);
+    expect(response2.body.filter((session) => session.isCurrent)).toHaveLength(1);
+    expect(response2.body.every((session) => typeof session.isCurrent === 'boolean')).toBe(true);
   });
 });
