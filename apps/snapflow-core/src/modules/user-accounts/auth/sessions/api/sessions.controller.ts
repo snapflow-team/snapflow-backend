@@ -30,7 +30,7 @@ export class SessionsController {
   async getAllSessions(
     @ExtractSessionFromRequest() session: SessionContextDto,
   ): Promise<SessionsViewDto[]> {
-    return this.queryBus.execute(new GetAllSessionsQuery(session.userId));
+    return this.queryBus.execute(new GetAllSessionsQuery(session.userId, session.deviceId));
   }
 
   @Delete('terminate-all')

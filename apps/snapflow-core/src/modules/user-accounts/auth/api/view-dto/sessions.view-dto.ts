@@ -26,13 +26,20 @@ export class SessionsViewDto {
   })
   lastVisit: string;
 
-  static mapToView(session: Session): SessionsViewDto {
+  @ApiProperty({
+    example: true,
+    description: 'Текущая сессия, с которой выполнен запрос',
+  })
+  isCurrent: boolean;
+
+  static mapToView(session: Session, currentDeviceId: string): SessionsViewDto {
     const dto = new SessionsViewDto();
 
     dto.deviceId = session.deviceId;
     dto.deviceName = session.deviceName;
     dto.ip = session.ip;
     dto.lastVisit = session.iat.toISOString();
+    dto.isCurrent = session.deviceId === currentDeviceId;
 
     return dto;
   }
