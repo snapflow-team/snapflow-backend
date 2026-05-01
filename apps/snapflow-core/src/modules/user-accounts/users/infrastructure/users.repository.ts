@@ -16,7 +16,17 @@ export class UsersRepository {
   constructor(public readonly prisma: PrismaService) {}
 
   // User ---------------------------------------------------------
-
+  async findUserById(
+    userId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<User | null> {
+    return tx.user.findUnique({
+      where: {
+        id: userId,
+        deletedAt: null,
+      },
+    });
+  }
   async findUserByEmail(
     email: string,
     tx: Prisma.TransactionClient = this.prisma,

@@ -1,4 +1,4 @@
-export interface PaymentFailedEvent {
+export interface SubscriptionRenewalFailedEvent {
   userId: number;
   planId: string;
   subscriptionId: number;

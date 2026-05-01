@@ -1,0 +1,1 @@
+export const WEBHOOK_HANDLERS = Symbol('WEBHOOK_HANDLERS');
