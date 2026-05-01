@@ -31,6 +31,7 @@
     "prisma:reset:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate reset --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:deploy:prod:snapflow-core": "cross-env NODE_ENV=production npx prisma migrate deploy --config=./apps/snapflow-core/prisma.config.ts",
     "prisma:deploy:dev:snapflow-core": "cross-env NODE_ENV=development npx prisma migrate deploy --config=./apps/snapflow-core/prisma.config.ts",
+    "prisma:deploy:test:snapflow-core": "cross-env NODE_ENV=testing npx prisma migrate deploy --config=./apps/snapflow-core/prisma.config.ts",
     "build:files": "nest build files",
     "start:dev:files": "cross-env NODE_ENV=development nest start files --watch",
     "start:stage:files": "cross-env NODE_ENV=staging node ./dist/apps/files/main.js",
