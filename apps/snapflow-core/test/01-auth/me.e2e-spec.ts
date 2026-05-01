@@ -74,6 +74,7 @@ describe('AuthController - me() (POST: /auth/me)', () => {
         userId: id.toString(),
         email,
         username,
+        profileId: expect.stringMatching(/^\d+$/),
       }),
     );
 

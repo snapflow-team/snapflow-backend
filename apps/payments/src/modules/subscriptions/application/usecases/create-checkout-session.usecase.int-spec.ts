@@ -1,16 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateCheckoutSessionCommand, CreateCheckoutSessionUseCase, } from './create-checkout-session.usecase';
+import {
+  CreateCheckoutSessionCommand,
+  CreateCheckoutSessionUseCase,
+} from './create-checkout-session.usecase';
 import { StripeService } from '../services/stripe.service';
 import { Notification } from '../../../../common/notification/notification';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 import { PaymentStatus, SubscriptionStatus } from '@generated/prisma-payments';
 import { PrismaService } from '../../../database/prisma.service';
 import { PaymentsModule } from '../../../../payments.module';
+import { SubscriptionsRepository } from '../../infrastructure/subscriptions.repository';
 
 describe('CreateCheckoutSessionUseCase (Integration)', () => {
   let module: TestingModule;
   let useCase: CreateCheckoutSessionUseCase;
   let prisma: PrismaService;
+  let subscriptionRepository: SubscriptionsRepository;
 
   const createCheckoutSessionMock = jest.fn();
 
@@ -24,11 +29,12 @@ describe('CreateCheckoutSessionUseCase (Integration)', () => {
 
     useCase = module.get<CreateCheckoutSessionUseCase>(CreateCheckoutSessionUseCase);
     prisma = module.get<PrismaService>(PrismaService);
+    subscriptionRepository = module.get<SubscriptionsRepository>(SubscriptionsRepository);
   });
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE TABLE payments, subscriptions RESTART IDENTITY CASCADE',
+      'TRUNCATE TABLE payments, subscriptions, customers RESTART IDENTITY CASCADE',
     );
 
     createCheckoutSessionMock.mockClear();
@@ -62,7 +68,7 @@ describe('CreateCheckoutSessionUseCase (Integration)', () => {
 
       // 2. Проверяем, что в БД создалась подписка
       const subscription = await prisma.subscription.findFirst({
-        where: { userId, planId },
+        where: { planId },
         include: { payments: true },
       });
 
@@ -128,11 +134,33 @@ describe('CreateCheckoutSessionUseCase (Integration)', () => {
       );
 
       // Имитируем падение БД
-      jest.spyOn(prisma.subscription, 'create').mockRejectedValueOnce(new Error('Prisma error'));
+      jest
+        .spyOn(subscriptionRepository, 'createPendingOrder')
+        .mockRejectedValueOnce(new Error('Some prisma error'));
 
       const command = new CreateCheckoutSessionCommand({ userId, planId });
 
-      await expect(useCase.execute(command)).rejects.toThrow('Prisma error');
+      const result = await useCase.execute(command);
+      console.log(result);
+      expect(result).toBeInstanceOf(Notification);
+      expect(result.code).toBe(NotificationResultCode.InternalServerError);
+    });
+    it('должен упасть с ошибкой, если у пользователя есть активная подписка', async () => {
+      const userId = 400;
+      const planId = 'business_monthly';
+
+      const mockedActiveSubscription = {};
+      // Имитируем что при поиске активных подписок, у нас вернулся null
+      jest
+        .spyOn(subscriptionRepository, 'findActiveOrPastDueByUserId')
+        .mockResolvedValueOnce(mockedActiveSubscription as any);
+
+      const command = new CreateCheckoutSessionCommand({ userId, planId });
+
+      const result = await useCase.execute(command);
+      console.log(result);
+      expect(result).toBeInstanceOf(Notification);
+      expect(result.code).toBe(NotificationResultCode.BadRequest);
     });
   });
 });

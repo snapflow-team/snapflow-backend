@@ -17,6 +17,11 @@ export class UsersQueryRepository {
         username: true,
         email: true,
         accountType: true,
+        profiles: {
+          where: { deletedAt: null },
+          select: { id: true },
+          take: 1,
+        },
       },
     });
 

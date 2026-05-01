@@ -4,9 +4,7 @@ import { Server } from 'http';
 import { EmailTemplate } from '../../src/modules/emails/templates/types';
 import { HttpStatus } from '@nestjs/common';
 import { EmailService } from '../../src/modules/emails/services/email.service';
-import {
-  RegistrationUserInputDto
-} from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { AuthTestManager } from '../managers/auth.test-manager';
@@ -449,7 +447,6 @@ describe('AuthController - registration() (POST: /auth/registration)', () => {
     }
 
     // 🔸 Проверяем профиль
-    expect(profile.username).toBe(dto.username);
     expect(profile.firstName).toBeNull();
     expect(profile.lastName).toBeNull();
     expect(profile.city).toBeNull();

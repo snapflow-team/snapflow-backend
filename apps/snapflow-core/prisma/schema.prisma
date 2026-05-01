@@ -27,6 +27,30 @@ enum AccountType {
   BUSINESS
 }
 
+enum OutboxEventStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+enum OutboxEventType {
+  DELETE_POST_MEDIA_FILE
+}
+
+model OutboxEvent {
+  id        String            @id @default(uuid()) @db.Uuid
+  type      OutboxEventType
+  payload   Json              @db.JsonB
+  status    OutboxEventStatus @default(PENDING)
+  error     String?           @db.Text
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@map("outbox_events")
+}
+
 model User {
   id Int @id @default(autoincrement())
 
@@ -54,7 +78,6 @@ model User {
 model UserProfile {
   id Int @id @default(autoincrement())
 
-  username  String  @db.VarChar(30)
   firstName String? @map("first_name") @db.VarChar(50)
   lastName  String? @map("last_name") @db.VarChar(50)
 
@@ -152,6 +175,9 @@ model Post {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  /// ВНИМАНИЕ: Поле userId имеет уникальное ограничение в БД только для активных DRAFT-постов (Soft Delete).
+  /// @unique не добавляется в схему намеренно, так как уникальность реализована partial unique index.
+  /// Добавлено в миграции: 20260427085100_add_partial_unique_index_user_draft_post
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int         @map("user_id")
   postMedias PostMedia[]

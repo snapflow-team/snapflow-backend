@@ -53,6 +53,8 @@
     "prisma:create-migrate:payments": "cross-env NODE_ENV=development npx prisma migrate dev --create-only --config=./apps/payments/prisma.config.ts",
     "prisma:generate:payments": "cross-env NODE_ENV=development npx prisma generate --schema=./apps/payments/prisma/schema.prisma",
     "prisma:generate:prod:payments": "cross-env NODE_ENV=production npx prisma generate --schema=./apps/payments/prisma/schema.prisma",
+    "prisma:studio:payments": "cross-env NODE_ENV=development npx prisma studio --config=./apps/payments/prisma.config.ts",
+    "prisma:reset:payments": "cross-env NODE_ENV=development npx prisma migrate reset --config=./apps/payments/prisma.config.ts",
     "prisma:deploy:prod:payments": "cross-env NODE_ENV=production npx prisma migrate deploy --config=./apps/payments/prisma.config.ts",
     "prisma:deploy:dev:payments": "cross-env NODE_ENV=development npx prisma migrate deploy --config=./apps/payments/prisma.config.ts",
     "prisma:deploy:test:payments": "cross-env NODE_ENV=testing npx prisma migrate deploy --config=./apps/payments/prisma.config.ts"
@@ -172,6 +174,9 @@
       "<rootDir>/apps/snapflow-core/test/jest-e2e.json",
       "<rootDir>/apps/files/test/jest-unit.json",
       "<rootDir>/apps/files/test/jest-int.json",
+      "<rootDir>/apps/payments/test/jest-unit.json",
+      "<rootDir>/apps/payments/test/jest-int.json",
+      "<rootDir>/apps/payments/test/jest-e2e.json",
       "<rootDir>/libs/common/jest-unit.json"
     ]
   }

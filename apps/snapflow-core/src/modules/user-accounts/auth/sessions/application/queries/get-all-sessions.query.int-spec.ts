@@ -95,10 +95,16 @@ describe('GetAllSessionsQueryHandler (Интеграция)', () => {
       data: { deletedAt: new Date() },
     });
 
-    const result = await queryHandler.execute(new GetAllSessionsQuery(user.id));
+    const result = await queryHandler.execute(new GetAllSessionsQuery(user.id, 'device-1'));
 
     expect(result).toHaveLength(2);
     expect(result.map((x) => x.deviceId).sort()).toEqual(['device-1', 'device-2']);
     expect(result.every((x) => x.ip.startsWith('127.0.0.'))).toBe(true);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ deviceId: 'device-1', isCurrent: true }),
+        expect.objectContaining({ deviceId: 'device-2', isCurrent: false }),
+      ]),
+    );
   });
 });

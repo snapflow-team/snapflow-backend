@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import { PostViewDto } from '../api/view-dto/post.view-dto';
 import { PostStatus, Prisma } from '@generated/prisma-snapflow';
@@ -11,8 +11,7 @@ import { PostWithMediaAndUserMetadata } from './types/post-with-media-and-user-m
 export class PostsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // vilyamz: выяснить зачем нам этот метод?
-  async findProfilePosts(
+  async findUserPosts(
     params: GetPostsQueryParamsDto,
     userId: number,
   ): Promise<PaginatedViewDto<PostViewDto>> {
@@ -34,7 +33,7 @@ export class PostsQueryRepository {
               username: true,
               profiles: {
                 where: { deletedAt: null },
-                select: { avatarUrl: true },
+                select: { id: true, avatarUrl: true },
               },
             },
           },
@@ -86,7 +85,7 @@ export class PostsQueryRepository {
               username: true,
               profiles: {
                 where: { deletedAt: null },
-                select: { avatarUrl: true },
+                select: { id: true, avatarUrl: true },
               },
             },
           },
@@ -142,7 +141,7 @@ export class PostsQueryRepository {
             username: true,
             profiles: {
               where: { deletedAt: null },
-              select: { avatarUrl: true },
+              select: { id: true, avatarUrl: true },
             },
           },
         },
@@ -175,7 +174,7 @@ export class PostsQueryRepository {
             username: true,
             profiles: {
               where: { deletedAt: null },
-              select: { avatarUrl: true },
+              select: { id: true, avatarUrl: true },
             },
           },
         },

@@ -11,3 +11,7 @@ export function isInvoiceObject(value: unknown): value is Stripe.Invoice {
   if (!isRecord(value)) return false;
   return value.object === 'invoice';
 }
+export function isSubscriptionObject(value: unknown): value is Stripe.Subscription {
+  if (!isRecord(value)) return false;
+  return value.object === 'subscription';
+}

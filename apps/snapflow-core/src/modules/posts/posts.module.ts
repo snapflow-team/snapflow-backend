@@ -9,22 +9,23 @@ import { PostsQueryRepository } from './infrastructure/posts.query-repository';
 import { Module } from '@nestjs/common';
 import { PostsController } from './api/posts.controller';
 import { UserAccountsModule } from '../user-accounts/user-accounts.module';
-import { FilesClientModule } from '../integrations/files/files-client.module';
-import { GetProfilePostsQueryHandler } from './application/queries/get-profile-posts.query-handler';
+import { GetUserPostsQueryHandler } from './application/queries/get-user-posts.query-handler';
 import { SaveDraftUseCase } from './application/usecases/save-draft.usecase';
+import { OutboxRepository } from './outbox/repositories/outbox.repository';
+import { OutboxProcessorService } from './outbox/services/outbox-processor.service';
 
 const useCases = [CreatePostUseCase, EditPostUseCase, DeletePostUseCase, SaveDraftUseCase];
 const queries = [
   GetPostQueryHandler,
   GetPostsQueryHandler,
   GetDraftQueryHandler,
-  GetProfilePostsQueryHandler,
+  GetUserPostsQueryHandler,
 ];
-const services = [];
-const repositories = [PostsRepository, PostsQueryRepository];
+const services = [OutboxProcessorService];
+const repositories = [PostsRepository, PostsQueryRepository, OutboxRepository];
 
 @Module({
-  imports: [UserAccountsModule, FilesClientModule],
+  imports: [UserAccountsModule],
   controllers: [PostsController],
   providers: [...useCases, ...queries, ...services, ...repositories],
   exports: [],

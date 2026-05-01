@@ -1,15 +1,12 @@
 import { PrismaService } from '../../../../database/prisma.service';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { PostStatus, User } from '@generated/prisma-snapflow';
-import {
-  GetProfilePostsQuery,
-  GetProfilePostsQueryHandler,
-} from './get-profile-posts.query-handler';
+import { GetUserPostsQuery, GetUserPostsQueryHandler } from './get-user-posts.query-handler';
 import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
 import { GetPostsQueryParamsDto, PostSortBy } from '../../api/input-dto/get-posts.query-params.dto';
 
 describe('GetProfilePostsQueryHandler', () => {
-  let handler: GetProfilePostsQueryHandler;
+  let handler: GetUserPostsQueryHandler;
   let prisma: PrismaService;
   let testHelper: IntTestHelper;
 
@@ -26,7 +23,7 @@ describe('GetProfilePostsQueryHandler', () => {
       },
     ]);
     prisma = testHelper.get<PrismaService>(PrismaService);
-    handler = testHelper.get<GetProfilePostsQueryHandler>(GetProfilePostsQueryHandler);
+    handler = testHelper.get<GetUserPostsQueryHandler>(GetUserPostsQueryHandler);
   });
 
   afterAll(async () => {
@@ -50,13 +47,21 @@ describe('GetProfilePostsQueryHandler', () => {
     dto.pageSize = 8;
     dto.sortBy = PostSortBy.createdAt;
 
-    const query = new GetProfilePostsQuery(dto, user.id);
+    const query = new GetUserPostsQuery(dto, user.id);
 
     const result = await handler.execute(query);
 
     expect(result.items).toHaveLength(8);
     expect(result.items[0].description).toBe('Post 12');
     expect(result.items[7].description).toBe('Post 5');
+    expect(result.items[0].owner).toEqual(
+      expect.objectContaining({
+        userId: expect.any(String),
+        profileId: expect.any(String),
+        username: expect.any(String),
+      }),
+    );
+    expect(result.items[0].owner).not.toHaveProperty('ownerId');
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(8);
     expect(result.totalCount).toBe(12);
@@ -67,7 +72,7 @@ describe('GetProfilePostsQueryHandler', () => {
     const user: User = await testHelper.createUserWithProfile(prisma, 'no_posts');
 
     const dto = new GetPostsQueryParamsDto();
-    const query = new GetProfilePostsQuery(dto, user.id);
+    const query = new GetUserPostsQuery(dto, user.id);
 
     const result = await handler.execute(query);
 
@@ -81,7 +86,7 @@ describe('GetProfilePostsQueryHandler', () => {
     await testHelper.createPost(user.id, ['f1'], PostStatus.PUBLISHED, 'Published');
     await testHelper.createPost(user.id, ['f2'], PostStatus.DRAFT, 'Draft');
 
-    const query = new GetProfilePostsQuery(new GetPostsQueryParamsDto(), user.id);
+    const query = new GetUserPostsQuery(new GetPostsQueryParamsDto(), user.id);
     const result = await handler.execute(query);
 
     expect(result.items).toHaveLength(1);
@@ -98,7 +103,7 @@ describe('GetProfilePostsQueryHandler', () => {
     const dto = new GetPostsQueryParamsDto();
     dto.pageNumber = 2;
     dto.pageSize = 8;
-    const query = new GetProfilePostsQuery(dto, user.id);
+    const query = new GetUserPostsQuery(dto, user.id);
 
     const result = await handler.execute(query);
 
@@ -115,7 +120,7 @@ describe('GetProfilePostsQueryHandler', () => {
     }
 
     const dto = new GetPostsQueryParamsDto();
-    const query = new GetProfilePostsQuery(dto, user.id);
+    const query = new GetUserPostsQuery(dto, user.id);
 
     const result = await handler.execute(query);
 

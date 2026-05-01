@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Query, HttpStatus, Post, Put, UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { GetPlansQuery } from '../application/queries/get-plans.query-handler';
@@ -18,6 +18,9 @@ import { GetPaymentsQueryParams } from './input-dto/get-payments-query-params.in
 import { PaymentViewDto } from './view-dto/payment.view-dto';
 import { GetMyPaymentsQuery } from '../application/queries/get-my-payments.query-handler';
 import { GetMyPaymentsSwagger } from './swagger/get-my-payments.swagger';
+import { UpdateAutoRenewalInputDto } from './input-dto/update-auto-renewal.input-dto';
+import { UpdateAutoRenewalCommand } from '../application/usecases/update-auto-renewal.usecase';
+import { UpdateAutoRenewalSwagger } from './swagger/update-auto-renewal.swagger';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -62,5 +65,23 @@ export class SubscriptionsController {
     }
 
     return { url: notification.value };
+  }
+
+  @UseGuards(RemoteAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Put(`stripe/auto-renewal`)
+  @UpdateAutoRenewalSwagger()
+  async updateAutoRenewal(
+    @Body() { autoRenewal }: UpdateAutoRenewalInputDto,
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+  ): Promise<void> {
+    const notification: Notification<void> = await this.commandBus.execute(
+      new UpdateAutoRenewalCommand({ autoRenewal, userId }),
+    );
+
+    if (notification.hasErrors) {
+      NotificationExceptionMapper.throw(notification);
+    }
+    return;
   }
 }

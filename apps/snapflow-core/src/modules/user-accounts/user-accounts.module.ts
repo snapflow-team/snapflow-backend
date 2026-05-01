@@ -21,7 +21,7 @@ import { NewPasswordUseCase } from './auth/application/usecases/new-password.use
 import { GetMeQueryHandler } from './auth/application/queries/get-me.query-handler';
 import { JwtStrategy } from './auth/domain/guards/bearer/jwt.strategy';
 import { UsersQueryRepository } from './users/infrastructure/users.query-repository';
-import { AuthTokenService } from '../../../../../libs/common/services/auth-token.service';
+import { AuthTokenService } from './auth/application/services/auth-token.service';
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
@@ -45,7 +45,6 @@ import { GetProfileQueryHandler } from './users/profile/application/queries/get-
 import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
 import { EmailModule } from '../emails/email-module';
 import { FilesClientModule } from '../integrations/files/files-client.module';
-import { FilesClient } from '../integrations/files/files.client';
 import { FilesMediaController } from '../integrations/files/api/files-media.controller';
 import { MulterModule } from '@nestjs/platform-express';
 import { UploadAvatarUseCase } from './users/profile/application/usecases/upload-avatar.usecase';
@@ -120,7 +119,6 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
 @Module({
   imports: [
     EmailModule,
-    // todo(vilyamz): вынести регистрацию FilesClientModule в SnapFlowCoreModule
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({
@@ -143,6 +141,6 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
     ...repositories,
     ...strategies,
   ],
-  exports: [ProfilesRepository, UsersRepository],
+  exports: [ProfilesRepository, UsersRepository, FilesClientModule],
 })
 export class UserAccountsModule {}

@@ -9,20 +9,73 @@ import { SubscriptionsRepository } from './infrastructure/subscriptions.reposito
 import { StripeWebhookController } from './api/stripe-webhook.controller';
 import { HandleStripeWebhookUseCase } from './application/usecases/handle-stripe-webhook.usecase';
 import { PaymentsRepository } from './infrastructure/payments.repository';
+import { CustomersRepository } from './infrastructure/customers.repository';
+import { CheckoutSessionCompletedHandler } from './application/webhook/handlers/checkout-session-completed-handler';
+import { CheckoutSessionExpiredHandler } from './application/webhook/handlers/checkout-session-expired-handler';
+import { InvoicePaymentSucceededHandler } from './application/webhook/handlers/invoice-payment-succeeded-handler';
+import { InvoicePaymentFailedHandler } from './application/webhook/handlers/invoice-payment-failed-handler';
+import { WEBHOOK_HANDLERS } from '../../core/providers/provide-tokens/webhook-handlers.inject-token';
+import { CustomerSubscriptionDeletedHandler } from './application/webhook/handlers/customer-subscription-deleted-handler';
+import { UpdateAutoRenewalUseCase } from './application/usecases/update-auto-renewal.usecase';
 import { GetMyPaymentsQueryHandler } from './application/queries/get-my-payments.query-handler';
 import { PaymentsQueryRepository } from './infrastructure/query/paments.query-repository';
 
 const controllers = [SubscriptionsController, StripeWebhookController];
 const useCases = [CreateCheckoutSessionUseCase, HandleStripeWebhookUseCase];
 const queries = [GetPlansQueryHandler, GetMyPaymentsQueryHandler];
+const useCases = [
+  CreateCheckoutSessionUseCase,
+  HandleStripeWebhookUseCase,
+  UpdateAutoRenewalUseCase,
+];
+const webhookHandlers = [
+  CheckoutSessionCompletedHandler,
+  CheckoutSessionExpiredHandler,
+  InvoicePaymentSucceededHandler,
+  InvoicePaymentFailedHandler,
+  CustomerSubscriptionDeletedHandler,
+];
+const queries = [GetPlansQueryHandler];
 const services = [StripeService];
 const repositories = [SubscriptionsRepository, PaymentsRepository, PaymentsQueryRepository];
+const repositories = [SubscriptionsRepository, PaymentsRepository, CustomersRepository];
 const guards = [RemoteAuthGuard];
 
 @Module({
   imports: [OutboxModule],
   controllers: [...controllers],
-  providers: [...useCases, ...queries, ...services, ...repositories, ...guards],
+  providers: [
+    ...useCases,
+    ...webhookHandlers,
+    ...queries,
+    ...services,
+    ...repositories,
+    ...guards,
+    //todo вынести этот провайдер отдельно
+    {
+      provide: WEBHOOK_HANDLERS,
+      useFactory: (
+        CheckoutSessionCompleted: CheckoutSessionCompletedHandler,
+        CheckoutSessionExpired: CheckoutSessionExpiredHandler,
+        InvoicePaymentSucceeded: InvoicePaymentSucceededHandler,
+        InvoicePaymentFailed: InvoicePaymentFailedHandler,
+        CustomerSubscriptionDeleted: CustomerSubscriptionDeletedHandler,
+      ) => [
+        CheckoutSessionCompleted,
+        CheckoutSessionExpired,
+        InvoicePaymentSucceeded,
+        InvoicePaymentFailed,
+        CustomerSubscriptionDeleted,
+      ],
+      inject: [
+        CheckoutSessionCompletedHandler,
+        CheckoutSessionExpiredHandler,
+        InvoicePaymentSucceededHandler,
+        InvoicePaymentFailedHandler,
+        CustomerSubscriptionDeletedHandler,
+      ],
+    },
+  ],
   exports: [],
 })
 export class SubscriptionsModule {}

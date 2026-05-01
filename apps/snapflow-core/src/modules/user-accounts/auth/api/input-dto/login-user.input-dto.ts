@@ -1,9 +1,7 @@
 import { IsEmail, IsString, Matches } from 'class-validator';
 import { Trim } from '../../../../../../../../libs/common/decorators/transform/trim.decorator';
 import { emailConstraints, passwordConstraints } from './registration-user.input-dto';
-import {
-  IsStringWithTrim
-} from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
+import { IsStringWithTrim } from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginUserInputDto {
