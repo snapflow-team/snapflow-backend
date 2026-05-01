@@ -78,6 +78,7 @@ describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId
     // 🔻 4. Проверяем точное соответствие возвращаемой структуры PublicProfileViewDto
     expect(response.body).toEqual<PublicProfileViewDto>({
       id: profile!.id.toString(),
+      userId: userId.toString(),
       username: updateDto.username,
       avatarUrl: null,
       aboutMe: updateDto.aboutMe,
@@ -124,6 +125,7 @@ describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId
     // 🔻 5. Проверяем точное соответствие возвращаемой структуры PublicProfileViewDto
     expect(response.body).toEqual<PublicProfileViewDto>({
       id: profile!.id.toString(),
+      userId: userId.toString(),
       username: updateDto.username,
       avatarUrl: null,
       aboutMe: updateDto.aboutMe,
@@ -188,6 +190,7 @@ describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId
     // 🔻 6. Проверяем, что вернулось 3 поста, а не 5 (так как 2 были удалены)
     expect(response.body).toEqual<PublicProfileViewDto>({
       id: profile!.id.toString(),
+      userId: userId.toString(),
       username: updateDto.username,
       avatarUrl: null,
       aboutMe: updateDto.aboutMe,
@@ -237,6 +240,7 @@ describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId
     // 🔻 6. Проверяем, что вернулось 5 поста, а не 6 (так как 1 черновик)
     expect(response.body).toEqual<PublicProfileViewDto>({
       id: profile!.id.toString(),
+      userId: userId.toString(),
       username: updateDto.username,
       avatarUrl: null,
       aboutMe: updateDto.aboutMe,

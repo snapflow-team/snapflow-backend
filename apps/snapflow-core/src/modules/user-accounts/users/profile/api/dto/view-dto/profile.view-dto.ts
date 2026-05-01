@@ -9,6 +9,12 @@ export class ProfileViewDto {
   id: string;
 
   @ApiProperty({
+    description: 'ID пользователя, которому принадлежит профиль',
+    example: '1',
+  })
+  userId: string;
+
+  @ApiProperty({
     description: 'Уникальный username пользователя',
     example: 'username_01',
   })
@@ -74,6 +80,7 @@ export class ProfileViewDto {
     const dto = new this();
 
     dto.id = profile.id.toString();
+    dto.userId = profile.userId.toString();
     dto.username = profile.user.username;
     dto.firstName = profile.firstName;
     dto.lastName = profile.lastName;

@@ -58,6 +58,7 @@ export class AuthController {
   ) {
     this.apiSettings = this.configService.get<ApiSettings>('apiSettings');
   }
+
   @Post('registration')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiRegistration()

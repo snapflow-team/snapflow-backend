@@ -66,7 +66,7 @@ describe('PostsController - getPosts() (GET: /posts)', () => {
     // 🔻 1. Регистрируем пользователя
     const {
       accessToken,
-      createdUser: { username },
+      createdUser: { id: userId, username },
     } = await authTestManager.loginAndGetAuthTokens();
 
     // 🔻 Делаем запрос на получение профиля
@@ -78,6 +78,7 @@ describe('PostsController - getPosts() (GET: /posts)', () => {
     // 🔻 Проверяем структуру ответа
     expect(body).toEqual<ProfileViewDto>({
       id: expect.any(String),
+      userId: userId.toString(),
       username: username,
       firstName: null,
       lastName: null,
