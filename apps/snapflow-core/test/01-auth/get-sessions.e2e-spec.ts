@@ -49,7 +49,7 @@ describe('SessionsController - getAllSessions() (GET: /sessions)', () => {
           deviceId: expect.any(String),
           deviceName: expect.any(String),
           ip: expect.any(String),
-          lastVisit: expect.any(String),
+          lastActive: expect.any(String),
           isCurrent: true,
         }),
       ]),

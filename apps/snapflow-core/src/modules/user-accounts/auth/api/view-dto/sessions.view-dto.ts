@@ -24,7 +24,7 @@ export class SessionsViewDto {
     example: '2026-02-15T18:59:28.562Z',
     description: 'Дата последней генерации токенов',
   })
-  lastVisit: string;
+  lastActive: string;
 
   @ApiProperty({
     example: true,
@@ -38,7 +38,7 @@ export class SessionsViewDto {
     dto.deviceId = session.deviceId;
     dto.deviceName = session.deviceName;
     dto.ip = session.ip;
-    dto.lastVisit = session.iat.toISOString();
+    dto.lastActive = session.iat.toISOString();
     dto.isCurrent = session.deviceId === currentDeviceId;
 
     return dto;
