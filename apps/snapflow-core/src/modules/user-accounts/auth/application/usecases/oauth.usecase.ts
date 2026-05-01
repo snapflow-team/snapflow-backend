@@ -4,7 +4,7 @@ import { AuthTokenService } from '../services/auth-token.service';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { UserUtilsService } from '../../../users/application/services/user-utils.service';
 import { AuthTokens } from '../../domain/types/auth-tokens.type';
-import { parseUserAgent } from '../../../../../../../../libs/common/utils/user-agent.parser';
+import { parseUserAgentDetails } from '../../../../../../../../libs/common/utils/user-agent.parser';
 import { PayloadRefreshToken } from '../types/payload-refresh-token.type';
 import { SessionsRepository } from '../../sessions/infrastructure/sessions.repository';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
@@ -106,7 +106,8 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
       }
 
       const deviceId: string = this.cryptoService.generateUUID();
-      const deviceName: string = parseUserAgent(userAgent);
+      const { browserName, browserVersion, osName, osVersion, deviceName, deviceType } =
+        parseUserAgentDetails(userAgent);
       const accessToken: string = this.authTokenService.generateAccessToken(userId);
       const refreshToken: string = this.authTokenService.generateRefreshToken(userId, deviceId);
       const payload: PayloadRefreshToken = this.authTokenService.decodeRefreshToken(refreshToken);
@@ -114,6 +115,11 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
       const sessionData: Prisma.SessionCreateInput = {
         deviceId,
         deviceName,
+        browserName,
+        browserVersion,
+        osName,
+        osVersion,
+        deviceType,
         ip,
         iat: new Date(payload.iat * 1000),
         exp: new Date(payload.exp * 1000),
