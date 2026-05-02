@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Session, User } from '@generated/prisma-snapflow';
 import { PrismaService } from '../../../../../../database/prisma.service';
-import { parseUserAgent } from '../../../../../../../../../libs/common/utils/user-agent.parser';
+import { parseUserAgentDetails } from '../../../../../../../../../libs/common/utils/user-agent.parser';
 import { CreateSessionCommand, CreateSessionUseCase } from './create-session.usecase';
 import { CreateSessionDto } from '../../dto/create-session.dto';
 import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
@@ -61,7 +61,13 @@ describe('CreateSessionUseCase (Integration)', () => {
     expect(createdSession!.userId).toBe(user.id);
     expect(createdSession!.deviceId).toBe(dto.deviceId);
     expect(createdSession!.ip).toBe(dto.ip);
-    expect(createdSession!.deviceName).toBe(parseUserAgent(dto.userAgent));
+    const parsedUserAgentDetails = parseUserAgentDetails(dto.userAgent);
+    expect(createdSession!.browserName).toBe(parsedUserAgentDetails.browserName);
+    expect(createdSession!.browserVersion).toBe(parsedUserAgentDetails.browserVersion);
+    expect(createdSession!.osName).toBe(parsedUserAgentDetails.osName);
+    expect(createdSession!.osVersion).toBe(parsedUserAgentDetails.osVersion);
+    expect(createdSession!.deviceName).toBe(parsedUserAgentDetails.deviceName);
+    expect(createdSession!.deviceType).toBe(parsedUserAgentDetails.deviceType);
     expect(createdSession!.iat).toEqual(new Date(dto.iat * 1000));
     expect(createdSession!.exp).toEqual(new Date(dto.exp * 1000));
   });
