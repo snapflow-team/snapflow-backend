@@ -243,8 +243,7 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
     expect(body.items[0]?.price).toBe(1000);
   });
 
-  // vilyamz: тест заработает после удаления partial index на userId
-  it.skip('не должен возвращать платежи с payment.deletedAt != null', async () => {
+  it('не должен возвращать платежи с payment.deletedAt != null', async () => {
     await createSubscriptionWithPayment({
       userId: TEST_USER_ID,
       planId: 'business_monthly',
@@ -266,8 +265,7 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
     expect(body.items[0]?.subscriptionType).toBe(Label.BusinessMonthly);
   });
 
-  // vilyamz: тест заработает после удаления partial index на userId
-  it.skip('не должен возвращать платежи подписок с subscription.deletedAt != null', async () => {
+  it('не должен возвращать платежи подписок с subscription.deletedAt != null', async () => {
     await createSubscriptionWithPayment({
       userId: TEST_USER_ID,
       planId: 'business_monthly',
