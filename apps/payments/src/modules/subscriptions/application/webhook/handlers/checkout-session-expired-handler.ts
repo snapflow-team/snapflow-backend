@@ -73,8 +73,6 @@ export class CheckoutSessionExpiredHandler implements WebhookHandler {
         );
       }
 
-      // vilyamz,vitaliy[payments]: нужно ли нам оповещать snapflow-core о том что платежная сессия протухла?
-
       await this.outboxRepository.saveEvent(
         OutboxEventType.CHECKOUT_SESSION_EXPIRED,
         {
