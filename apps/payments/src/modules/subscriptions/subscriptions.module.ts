@@ -17,8 +17,11 @@ import { InvoicePaymentFailedHandler } from './application/webhook/handlers/invo
 import { WEBHOOK_HANDLERS } from '../../core/providers/provide-tokens/webhook-handlers.inject-token';
 import { CustomerSubscriptionDeletedHandler } from './application/webhook/handlers/customer-subscription-deleted-handler';
 import { UpdateAutoRenewalUseCase } from './application/usecases/update-auto-renewal.usecase';
+import { GetMyPaymentsQueryHandler } from './application/queries/get-my-payments.query-handler';
+import { PaymentsQueryRepository } from './infrastructure/query/paments.query-repository';
 
 const controllers = [SubscriptionsController, StripeWebhookController];
+const queries = [GetPlansQueryHandler, GetMyPaymentsQueryHandler];
 const useCases = [
   CreateCheckoutSessionUseCase,
   HandleStripeWebhookUseCase,
@@ -31,9 +34,13 @@ const webhookHandlers = [
   InvoicePaymentFailedHandler,
   CustomerSubscriptionDeletedHandler,
 ];
-const queries = [GetPlansQueryHandler];
 const services = [StripeService];
-const repositories = [SubscriptionsRepository, PaymentsRepository, CustomersRepository];
+const repositories = [
+  SubscriptionsRepository,
+  PaymentsRepository,
+  PaymentsQueryRepository,
+  CustomersRepository,
+];
 const guards = [RemoteAuthGuard];
 
 @Module({

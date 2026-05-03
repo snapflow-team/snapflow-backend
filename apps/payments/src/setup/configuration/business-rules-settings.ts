@@ -3,9 +3,14 @@ import { EnvironmentVariable } from './configuration';
 
 export interface Plan {
   id: string;
-  label: string;
+  label: Label;
   priceInCents: number;
   stripePriceId: string;
+}
+
+export enum Label {
+  BusinessMonthly = 'Business Monthly',
+  BusinessYearly = 'Business Yearly',
 }
 
 export class BusinessRulesSettings {
@@ -24,13 +29,13 @@ export class BusinessRulesSettings {
     return [
       {
         id: 'business_monthly',
-        label: 'Business Monthly',
+        label: Label.BusinessMonthly,
         priceInCents: 1000,
         stripePriceId: this.stripePriceIdBusinessMonthly,
       },
       {
         id: 'business_yearly',
-        label: 'Business Yearly',
+        label: Label.BusinessYearly,
         priceInCents: 9000,
         stripePriceId: this.stripePriceIdBusinessYearly,
       },
