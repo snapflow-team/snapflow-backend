@@ -27,6 +27,7 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
 
   const constructEventMock = jest.fn();
   const retrieveSubscriptionBillingPeriodMock = jest.fn();
+  const getSubscriptionMock = jest.fn();
 
   const redisMock = {
     set: jest.fn<Promise<'OK' | null>, [string, string, string, number, string]>(),
@@ -41,6 +42,7 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
       .useValue({
         constructEvent: constructEventMock,
         retrieveSubscriptionBillingPeriod: retrieveSubscriptionBillingPeriodMock,
+        getSubscription: getSubscriptionMock,
         getBillingPeriodFromSubscriptionObject: jest.fn(),
         createCheckoutSession: jest.fn(),
       })
@@ -54,11 +56,16 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE TABLE outbox_events, payments, subscriptions RESTART IDENTITY CASCADE',
+      'TRUNCATE TABLE outbox_events, payments, subscriptions, customers RESTART IDENTITY CASCADE',
     );
 
     constructEventMock.mockReset();
     retrieveSubscriptionBillingPeriodMock.mockReset();
+    getSubscriptionMock.mockReset();
+    getSubscriptionMock.mockResolvedValue({
+      id: 'sub_default',
+      customer: 'cus_default',
+    });
     redisMock.set.mockReset();
     redisMock.del.mockReset();
     redisMock.set.mockResolvedValue('OK');
@@ -77,6 +84,7 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
     return {
       id: 'evt_test_1',
       object: 'event',
+      created: Math.floor(Date.now() / 1000),
       type: StripeEvents.CheckoutSessionCompleted,
       data: {
         object: {
@@ -96,6 +104,7 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
     nextPaymentAttempt?: number | null;
     failureCode?: string | null;
     failureMessage?: string | null;
+    stripeCustomerId?: string;
   }): Stripe.Event {
     const {
       eventId,
@@ -105,11 +114,14 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
       nextPaymentAttempt = 1_767_225_600,
       failureCode = 'card_declined',
       failureMessage = 'Your card was declined.',
+      stripeCustomerId,
     } = params;
 
     const invoiceObject = {
       id: invoiceId,
       object: 'invoice',
+      billing_reason: 'subscription_cycle',
+      ...(stripeCustomerId !== undefined ? { customer: stripeCustomerId } : {}),
       attempt_count: attemptCount,
       next_payment_attempt: nextPaymentAttempt,
       last_finalization_error:
@@ -129,6 +141,7 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
     return {
       id: eventId,
       object: 'event',
+      created: Math.floor(Date.now() / 1000),
       type: StripeEvents.InvoicePaymentFailed,
       data: {
         object: invoiceObject,
@@ -142,10 +155,11 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
     const periodStart = new Date('2026-01-01T00:00:00.000Z');
     const periodEnd = new Date('2026-02-01T00:00:00.000Z');
 
+    const customer = await prisma.customer.create({ data: { userId: 42 } });
+
     const subscription: Subscription = await prisma.subscription.create({
       data: {
-        //todo(vitaliy) временная заглушка, надо ее убрать
-        customerId: 1,
+        customerId: customer.id,
         planId: 'business_monthly',
         status: SubscriptionStatus.PENDING,
         payments: {
@@ -167,6 +181,11 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
     const billingPeriod: BillingPeriod = { start: periodStart, end: periodEnd };
 
     retrieveSubscriptionBillingPeriodMock.mockResolvedValue(Notification.ok(billingPeriod));
+
+    getSubscriptionMock.mockResolvedValue({
+      id: stripeSubId,
+      customer: 'cus_checkout_session_completed',
+    });
 
     const result: Notification<void> = await useCase.execute(
       new HandleStripeWebhookCommand({ rawBody: Buffer.from('{}'), signature: 'sig' }),
@@ -202,12 +221,15 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
 
   it('invoice.payment_failed: создаёт PAYMENT_FAILED c контекстом ошибки', async () => {
     const stripeSubId = 'sub_invoice_failed_1';
+    const stripeCusId = 'cus_invoice_failed_1';
+
+    const customer = await prisma.customer.create({
+      data: { userId: 7, stripeCusId },
+    });
 
     const subscription: Subscription = await prisma.subscription.create({
       data: {
-        //userId: 7,
-        //todo(vitaliy) это временная заглушка, убрать ее
-        customerId: 1,
+        customerId: customer.id,
         planId: 'business_monthly',
         status: SubscriptionStatus.ACTIVE,
         stripeSubId,
@@ -219,6 +241,7 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
       eventId: 'evt_invoice_failed_1',
       invoiceId: 'in_test_failed_1',
       stripeSubscriptionRef: stripeSubId,
+      stripeCustomerId: stripeCusId,
       attemptCount: 2,
       nextPaymentAttempt,
       failureCode: 'insufficient_funds',
@@ -325,11 +348,11 @@ describe('HandleStripeWebhookUseCase (Integration)', () => {
   });
 
   it('при неожиданном исключении: удаляет idempotency key и возвращает internal error', async () => {
+    const customer = await prisma.customer.create({ data: { userId: 777 } });
+
     await prisma.subscription.create({
       data: {
-        //todo(vitaliy) это временная заглушка, убрать ее
-        //userId: 777,
-        customerId: 777,
+        customerId: customer.id,
         planId: 'business_monthly',
         status: SubscriptionStatus.PENDING,
         payments: {

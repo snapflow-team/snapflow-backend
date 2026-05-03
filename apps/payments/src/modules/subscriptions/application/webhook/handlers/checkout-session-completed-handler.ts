@@ -108,7 +108,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
       await this.outboxRepository.saveEvent(
         OutboxEventType.SUBSCRIPTION_ACTIVATED,
         {
-          userId: customer.id,
+          userId: customer.userId,
           planId: subscription.planId,
           subscriptionId: subscription.id,
           currentPeriodEnd: subscription.currentPeriodEnd?.toISOString() ?? null,
