@@ -13,7 +13,6 @@ import { NextjsIntegrationModule } from './modules/integrations/nextjs/nextjs-in
 import { PostsModule } from './modules/posts/posts.module';
 import { PaymentsEventsModule } from './modules/integrations/payments/payments-events.module';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
-import { AsyncLocalStorageService } from './common/async-local-storage/async-local-storage.service';
 import { CryptoService } from '../../../libs/common/services/crypto.service';
 import { LoggerModule } from './modules/logger/logger.module';
 
@@ -21,12 +20,12 @@ import { LoggerModule } from './modules/logger/logger.module';
 @Module({
   imports: [
     CoreModule,
+    LoggerModule,
     PrismaModule,
     UserAccountsModule,
     PostsModule,
     NextjsIntegrationModule,
     PaymentsEventsModule,
-    LoggerModule,
     ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
@@ -36,12 +35,7 @@ import { LoggerModule } from './modules/logger/logger.module';
     }),
   ],
   controllers: [SnapflowCoreController],
-  providers: [
-    SnapflowCoreService,
-    RequestContextMiddleware,
-    AsyncLocalStorageService,
-    CryptoService,
-  ],
+  providers: [SnapflowCoreService, RequestContextMiddleware, CryptoService],
 })
 export class SnapflowCoreModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
