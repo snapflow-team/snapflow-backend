@@ -18,15 +18,24 @@ export class PaymentsQueryRepository {
       deletedAt: null,
       status: PaymentStatus.PAID,
       subscription: {
-        userId,
         deletedAt: null,
+        customer: {
+          userId,
+          deletedAt: null,
+        },
       },
     };
 
     const [payments, totalCount] = await Promise.all([
       this.prisma.payment.findMany({
         where,
-        include: { subscription: true },
+        include: {
+          subscription: {
+            include: {
+              customer: true,
+            },
+          },
+        },
         orderBy: { [sortBy]: sortDirection },
         skip: queryParams.calculateSkip(),
         take: pageSize,

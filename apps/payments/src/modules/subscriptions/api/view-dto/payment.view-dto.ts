@@ -1,5 +1,5 @@
 import { PaymentProvider } from '@generated/prisma-payments';
-import { PaymentWithSubscription } from '../../types/payment-with-subscription.type';
+import { PaymentWithSubscriptionAndCustomer } from '../../types/payment-with-subscription.type';
 import { Label } from '../../../../setup/configuration/business-rules-settings';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -49,10 +49,10 @@ export class PaymentViewDto {
   })
   provider: PaymentProvider;
 
-  static mapToView(payment: PaymentWithSubscription): PaymentViewDto {
+  static mapToView(payment: PaymentWithSubscriptionAndCustomer): PaymentViewDto {
     const dto = new this();
 
-    dto.userId = payment.subscription.userId.toString();
+    dto.userId = payment.subscription.customer.userId.toString();
     dto.subscriptionId = payment.subscriptionId.toString();
     dto.dateOfPayment = payment.createdAt.toISOString();
     dto.endDateOfSubscription = payment.subscription.currentPeriodEnd?.toISOString() ?? null;

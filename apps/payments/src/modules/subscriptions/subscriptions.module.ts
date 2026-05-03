@@ -21,7 +21,6 @@ import { GetMyPaymentsQueryHandler } from './application/queries/get-my-payments
 import { PaymentsQueryRepository } from './infrastructure/query/paments.query-repository';
 
 const controllers = [SubscriptionsController, StripeWebhookController];
-const useCases = [CreateCheckoutSessionUseCase, HandleStripeWebhookUseCase];
 const queries = [GetPlansQueryHandler, GetMyPaymentsQueryHandler];
 const useCases = [
   CreateCheckoutSessionUseCase,
@@ -35,10 +34,13 @@ const webhookHandlers = [
   InvoicePaymentFailedHandler,
   CustomerSubscriptionDeletedHandler,
 ];
-const queries = [GetPlansQueryHandler];
 const services = [StripeService];
-const repositories = [SubscriptionsRepository, PaymentsRepository, PaymentsQueryRepository];
-const repositories = [SubscriptionsRepository, PaymentsRepository, CustomersRepository];
+const repositories = [
+  SubscriptionsRepository,
+  PaymentsRepository,
+  PaymentsQueryRepository,
+  CustomersRepository,
+];
 const guards = [RemoteAuthGuard];
 
 @Module({

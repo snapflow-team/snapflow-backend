@@ -26,6 +26,7 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
     amount?: number;
     paymentDeletedAt?: Date | null;
     subscriptionDeletedAt?: Date | null;
+    customerDeletedAt?: Date | null;
     currentPeriodEnd?: Date | null;
   }) {
     const {
@@ -35,12 +36,20 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
       amount = 1000,
       paymentDeletedAt = null,
       subscriptionDeletedAt = null,
+      customerDeletedAt = null,
       currentPeriodEnd = null,
     } = params;
 
-    return prisma.subscription.create({
+    const customer = await prisma.customer.create({
       data: {
         userId,
+        deletedAt: customerDeletedAt,
+      },
+    });
+
+    const subscription = await prisma.subscription.create({
+      data: {
+        customerId: customer.id,
         planId,
         status: SubscriptionStatus.ACTIVE,
         currentPeriodEnd,
@@ -58,6 +67,8 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
       },
       include: { payments: true },
     });
+
+    return { customer, ...subscription };
   }
 
   beforeAll(async () => {

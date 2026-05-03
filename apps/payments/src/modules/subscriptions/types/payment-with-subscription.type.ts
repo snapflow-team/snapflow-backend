@@ -1,7 +1,11 @@
 import { Prisma } from '@generated/prisma-payments';
 
-export type PaymentWithSubscription = Prisma.PaymentGetPayload<{
+export type PaymentWithSubscriptionAndCustomer = Prisma.PaymentGetPayload<{
   include: {
-    subscription: true;
+    subscription: {
+      include: {
+        customer: true;
+      };
+    };
   };
 }>;
