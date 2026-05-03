@@ -1,7 +1,7 @@
 'use strict';
 
 exports.config = {
-  app_name: [process.env.NEW_RELIC_APP_NAME || 'snapflow-unknown'],
+  app_name: [process.env.NEW_RELIC_APP_NAME || 'snapflow-core'],
   license_key: process.env.NEW_RELIC_LICENSE_KEY,
   agent_enabled: process.env.NEW_RELIC_ENABLED !== 'false',
 
@@ -30,7 +30,7 @@ exports.config = {
   error_collector: { enabled: true },
 
   application_logging: {
-    forwarding: { enabled: true },
+    forwarding: { enabled: true, max_samples_stored: 10000 },
     metrics: { enabled: true },
     local_decorating: { enabled: false },
   },
