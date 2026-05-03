@@ -103,6 +103,7 @@ export class SubscriptionsRepository {
     lastStripeEventAt: Date,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription | null> {
+    // vilyamz,vitaliy[payments]: нормально ли то, что мы выполняем два запроса в бд в рамках одного метода?
     const subscription = await tx.subscription.findUnique({
       where: { id: subscriptionId },
     });
