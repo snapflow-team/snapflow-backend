@@ -1,4 +1,4 @@
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { SnapflowCoreController } from './snapflow-core.controller';
 import { SnapflowCoreService } from './snapflow-core.service';
 import { CoreModule } from './core/core.module';
@@ -12,6 +12,9 @@ import { Configuration } from './setup/configuration/configuration';
 import { NextjsIntegrationModule } from './modules/integrations/nextjs/nextjs-integration.module';
 import { PostsModule } from './modules/posts/posts.module';
 import { PaymentsEventsModule } from './modules/integrations/payments/payments-events.module';
+import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
+import { AsyncLocalStorageService } from './common/async-local-storage/async-local-storage.service';
+import { CryptoService } from '../../../libs/common/services/crypto.service';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
@@ -31,9 +34,13 @@ import { PaymentsEventsModule } from './modules/integrations/payments/payments-e
     }),
   ],
   controllers: [SnapflowCoreController],
-  providers: [SnapflowCoreService],
+  providers: [SnapflowCoreService, RequestContextMiddleware, AsyncLocalStorageService, CryptoService],
 })
-export class SnapflowCoreModule {
+export class SnapflowCoreModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestContextMiddleware).forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+
   /**
    * Динамическая конфигурация модуля
    *
