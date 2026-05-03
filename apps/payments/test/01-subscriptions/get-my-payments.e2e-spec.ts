@@ -287,5 +287,27 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
     expect(body.items[0]?.subscriptionType).toBe(Label.BusinessMonthly);
   });
 
+  it('не должен возвращать платежи, если customer.deletedAt != null', async () => {
+    await createSubscriptionWithPayment({
+      userId: TEST_USER_ID,
+      planId: 'business_monthly',
+    });
+    await createSubscriptionWithPayment({
+      userId: TEST_USER_ID,
+      planId: 'business_yearly',
+      customerDeletedAt: new Date('2026-04-01T00:00:00.000Z'),
+    });
+
+    const res: Response = await request(server)
+      .get(`/${GLOBAL_PREFIX}/subscriptions/my-payments`)
+      .set('Authorization', 'Bearer valid-token')
+      .expect(HttpStatus.OK);
+
+    const body = res.body as PaginatedViewDto<PaymentViewDto>;
+    expect(body.items).toHaveLength(1);
+    expect(body.totalCount).toBe(1);
+    expect(body.items[0]?.subscriptionType).toBe(Label.BusinessMonthly);
+  });
+
   // vilyamz: написать тесты на пагинацию и сортировку после удаления partial index на userId
 });
