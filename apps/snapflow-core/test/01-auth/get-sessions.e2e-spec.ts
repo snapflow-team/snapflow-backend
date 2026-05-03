@@ -47,9 +47,14 @@ describe('SessionsController - getAllSessions() (GET: /sessions)', () => {
       expect.arrayContaining([
         expect.objectContaining({
           deviceId: expect.any(String),
+          browserName: expect.any(String),
+          browserVersion: expect.any(String),
+          osName: expect.any(String),
+          osVersion: expect.any(String),
           deviceName: expect.any(String),
+          deviceType: expect.any(String),
           ip: expect.any(String),
-          lastVisit: expect.any(String),
+          lastActive: expect.any(String),
           isCurrent: true,
         }),
       ]),

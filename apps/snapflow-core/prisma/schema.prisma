@@ -138,6 +138,11 @@ model Session {
   id         Int      @id @default(autoincrement())
   deviceId   String   @map("device_id")
   deviceName String   @map("device_name") @db.VarChar(255)
+  browserName    String? @map("browser_name") @db.VarChar(255)
+  browserVersion String? @map("browser_version") @db.VarChar(255)
+  osName         String? @map("os_name") @db.VarChar(255)
+  osVersion      String? @map("os_version") @db.VarChar(255)
+  deviceType     String? @map("device_type") @db.VarChar(255)
   ip         String   @db.VarChar(255)
   iat        DateTime
   exp        DateTime
