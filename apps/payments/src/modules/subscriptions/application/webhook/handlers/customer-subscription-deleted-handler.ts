@@ -87,7 +87,7 @@ export class CustomerSubscriptionDeletedHandler implements WebhookHandler {
       await this.outboxRepository.saveEvent(
         OutboxEventType.SUBSCRIPTION_CANCELLED,
         {
-          userId: customer.id,
+          userId: customer.userId,
           planId: subscription.planId,
           subscriptionId: subscription.id,
           cancelledAt: cancelledAt,

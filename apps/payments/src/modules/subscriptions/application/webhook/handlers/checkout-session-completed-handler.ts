@@ -16,8 +16,8 @@ import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.r
 import { Injectable, Logger } from '@nestjs/common';
 import { extractSubscriptionIdFromCS } from './utils/extract-subscription-id';
 import { extractEventDate } from './utils/extract-date-from-event-created';
-import { InternalServerException } from '../../../../../../../snapflow-core/src/common/exceptions/domain-exceptions';
 import { extractCustomerId } from './utils/extract-customer-id';
+import { InternalServerErrorException } from '../../../../../common/exceptions/domain-exceptions';
 
 @Injectable()
 export class CheckoutSessionCompletedHandler implements WebhookHandler {
@@ -94,7 +94,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
         );
       if (!subscription) {
         this.logger.warn(`Subscription with id ${payment.subscriptionId} not found`);
-        throw new InternalServerException();
+        throw new InternalServerErrorException();
       }
 
       const customer: Customer | null = await this.customersRepository.findById(
@@ -102,7 +102,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
       );
       if (!customer) {
         this.logger.warn(`Customer with id ${subscription.customerId} not found`);
-        throw new InternalServerException();
+        throw new InternalServerErrorException();
       }
 
       await this.outboxRepository.saveEvent(

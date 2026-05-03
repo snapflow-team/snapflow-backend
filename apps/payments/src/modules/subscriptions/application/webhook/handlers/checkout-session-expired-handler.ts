@@ -75,7 +75,7 @@ export class CheckoutSessionExpiredHandler implements WebhookHandler {
       await this.outboxRepository.saveEvent(
         OutboxEventType.CHECKOUT_SESSION_EXPIRED,
         {
-          userId: customer.id,
+          userId: customer.userId,
           planId: subscription.planId,
           description: 'checkout session expired',
         } satisfies CheckoutSessionExpiredEvent,
