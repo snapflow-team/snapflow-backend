@@ -28,6 +28,7 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
     subscriptionDeletedAt?: Date | null;
     customerDeletedAt?: Date | null;
     currentPeriodEnd?: Date | null;
+    paymentCreatedAt?: Date;
   }) {
     const {
       userId,
@@ -38,6 +39,7 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
       subscriptionDeletedAt = null,
       customerDeletedAt = null,
       currentPeriodEnd = null,
+      paymentCreatedAt,
     } = params;
 
     const customer = await prisma.customer.create({
@@ -62,6 +64,7 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
             status: PaymentStatus.PAID,
             externalId: `ext_${userId}_${Date.now()}_${Math.random().toString(36).slice(2)}`,
             deletedAt: paymentDeletedAt,
+            ...(paymentCreatedAt !== undefined ? { createdAt: paymentCreatedAt } : {}),
           },
         },
       },
@@ -309,5 +312,79 @@ describe('SubscriptionsController - getMyPayments() (GET: /subscriptions/my-paym
     expect(body.items[0]?.subscriptionType).toBe(Label.BusinessMonthly);
   });
 
-  // vilyamz: написать тесты на пагинацию и сортировку после удаления partial index на userId
+  it('должен пагинировать платежи: pageNumber=2, pageSize=5 при 12 платежах', async () => {
+    for (let i = 0; i < 12; i++) {
+      await createSubscriptionWithPayment({
+        userId: TEST_USER_ID,
+        planId: 'business_monthly',
+      });
+    }
+
+    const res: Response = await request(server)
+      .get(`/${GLOBAL_PREFIX}/subscriptions/my-payments`)
+      .query({ pageNumber: 2, pageSize: 5 })
+      .set('Authorization', 'Bearer valid-token')
+      .expect(HttpStatus.OK);
+
+    const body = res.body as PaginatedViewDto<PaymentViewDto>;
+    expect(body.items).toHaveLength(5);
+    expect(body.totalCount).toBe(12);
+    expect(body.pagesCount).toBe(3);
+    expect(body.page).toBe(2);
+    expect(body.pageSize).toBe(5);
+  });
+
+  it('по умолчанию сортирует по createdAt desc (самый свежий платёж первым)', async () => {
+    const oldest = new Date('2026-01-01T00:00:00.000Z');
+    const middle = new Date('2026-02-01T00:00:00.000Z');
+    const newest = new Date('2026-03-01T00:00:00.000Z');
+
+    await createSubscriptionWithPayment({
+      userId: TEST_USER_ID,
+      planId: 'business_monthly',
+      paymentCreatedAt: oldest,
+    });
+    await createSubscriptionWithPayment({
+      userId: TEST_USER_ID,
+      planId: 'business_monthly',
+      paymentCreatedAt: middle,
+    });
+    const latestSubscription = await createSubscriptionWithPayment({
+      userId: TEST_USER_ID,
+      planId: 'business_monthly',
+      paymentCreatedAt: newest,
+    });
+
+    const res: Response = await request(server)
+      .get(`/${GLOBAL_PREFIX}/subscriptions/my-payments`)
+      .set('Authorization', 'Bearer valid-token')
+      .expect(HttpStatus.OK);
+
+    const body = res.body as PaginatedViewDto<PaymentViewDto>;
+    expect(body.items).toHaveLength(3);
+    expect(body.items[0]?.subscriptionId).toBe(latestSubscription.id.toString());
+    expect(body.items[0]?.dateOfPayment).toBe(newest.toISOString());
+  });
+
+  it('при sortBy=planId и sortDirection=asc возвращает business_monthly раньше business_yearly', async () => {
+    await createSubscriptionWithPayment({
+      userId: TEST_USER_ID,
+      planId: 'business_yearly',
+    });
+    await createSubscriptionWithPayment({
+      userId: TEST_USER_ID,
+      planId: 'business_monthly',
+    });
+
+    const res: Response = await request(server)
+      .get(`/${GLOBAL_PREFIX}/subscriptions/my-payments`)
+      .query({ sortBy: 'planId', sortDirection: 'asc' })
+      .set('Authorization', 'Bearer valid-token')
+      .expect(HttpStatus.OK);
+
+    const body = res.body as PaginatedViewDto<PaymentViewDto>;
+    expect(body.items).toHaveLength(2);
+    expect(body.items[0]?.subscriptionType).toBe(Label.BusinessMonthly);
+    expect(body.items[1]?.subscriptionType).toBe(Label.BusinessYearly);
+  });
 });
