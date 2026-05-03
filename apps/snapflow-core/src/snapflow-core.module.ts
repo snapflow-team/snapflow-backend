@@ -15,6 +15,7 @@ import { PaymentsEventsModule } from './modules/integrations/payments/payments-e
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 import { AsyncLocalStorageService } from './common/async-local-storage/async-local-storage.service';
 import { CryptoService } from '../../../libs/common/services/crypto.service';
+import { LoggerModule } from './modules/logger/logger.module';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
@@ -25,6 +26,7 @@ import { CryptoService } from '../../../libs/common/services/crypto.service';
     PostsModule,
     NextjsIntegrationModule,
     PaymentsEventsModule,
+    LoggerModule,
     ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
@@ -34,7 +36,12 @@ import { CryptoService } from '../../../libs/common/services/crypto.service';
     }),
   ],
   controllers: [SnapflowCoreController],
-  providers: [SnapflowCoreService, RequestContextMiddleware, AsyncLocalStorageService, CryptoService],
+  providers: [
+    SnapflowCoreService,
+    RequestContextMiddleware,
+    AsyncLocalStorageService,
+    CryptoService,
+  ],
 })
 export class SnapflowCoreModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

@@ -15,7 +15,7 @@ const LOG_LEVELS: Record<LoggerLevel, number> = {
 };
 
 type LogMeta = {
-  requestId?: string;
+  requestId?: string | null;
   functionName?: string;
   sourceName?: string;
   stack?: string;
@@ -41,48 +41,44 @@ export class WinstonService {
   }
 
   trace(
-    message: unknown,
-    requestId?: string,
+    message: string,
+    requestId: string | null,
     functionName?: string,
     sourceName?: string,
-    stack?: string,
   ): void {
-    this.write('trace', message, { requestId, functionName, sourceName, stack });
+    this.write('trace', message, { requestId, functionName, sourceName });
   }
 
   debug(
-    message: unknown,
-    requestId?: string,
+    message: string,
+    requestId: string | null,
     functionName?: string,
     sourceName?: string,
-    stack?: string,
   ): void {
-    this.write('debug', message, { requestId, functionName, sourceName, stack });
+    this.write('debug', message, { requestId, functionName, sourceName });
   }
 
   info(
-    message: unknown,
-    requestId?: string,
+    message: string,
+    requestId: string | null,
     functionName?: string,
     sourceName?: string,
-    stack?: string,
   ): void {
-    this.write('info', message, { requestId, functionName, sourceName, stack });
+    this.write('info', message, { requestId, functionName, sourceName });
   }
 
   warn(
-    message: unknown,
-    requestId?: string,
+    message: string,
+    requestId: string | null,
     functionName?: string,
     sourceName?: string,
-    stack?: string,
   ): void {
-    this.write('warn', message, { requestId, functionName, sourceName, stack });
+    this.write('warn', message, { requestId, functionName, sourceName });
   }
 
   error(
-    message: unknown,
-    requestId?: string,
+    message: string,
+    requestId: string | null,
     functionName?: string,
     sourceName?: string,
     stack?: string,
@@ -91,8 +87,8 @@ export class WinstonService {
   }
 
   fatal(
-    message: unknown,
-    requestId?: string,
+    message: string,
+    requestId: string | null,
     functionName?: string,
     sourceName?: string,
     stack?: string,
@@ -142,9 +138,11 @@ export class WinstonService {
 
   private cleanMeta(meta: LogMeta): LogMeta {
     return Object.entries(meta).reduce<LogMeta>((accumulator, [key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        accumulator[key as keyof LogMeta] = value;
+      if (value === undefined || value === '') {
+        return accumulator;
       }
+
+      accumulator[key as keyof LogMeta] = value as never;
 
       return accumulator;
     }, {});
