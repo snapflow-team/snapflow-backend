@@ -48,6 +48,7 @@ describe('CreatePostUseCase (Интеграционные тесты)', () => {
         new CreatePostCommand({
           userId: user.id,
           status: PostStatus.PUBLISHED,
+          description: null,
           fileIds: [],
         }),
       ),
@@ -66,6 +67,7 @@ describe('CreatePostUseCase (Интеграционные тесты)', () => {
         new CreatePostCommand({
           userId: user.id,
           status: PostStatus.PUBLISHED,
+          description: null,
           fileIds: ['33333333-3333-4333-8333-333333333333'],
         }),
       ),
@@ -152,7 +154,7 @@ describe('CreatePostUseCase (Интеграционные тесты)', () => {
       new CreatePostCommand({
         userId: user.id,
         status: PostStatus.DRAFT,
-        description: dto.description,
+        description: dto.description ?? null,
         fileIds: dto.fileIds,
       }),
     );
@@ -181,7 +183,7 @@ describe('CreatePostUseCase (Интеграционные тесты)', () => {
         new CreatePostCommand({
           userId: user.id,
           status: PostStatus.PUBLISHED,
-          description: dto.description,
+          description: dto.description ?? null,
           fileIds: dto.fileIds,
         }),
       ),
@@ -204,6 +206,7 @@ describe('CreatePostUseCase (Интеграционные тесты)', () => {
         new CreatePostCommand({
           userId: user.id,
           status: PostStatus.PUBLISHED,
+          description: null,
           fileIds: ['55555555-5555-4555-8555-555555555555'],
         }),
       ),

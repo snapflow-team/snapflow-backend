@@ -20,7 +20,7 @@ export class OutboxProcessorService {
     private readonly configService: ConfigService<Configuration, true>,
   ) {}
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_10_HOURS)
   async processOutboxEvents() {
     if (this.isProcessing) return;
     this.isProcessing = true;

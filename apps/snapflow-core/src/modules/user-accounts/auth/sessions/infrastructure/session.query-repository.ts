@@ -6,13 +6,15 @@ import { Session } from '@generated/prisma-snapflow';
 @Injectable()
 export class SessionQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
-  async getAllSessions(userId: number): Promise<SessionsViewDto[]> {
+  async getAllSessions(userId: number, currentDeviceId: string): Promise<SessionsViewDto[]> {
     const sessions: Session[] = await this.prisma.session.findMany({
       where: {
         userId,
         deletedAt: null,
       },
     });
-    return sessions.map((session: Session): SessionsViewDto => SessionsViewDto.mapToView(session));
+    return sessions.map(
+      (session: Session): SessionsViewDto => SessionsViewDto.mapToView(session, currentDeviceId),
+    );
   }
 }

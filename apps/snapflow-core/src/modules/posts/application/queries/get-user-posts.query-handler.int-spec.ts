@@ -54,6 +54,14 @@ describe('GetProfilePostsQueryHandler', () => {
     expect(result.items).toHaveLength(8);
     expect(result.items[0].description).toBe('Post 12');
     expect(result.items[7].description).toBe('Post 5');
+    expect(result.items[0].owner).toEqual(
+      expect.objectContaining({
+        userId: expect.any(String),
+        profileId: expect.any(String),
+        username: expect.any(String),
+      }),
+    );
+    expect(result.items[0].owner).not.toHaveProperty('ownerId');
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(8);
     expect(result.totalCount).toBe(12);

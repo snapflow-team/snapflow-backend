@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
 import { PostViewDto } from '../api/view-dto/post.view-dto';
 import { PostStatus, Prisma } from '@generated/prisma-snapflow';
@@ -33,7 +33,7 @@ export class PostsQueryRepository {
               username: true,
               profiles: {
                 where: { deletedAt: null },
-                select: { avatarUrl: true },
+                select: { id: true, avatarUrl: true },
               },
             },
           },
@@ -85,7 +85,7 @@ export class PostsQueryRepository {
               username: true,
               profiles: {
                 where: { deletedAt: null },
-                select: { avatarUrl: true },
+                select: { id: true, avatarUrl: true },
               },
             },
           },
@@ -141,7 +141,7 @@ export class PostsQueryRepository {
             username: true,
             profiles: {
               where: { deletedAt: null },
-              select: { avatarUrl: true },
+              select: { id: true, avatarUrl: true },
             },
           },
         },
@@ -174,7 +174,7 @@ export class PostsQueryRepository {
             username: true,
             profiles: {
               where: { deletedAt: null },
-              select: { avatarUrl: true },
+              select: { id: true, avatarUrl: true },
             },
           },
         },

@@ -3,7 +3,10 @@ import { SessionQueryRepository } from '../../infrastructure/session.query-repos
 import { SessionsViewDto } from '../../../api/view-dto/sessions.view-dto';
 
 export class GetAllSessionsQuery {
-  constructor(public readonly userId: number) {}
+  constructor(
+    public readonly userId: number,
+    public readonly currentDeviceId: string,
+  ) {}
 }
 
 @QueryHandler(GetAllSessionsQuery)
@@ -11,6 +14,6 @@ export class GetAllSessionsQueryHandler {
   constructor(private readonly sessionQueryRepository: SessionQueryRepository) {}
 
   async execute(query: GetAllSessionsQuery): Promise<SessionsViewDto[]> {
-    return this.sessionQueryRepository.getAllSessions(query.userId);
+    return this.sessionQueryRepository.getAllSessions(query.userId, query.currentDeviceId);
   }
 }

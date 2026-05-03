@@ -5,4 +5,5 @@ export type RawUserForMe = {
   username: string;
   email: string;
   accountType: AccountType;
+  profiles: { id: number }[];
 };
