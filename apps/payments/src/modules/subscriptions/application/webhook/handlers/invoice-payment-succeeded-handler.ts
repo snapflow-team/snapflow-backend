@@ -10,15 +10,15 @@ import { OutboxRepository } from '../../../../outbox/repositories/outbox.reposit
 import { Notification } from '../../../../../common/notification/notification';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
 import { Injectable, Logger } from '@nestjs/common';
-import { extractSubscriptionId } from './utils/extract-subscription-id';
+import { extractSubscriptionId } from './utils/extract-subscription-id.helper';
 import { StripeService } from '../../services/stripe.service';
 import { BillingPeriod } from '../../types/billing-period.type';
 import { PaymentsRepository } from '../../../infrastructure/payments.repository';
 import { PrismaService } from '../../../../database/prisma.service';
 import { InternalServerException } from '../../../../../../../snapflow-core/src/common/exceptions/domain-exceptions';
-import { checkIsOldEvent } from './utils/check-is-old-event';
-import { extractEventDate } from './utils/extract-date-from-event-created';
-import { isSubscriptionRenewal } from './utils/check-is-subscription-renewal';
+import { checkIsOldEvent } from './utils/check-is-old-event.helper';
+import { extractEventDate } from './utils/extract-date-from-event-created.helper';
+import { isSubscriptionRenewal } from './utils/check-is-subscription-renewal.helper';
 import { InvoicePayment } from '../../types/invoice-payment.type';
 
 @Injectable()

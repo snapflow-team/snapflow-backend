@@ -10,11 +10,11 @@ import { Notification } from '../../../../../common/notification/notification';
 import { PrismaService } from '../../../../database/prisma.service';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
 import { Injectable, Logger } from '@nestjs/common';
-import { extractEventDate } from './utils/extract-date-from-event-created';
-import { extractSubscriptionId } from './utils/extract-subscription-id';
-import { checkIsOldEvent } from './utils/check-is-old-event';
+import { extractEventDate } from './utils/extract-date-from-event-created.helper';
+import { extractSubscriptionId } from './utils/extract-subscription-id.helper';
+import { checkIsOldEvent } from './utils/check-is-old-event.helper';
 import { SubscriptionCancelledEvent } from '../../../../../../../../libs/contracts/payments/payments-subscription-cancelled.event';
-import { extractCancelledAt } from './utils/extract-cancelled-at';
+import { extractCancelledAt } from './utils/extract-cancelled-at.helper';
 
 @Injectable()
 export class CustomerSubscriptionDeletedHandler implements WebhookHandler {

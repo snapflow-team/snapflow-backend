@@ -12,7 +12,7 @@ import { PrismaService } from '../../../../database/prisma.service';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
 import { CheckoutSessionExpiredEvent } from '../../../../../../../../libs/contracts/payments/payments-checkout-sesion-expired.event';
 import { Injectable } from '@nestjs/common';
-import { extractEventDate } from './utils/extract-date-from-event-created';
+import { extractEventDate } from './utils/extract-date-from-event-created.helper';
 
 @Injectable()
 export class CheckoutSessionExpiredHandler implements WebhookHandler {
