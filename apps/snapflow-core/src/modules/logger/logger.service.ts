@@ -7,8 +7,32 @@ import { WinstonService } from './winston.service';
 import { AsyncLocalStorageService } from '../../common/async-local-storage/async-local-storage.service';
 import { REQUEST_ID_KEY } from '../../common/middleware/request-context.middleware';
 
+export type CustomLoggerPhase = 'bootstrap' | 'banner' | 'runtime';
+
 @Injectable({ scope: Scope.TRANSIENT })
 export class CustomLogger extends ConsoleLogger {
+  /**
+   * bootstrap — только `[Nest] ...` (Nest ConsoleLogger), без дубля в Winston.
+   * banner — только кастомный Winston (например баннер в колбэке `app.listen`), без `[Nest]`.
+   * runtime — как в референсе: Nest + Winston.
+   */
+  private static phase: CustomLoggerPhase = 'bootstrap';
+
+  /** Перед логами баннера в `app.listen` (только Winston). */
+  static enterBannerPhase(): void {
+    CustomLogger.phase = 'banner';
+  }
+
+  /** После баннера — обычное двойное логирование. */
+  static enterRuntimePhase(): void {
+    CustomLogger.phase = 'runtime';
+  }
+
+  /** Для тестов / повторного подъёма приложения. */
+  static resetPhase(): void {
+    CustomLogger.phase = 'bootstrap';
+  }
+
   constructor(
     context: string,
     options: ConsoleLoggerOptions,
@@ -80,28 +104,60 @@ export class CustomLogger extends ConsoleLogger {
     }
   }
 
-  trace(message: string, functionName?: string) {
-    super.verbose(message, this.getSourceContext() || functionName);
+  private writeNestIfAllowed(logFn: () => void): void {
+    if (CustomLogger.phase === 'banner') {
+      return;
+    }
 
-    this.winstonLogger.trace(message, this.getRequestId(), functionName, this.getSourceContext());
+    logFn();
+  }
+
+  private writeWinstonIfAllowed(writeFn: () => void): void {
+    if (CustomLogger.phase === 'bootstrap') {
+      return;
+    }
+
+    writeFn();
+  }
+
+  trace(message: string, functionName?: string) {
+    this.writeNestIfAllowed(() => {
+      super.verbose(message, this.getSourceContext() || functionName);
+    });
+
+    this.writeWinstonIfAllowed(() => {
+      this.winstonLogger.trace(message, this.getRequestId(), functionName, this.getSourceContext());
+    });
   }
 
   debug(message: string, functionName?: string) {
-    super.debug(message, this.getSourceContext() || functionName);
+    this.writeNestIfAllowed(() => {
+      super.debug(message, this.getSourceContext() || functionName);
+    });
 
-    this.winstonLogger.debug(message, this.getRequestId(), functionName, this.getSourceContext());
+    this.writeWinstonIfAllowed(() => {
+      this.winstonLogger.debug(message, this.getRequestId(), functionName, this.getSourceContext());
+    });
   }
 
   log(message: string, functionName?: string) {
-    super.log(message, this.getSourceContext() || functionName);
+    this.writeNestIfAllowed(() => {
+      super.log(message, this.getSourceContext() || functionName);
+    });
 
-    this.winstonLogger.info(message, this.getRequestId(), functionName, this.getSourceContext());
+    this.writeWinstonIfAllowed(() => {
+      this.winstonLogger.info(message, this.getRequestId(), functionName, this.getSourceContext());
+    });
   }
 
   warn(message: string, functionName?: string) {
-    super.warn(message, this.getSourceContext() || functionName);
+    this.writeNestIfAllowed(() => {
+      super.warn(message, this.getSourceContext() || functionName);
+    });
 
-    this.winstonLogger.warn(message, this.getRequestId(), functionName, this.getSourceContext());
+    this.writeWinstonIfAllowed(() => {
+      this.winstonLogger.warn(message, this.getRequestId(), functionName, this.getSourceContext());
+    });
   }
 
   error(error: unknown, functionName?: string) {
@@ -113,26 +169,34 @@ export class CustomLogger extends ConsoleLogger {
       errMessage !== undefined ? `msg: ${errMessage}; ` : ''
     } fullError: ${jsonError}`;
 
-    super.error(error, stack, this.getSourceContext() || functionName);
+    this.writeNestIfAllowed(() => {
+      super.error(error, stack, this.getSourceContext() || functionName);
+    });
 
-    this.winstonLogger.error(
-      fullErrorMessage,
-      this.getRequestId(),
-      functionName,
-      this.getSourceContext(),
-      stack,
-    );
+    this.writeWinstonIfAllowed(() => {
+      this.winstonLogger.error(
+        fullErrorMessage,
+        this.getRequestId(),
+        functionName,
+        this.getSourceContext(),
+        stack,
+      );
+    });
   }
 
   fatal(message: string, functionName?: string, stack?: string) {
-    super.fatal(message, this.getSourceContext() || functionName);
+    this.writeNestIfAllowed(() => {
+      super.fatal(message, this.getSourceContext() || functionName);
+    });
 
-    this.winstonLogger.fatal(
-      message,
-      this.getRequestId(),
-      functionName,
-      this.getSourceContext(),
-      stack,
-    );
+    this.writeWinstonIfAllowed(() => {
+      this.winstonLogger.fatal(
+        message,
+        this.getRequestId(),
+        functionName,
+        this.getSourceContext(),
+        stack,
+      );
+    });
   }
 }

@@ -13,6 +13,65 @@ import { Express } from 'express';
 import { applyAppInitialization } from './setup/app-initialization';
 import { CustomLogger } from './modules/logger/logger.service';
 
+function stripAnsi(s: string): string {
+  return s.replace(/\x1b\[[0-9;]*m/g, '');
+}
+
+function centerVisual(text: string, width: number): string {
+  const visible = stripAnsi(text);
+  const pad = Math.max(0, width - visible.length);
+  const left = Math.floor(pad / 2);
+  const right = pad - left;
+
+  return `${' '.repeat(left)}${text}${' '.repeat(right)}`;
+}
+
+function logSnapflowStartupBanner(
+  appLogger: CustomLogger,
+  params: { env: string; port: number },
+): void {
+  const { env, port } = params;
+  const pid = process.pid;
+  const r = '\x1b[0m';
+  const bold = '\x1b[1m';
+  const dim = '\x1b[2m';
+  const cyan = '\x1b[36m';
+  const mag = '\x1b[35m';
+  const grn = '\x1b[32m';
+  const ylw = '\x1b[33m';
+
+  const inner = 58;
+
+  const boxRow = (content: string): string => {
+    const pad = Math.max(0, inner - stripAnsi(content).length);
+
+    return `${cyan}│${r}${content}${' '.repeat(pad)}${cyan}│${r}`;
+  };
+
+  const hr = `${cyan}${'─'.repeat(inner)}${r}`;
+  const title = `${bold}${mag}SNAPFLOW${r}${dim} · ${r}${bold}${mag}CORE${r}`;
+  const subtitle = `${dim}NestJS · PostgreSQL · Prisma · RabbitMQ · Redis${r}`;
+
+  const lines: string[] = [
+    '',
+    `${cyan}╭${hr}${cyan}╮${r}`,
+    boxRow(''),
+    boxRow(centerVisual(title, inner)),
+    boxRow(centerVisual(subtitle, inner)),
+    boxRow(''),
+    `${cyan}├${hr}${cyan}┤${r}`,
+    boxRow(`  ${grn}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`),
+    boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${dim}http://${r}${ylw}0.0.0.0:${String(port)}${r}`),
+    boxRow(`  ${grn}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`),
+    `${cyan}╰${hr}${cyan}╯${r}`,
+    '',
+  ];
+
+  for (const line of lines) {
+    appLogger.log(line, 'bootstrap');
+  }
+}
+
 async function bootstrap() {
   const DynamicAppModule = await initSnapFlowCoreAppModule();
 
@@ -40,11 +99,9 @@ async function bootstrap() {
   const env: string = environmentSettings.currentEnv;
 
   await app.listen(port, () => {
-    appLogger.log(`\x1b[35m=========================================\x1b[0m`, 'bootstrap');
-    appLogger.log(`\x1b[36m✅ Application is running in ${env} mode\x1b[0m`, 'bootstrap');
-    appLogger.log(`\x1b[36m📡 Server listening on port ${port}\x1b[0m`, 'bootstrap');
-    appLogger.log(`\x1b[36m🌍 Environment: ${env}\x1b[0m`, 'bootstrap');
-    appLogger.log(`\x1b[35m=========================================\x1b[0m`, 'bootstrap');
+    CustomLogger.enterBannerPhase();
+    logSnapflowStartupBanner(appLogger, { env, port });
+    CustomLogger.enterRuntimePhase();
   });
 }
 

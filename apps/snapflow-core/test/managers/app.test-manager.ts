@@ -74,6 +74,8 @@ export class AppTestManager {
     await applyAppInitialization(this.app, appLogger);
 
     await this.app.init();
+
+    CustomLogger.enterRuntimePhase();
   }
 
   /**
