@@ -1,4 +1,12 @@
-import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsString, IsUrl } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 import { CookieOptions } from 'express';
 import { EnvironmentVariable } from './configuration';
 
@@ -11,6 +19,14 @@ export enum SameSite {
 export class ApiSettings {
   @IsNumber()
   port: number;
+
+  /**
+   * Публичный origin API (https://api.example.com) для ссылок в логах/баннере.
+   * Без значения в dev остаётся `http://0.0.0.0:<PORT>` на bind-адрес.
+   */
+  @IsOptional()
+  @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
+  publicApiBaseUrl?: string;
 
   @IsNotEmpty()
   accessTokenSecret: string;
@@ -98,6 +114,10 @@ export class ApiSettings {
 
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
+
+    const publicBase = environmentVariables.PUBLIC_API_BASE_URL?.trim();
+    this.publicApiBaseUrl =
+      publicBase !== undefined && publicBase.length > 0 ? publicBase : undefined;
 
     this.accessTokenSecret = environmentVariables.JWT_SECRET_AT;
     this.refreshTokenSecret = environmentVariables.JWT_SECRET_RT;
