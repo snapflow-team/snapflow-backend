@@ -11,8 +11,12 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { corsSetup } from './cors.setup';
 import { globalExceptionFilterSetup } from './global-exception-filter.setup';
 import { swaggerSetup } from './swagger.setup';
+import type { CustomLogger } from '../modules/logger/logger.service';
 
-export const applyAppInitialization = (app: INestApplication): void => {
+export const applyAppInitialization = async (
+  app: INestApplication,
+  bootstrapLogger: CustomLogger,
+): Promise<void> => {
   const configService: ConfigService<Configuration, true> = app.get(
     ConfigService<Configuration, true>,
   );
@@ -26,12 +30,13 @@ export const applyAppInitialization = (app: INestApplication): void => {
   pipesSetup(app);
   globalPrefixSetup(app);
   swaggerSetup(app, swaggerSettings, envSetting);
-  globalExceptionFilterSetup(app, apiSettings.sendInternalServerErrorDetails);
+  await globalExceptionFilterSetup(app, apiSettings.sendInternalServerErrorDetails);
 
   if (envSetting.isDevelopment) {
-    console.log('🚀 Development mode enabled');
-    console.log(
+    bootstrapLogger.log('🚀 Development mode enabled', 'applyAppInitialization');
+    bootstrapLogger.log(
       `📚 Swagger available at: http://localhost:${apiSettings.port}/${GLOBAL_PREFIX}/${swaggerSettings.swaggerPath}`,
+      'applyAppInitialization',
     );
   }
 };

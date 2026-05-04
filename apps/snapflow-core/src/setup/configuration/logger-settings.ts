@@ -9,7 +9,13 @@ export class LoggerSettings {
   private readonly LOGGER_LEVEL: LoggerLevel;
 
   constructor(private readonly environmentVariables: EnvironmentVariable) {
-    this.LOGGER_LEVEL = environmentVariables.LOGGER_LEVEL as LoggerLevel;
+    const raw: string | undefined = environmentVariables.LOGGER_LEVEL?.trim();
+    const normalized: LoggerLevel =
+      raw !== undefined && raw !== '' && (LOGGER_LEVELS as readonly string[]).includes(raw)
+        ? (raw as LoggerLevel)
+        : 'info';
+
+    this.LOGGER_LEVEL = normalized;
   }
 
   get level(): LoggerLevel {

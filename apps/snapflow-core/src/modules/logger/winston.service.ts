@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as winston from 'winston';
 import { Configuration } from '../../setup/configuration/configuration';
-import { EnvironmentSettings } from '../../setup/configuration/environment-settings';
 import { LoggerLevel, LoggerSettings } from '../../setup/configuration/logger-settings';
 
 const LOG_LEVELS: Record<LoggerLevel, number> = {
@@ -24,19 +23,28 @@ type LogMeta = {
 @Injectable()
 export class WinstonService {
   private readonly logger: winston.Logger;
+  private readonly serviceName = 'snapflow-core';
 
   constructor(private readonly configService: ConfigService<Configuration, true>) {
     const loggerSettings: LoggerSettings = this.configService.get<LoggerSettings>('loggerSettings');
-    const environmentSettings: EnvironmentSettings =
-      this.configService.get<EnvironmentSettings>('environmentSettings');
-    const isProduction: boolean = environmentSettings.isProduction;
+    const timeFormat = 'YYYY-MM-DD HH:mm:ss';
+    const { combine, prettyPrint, timestamp, errors, colorize } = winston.format;
+
+    const consoleTransport = new winston.transports.Console({
+      format: combine(
+        timestamp({ format: timeFormat }),
+        errors({ stack: true }),
+        prettyPrint(),
+        colorize({ all: true, colors: { trace: 'yellow' } }),
+      ),
+    });
 
     this.logger = winston.createLogger({
       levels: LOG_LEVELS,
       level: loggerSettings.level,
-      defaultMeta: { serviceName: 'snapflow-core' },
-      format: this.buildFormat(isProduction),
-      transports: [new winston.transports.Console()],
+      defaultMeta: { serviceName: this.serviceName },
+      format: winston.format.timestamp({ format: timeFormat }),
+      transports: [consoleTransport],
     });
   }
 
@@ -93,27 +101,7 @@ export class WinstonService {
     sourceName?: string,
     stack?: string,
   ): void {
-    this.write('fatal', message, { requestId, functionName, sourceName, stack });
-  }
-
-  private buildFormat(isProduction: boolean): winston.Logform.Format {
-    if (isProduction) {
-      return winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.errors({ stack: true }),
-        winston.format.json(),
-      );
-    }
-
-    return winston.format.combine(
-      winston.format.colorize({ all: true }),
-      winston.format.timestamp(),
-      winston.format.errors({ stack: true }),
-      winston.format.printf(({ level, message, timestamp, ...meta }) => {
-        const metadata = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
-        return `${timestamp} [${level}] ${message}${metadata}`;
-      }),
-    );
+    this.logger.log('fatal', message, this.cleanMeta({ requestId, functionName, sourceName, stack }));
   }
 
   private write(level: LoggerLevel, message: unknown, meta: LogMeta): void {
