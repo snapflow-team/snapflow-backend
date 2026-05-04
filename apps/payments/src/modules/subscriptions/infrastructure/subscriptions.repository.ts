@@ -35,6 +35,17 @@ export class SubscriptionsRepository {
     });
   }
 
+  async findActiveByUserId(userId: number, tx: Prisma.TransactionClient = this.prisma) {
+    return tx.subscription.findFirst({
+      where: {
+        customer: {
+          userId,
+        },
+        status: SubscriptionStatus.ACTIVE,
+      },
+    });
+  }
+
   async createPendingOrder(
     data: CreatePendingOrderInfrastructureDto,
     tx: Prisma.TransactionClient = this.prisma,
@@ -73,12 +84,6 @@ export class SubscriptionsRepository {
     dto: ActivateSubscriptionDto,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription | null> {
-    const subscription = await tx.subscription.findUnique({
-      where: { id: dto.subscriptionId },
-    });
-    if (!subscription) {
-      return null;
-    }
     return tx.subscription.update({
       where: { id: dto.subscriptionId },
       data: {
@@ -140,6 +145,7 @@ export class SubscriptionsRepository {
     });
   }
 
+  //Метод для автопродления подписки страйпом автоматически по истечении периода подписки(autoRenewal: true)
   async renewSubscription(
     subscriptionId: number,
     period: BillingPeriod,
@@ -157,6 +163,23 @@ export class SubscriptionsRepository {
       data: {
         status: SubscriptionStatus.ACTIVE,
         currentPeriodStart: period.start,
+        currentPeriodEnd: period.end,
+        lastStripeEventAt,
+      },
+    });
+  }
+
+  //Этот метод используется для продления активной подписки покупке пользователем еще подписки
+  async extendSubscription(
+    subscriptionId: number,
+    period: BillingPeriod,
+    lastStripeEventAt: Date,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription | null> {
+    return tx.subscription.update({
+      where: { id: subscriptionId },
+      data: {
+        autoRenewal: true,
         currentPeriodEnd: period.end,
         lastStripeEventAt,
       },
