@@ -6,6 +6,7 @@ export interface Plan {
   label: Label;
   priceInCents: number;
   stripePriceId: string;
+  subscriptionDurationInDays: number;
 }
 
 export enum Label {
@@ -32,12 +33,14 @@ export class BusinessRulesSettings {
         label: Label.BusinessMonthly,
         priceInCents: 1000,
         stripePriceId: this.stripePriceIdBusinessMonthly,
+        subscriptionDurationInDays: 30,
       },
       {
         id: 'business_yearly',
         label: Label.BusinessYearly,
         priceInCents: 9000,
         stripePriceId: this.stripePriceIdBusinessYearly,
+        subscriptionDurationInDays: 30 * 12,
       },
     ];
   }
