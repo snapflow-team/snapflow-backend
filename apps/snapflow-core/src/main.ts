@@ -57,10 +57,10 @@ function centerVisual(text: string, width: number): string {
  */
 function printSnapflowStartupBannerToConsole(params: {
   env: string;
-  listenUrl: string;
+  port: number;
   swaggerDocUrl: string;
 }): void {
-  const { env, listenUrl, swaggerDocUrl } = params;
+  const { env, port, swaggerDocUrl } = params;
   const pid = process.pid;
   const r = '\x1b[0m';
   const bold = '\x1b[1m';
@@ -107,7 +107,9 @@ function printSnapflowStartupBannerToConsole(params: {
     motdLine(boxRow('')),
     motdLine(`${cyan}├${hrPlain}┤${r}`),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`)),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${listenUrl}${r}`)),
+    motdLine(
+      boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${String(port)}${r}`),
+    ),
     motdLine(
       boxRow(`  ${grn}▸${r}  ${bold}swagger${r}${dim}:${r}       ${ylw}${swaggerDocUrl}${r}`),
     ),
@@ -157,7 +159,8 @@ async function bootstrap() {
   );
 
   await app.listen(port, () => {
-    printSnapflowStartupBannerToConsole({ env, listenUrl: publicApiBase, swaggerDocUrl });
+    printSnapflowStartupBannerToConsole({ env, port, swaggerDocUrl });
+
     setImmediate(() => {
       CustomLogger.enterRuntimePhase();
     });
