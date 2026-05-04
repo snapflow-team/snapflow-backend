@@ -7,23 +7,17 @@ import { WinstonService } from './winston.service';
 import { AsyncLocalStorageService } from '../../common/async-local-storage/async-local-storage.service';
 import { REQUEST_ID_KEY } from '../../common/middleware/request-context.middleware';
 
-export type CustomLoggerPhase = 'bootstrap' | 'banner' | 'runtime';
+export type CustomLoggerPhase = 'bootstrap' | 'runtime';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class CustomLogger extends ConsoleLogger {
   /**
    * bootstrap — только `[Nest] ...` (Nest ConsoleLogger), без дубля в Winston.
-   * banner — только кастомный Winston (например баннер в колбэке `app.listen`), без `[Nest]`.
-   * runtime — как в референсе: Nest + Winston.
+   * runtime — Nest + Winston. Баннер старта — отдельно через `console.log` в `main.ts`.
    */
   private static phase: CustomLoggerPhase = 'bootstrap';
 
-  /** Перед логами баннера в `app.listen` (только Winston). */
-  static enterBannerPhase(): void {
-    CustomLogger.phase = 'banner';
-  }
-
-  /** После баннера — обычное двойное логирование. */
+  /** После `listen` — обычное двойное логирование (Nest + Winston). */
   static enterRuntimePhase(): void {
     CustomLogger.phase = 'runtime';
   }
@@ -104,14 +98,6 @@ export class CustomLogger extends ConsoleLogger {
     }
   }
 
-  private writeNestIfAllowed(logFn: () => void): void {
-    if (CustomLogger.phase === 'banner') {
-      return;
-    }
-
-    logFn();
-  }
-
   private writeWinstonIfAllowed(writeFn: () => void): void {
     if (CustomLogger.phase === 'bootstrap') {
       return;
@@ -121,9 +107,7 @@ export class CustomLogger extends ConsoleLogger {
   }
 
   trace(message: string, functionName?: string) {
-    this.writeNestIfAllowed(() => {
-      super.verbose(message, this.getSourceContext() || functionName);
-    });
+    super.verbose(message, this.getSourceContext() || functionName);
 
     this.writeWinstonIfAllowed(() => {
       this.winstonLogger.trace(message, this.getRequestId(), functionName, this.getSourceContext());
@@ -131,9 +115,7 @@ export class CustomLogger extends ConsoleLogger {
   }
 
   debug(message: string, functionName?: string) {
-    this.writeNestIfAllowed(() => {
-      super.debug(message, this.getSourceContext() || functionName);
-    });
+    super.debug(message, this.getSourceContext() || functionName);
 
     this.writeWinstonIfAllowed(() => {
       this.winstonLogger.debug(message, this.getRequestId(), functionName, this.getSourceContext());
@@ -141,9 +123,7 @@ export class CustomLogger extends ConsoleLogger {
   }
 
   log(message: string, functionName?: string) {
-    this.writeNestIfAllowed(() => {
-      super.log(message, this.getSourceContext() || functionName);
-    });
+    super.log(message, this.getSourceContext() || functionName);
 
     this.writeWinstonIfAllowed(() => {
       this.winstonLogger.info(message, this.getRequestId(), functionName, this.getSourceContext());
@@ -151,9 +131,7 @@ export class CustomLogger extends ConsoleLogger {
   }
 
   warn(message: string, functionName?: string) {
-    this.writeNestIfAllowed(() => {
-      super.warn(message, this.getSourceContext() || functionName);
-    });
+    super.warn(message, this.getSourceContext() || functionName);
 
     this.writeWinstonIfAllowed(() => {
       this.winstonLogger.warn(message, this.getRequestId(), functionName, this.getSourceContext());
@@ -169,9 +147,7 @@ export class CustomLogger extends ConsoleLogger {
       errMessage !== undefined ? `msg: ${errMessage}; ` : ''
     } fullError: ${jsonError}`;
 
-    this.writeNestIfAllowed(() => {
-      super.error(error, stack, this.getSourceContext() || functionName);
-    });
+    super.error(error, stack, this.getSourceContext() || functionName);
 
     this.writeWinstonIfAllowed(() => {
       this.winstonLogger.error(
@@ -185,9 +161,7 @@ export class CustomLogger extends ConsoleLogger {
   }
 
   fatal(message: string, functionName?: string, stack?: string) {
-    this.writeNestIfAllowed(() => {
-      super.fatal(message, this.getSourceContext() || functionName);
-    });
+    super.fatal(message, this.getSourceContext() || functionName);
 
     this.writeWinstonIfAllowed(() => {
       this.winstonLogger.fatal(

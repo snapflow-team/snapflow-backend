@@ -26,10 +26,11 @@ function centerVisual(text: string, width: number): string {
   return `${' '.repeat(left)}${text}${' '.repeat(right)}`;
 }
 
-function logSnapflowStartupBanner(
-  appLogger: CustomLogger,
-  params: { env: string; port: number },
-): void {
+/**
+ * Баннер в сыром stdout: без Winston (без timestamp/JSON) и без Nest-обёртки.
+ * New Relic при `application_logging` подхватит `console` отдельно, если агент это пересылает.
+ */
+function printSnapflowStartupBannerToConsole(params: { env: string; port: number }): void {
   const { env, port } = params;
   const pid = process.pid;
   const r = '\x1b[0m';
@@ -48,27 +49,28 @@ function logSnapflowStartupBanner(
     return `${cyan}│${r}${content}${' '.repeat(pad)}${cyan}│${r}`;
   };
 
-  const hr = `${cyan}${'─'.repeat(inner)}${r}`;
+  const hrPlain = '─'.repeat(inner);
   const title = `${bold}${mag}SNAPFLOW${r}${dim} · ${r}${bold}${mag}CORE${r}`;
   const subtitle = `${dim}NestJS · PostgreSQL · Prisma · RabbitMQ · Redis${r}`;
 
   const lines: string[] = [
     '',
-    `${cyan}╭${hr}${cyan}╮${r}`,
+    `${cyan}╭${hrPlain}╮${r}`,
     boxRow(''),
     boxRow(centerVisual(title, inner)),
     boxRow(centerVisual(subtitle, inner)),
     boxRow(''),
-    `${cyan}├${hr}${cyan}┤${r}`,
+    `${cyan}├${hrPlain}┤${r}`,
     boxRow(`  ${grn}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`),
     boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${dim}http://${r}${ylw}0.0.0.0:${String(port)}${r}`),
     boxRow(`  ${grn}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`),
-    `${cyan}╰${hr}${cyan}╯${r}`,
+    `${cyan}╰${hrPlain}╯${r}`,
     '',
   ];
 
   for (const line of lines) {
-    appLogger.log(line, 'bootstrap');
+    // eslint-disable-next-line no-console -- нарочный баннер в TTY, не через winston
+    console.log(line);
   }
 }
 
@@ -99,9 +101,10 @@ async function bootstrap() {
   const env: string = environmentSettings.currentEnv;
 
   await app.listen(port, () => {
-    CustomLogger.enterBannerPhase();
-    logSnapflowStartupBanner(appLogger, { env, port });
-    CustomLogger.enterRuntimePhase();
+    printSnapflowStartupBannerToConsole({ env, port });
+    setImmediate(() => {
+      CustomLogger.enterRuntimePhase();
+    });
   });
 }
 
