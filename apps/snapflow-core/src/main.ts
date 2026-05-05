@@ -14,9 +14,7 @@ import { applyAppInitialization } from './setup/app-initialization';
 import { CustomLogger } from './modules/logger/logger.service';
 import { SwaggerSettings } from './setup/configuration/swagger-settings';
 import { GLOBAL_PREFIX } from '../../../libs/common/constants/global-prefix.constant';
-import {
-  printSnapflowStartupBannerToConsole,
-} from './modules/logger/utils/startup-banner.util';
+import { printSnapflowStartupBannerToConsole } from './modules/logger/utils/startup-banner.util';
 
 async function bootstrap() {
   const DynamicAppModule = await initSnapFlowCoreAppModule();
