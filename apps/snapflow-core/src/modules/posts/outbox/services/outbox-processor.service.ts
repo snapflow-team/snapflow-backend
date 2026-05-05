@@ -56,7 +56,7 @@ export class OutboxProcessorService {
           await this.outboxRepository.markAsProcessed(event.id);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown files service error';
-          this.logger.error(error, this.processOutboxEvents.name);
+          this.logger.error(error, `${this.processOutboxEvents.name}:eventId=${event.id}`);
 
           await this.outboxRepository.releaseToPending(event.id, message);
         }
