@@ -1,4 +1,4 @@
-import { GLOBAL_PREFIX } from '../../../../../libs/common/constants/global-prefix.constant';
+import { GLOBAL_PREFIX } from '../../../../../../libs/common/constants/global-prefix.constant';
 
 export type StartupBannerParams = {
   env: string;
