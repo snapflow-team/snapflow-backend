@@ -13,8 +13,8 @@ import { Express } from 'express';
 import { applyAppInitialization } from './setup/app-initialization';
 import { CustomLogger } from './modules/logger/logger.service';
 import { SwaggerSettings } from './setup/configuration/swagger-settings';
+import { GLOBAL_PREFIX } from '../../../libs/common/constants/global-prefix.constant';
 import {
-  buildSwaggerDocUrl,
   printSnapflowStartupBannerToConsole,
 } from './modules/logger/utils/startup-banner.util';
 
@@ -32,9 +32,9 @@ async function bootstrap() {
   const configService: ConfigService<Configuration, true> = app.get(
     ConfigService<Configuration, true>,
   );
-  const { port, publicApiBaseUrl }: ApiSettings = configService.get<ApiSettings>('apiSettings');
   const environmentSettings: EnvironmentSettings =
     configService.get<EnvironmentSettings>('environmentSettings');
+  const { port, publicApiBaseUrl }: ApiSettings = configService.get<ApiSettings>('apiSettings');
   const { swaggerPath }: SwaggerSettings = configService.get<SwaggerSettings>('swaggerSettings');
 
   const server: Express = app.getHttpAdapter().getInstance();
@@ -43,11 +43,19 @@ async function bootstrap() {
   await applyAppInitialization(app);
 
   const env: string = environmentSettings.currentEnv;
-  const swaggerDocUrl: string = buildSwaggerDocUrl(publicApiBaseUrl, swaggerPath);
+  const swaggerDocUrl: string = `${publicApiBaseUrl}/${GLOBAL_PREFIX}/${swaggerPath}`;
+  const showSwaggerInBanner: boolean =
+    environmentSettings.isDevelopment || environmentSettings.isStaging;
 
   await app.listen(port, () => {
     const startedAt: string = new Date().toLocaleString();
-    printSnapflowStartupBannerToConsole({ env, port, swaggerDocUrl, startedAt });
+    printSnapflowStartupBannerToConsole({
+      env,
+      port,
+      swaggerDocUrl,
+      startedAt,
+      showSwagger: showSwaggerInBanner,
+    });
 
     setImmediate(() => {
       CustomLogger.enterRuntimePhase();

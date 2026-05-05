@@ -1,10 +1,9 @@
-import { GLOBAL_PREFIX } from '../../../../../../libs/common/constants/global-prefix.constant';
-
 export type StartupBannerParams = {
   env: string;
   port: number;
   swaggerDocUrl: string;
   startedAt: string;
+  showSwagger: boolean;
 };
 
 function stripAnsi(s: string): string {
@@ -20,20 +19,6 @@ function centerVisual(text: string, width: number): string {
   return `${' '.repeat(left)}${text}${' '.repeat(right)}`;
 }
 
-function joinPublicApiPath(base: string, ...segments: string[]): string {
-  const root = base.replace(/\/+$/, '');
-  const path = segments
-    .map((s) => s.replace(/^\/+/, '').replace(/\/+$/, ''))
-    .filter((s) => s.length > 0)
-    .join('/');
-
-  return path.length > 0 ? `${root}/${path}` : root;
-}
-
-export function buildSwaggerDocUrl(publicApiBaseUrl: string, swaggerPath: string): string {
-  return joinPublicApiPath(publicApiBaseUrl, GLOBAL_PREFIX, swaggerPath);
-}
-
 /**
  * Баннер в сыром stdout: без Winston (без timestamp/JSON) и без Nest-обёртки.
  * New Relic при `application_logging` подхватит `console` отдельно, если агент это пересылает.
@@ -41,7 +26,7 @@ export function buildSwaggerDocUrl(publicApiBaseUrl: string, swaggerPath: string
  * Логотип: монограмма **SF** (Snapflow) из псевдографики — как motd у Linux.
  */
 export function printSnapflowStartupBannerToConsole(params: StartupBannerParams): void {
-  const { env, port, swaggerDocUrl, startedAt } = params;
+  const { env, port, swaggerDocUrl, startedAt, showSwagger } = params;
   const pid = process.pid;
   const r = '\x1b[0m';
   const bold = '\x1b[1m';
@@ -72,7 +57,6 @@ export function printSnapflowStartupBannerToConsole(params: StartupBannerParams)
 
   const title = `${bold}${mag}SNAPFLOW${r} ${dim}·${r} ${bold}${mag}CORE${r}`;
   const subtitle = `${dim}NestJS · PostgreSQL · Prisma · RabbitMQ · Redis${r}`;
-
   const lines: string[] = [
     '',
     motdLine(`${cyan}╭${hrPlain}╮${r}`),
@@ -84,8 +68,16 @@ export function printSnapflowStartupBannerToConsole(params: StartupBannerParams)
     motdLine(boxRow('')),
     motdLine(`${cyan}├${hrPlain}┤${r}`),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`)),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${String(port)}${r}`)),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}swagger${r}${dim}:${r}       ${ylw}${swaggerDocUrl}${r}`)),
+    motdLine(
+      boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${String(port)}${r}`),
+    ),
+    ...(showSwagger
+      ? [
+          motdLine(
+            boxRow(`  ${grn}▸${r}  ${bold}swagger${r}${dim}:${r}       ${ylw}${swaggerDocUrl}${r}`),
+          ),
+        ]
+      : []),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}started at${r}${dim}:${r}    ${ylw}${startedAt}${r}`)),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`)),
     motdLine(`${cyan}╰${hrPlain}╯${r}`),
