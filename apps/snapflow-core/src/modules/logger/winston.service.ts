@@ -67,11 +67,7 @@ export class WinstonService {
 
     const consoleTransport = new winston.transports.Console({
       format: environmentSettings.isProduction
-        ? combine(
-            timestamp({ format: timeFormat }),
-            errors({ stack: true }),
-            winston.format.json(),
-          )
+        ? combine(timestamp({ format: timeFormat }), errors({ stack: true }), winston.format.json())
         : combine(
             timestamp({ format: timeFormat }),
             errors({ stack: true }),
@@ -142,7 +138,11 @@ export class WinstonService {
     sourceName?: string,
     stack?: string,
   ): void {
-    this.logger.log('fatal', message, this.cleanMeta({ requestId, functionName, sourceName, stack }));
+    this.logger.log(
+      'fatal',
+      message,
+      this.cleanMeta({ requestId, functionName, sourceName, stack }),
+    );
   }
 
   private write(level: LoggerLevel, message: unknown, meta: LogMeta): void {
