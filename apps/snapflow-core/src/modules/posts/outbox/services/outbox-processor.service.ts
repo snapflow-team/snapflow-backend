@@ -23,7 +23,7 @@ export class OutboxProcessorService {
     this.logger.setContext(OutboxProcessorService.name);
   }
 
-  @Cron(CronExpression.EVERY_5_SECONDS)
+  @Cron(CronExpression.EVERY_30_SECONDS)
   async processOutboxEvents() {
     if (this.isProcessing) return;
     this.isProcessing = true;
@@ -35,7 +35,10 @@ export class OutboxProcessorService {
 
       if (pendingEvents.length === 0) return;
 
-      this.logger.debug(`Found ${pendingEvents.length} pending outbox events. Processing...`);
+      this.logger.log(
+        `Found ${pendingEvents.length} pending outbox events. Processing...`,
+        this.processOutboxEvents.name,
+      );
 
       for (const event of pendingEvents) {
         try {

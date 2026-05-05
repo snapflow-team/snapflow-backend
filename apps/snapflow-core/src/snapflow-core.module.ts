@@ -1,4 +1,10 @@
-import { DynamicModule, MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import {
+  DynamicModule,
+  MiddlewareConsumer,
+  Module,
+  NestModule,
+  RequestMethod,
+} from '@nestjs/common';
 import { SnapflowCoreController } from './snapflow-core.controller';
 import { SnapflowCoreService } from './snapflow-core.service';
 import { CoreModule } from './core/core.module';
@@ -13,6 +19,7 @@ import { NextjsIntegrationModule } from './modules/integrations/nextjs/nextjs-in
 import { PostsModule } from './modules/posts/posts.module';
 import { PaymentsEventsModule } from './modules/integrations/payments/payments-events.module';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
+import { AsyncLocalStorageService } from './common/async-local-storage/async-local-storage.service';
 import { CryptoService } from '../../../libs/common/services/crypto.service';
 import { LoggerModule } from './modules/logger/logger.module';
 
@@ -35,7 +42,12 @@ import { LoggerModule } from './modules/logger/logger.module';
     }),
   ],
   controllers: [SnapflowCoreController],
-  providers: [SnapflowCoreService, RequestContextMiddleware, CryptoService],
+  providers: [
+    SnapflowCoreService,
+    RequestContextMiddleware,
+    AsyncLocalStorageService,
+    CryptoService,
+  ],
 })
 export class SnapflowCoreModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

@@ -54,10 +54,6 @@ async function bootstrap() {
       startedAt,
       showSwagger: showSwaggerInBanner,
     });
-
-    setImmediate(() => {
-      CustomLogger.enterRuntimePhase();
-    });
   });
 }
 

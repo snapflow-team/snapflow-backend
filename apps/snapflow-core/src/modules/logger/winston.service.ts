@@ -14,56 +14,18 @@ const LOG_LEVELS: Record<LoggerLevel, number> = {
   trace: 5,
 };
 
-type LogMeta = {
-  requestId?: string | null;
-  functionName?: string;
-  sourceName?: string;
-  stack?: string;
-};
+const timeFormat = 'YYYY-MM-DD HH:mm:ss';
+const { combine, prettyPrint, timestamp, errors, colorize } = winston.format;
 
 @Injectable()
 export class WinstonService {
-  private readonly logger: winston.Logger;
-  private readonly serviceName = 'snapflow-core';
+  private logger: winston.Logger;
+  private serviceName = 'snapflow-core';
 
   constructor(private readonly configService: ConfigService<Configuration, true>) {
     const loggerSettings: LoggerSettings = this.configService.get<LoggerSettings>('loggerSettings');
     const environmentSettings: EnvironmentSettings =
       this.configService.get<EnvironmentSettings>('environmentSettings');
-    const timeFormat = 'YYYY-MM-DD HH:mm:ss';
-    const { combine, timestamp, errors, colorize, printf } = winston.format;
-
-    const metaSuffix = (info: winston.Logform.TransformableInfo): string => {
-      const payload: Record<string, unknown> = {};
-      const rid = info.requestId as string | null | undefined;
-      if (rid !== undefined && rid !== null && rid !== '') {
-        payload.requestId = rid;
-      }
-      if (info.functionName !== undefined && info.functionName !== '') {
-        payload.functionName = info.functionName;
-      }
-      if (info.sourceName !== undefined && info.sourceName !== '') {
-        payload.sourceName = info.sourceName;
-      }
-      if (info.stack !== undefined && info.stack !== '') {
-        payload.stack = info.stack;
-      }
-
-      return Object.keys(payload).length > 0 ? ` ${JSON.stringify(payload)}` : '';
-    };
-
-    const devLineFormat = printf((info) => {
-      const ts = String(info.timestamp ?? '');
-      const lvl = String(info.level ?? '');
-      const msg =
-        typeof info.message === 'string'
-          ? info.message
-          : info.message === undefined || info.message === null
-            ? ''
-            : JSON.stringify(info.message);
-
-      return `${ts} [${lvl}] ${msg}${metaSuffix(info)}`;
-    });
 
     const consoleTransport = new winston.transports.Console({
       format: environmentSettings.isProduction
@@ -71,17 +33,17 @@ export class WinstonService {
         : combine(
             timestamp({ format: timeFormat }),
             errors({ stack: true }),
+            prettyPrint(),
             colorize({ all: true, colors: { trace: 'yellow' } }),
-            devLineFormat,
           ),
     });
 
     this.logger = winston.createLogger({
-      levels: LOG_LEVELS,
-      level: loggerSettings.level,
-      defaultMeta: { serviceName: this.serviceName },
       format: winston.format.timestamp({ format: timeFormat }),
+      level: loggerSettings.level,
+      levels: LOG_LEVELS,
       transports: [consoleTransport],
+      defaultMeta: { serviceName: this.serviceName },
     });
   }
 
@@ -91,7 +53,11 @@ export class WinstonService {
     functionName?: string,
     sourceName?: string,
   ): void {
-    this.write('trace', message, { requestId, functionName, sourceName });
+    this.logger.log('trace', message, {
+      sourceName,
+      functionName,
+      requestId,
+    });
   }
 
   debug(
@@ -100,7 +66,11 @@ export class WinstonService {
     functionName?: string,
     sourceName?: string,
   ): void {
-    this.write('debug', message, { requestId, functionName, sourceName });
+    this.logger.debug(message, {
+      sourceName,
+      functionName,
+      requestId,
+    });
   }
 
   info(
@@ -109,7 +79,11 @@ export class WinstonService {
     functionName?: string,
     sourceName?: string,
   ): void {
-    this.write('info', message, { requestId, functionName, sourceName });
+    this.logger.info(message, {
+      sourceName,
+      functionName,
+      requestId,
+    });
   }
 
   warn(
@@ -118,7 +92,11 @@ export class WinstonService {
     functionName?: string,
     sourceName?: string,
   ): void {
-    this.write('warn', message, { requestId, functionName, sourceName });
+    this.logger.warn(message, {
+      sourceName,
+      functionName,
+      requestId,
+    });
   }
 
   error(
@@ -128,7 +106,12 @@ export class WinstonService {
     sourceName?: string,
     stack?: string,
   ): void {
-    this.write('error', message, { requestId, functionName, sourceName, stack });
+    this.logger.error(message, {
+      sourceName,
+      functionName,
+      requestId,
+      stack,
+    });
   }
 
   fatal(
@@ -141,39 +124,12 @@ export class WinstonService {
     this.logger.log(
       'fatal',
       message,
-      this.cleanMeta({ requestId, functionName, sourceName, stack }),
+      {
+        sourceName,
+        functionName,
+        requestId,
+        stack,
+      },
     );
-  }
-
-  private write(level: LoggerLevel, message: unknown, meta: LogMeta): void {
-    this.logger.log({
-      level,
-      message: this.stringifyMessage(message),
-      ...this.cleanMeta(meta),
-    });
-  }
-
-  private stringifyMessage(message: unknown): string {
-    if (typeof message === 'string') {
-      return message;
-    }
-
-    if (message instanceof Error) {
-      return message.message;
-    }
-
-    return JSON.stringify(message);
-  }
-
-  private cleanMeta(meta: LogMeta): LogMeta {
-    return Object.entries(meta).reduce<LogMeta>((accumulator, [key, value]) => {
-      if (value === undefined || value === '') {
-        return accumulator;
-      }
-
-      accumulator[key as keyof LogMeta] = value as never;
-
-      return accumulator;
-    }, {});
   }
 }
