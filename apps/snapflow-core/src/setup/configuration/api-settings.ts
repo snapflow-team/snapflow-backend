@@ -12,10 +12,6 @@ export class ApiSettings {
   @IsNumber()
   port: number;
 
-  /**
-   * Публичный origin API (https://api.example.com) для ссылок в логах/баннере.
-   * Без значения в dev остаётся `http://0.0.0.0:<PORT>` на bind-адрес.
-   */
   @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
   publicApiBaseUrl: string;
 
