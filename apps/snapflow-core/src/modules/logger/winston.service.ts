@@ -22,7 +22,7 @@ const { combine, prettyPrint, timestamp, colorize } = winston.format;
 @Injectable()
 export class WinstonService {
   private logger: winston.Logger;
-  private serviceName = 'snapflow-core';
+  private readonly serviceName: string = 'snapflow-core';
 
   constructor(
     private readonly configService: ConfigService<Configuration, true>,
@@ -87,12 +87,7 @@ export class WinstonService {
     });
   }
 
-  error(
-    message: string,
-    sourceName?: string,
-    functionName?: string,
-    stack?: string,
-  ): void {
+  error(message: string, sourceName?: string, functionName?: string, stack?: string): void {
     this.logger.error(message, {
       sourceName,
       functionName,
@@ -101,21 +96,12 @@ export class WinstonService {
     });
   }
 
-  fatal(
-    message: string,
-    sourceName?: string,
-    functionName?: string,
-    stack?: string,
-  ): void {
-    this.logger.log(
-      'fatal',
-      message,
-      {
-        sourceName,
-        functionName,
-        requestId: this.getRequestId(),
-        stack,
-      },
-    );
+  fatal(message: string, sourceName?: string, functionName?: string, stack?: string): void {
+    this.logger.log('fatal', message, {
+      sourceName,
+      functionName,
+      requestId: this.getRequestId(),
+      stack,
+    });
   }
 }
