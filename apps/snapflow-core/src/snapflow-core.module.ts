@@ -41,11 +41,7 @@ import { LoggerModule } from './modules/logger/logger.module';
     }),
   ],
   controllers: [SnapflowCoreController],
-  providers: [
-    SnapflowCoreService,
-    RequestContextMiddleware,
-    CryptoService,
-  ],
+  providers: [SnapflowCoreService, RequestContextMiddleware, CryptoService],
 })
 export class SnapflowCoreModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
