@@ -23,8 +23,7 @@ async function bootstrap() {
     bufferLogs: true,
   });
 
-  const appLogger: CustomLogger = await app.resolve(CustomLogger);
-  appLogger.setContext('NEST_INIT');
+  const appLogger: CustomLogger = app.get(CustomLogger);
   app.useLogger(appLogger);
 
   const configService: ConfigService<Configuration, true> = app.get(
