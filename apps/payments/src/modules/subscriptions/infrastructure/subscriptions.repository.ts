@@ -23,6 +23,14 @@ export class SubscriptionsRepository {
       where: { stripeSubId, deletedAt: null },
     });
   }
+  async findById(
+    subscriptionId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription | null> {
+    return tx.subscription.findFirst({
+      where: { id: subscriptionId, deletedAt: null },
+    });
+  }
 
   async findActiveOrPastDueByUserId(userId: number, tx: Prisma.TransactionClient = this.prisma) {
     return tx.subscription.findFirst({
@@ -31,18 +39,23 @@ export class SubscriptionsRepository {
           userId,
         },
         OR: [{ status: SubscriptionStatus.ACTIVE }, { status: SubscriptionStatus.PAST_DUE }],
+        deletedAt: null,
       },
     });
   }
 
-  async findActiveByUserId(userId: number, tx: Prisma.TransactionClient = this.prisma) {
+  async findLastByUserId(
+    userId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription | null> {
     return tx.subscription.findFirst({
       where: {
         customer: {
           userId,
         },
-        status: SubscriptionStatus.ACTIVE,
+        deletedAt: null,
       },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -73,7 +86,7 @@ export class SubscriptionsRepository {
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription> {
     return tx.subscription.update({
-      where: { id: subscriptionId },
+      where: { id: subscriptionId, deletedAt: null },
       data: {
         autoRenewal: autoRenewal,
       },
@@ -172,15 +185,14 @@ export class SubscriptionsRepository {
   //Этот метод используется для продления активной подписки покупке пользователем еще подписки
   async extendSubscription(
     subscriptionId: number,
-    period: BillingPeriod,
+    newEnd: Date,
     lastStripeEventAt: Date,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription | null> {
     return tx.subscription.update({
       where: { id: subscriptionId },
       data: {
-        autoRenewal: true,
-        currentPeriodEnd: period.end,
+        currentPeriodEnd: newEnd,
         lastStripeEventAt,
       },
     });

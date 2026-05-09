@@ -1,9 +1,12 @@
 import { StripeCSModes } from './stripe-checkout-session-modes.enum';
-import { Plan } from '../../../../../setup/configuration/business-rules-settings';
 
 export type CreateCheckoutSessionDto = {
   mode: StripeCSModes;
-  plan: Plan;
+  stripePriceId: string;
+  planId: string;
   userId: number;
+  subscriptionDurationInDays: number;
+  //Параметр, чтобы хранить в чекаут сессии привязку к нашей продлеваемой подписке
+  extendingSubscriptionId?: string;
   stripeCusId?: string;
 };

@@ -9,10 +9,11 @@ import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-re
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 import { CreateCheckoutSessionDto } from './types/create-checkout-session.dto';
 import { $Enums, PaymentProvider } from '@generated/prisma-payments';
-import PaymentStatus = $Enums.PaymentStatus;
 import { InvoicePayment } from '../types/invoice-payment.type';
 import { DateService } from '../../../../../../../libs/common/services/date.service';
 import { CheckoutSessionMetadata } from '../types/checkout-session-metadata.type';
+import { StripeCSModes } from './types/stripe-checkout-session-modes.enum';
+import PaymentStatus = $Enums.PaymentStatus;
 
 @Injectable()
 export class StripeService {
@@ -107,18 +108,16 @@ export class StripeService {
     try {
       const session = await this.stripe.checkout.sessions.create({
         mode: dto.mode,
-        line_items: [{ price: dto.plan.stripePriceId, quantity: 1 }],
+        line_items: [{ price: dto.stripePriceId, quantity: 1 }],
         success_url: `${this.apiSettings.stripeSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: this.apiSettings.stripeCancelUrl,
-        metadata: {
-          userId: String(dto.userId),
-          planId: dto.plan.id,
-          subscriptionDuration: String(dto.plan.subscriptionDurationInDays),
-        } satisfies CheckoutSessionMetadata,
+        metadata: this.createCheckoutSessionMetadataObject(dto),
         //Если у нас покупатель не прилетел в дто, то этот параметр в дто обратится в undefined и страйп сам создаст нового покупателя
         customer: dto.stripeCusId,
       });
-
+      if (dto.mode === StripeCSModes.Payment) {
+        this.logger.debug(`checkout session for extending: ${session.id}`);
+      }
       if (!session.url) {
         this.logger.error(`Failed to create stripe checkout session: ${session.id}`);
         return Notification.fail<StripeCheckoutSessionResult>(
@@ -126,7 +125,7 @@ export class StripeService {
           'Failed to create new subscription with payments provider',
         );
       }
-
+      this.logger.debug(`Created checkout session: ${session.id}`);
       return Notification.ok({
         url: session.url,
         sessionId: session.id,
@@ -169,7 +168,6 @@ export class StripeService {
 
   async extendSubscription(stripeSubId: string, newEnd: Date): Promise<void> {
     await this.stripe.subscriptions.update(stripeSubId, {
-      cancel_at_period_end: true,
       //Ставим новую дату протухания подписки
       trial_end: this.dateService.convertDateToSeconds(newEnd),
       //Задаем поведению страйпу, чтобы он не делал никаких попыток досчитать что-то прямо сейчас
@@ -224,5 +222,22 @@ export class StripeService {
       status: PaymentStatus.PAID,
       provider: PaymentProvider.STRIPE,
     });
+  }
+
+  private createCheckoutSessionMetadataObject(dto: CreateCheckoutSessionDto): Stripe.Metadata {
+    if (dto.extendingSubscriptionId) {
+      return {
+        userId: String(dto.userId),
+        planId: dto.planId,
+        subscriptionDuration: String(dto.subscriptionDurationInDays),
+        extendingSubscriptionId: dto.extendingSubscriptionId,
+      } satisfies CheckoutSessionMetadata;
+    } else {
+      return {
+        userId: String(dto.userId),
+        planId: dto.planId,
+        subscriptionDuration: String(dto.subscriptionDurationInDays),
+      } satisfies CheckoutSessionMetadata;
+    }
   }
 }

@@ -19,7 +19,8 @@ import { extractEventDate } from './utils/extract-date-from-event-created.helper
 import { extractCustomerId } from './utils/extract-customer-id.helper';
 import { StripeCSModes } from '../../services/types/stripe-checkout-session-modes.enum';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
-import { checkIsMetadata } from './utils/check-is-stripe-metadata.helper';
+import { checkIsMetadata } from '../../type-guards/check-is-stripe-metadata.type-guard';
+import { SubscriptionRenewedEvent } from '../../../../../../../../libs/contracts/payments/payment-subscription-renewed.event';
 
 @Injectable()
 export class CheckoutSessionCompletedHandler implements WebhookHandler {
@@ -69,10 +70,11 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
       );
     }
 
-    const localSubscription =
-      await this.subscriptionsRepository.findByStripeSubscriptionId(stripeSubscriptionId);
+    const localSubscription = await this.subscriptionsRepository.findById(
+      localPayment.subscriptionId,
+    );
     if (!localSubscription) {
-      this.logger.warn(`Local subscription with stripeSubId ${stripeSubscriptionId} not found`);
+      this.logger.warn(`Local subscription with id ${localPayment.subscriptionId} not found`);
 
       return Notification.fail(
         NotificationResultCode.InternalServerError,
@@ -111,73 +113,79 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
         `Stripe customer with subscription: ${stripeSubscription.id} not found`,
       );
     }
+    switch (payload.mode) {
+      //Если у нас приходит платеж на продление подписки
+      case StripeCSModes.Payment: {
+        if (!checkIsMetadata(payload.metadata)) {
+          this.logger.log(`No metadata for stripe checkout session ${externalId}`);
 
-    //Если у нас пришел ивент на покупку новой подписки юзером
-    if (payload.mode === StripeCSModes.Payment) {
-      //Находим в чекаут сессии метадату
-      if (!checkIsMetadata(payload.metadata)) {
-        this.logger.log(`No metadata for stripe checkout session ${externalId}`);
+          return Notification.fail(
+            NotificationResultCode.InternalServerError,
+            'Some error occurred with payment provider',
+          );
+        }
 
-        return Notification.fail(
-          NotificationResultCode.InternalServerError,
-          'Some error occurred with payment provider',
+        const newEnd = this.dateService.addDaysToDate(
+          currentPeriod.end,
+          +payload.metadata.subscriptionDuration,
         );
+
+        await this.prisma.$transaction(async (tx) => {
+          await this.paymentsRepository.markAsPaid(localPayment.id, tx);
+
+          await this.subscriptionsRepository.extendSubscription(
+            localPayment.subscriptionId,
+            newEnd,
+            extractEventDate(event),
+          );
+
+          await this.outboxRepository.saveEvent(
+            OutboxEventType.SUBSCRIPTION_RENEWED,
+            {
+              userId: localCustomer.userId,
+              planId: localSubscription.planId,
+              subscriptionId: localSubscription.id,
+              currentPeriodEnd: newEnd.toISOString(),
+            } satisfies SubscriptionRenewedEvent,
+            tx,
+          );
+
+          await this.stripeService.extendSubscription(stripeSubscriptionId, newEnd);
+        });
+        return Notification.ok();
       }
+      case StripeCSModes.Subscription: {
+        //Если у нас приходит платеж на оформление подписки
+        await this.prisma.$transaction(async (tx) => {
+          await this.paymentsRepository.markAsPaid(localPayment.id, tx);
 
-      const newEnd = this.dateService.addDaysToDate(
-        currentPeriod.end,
-        +payload.metadata.subscriptionDuration,
-      );
+          await this.subscriptionsRepository.activateSubscription(
+            {
+              subscriptionId: localPayment.subscriptionId,
+              stripeSubId: stripeSubscriptionId,
+              currentPeriod,
+              lastStripeEventAt: extractEventDate(event),
+              stripeCusId: stripeCusId,
+            },
+            tx,
+          );
 
-      await this.prisma.$transaction(async (tx) => {
-        await this.paymentsRepository.markAsPaid(localPayment.id, tx);
-
-        await this.subscriptionsRepository.extendSubscription(
-          localPayment.subscriptionId,
-          currentPeriod,
-          extractEventDate(event),
-        );
-
-        await this.outboxRepository.saveEvent(
-          OutboxEventType.SUBSCRIPTION_ACTIVATED,
-          {
-            userId: localCustomer.userId,
-            planId: localSubscription.planId,
-            subscriptionId: localSubscription.id,
-            currentPeriodEnd: localSubscription.currentPeriodEnd?.toISOString() ?? null,
-          } satisfies SubscriptionActivatedEvent,
-          tx,
-        );
-
-        await this.stripeService.extendSubscription(stripeSubscriptionId, newEnd);
-      });
-    } else {
-      await this.prisma.$transaction(async (tx) => {
-        await this.paymentsRepository.markAsPaid(localPayment.id, tx);
-
-        await this.subscriptionsRepository.activateSubscription(
-          {
-            subscriptionId: localPayment.subscriptionId,
-            stripeSubId: stripeSubscriptionId,
-            currentPeriod,
-            lastStripeEventAt: extractEventDate(event),
-            stripeCusId: stripeCusId,
-          },
-          tx,
-        );
-
-        await this.outboxRepository.saveEvent(
-          OutboxEventType.SUBSCRIPTION_ACTIVATED,
-          {
-            userId: localCustomer.userId,
-            planId: localSubscription.planId,
-            subscriptionId: localSubscription.id,
-            currentPeriodEnd: localSubscription.currentPeriodEnd?.toISOString() ?? null,
-          } satisfies SubscriptionActivatedEvent,
-          tx,
-        );
-      });
+          await this.outboxRepository.saveEvent(
+            OutboxEventType.SUBSCRIPTION_ACTIVATED,
+            {
+              userId: localCustomer.userId,
+              planId: localSubscription.planId,
+              subscriptionId: localSubscription.id,
+              currentPeriodEnd: localSubscription.currentPeriodEnd?.toISOString() ?? null,
+            } satisfies SubscriptionActivatedEvent,
+            tx,
+          );
+        });
+        return Notification.ok();
+      }
+      default: {
+        return Notification.ok();
+      }
     }
-    return Notification.ok();
   }
 }

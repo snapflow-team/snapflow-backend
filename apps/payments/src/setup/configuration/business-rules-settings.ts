@@ -5,7 +5,8 @@ export interface Plan {
   id: string;
   label: Label;
   priceInCents: number;
-  stripePriceId: string;
+  stripeSubscriptionPriceId: string;
+  stripeOnePayPriceId: string;
   subscriptionDurationInDays: number;
 }
 
@@ -15,33 +16,52 @@ export enum Label {
 }
 
 export class BusinessRulesSettings {
+  private plans: Plan[];
+
   @IsString()
   stripePriceIdBusinessMonthly: string;
 
   @IsString()
+  stripePriceIdBusinessMonthlyOnePay: string;
+
+  @IsString()
   stripePriceIdBusinessYearly: string;
+
+  @IsString()
+  stripePriceIdBusinessYearlyOnePay: string;
 
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.stripePriceIdBusinessMonthly = environmentVariables.STRIPE_PRICE_ID_BUSINESS_MONTHLY;
+    this.stripePriceIdBusinessMonthlyOnePay =
+      environmentVariables.STRIPE_PRICE_ID_BUSINESS_MONTHLY_ONE_PAY;
     this.stripePriceIdBusinessYearly = environmentVariables.STRIPE_PRICE_ID_BUSINESS_YEARLY;
-  }
+    this.stripePriceIdBusinessYearlyOnePay =
+      environmentVariables.STRIPE_PRICE_ID_BUSINESS_YEARLY_ONE_PAY;
 
-  get plans(): Plan[] {
-    return [
+    this.initializeProducts();
+  }
+  private initializeProducts(): void {
+    this.plans = [
       {
         id: 'business_monthly',
         label: Label.BusinessMonthly,
         priceInCents: 1000,
-        stripePriceId: this.stripePriceIdBusinessMonthly,
+        stripeSubscriptionPriceId: this.stripePriceIdBusinessMonthly,
+        stripeOnePayPriceId: this.stripePriceIdBusinessMonthlyOnePay,
         subscriptionDurationInDays: 30,
       },
       {
         id: 'business_yearly',
         label: Label.BusinessYearly,
         priceInCents: 9000,
-        stripePriceId: this.stripePriceIdBusinessYearly,
+        stripeSubscriptionPriceId: this.stripePriceIdBusinessYearly,
+        stripeOnePayPriceId: this.stripePriceIdBusinessYearlyOnePay,
         subscriptionDurationInDays: 30 * 12,
       },
     ];
+  }
+
+  getPlans(): Plan[] {
+    return this.plans;
   }
 }

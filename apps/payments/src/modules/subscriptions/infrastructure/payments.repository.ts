@@ -41,6 +41,7 @@ export class PaymentsRepository {
         subscriptionId: dto.subscriptionId,
         planId: dto.plan.id,
         status: PaymentStatus.PENDING,
+        externalId: dto.externalId,
       },
     });
   }
