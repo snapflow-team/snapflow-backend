@@ -5,12 +5,10 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from './setup/configuration/configuration';
 import { MicroserviceSettings } from './setup/configuration/microservice.settings';
 import { applyAppInitialization } from './setup/app-initialization';
-import { Logger } from '@nestjs/common';
 import { EnvironmentSettings } from './setup/configuration/environment-settings';
+import { printFilesStartupBannerToConsole } from './modules/logger/utils/startup-banner.util';
 
 async function bootstrap() {
-  const logger = new Logger('Bootstrap');
-
   const appContext = await NestFactory.createApplicationContext(FilesModule);
   const configService = appContext.get<ConfigService<Configuration, true>>(ConfigService);
 
@@ -32,13 +30,13 @@ async function bootstrap() {
 
   await app.listen();
 
-  logger.log(`\x1b[35m=========================================\x1b[0m`);
-  logger.log(`\x1b[36m✅ Microservice is running in ${env} mode\x1b[0m`);
-  logger.log(
-    `\x1b[36m📦 Files microservice running on ${microserviceSettings.host}:${microserviceSettings.port}\x1b[0m`,
-  );
-  logger.log(`\x1b[36m🌍 Environment: ${env}\x1b[0m`);
-  logger.log(`\x1b[35m=========================================\x1b[0m`);
+  const startedAt: string = new Date().toLocaleString();
+  printFilesStartupBannerToConsole({
+    env,
+    host: microserviceSettings.host,
+    port: microserviceSettings.port,
+    startedAt,
+  });
 }
 
 void bootstrap();
