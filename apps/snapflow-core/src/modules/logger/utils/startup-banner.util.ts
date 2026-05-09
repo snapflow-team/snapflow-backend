@@ -23,7 +23,7 @@ function centerVisual(text: string, width: number): string {
  * Баннер в сыром stdout: без Winston (без timestamp/JSON) и без Nest-обёртки.
  * New Relic при `application_logging` подхватит `console` отдельно, если агент это пересылает.
  *
- * Логотип: монограмма **SF** (Snapflow) из псевдографики — как motd у Linux.
+ * Логотип: монограмма **SF** (Snapflow).
  */
 export function printSnapflowStartupBannerToConsole(params: StartupBannerParams): void {
   const { env, port, swaggerDocUrl, startedAt, showSwagger } = params;
@@ -56,7 +56,6 @@ export function printSnapflowStartupBannerToConsole(params: StartupBannerParams)
   ];
 
   const title = `${bold}${mag}SNAPFLOW${r} ${dim}·${r} ${bold}${mag}CORE${r}`;
-  const subtitle = `${dim}NestJS · PostgreSQL · Prisma · RabbitMQ · Redis${r}`;
   const lines: string[] = [
     '',
     motdLine(`${cyan}╭${hrPlain}╮${r}`),
@@ -64,7 +63,6 @@ export function printSnapflowStartupBannerToConsole(params: StartupBannerParams)
     ...sfMark.map((row) => motdLine(boxRow(centerVisual(`${bold}${mag}${row}${r}`, W)))),
     motdLine(boxRow('')),
     motdLine(boxRow(centerVisual(title, W))),
-    motdLine(boxRow(centerVisual(subtitle, W))),
     motdLine(boxRow('')),
     motdLine(`${cyan}├${hrPlain}┤${r}`),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`)),
