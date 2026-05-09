@@ -25,7 +25,7 @@ export class OutboxProcessorService {
     this.logger = loggerFactory.create(OutboxProcessorService.name);
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS)
+  @Cron(CronExpression.EVERY_12_HOURS)
   async processOutboxEvents() {
     if (this.isProcessing) return;
     this.isProcessing = true;
