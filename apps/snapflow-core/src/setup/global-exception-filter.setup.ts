@@ -7,7 +7,7 @@ import {
 } from '../../../../libs/exceptions/http/filters';
 import { SnapFlowDomainExceptionCodeMapper } from '../common/exceptions/snapflow-domain-exception-mapper';
 import { SnapFlowDomainExceptionCodeType } from '../common/exceptions/domain-exception-codes';
-import { CustomLogger } from '../modules/logger/logger.service';
+import { LoggerFactory } from '../modules/logger/logger.factory';
 
 export async function globalExceptionFilterSetup(
   app: INestApplication,
@@ -15,14 +15,14 @@ export async function globalExceptionFilterSetup(
 ): Promise<void> {
   const mapper: SnapFlowDomainExceptionCodeMapper = app.get(SnapFlowDomainExceptionCodeMapper);
 
-  const filterLogger: CustomLogger = await app.resolve(CustomLogger);
-  filterLogger.setContext(GlobalExceptionsFilter.name);
+  const loggerFactory: LoggerFactory = app.get(LoggerFactory);
+  const filterLogger = loggerFactory.create(GlobalExceptionsFilter.name);
 
   const globalFilterLogger: GlobalExceptionsFilterLogger = {
     error: (message: string, stack?: string): void => {
       const err = new Error(message);
       if (stack !== undefined && stack !== '') {
-        Object.defineProperty(err, 'stack', { value: stack, configurable: true });
+        err.stack = stack;
       }
       filterLogger.error(err, 'GlobalExceptionsFilter.logException');
     },
