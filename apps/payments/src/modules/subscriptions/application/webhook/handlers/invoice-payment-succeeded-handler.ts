@@ -5,7 +5,6 @@ import { isInvoiceObject } from '../../type-guards/stripe-webhook.type-guards';
 import { NotificationResultCode } from '../../../../../common/notification/notification-result-code';
 import { OutboxEventType, Subscription } from '@generated/prisma-payments';
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
-import { SubscriptionActivatedEvent } from '../../../../../../../../libs/contracts/payments';
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
 import { Notification } from '../../../../../common/notification/notification';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
@@ -20,6 +19,7 @@ import { checkIsOldEvent } from './utils/check-is-old-event.helper';
 import { extractEventDate } from './utils/extract-date-from-event-created.helper';
 import { isSubscriptionRenewal } from './utils/check-is-subscription-renewal.helper';
 import { InvoicePayment } from '../../types/invoice-payment.type';
+import { SubscriptionRenewedEvent } from '../../../../../../../../libs/contracts/payments/payment-subscription-renewed.event';
 
 @Injectable()
 export class InvoicePaymentSucceededHandler implements WebhookHandler {
@@ -122,13 +122,13 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
       );
 
       await this.outboxRepository.saveEvent(
-        OutboxEventType.SUBSCRIPTION_ACTIVATED,
+        OutboxEventType.SUBSCRIPTION_RENEWED,
         {
           userId: customer.userId,
           planId: localSubscription.planId,
           subscriptionId: localSubscription.id,
           currentPeriodEnd: newCurrentPeriod.end.toISOString(),
-        } satisfies SubscriptionActivatedEvent,
+        } satisfies SubscriptionRenewedEvent,
         tx,
       );
     });
