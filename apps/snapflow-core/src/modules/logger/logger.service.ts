@@ -18,37 +18,26 @@ export class CustomLogger implements LoggerService {
     }
   }
 
-  private isLikelyStack(value: string): boolean {
-    return value.includes('\n') || value.includes(' at ');
-  }
-
   private parseErrorArgs(
     message: unknown,
-    stackOrContext?: string,
+    stack?: string,
     context?: string,
   ): { messageStr: string; stack?: string; sourceName?: string } {
     if (message instanceof Error) {
-      const { message: messageStr, stack } = serializeError(message);
-      const sourceName = context ?? stackOrContext;
+      const { message: messageStr, stack: errorStack } = serializeError(message);
 
-      return { messageStr, stack, sourceName };
+      return {
+        messageStr,
+        stack: stack ?? errorStack,
+        sourceName: context,
+      };
     }
 
-    const messageStr = this.stringifyMessage(message);
-
-    if (context !== undefined) {
-      return { messageStr, stack: stackOrContext, sourceName: context };
-    }
-
-    if (stackOrContext === undefined) {
-      return { messageStr };
-    }
-
-    if (this.isLikelyStack(stackOrContext)) {
-      return { messageStr, stack: stackOrContext };
-    }
-
-    return { messageStr, sourceName: stackOrContext };
+    return {
+      messageStr: this.stringifyMessage(message),
+      stack,
+      sourceName: context,
+    };
   }
 
   trace(message: string, functionName?: string): void {
@@ -71,13 +60,13 @@ export class CustomLogger implements LoggerService {
     this.winstonLogger.trace(this.stringifyMessage(message), context);
   }
 
-  error(message: unknown, stackOrContext?: string, context?: string): void {
+  error(message: unknown, stack?: string, context?: string): void {
     const {
       messageStr,
-      stack,
+      stack: resolvedStack,
       sourceName,
-    } = this.parseErrorArgs(message, stackOrContext, context);
-    this.winstonLogger.error(messageStr, sourceName, undefined, stack);
+    } = this.parseErrorArgs(message, stack, context);
+    this.winstonLogger.error(messageStr, sourceName, undefined, resolvedStack);
   }
 
   fatal(message: unknown, context?: string): void {

@@ -1,4 +1,4 @@
-type SerializedError = {
+export type SerializedError = {
   message: string;
   stack?: string;
 };
