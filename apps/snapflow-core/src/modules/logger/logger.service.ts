@@ -4,8 +4,6 @@ import {
 } from '@nestjs/common/services/console-logger.service';
 import { Injectable, Scope } from '@nestjs/common';
 import { WinstonService } from './winston.service';
-import { AsyncLocalStorageService } from '../../common/async-local-storage/async-local-storage.service';
-import { REQUEST_ID_KEY } from '../../common/middleware/request-context.middleware';
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class CustomLogger extends ConsoleLogger {
@@ -13,16 +11,11 @@ export class CustomLogger extends ConsoleLogger {
     context: string,
     options: ConsoleLoggerOptions,
     private winstonLogger: WinstonService,
-    private asyncLocalStorageService: AsyncLocalStorageService,
   ) {
     super(context, {
       ...options,
       logLevels: ['verbose', 'debug', 'log', 'warn', 'error', 'fatal'],
     });
-  }
-
-  private getRequestId(): string | null {
-    return this.asyncLocalStorageService.getStore()?.get(REQUEST_ID_KEY) || null;
   }
 
   private getSourceContext(): string | undefined {
@@ -55,22 +48,22 @@ export class CustomLogger extends ConsoleLogger {
 
   trace(message: string, functionName?: string) {
     // super.verbose(message, this.getSourceContext() || functionName);
-    this.winstonLogger.trace(message, this.getRequestId(), functionName, this.getSourceContext());
+    this.winstonLogger.trace(message, this.getSourceContext(), functionName);
   }
 
   debug(message: string, functionName?: string) {
     // super.debug(message, this.getSourceContext() || functionName);
-    this.winstonLogger.debug(message, this.getRequestId(), functionName, this.getSourceContext());
+    this.winstonLogger.debug(message, this.getSourceContext(), functionName);
   }
 
   log(message: string, functionName?: string) {
     // super.log(message, this.getSourceContext() || functionName);
-    this.winstonLogger.info(message, this.getRequestId(), functionName, this.getSourceContext());
+    this.winstonLogger.info(message, this.getSourceContext(), functionName);
   }
 
   warn(message: string, functionName?: string) {
     // super.warn(message, this.getSourceContext() || functionName);
-    this.winstonLogger.warn(message, this.getRequestId(), functionName, this.getSourceContext());
+    this.winstonLogger.warn(message, this.getSourceContext(), functionName);
   }
 
   error(error: any, functionName?: string) {
@@ -84,9 +77,8 @@ export class CustomLogger extends ConsoleLogger {
     // super.error(error, stack, this.getSourceContext() || functionName);
     this.winstonLogger.error(
       fullErrorMessage,
-      this.getRequestId(),
-      functionName,
       this.getSourceContext(),
+      functionName,
       stack,
     );
   }
@@ -95,9 +87,8 @@ export class CustomLogger extends ConsoleLogger {
     // super.fatal(message, this.getSourceContext() || functionName);
     this.winstonLogger.fatal(
       message,
-      this.getRequestId(),
-      functionName,
       this.getSourceContext(),
+      functionName,
       stack,
     );
   }
