@@ -25,5 +25,5 @@ export const applyAppInitialization = async (app: INestApplication): Promise<voi
   pipesSetup(app);
   globalPrefixSetup(app);
   swaggerSetup(app, swaggerSettings, envSetting);
-  await globalExceptionFilterSetup(app, apiSettings.sendInternalServerErrorDetails);
+  globalExceptionFilterSetup(app, apiSettings.sendInternalServerErrorDetails);
 };

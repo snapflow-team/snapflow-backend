@@ -70,10 +70,9 @@ export class AppTestManager {
     const appLogger: CustomLogger = this.app.get(CustomLogger);
     this.app.useLogger(appLogger);
 
-    await applyAppInitialization(this.app, appLogger);
+    await applyAppInitialization(this.app);
 
     await this.app.init();
-
   }
 
   /**

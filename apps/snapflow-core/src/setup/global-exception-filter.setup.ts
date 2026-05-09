@@ -9,10 +9,10 @@ import { SnapFlowDomainExceptionCodeMapper } from '../common/exceptions/snapflow
 import { SnapFlowDomainExceptionCodeType } from '../common/exceptions/domain-exception-codes';
 import { LoggerFactory } from '../modules/logger/logger.factory';
 
-export async function globalExceptionFilterSetup(
+export function globalExceptionFilterSetup(
   app: INestApplication,
   isExposeDetails: boolean,
-): Promise<void> {
+): void {
   const mapper: SnapFlowDomainExceptionCodeMapper = app.get(SnapFlowDomainExceptionCodeMapper);
 
   const loggerFactory: LoggerFactory = app.get(LoggerFactory);
