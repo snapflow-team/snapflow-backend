@@ -67,15 +67,13 @@ export class AppTestManager {
 
     this.prisma = this.app.get(PrismaService);
 
-    const appLogger: CustomLogger = await this.app.resolve(CustomLogger);
-    appLogger.setContext('AppTestManager');
+    const appLogger: CustomLogger = this.app.get(CustomLogger);
     this.app.useLogger(appLogger);
 
     await applyAppInitialization(this.app, appLogger);
 
     await this.app.init();
 
-    CustomLogger.enterRuntimePhase();
   }
 
   /**
