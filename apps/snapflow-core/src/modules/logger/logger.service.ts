@@ -1,95 +1,90 @@
-import {
-  ConsoleLogger,
-  type ConsoleLoggerOptions,
-} from '@nestjs/common/services/console-logger.service';
-import { Injectable, Scope } from '@nestjs/common';
+import { Injectable, type LoggerService } from '@nestjs/common';
 import { WinstonService } from './winston.service';
 
-@Injectable({ scope: Scope.TRANSIENT })
-export class CustomLogger extends ConsoleLogger {
-  constructor(
-    context: string,
-    options: ConsoleLoggerOptions,
-    private winstonLogger: WinstonService,
-  ) {
-    super(context, {
-      ...options,
-      logLevels: ['verbose', 'debug', 'log', 'warn', 'error', 'fatal'],
-    });
-  }
+@Injectable()
+export class CustomLogger implements LoggerService {
+  constructor(private readonly winstonLogger: WinstonService) {}
 
-  private getSourceContext(): string | undefined {
-    return this.context;
-  }
-
-  private getStack(error: any): string | undefined {
-    const stack = error?.stack;
-
-    if (stack) {
-      return `${stack?.split('\n')[1]}`;
-    }
-  }
-
-  private stringifyErrorForLog(error: any): string {
-    if (error instanceof Error) {
-      return JSON.stringify(error);
+  private stringifyMessage(message: unknown): string {
+    if (typeof message === 'string') {
+      return message;
     }
 
-    if (typeof error === 'string') {
-      return error;
+    if (message instanceof Error) {
+      return `${message.name}: ${message.message}`;
     }
 
     try {
-      return JSON.stringify(error);
+      return JSON.stringify(message);
     } catch {
-      return String(error);
+      return String(message);
     }
   }
 
-  trace(message: string, functionName?: string) {
-    // super.verbose(message, this.getSourceContext() || functionName);
-    this.winstonLogger.trace(message, this.getSourceContext(), functionName);
+  private isLikelyStack(value: string): boolean {
+    return value.includes('\n') || value.includes(' at ');
   }
 
-  debug(message: string, functionName?: string) {
-    // super.debug(message, this.getSourceContext() || functionName);
-    this.winstonLogger.debug(message, this.getSourceContext(), functionName);
+  private parseErrorArgs(
+    message: unknown,
+    stackOrContext?: string,
+    context?: string,
+  ): { messageStr: string; stack?: string; sourceName?: string } {
+    if (message instanceof Error) {
+      const messageStr = `${message.name}: ${message.message}`;
+      const stack = message.stack;
+      const sourceName = context ?? stackOrContext;
+
+      return { messageStr, stack, sourceName };
+    }
+
+    const messageStr = this.stringifyMessage(message);
+
+    if (context !== undefined) {
+      return { messageStr, stack: stackOrContext, sourceName: context };
+    }
+
+    if (stackOrContext === undefined) {
+      return { messageStr };
+    }
+
+    if (this.isLikelyStack(stackOrContext)) {
+      return { messageStr, stack: stackOrContext };
+    }
+
+    return { messageStr, sourceName: stackOrContext };
   }
 
-  log(message: string, functionName?: string) {
-    // super.log(message, this.getSourceContext() || functionName);
-    this.winstonLogger.info(message, this.getSourceContext(), functionName);
+  trace(message: string, functionName?: string): void {
+    this.winstonLogger.trace(message, undefined, functionName);
   }
 
-  warn(message: string, functionName?: string) {
-    // super.warn(message, this.getSourceContext() || functionName);
-    this.winstonLogger.warn(message, this.getSourceContext(), functionName);
+  debug(message: unknown, context?: string): void {
+    this.winstonLogger.debug(this.stringifyMessage(message), context);
   }
 
-  error(error: any, functionName?: string) {
-    const stack: string | undefined = this.getStack(error);
-    const jsonError: string = this.stringifyErrorForLog(error);
+  log(message: unknown, context?: string): void {
+    this.winstonLogger.info(this.stringifyMessage(message), context);
+  }
 
-    const fullErrorMessage = `${
-      error?.message ? `msg: ${error?.message}; ` : ''
-    } fullError: ${jsonError}`;
+  warn(message: unknown, context?: string): void {
+    this.winstonLogger.warn(this.stringifyMessage(message), context);
+  }
 
-    // super.error(error, stack, this.getSourceContext() || functionName);
-    this.winstonLogger.error(
-      fullErrorMessage,
-      this.getSourceContext(),
-      functionName,
+  verbose(message: unknown, context?: string): void {
+    this.winstonLogger.trace(this.stringifyMessage(message), context);
+  }
+
+  error(message: unknown, stackOrContext?: string, context?: string): void {
+    const {
+      messageStr,
       stack,
-    );
+      sourceName,
+    } = this.parseErrorArgs(message, stackOrContext, context);
+    this.winstonLogger.error(messageStr, sourceName, undefined, stack);
   }
 
-  fatal(message: string, functionName?: string, stack?: string) {
-    // super.fatal(message, this.getSourceContext() || functionName);
-    this.winstonLogger.fatal(
-      message,
-      this.getSourceContext(),
-      functionName,
-      stack,
-    );
+  fatal(message: unknown, context?: string): void {
+    this.winstonLogger.fatal(this.stringifyMessage(message), context);
   }
 }
