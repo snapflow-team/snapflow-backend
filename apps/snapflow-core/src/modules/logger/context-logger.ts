@@ -1,4 +1,5 @@
 import { WinstonService } from './winston.service';
+import { serializeError } from './utils/serialize-error.util';
 
 export class ContextLogger {
   constructor(
@@ -9,10 +10,6 @@ export class ContextLogger {
   private stringifyMessage(message: unknown): string {
     if (typeof message === 'string') {
       return message;
-    }
-
-    if (message instanceof Error) {
-      return `${message.name}: ${message.message}`;
     }
 
     try {
@@ -40,20 +37,13 @@ export class ContextLogger {
 
   error(message: unknown, functionName?: string): void {
     if (message instanceof Error) {
-      this.winston.error(
-        `${message.name}: ${message.message}`,
-        this.sourceName,
-        functionName,
-        message.stack,
-      );
+      const serialized = serializeError(message);
+
+      this.winston.error(serialized.message, this.sourceName, functionName, serialized.stack);
       return;
     }
 
-    this.winston.error(
-      this.stringifyMessage(message),
-      this.sourceName,
-      functionName,
-    );
+    this.winston.error(this.stringifyMessage(message), this.sourceName, functionName);
   }
 
   fatal(message: string, functionName?: string): void {

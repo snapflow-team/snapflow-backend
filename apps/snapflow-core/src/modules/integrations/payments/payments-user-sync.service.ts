@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AccountType } from '@generated/prisma-snapflow';
 import {
   PaymentsRoutingKey,
@@ -13,12 +13,19 @@ import {
 } from './type-guards/payments-events.type-guards';
 import { UsersRepository } from '../../user-accounts/users/infrastructure/users.repository';
 import { SubscriptionCancelledEvent } from '../../../../../../libs/contracts/payments/payments-subscription-cancelled.event';
+import { LoggerFactory } from '../../logger/logger.factory';
+import { ContextLogger } from '../../logger/context-logger';
 
 @Injectable()
 export class PaymentsUserSyncService {
-  private readonly logger: Logger = new Logger(PaymentsUserSyncService.name);
+  private readonly logger: ContextLogger;
 
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(PaymentsUserSyncService.name);
+  }
 
   async applyRoutingKey(routingKey: PaymentsRoutingKey, payload: unknown): Promise<void> {
     switch (routingKey) {

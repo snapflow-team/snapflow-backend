@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
@@ -9,10 +9,12 @@ import { Configuration } from '../../../setup/configuration/configuration';
 import * as jwt from 'jsonwebtoken';
 import { NextjsEndpoints } from './constants/nextjs-endpoints';
 import { CryptoService } from '../../../../../../libs/common/services/crypto.service';
+import { LoggerFactory } from '../../logger/logger.factory';
+import { ContextLogger } from '../../logger/context-logger';
 
 @Injectable()
 export class NextjsRevalidationService {
-  private readonly logger: Logger = new Logger(NextjsRevalidationService.name);
+  private readonly logger: ContextLogger;
   private readonly apiSettings: ApiSettings;
 
   constructor(
@@ -20,8 +22,10 @@ export class NextjsRevalidationService {
     private readonly httpService: HttpService,
     private readonly cryptoService: CryptoService,
     private readonly configService: ConfigService<Configuration, true>,
+    loggerFactory: LoggerFactory,
   ) {
     this.apiSettings = this.configService.get<ApiSettings>('apiSettings');
+    this.logger = loggerFactory.create(NextjsRevalidationService.name);
   }
 
   async checkAndRevalidatePosts() {
@@ -61,7 +65,7 @@ export class NextjsRevalidationService {
 
       return true;
     } catch (error) {
-      this.logger.error('Failed to trigger Next.js revalidation', error.message);
+      this.logger.error(error, this.triggerRevalidation.name);
 
       return false;
     }

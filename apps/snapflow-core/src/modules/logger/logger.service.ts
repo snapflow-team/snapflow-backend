@@ -1,5 +1,6 @@
 import { Injectable, type LoggerService } from '@nestjs/common';
 import { WinstonService } from './winston.service';
+import { serializeError } from './utils/serialize-error.util';
 
 @Injectable()
 export class CustomLogger implements LoggerService {
@@ -8,10 +9,6 @@ export class CustomLogger implements LoggerService {
   private stringifyMessage(message: unknown): string {
     if (typeof message === 'string') {
       return message;
-    }
-
-    if (message instanceof Error) {
-      return `${message.name}: ${message.message}`;
     }
 
     try {
@@ -31,8 +28,7 @@ export class CustomLogger implements LoggerService {
     context?: string,
   ): { messageStr: string; stack?: string; sourceName?: string } {
     if (message instanceof Error) {
-      const messageStr = `${message.name}: ${message.message}`;
-      const stack = message.stack;
+      const { message: messageStr, stack } = serializeError(message);
       const sourceName = context ?? stackOrContext;
 
       return { messageStr, stack, sourceName };

@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import amqp, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
@@ -11,17 +11,22 @@ import {
   PaymentsRoutingKey,
 } from '../../../../../../libs/contracts/payments';
 import { parsePaymentsRoutingKey } from './type-guards/payments-events.type-guards';
+import { LoggerFactory } from '../../logger/logger.factory';
+import { ContextLogger } from '../../logger/context-logger';
 
 @Injectable()
 export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
-  private readonly logger: Logger = new Logger(PaymentsEventsConsumer.name);
+  private readonly logger: ContextLogger;
   private connection?: AmqpConnectionManager;
   private channelWrapper?: ChannelWrapper;
 
   constructor(
     private readonly configService: ConfigService<Configuration, true>,
     private readonly paymentsUserSyncService: PaymentsUserSyncService,
-  ) {}
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(PaymentsEventsConsumer.name);
+  }
 
   async onModuleInit(): Promise<void> {
     const { rabbitMqUrl, paymentsEventsQueueName }: ApiSettings =
@@ -30,7 +35,7 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
     this.connection = amqp.connect([rabbitMqUrl]);
 
     this.connection.on('connect', () => {
-      this.logger.log('\x1b[36m✅Successfully connected to RabbitMQ\x1b[0m');
+      this.logger.log('Successfully connected to RabbitMQ', this.onModuleInit.name);
     });
 
     this.channelWrapper = this.connection.createChannel({
@@ -71,10 +76,7 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
       await this.paymentsUserSyncService.applyRoutingKey(parsedRoutingKey, payload);
       channel.ack(msg);
     } catch (error) {
-      const message: string = error instanceof Error ? error.message : 'Unknown error';
-      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
-
-      this.logger.error(`Payments event handling failed: ${message}`, errorStack);
+      this.logger.error(error, this.handleMessage.name);
 
       channel.nack(msg, false, true);
     }
@@ -90,7 +92,7 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
         await this.connection.close();
       }
     } catch (error) {
-      this.logger.error('Error closing RabbitMQ connection', error);
+      this.logger.error(error, this.onModuleDestroy.name);
     }
   }
 }
