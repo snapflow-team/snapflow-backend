@@ -7,10 +7,13 @@ import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { BillingPeriod } from '../types/billing-period.type';
 import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-result.type';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
-import { CreateCheckoutSessionDTO } from './types/CreateCheckoutSessionDTO';
+import { CreateCheckoutSessionDto } from './types/create-checkout-session.dto';
 import { $Enums, PaymentProvider } from '@generated/prisma-payments';
-import PaymentStatus = $Enums.PaymentStatus;
 import { InvoicePayment } from '../types/invoice-payment.type';
+import { DateService } from '../../../../../../../libs/common/services/date.service';
+import { CheckoutSessionMetadata } from '../types/checkout-session-metadata.type';
+import { StripeCSModes } from './types/stripe-checkout-session-modes.enum';
+import PaymentStatus = $Enums.PaymentStatus;
 
 @Injectable()
 export class StripeService {
@@ -18,7 +21,10 @@ export class StripeService {
   private readonly apiSettings: ApiSettings;
   private readonly logger: Logger = new Logger(StripeService.name);
 
-  constructor(configService: ConfigService<Configuration, true>) {
+  constructor(
+    configService: ConfigService<Configuration, true>,
+    private dateService: DateService,
+  ) {
     this.apiSettings = configService.get<ApiSettings>('apiSettings');
     this.stripe = new Stripe(this.apiSettings.stripeSecretKey);
   }
@@ -97,20 +103,21 @@ export class StripeService {
   }
 
   async createCheckoutSession(
-    dto: CreateCheckoutSessionDTO,
+    dto: CreateCheckoutSessionDto,
   ): Promise<Notification<StripeCheckoutSessionResult>> {
     try {
       const session = await this.stripe.checkout.sessions.create({
-        //vitaliy[payments:refactor]: вынести subscription в enum
-        mode: 'subscription',
+        mode: dto.mode,
         line_items: [{ price: dto.stripePriceId, quantity: 1 }],
         success_url: `${this.apiSettings.stripeSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: this.apiSettings.stripeCancelUrl,
-        metadata: { userId: String(dto.userId), planId: dto.planId },
+        metadata: this.createCheckoutSessionMetadataObject(dto),
         //Если у нас покупатель не прилетел в дто, то этот параметр в дто обратится в undefined и страйп сам создаст нового покупателя
         customer: dto.stripeCusId,
       });
-
+      if (dto.mode === StripeCSModes.Payment) {
+        this.logger.debug(`checkout session for extending: ${session.id}`);
+      }
       if (!session.url) {
         this.logger.error(`Failed to create stripe checkout session: ${session.id}`);
         return Notification.fail<StripeCheckoutSessionResult>(
@@ -118,7 +125,7 @@ export class StripeService {
           'Failed to create new subscription with payments provider',
         );
       }
-
+      this.logger.debug(`Created checkout session: ${session.id}`);
       return Notification.ok({
         url: session.url,
         sessionId: session.id,
@@ -158,6 +165,16 @@ export class StripeService {
       );
     }
   }
+
+  async extendSubscription(stripeSubId: string, newEnd: Date): Promise<void> {
+    await this.stripe.subscriptions.update(stripeSubId, {
+      //Ставим новую дату протухания подписки
+      trial_end: this.dateService.convertDateToSeconds(newEnd),
+      //Задаем поведению страйпу, чтобы он не делал никаких попыток досчитать что-то прямо сейчас
+      proration_behavior: 'none',
+    });
+  }
+
   private getBillingPeriodFromSubscriptionObject(
     sub: Stripe.Subscription,
   ): Notification<BillingPeriod> {
@@ -198,11 +215,29 @@ export class StripeService {
         'This succeeded payment has no amount_paid',
       );
     }
+
     return Notification.ok({
       amount: succeededPayment.amount_paid,
       currency: succeededPayment.currency,
       status: PaymentStatus.PAID,
       provider: PaymentProvider.STRIPE,
     });
+  }
+
+  private createCheckoutSessionMetadataObject(dto: CreateCheckoutSessionDto): Stripe.Metadata {
+    if (dto.extendingSubscriptionId) {
+      return {
+        userId: String(dto.userId),
+        planId: dto.planId,
+        subscriptionDuration: String(dto.subscriptionDurationInDays),
+        extendingSubscriptionId: dto.extendingSubscriptionId,
+      } satisfies CheckoutSessionMetadata;
+    } else {
+      return {
+        userId: String(dto.userId),
+        planId: dto.planId,
+        subscriptionDuration: String(dto.subscriptionDurationInDays),
+      } satisfies CheckoutSessionMetadata;
+    }
   }
 }

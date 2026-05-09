@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { add, differenceInYears, Duration, isBefore } from 'date-fns';
+import { add, differenceInYears, Duration, getUnixTime, isBefore } from 'date-fns';
 
 @Injectable()
 export class DateService {
@@ -17,5 +17,14 @@ export class DateService {
 
   getAge(dob: Date): number {
     return differenceInYears(this.now(), dob);
+  }
+
+  addDaysToDate(date: Date, days: number): Date {
+    return add(date, { days });
+  }
+
+  convertDateToSeconds(date: Date): number {
+    //Возвращает из даты количество секунд от 1970 года
+    return getUnixTime(date);
   }
 }

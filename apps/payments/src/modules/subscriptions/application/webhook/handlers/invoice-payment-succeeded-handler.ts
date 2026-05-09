@@ -5,21 +5,21 @@ import { isInvoiceObject } from '../../type-guards/stripe-webhook.type-guards';
 import { NotificationResultCode } from '../../../../../common/notification/notification-result-code';
 import { OutboxEventType, Subscription } from '@generated/prisma-payments';
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
-import { SubscriptionActivatedEvent } from '../../../../../../../../libs/contracts/payments';
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
 import { Notification } from '../../../../../common/notification/notification';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
 import { Injectable, Logger } from '@nestjs/common';
-import { extractSubscriptionId } from './utils/extract-subscription-id';
+import { extractSubscriptionId } from './utils/extract-subscription-id.helper';
 import { StripeService } from '../../services/stripe.service';
 import { BillingPeriod } from '../../types/billing-period.type';
 import { PaymentsRepository } from '../../../infrastructure/payments.repository';
 import { PrismaService } from '../../../../database/prisma.service';
 import { InternalServerException } from '../../../../../../../snapflow-core/src/common/exceptions/domain-exceptions';
-import { checkIsOldEvent } from './utils/check-is-old-event';
-import { extractEventDate } from './utils/extract-date-from-event-created';
-import { isSubscriptionRenewal } from './utils/check-is-subscription-renewal';
+import { checkIsOldEvent } from './utils/check-is-old-event.helper';
+import { extractEventDate } from './utils/extract-date-from-event-created.helper';
+import { isSubscriptionRenewal } from './utils/check-is-subscription-renewal.helper';
 import { InvoicePayment } from '../../types/invoice-payment.type';
+import { SubscriptionRenewedEvent } from '../../../../../../../../libs/contracts/payments/payment-subscription-renewed.event';
 
 @Injectable()
 export class InvoicePaymentSucceededHandler implements WebhookHandler {
@@ -122,13 +122,13 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
       );
 
       await this.outboxRepository.saveEvent(
-        OutboxEventType.SUBSCRIPTION_ACTIVATED,
+        OutboxEventType.SUBSCRIPTION_RENEWED,
         {
           userId: customer.userId,
           planId: localSubscription.planId,
           subscriptionId: localSubscription.id,
           currentPeriodEnd: newCurrentPeriod.end.toISOString(),
-        } satisfies SubscriptionActivatedEvent,
+        } satisfies SubscriptionRenewedEvent,
         tx,
       );
     });

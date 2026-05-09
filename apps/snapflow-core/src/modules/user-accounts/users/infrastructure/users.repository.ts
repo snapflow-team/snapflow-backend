@@ -10,6 +10,7 @@ import {
   User,
 } from '@generated/prisma-snapflow';
 import { UpdateAccountTypeInfrastructureDto } from './dto/update-account-type.infrastructure-dto';
+import { UpdatePeriodEndInfrastructureDto } from './dto/update-period-end.infrastructure-dto';
 
 @Injectable()
 export class UsersRepository {
@@ -145,6 +146,21 @@ export class UsersRepository {
       },
       data: {
         accountType,
+        subscriptionActiveUntil,
+      },
+    });
+  }
+
+  async updatePeriodEnd(
+    { userId: id, subscriptionActiveUntil }: UpdatePeriodEndInfrastructureDto,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.user.updateMany({
+      where: {
+        id,
+        deletedAt: null,
+      },
+      data: {
         subscriptionActiveUntil,
       },
     });

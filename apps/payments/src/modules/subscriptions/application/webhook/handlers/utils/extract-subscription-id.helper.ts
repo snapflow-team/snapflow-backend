@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { checkIsMetadata } from '../../../type-guards/check-is-stripe-metadata.type-guard';
 
 export function extractSubscriptionId(
   subscription: string | Stripe.Subscription | undefined,
@@ -27,6 +28,13 @@ export function extractSubscriptionIdFromCS(
   }
   if (subscription && typeof subscription === 'object') {
     return subscription.id;
+  }
+  //Проверяем subscriptionId в мета дате, если она прикреплялась к одноразовому платежу за подписку
+  if (
+    checkIsMetadata(checkoutSession.metadata) &&
+    checkoutSession.metadata.extendingSubscriptionId
+  ) {
+    return checkoutSession.metadata.extendingSubscriptionId;
   }
   return null;
 }

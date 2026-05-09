@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { Payment, PaymentStatus, Prisma } from '@generated/prisma-payments';
 import { CreateSucceededPaymentInfrastructureDto } from './types/create-succeeded-payment.infrastructure-dto';
+import { CreatePendingPaymentInfrastructureDto } from './types/create-pending-payment.infrastructure-dto';
 
 @Injectable()
 export class PaymentsRepository {
@@ -26,6 +27,21 @@ export class PaymentsRepository {
         subscriptionId: dto.subscriptionId,
         planId: dto.planId,
         status: PaymentStatus.PAID,
+      },
+    });
+  }
+
+  async createPendingPayment(
+    dto: CreatePendingPaymentInfrastructureDto,
+    tx: Prisma.TransactionClient = this.prisma,
+  ) {
+    return tx.payment.create({
+      data: {
+        amount: dto.plan.priceInCents,
+        subscriptionId: dto.subscriptionId,
+        planId: dto.plan.id,
+        status: PaymentStatus.PENDING,
+        externalId: dto.externalId,
       },
     });
   }
