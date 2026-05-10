@@ -145,9 +145,10 @@ export class StripeService {
 
   async updateAutoRenewal(stripeSubId: string, autoRenewal: boolean): Promise<Notification<void>> {
     try {
+      const isCancelAtPeriodEnd = !autoRenewal;
       await this.stripe.subscriptions.update(stripeSubId, {
         //Этот флаг в страйпе отвечает за то, будет ли продлена подписка если она закончится, т е фактически autoRenewal
-        cancel_at_period_end: autoRenewal,
+        cancel_at_period_end: isCancelAtPeriodEnd,
       });
 
       return Notification.ok();
