@@ -1,9 +1,11 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { NextFunction, Request, Response } from 'express';
+import {
+  REQUEST_ID_HEADER,
+  REQUEST_ID_KEY,
+} from '../../../../../libs/common/constants/request-id.constants';
 import { CryptoService } from '../../../../../libs/common/services/crypto.service';
 import { AsyncLocalStorageService } from '../async-local-storage/async-local-storage.service';
-
-export const REQUEST_ID_KEY = 'requestId';
 
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {
@@ -14,15 +16,16 @@ export class RequestContextMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction): void {
     this.asyncLocalStorageService.start(() => {
-      const incomingRequestId = req.headers['x-request-id'];
-      const requestId =
+      const incomingRequestId: string | string[] | undefined = req.headers[REQUEST_ID_HEADER];
+
+      const requestId: string =
         typeof incomingRequestId === 'string' && incomingRequestId.trim().length > 0
           ? incomingRequestId
           : this.cryptoService.generateUUID();
 
       this.asyncLocalStorageService.getStore()?.set(REQUEST_ID_KEY, requestId);
 
-      res.setHeader('X-Request-Id', requestId);
+      res.setHeader(REQUEST_ID_HEADER, requestId);
 
       next();
     });

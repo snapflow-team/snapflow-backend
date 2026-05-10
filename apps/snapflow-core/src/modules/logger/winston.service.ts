@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as winston from 'winston';
 import { AsyncLocalStorageService } from '../../common/async-local-storage/async-local-storage.service';
-import { REQUEST_ID_KEY } from '../../common/middleware/request-context.middleware';
+import { REQUEST_ID_KEY } from '../../../../../libs/common/constants/request-id.constants';
 import { Configuration } from '../../setup/configuration/configuration';
 import { EnvironmentSettings } from '../../setup/configuration/environment-settings';
 import { LoggerLevel, LoggerSettings } from '../../setup/configuration/logger-settings';
