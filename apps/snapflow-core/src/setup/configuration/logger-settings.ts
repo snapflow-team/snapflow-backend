@@ -1,24 +1,21 @@
-import { IsIn } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
 import { EnvironmentVariable } from './configuration';
 
-export const LOGGER_LEVELS = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'] as const;
-export type LoggerLevel = (typeof LOGGER_LEVELS)[number];
+export enum LoggerLevel {
+  TRACE = 'trace',
+  DEBUG = 'debug',
+  INFO = 'info',
+  WARN = 'warn',
+  ERROR = 'error',
+  FATAL = 'fatal',
+}
 
 export class LoggerSettings {
-  @IsIn(LOGGER_LEVELS)
-  private readonly LOGGER_LEVEL: LoggerLevel;
+  @IsNotEmpty()
+  @IsEnum(LoggerLevel)
+  level: LoggerLevel;
 
   constructor(private readonly environmentVariables: EnvironmentVariable) {
-    const raw: string | undefined = environmentVariables.LOGGER_LEVEL?.trim();
-    const normalized: LoggerLevel =
-      raw !== undefined && raw !== '' && (LOGGER_LEVELS as readonly string[]).includes(raw)
-        ? (raw as LoggerLevel)
-        : 'info';
-
-    this.LOGGER_LEVEL = normalized;
-  }
-
-  get level(): LoggerLevel {
-    return this.LOGGER_LEVEL;
+    this.level = environmentVariables.LOGGER_LEVEL as LoggerLevel;
   }
 }
