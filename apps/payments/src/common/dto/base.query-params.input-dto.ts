@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsNumber } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export enum SortDirection {
   Ascending = 'asc',
@@ -15,6 +16,12 @@ export abstract class BaseQueryParams<T> {
   @Type(() => Number)
   pageSize: number = 10;
 
+  @ApiPropertyOptional({
+    enum: SortDirection,
+    default: SortDirection.Descending,
+    example: SortDirection.Descending,
+  })
+  @IsOptional()
   @IsEnum(SortDirection)
   sortDirection: SortDirection = SortDirection.Descending;
 
