@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Logger } from '@nestjs/common';
 import { OutboxEvent, OutboxEventStatus, OutboxEventType } from '@generated/prisma-payments';
 import { OutboxProcessorService } from './outbox-processor.service';
 import { OutboxRepository } from '../repositories/outbox.repository';
 import { RabbitMQPublisherService } from './rabbitmq-publisher.service';
 import { PAYMENTS_EXCHANGE } from '../../../../../../libs/contracts/payments';
 import { OutboxProcessing } from '../constants/outbox.constants';
+import { LoggerFactory } from '../../logger/logger.factory';
 
 function createMockEvent(overrides: Partial<OutboxEvent> = {}): OutboxEvent {
   return {
     id: 'uuid-1',
-    type: OutboxEventType.PAYMENT_COMPLETED,
+    type: OutboxEventType.SUBSCRIPTION_ACTIVATED,
     payload: { subscriptionId: 'sub-123' },
     status: OutboxEventStatus.PENDING,
     error: null,
@@ -24,8 +24,15 @@ describe('OutboxProcessorService (unit)', () => {
   let service: OutboxProcessorService;
   let outboxRepositoryMock: Record<keyof OutboxRepository, jest.Mock>;
   let rabbitPublisherMock: Record<keyof RabbitMQPublisherService, jest.Mock>;
+  let loggerMock: { debug: jest.Mock; error: jest.Mock; warn: jest.Mock };
 
   beforeEach(async () => {
+    loggerMock = {
+      debug: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+    };
+
     outboxRepositoryMock = {
       saveEvent: jest.fn(),
       lockEventsForProcessing: jest.fn(),
@@ -45,14 +52,14 @@ describe('OutboxProcessorService (unit)', () => {
         OutboxProcessorService,
         { provide: OutboxRepository, useValue: outboxRepositoryMock },
         { provide: RabbitMQPublisherService, useValue: rabbitPublisherMock },
+        {
+          provide: LoggerFactory,
+          useValue: { create: jest.fn().mockReturnValue(loggerMock) },
+        },
       ],
     }).compile();
 
     service = module.get<OutboxProcessorService>(OutboxProcessorService);
-
-    jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -96,7 +103,7 @@ describe('OutboxProcessorService (unit)', () => {
       const first = createMockEvent({ id: 'uuid-1' });
       const second = createMockEvent({
         id: 'uuid-2',
-        type: OutboxEventType.PAYMENT_FAILED,
+        type: OutboxEventType.SUBSCRIPTION_RENEWAL_FAILED,
         payload: { reason: 'declined' },
       });
       const third = createMockEvent({ id: 'uuid-3' });
@@ -215,9 +222,9 @@ describe('OutboxProcessorService (unit)', () => {
 
       expect(rabbitPublisherMock.publish).not.toHaveBeenCalled();
       expect(outboxRepositoryMock.lockEventsForProcessing).toHaveBeenCalledTimes(2);
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Critical failure in outbox processor loop',
-        expect.stringContaining('DB down'),
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'DB down' }),
+        'processOutboxEvents',
       );
     });
   });
@@ -274,7 +281,10 @@ describe('OutboxProcessorService (unit)', () => {
       expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
         OutboxProcessing.STALE_THRESHOLD_MINUTES,
       );
-      expect(Logger.prototype.warn).toHaveBeenCalledWith(expect.stringContaining('3'));
+      expect(loggerMock.warn).toHaveBeenCalledWith(
+        expect.stringContaining('3'),
+        'handleStaleEvents',
+      );
     });
 
     it('если зависших событий нет, не вызывает warn', async () => {
@@ -285,7 +295,7 @@ describe('OutboxProcessorService (unit)', () => {
       expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
         OutboxProcessing.STALE_THRESHOLD_MINUTES,
       );
-      expect(Logger.prototype.warn).not.toHaveBeenCalled();
+      expect(loggerMock.warn).not.toHaveBeenCalled();
     });
 
     it('при ошибке recoverStaleEvents логирует ошибку и не пробрасывает исключение', async () => {
@@ -294,10 +304,7 @@ describe('OutboxProcessorService (unit)', () => {
 
       await expect(service.handleStaleEvents()).resolves.toBeUndefined();
 
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Failed to recover stale events',
-        repoError,
-      );
+      expect(loggerMock.error).toHaveBeenCalledWith(repoError, 'handleStaleEvents');
     });
   });
 });
