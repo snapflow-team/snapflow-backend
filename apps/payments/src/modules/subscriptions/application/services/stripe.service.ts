@@ -109,7 +109,7 @@ export class StripeService {
       const session = await this.stripe.checkout.sessions.create({
         mode: dto.mode,
         line_items: [{ price: dto.stripePriceId, quantity: 1 }],
-        success_url: `${this.apiSettings.stripeSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: this.apiSettings.stripeSuccessUrl,
         cancel_url: this.apiSettings.stripeCancelUrl,
         metadata: this.createCheckoutSessionMetadataObject(dto),
         //Если у нас покупатель не прилетел в дто, то этот параметр в дто обратится в undefined и страйп сам создаст нового покупателя
