@@ -7,6 +7,7 @@ import { MicroserviceSettings } from './setup/configuration/microservice.setting
 import { applyAppInitialization } from './setup/app-initialization';
 import { EnvironmentSettings } from './setup/configuration/environment-settings';
 import { printFilesStartupBannerToConsole } from './modules/logger/utils/startup-banner.util';
+import { CustomLogger } from './modules/logger/logger.service';
 
 async function bootstrap() {
   const appContext = await NestFactory.createApplicationContext(FilesModule);
@@ -20,11 +21,14 @@ async function bootstrap() {
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(FilesModule, {
     transport: Transport.TCP,
+    bufferLogs: true,
     options: {
       host: microserviceSettings.host,
       port: microserviceSettings.port,
     },
   });
+
+  app.useLogger(app.get(CustomLogger));
 
   applyAppInitialization(app);
 
