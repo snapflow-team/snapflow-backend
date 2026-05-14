@@ -2,6 +2,7 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import amqp, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
+import { randomUUID } from 'node:crypto';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { PaymentsUserSyncService } from './payments-user-sync.service';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
@@ -13,6 +14,9 @@ import {
 import { parsePaymentsRoutingKey } from './type-guards/payments-events.type-guards';
 import { LoggerFactory } from '../../logger/logger.factory';
 import { ContextLogger } from '../../logger/context-logger';
+import { AsyncLocalStorageService } from '../../../common/async-local-storage/async-local-storage.service';
+import { REQUEST_ID_KEY } from '../../../../../../libs/common/constants/request-id.constants';
+import { extractRequestIdFromAmqpMsg } from '../../../../../../libs/common/messaging/amqp-headers';
 
 @Injectable()
 export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
@@ -23,6 +27,7 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly configService: ConfigService<Configuration, true>,
     private readonly paymentsUserSyncService: PaymentsUserSyncService,
+    private readonly asyncLocalStorageService: AsyncLocalStorageService,
     loggerFactory: LoggerFactory,
   ) {
     this.logger = loggerFactory.create(PaymentsEventsConsumer.name);
@@ -55,9 +60,22 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
             return;
           }
 
-          void this.handleMessage(channel, msg);
+          this.dispatchMessageWithRequestContext(channel, msg);
         });
       },
+    });
+  }
+
+  /**
+   * Каждое AMQP-сообщение выполняется в своём ALS-контексте с requestId из headers
+   * (или новым UUID), чтобы логи и вложенные сервисы видели тот же requestId.
+   */
+  private dispatchMessageWithRequestContext(channel: ConfirmChannel, msg: ConsumeMessage): void {
+    const requestId: string = extractRequestIdFromAmqpMsg(msg) ?? randomUUID();
+
+    this.asyncLocalStorageService.start(() => {
+      this.asyncLocalStorageService.getStore()?.set(REQUEST_ID_KEY, requestId);
+      void this.handleMessage(channel, msg);
     });
   }
 
