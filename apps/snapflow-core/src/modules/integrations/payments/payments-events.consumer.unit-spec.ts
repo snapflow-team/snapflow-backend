@@ -34,9 +34,9 @@ function createConsumeMessageWithContent(routingKey: string, content: Buffer): C
 type HandleMessageFn = (channel: ConfirmChannel, msg: ConsumeMessage) => Promise<void>;
 
 function getHandleMessage(consumer: PaymentsEventsConsumer): HandleMessageFn {
-  const bound = (
-    consumer as unknown as { handleMessage: HandleMessageFn }
-  ).handleMessage.bind(consumer);
+  const bound = (consumer as unknown as { handleMessage: HandleMessageFn }).handleMessage.bind(
+    consumer,
+  );
   return bound as HandleMessageFn;
 }
 
@@ -135,7 +135,6 @@ describe('PaymentsEventsConsumer.handleMessage() (unit)', () => {
       expect(jest.mocked(channelMock.ack)).toHaveBeenCalledWith(msg);
       expect(jest.mocked(loggerMock.warn)).toHaveBeenCalledWith(
         'Unhandled routing key: unknown.key',
-        'handleMessage',
       );
     });
   });
@@ -174,7 +173,7 @@ describe('PaymentsEventsConsumer.handleMessage() (unit)', () => {
       await handleMessage(channelMock as unknown as ConfirmChannel, msg);
 
       expect(jest.mocked(channelMock.nack)).toHaveBeenCalledWith(msg, false, true);
-      expect(jest.mocked(loggerMock.error)).toHaveBeenCalledWith('"something"', 'handleMessage');
+      expect(jest.mocked(loggerMock.error)).toHaveBeenCalledWith('something', 'handleMessage');
     });
 
     it('при невалидном JSON в msg.content делает nack и логирует ошибку', async () => {
