@@ -7,6 +7,7 @@ import { NextjsRevalidationService } from '../nextjs-revalidation.service';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
 import { CryptoService } from '../../../../../../../libs/common/services/crypto.service';
 import { NextjsEndpoints } from '../constants/nextjs-endpoints';
+import { LoggerFactory } from '../../../logger/logger.factory';
 
 describe('RevalidateOnPostCreatedEventHandler (Integration)', () => {
   let module: TestingModule;
@@ -63,6 +64,17 @@ describe('RevalidateOnPostCreatedEventHandler (Integration)', () => {
                 };
               }
               return null;
+            }),
+          },
+        },
+        {
+          provide: LoggerFactory,
+          useValue: {
+            create: jest.fn().mockReturnValue({
+              log: jest.fn(),
+              warn: jest.fn(),
+              error: jest.fn(),
+              debug: jest.fn(),
             }),
           },
         },
