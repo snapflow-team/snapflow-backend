@@ -15,7 +15,8 @@ import { CustomersRepository } from '../../infrastructure/customers.repository';
 import { Customer } from '@generated/prisma-payments';
 import { PrismaService } from '../../../database/prisma.service';
 import { CreateCheckoutSessionDTO } from '../services/types/CreateCheckoutSessionDTO';
-import { Logger } from '@nestjs/common';
+import { LoggerFactory } from '../../../logger/logger.factory';
+import { ContextLogger } from '../../../logger/context-logger';
 import { extractStripeCustomerId } from '../utils/extract-stripe-customer-id';
 
 export class CreateCheckoutSessionCommand {
@@ -26,14 +27,17 @@ export class CreateCheckoutSessionCommand {
 export class CreateCheckoutSessionUseCase
   implements ICommandHandler<CreateCheckoutSessionCommand, Notification<string>>
 {
-  private readonly logger = new Logger(CreateCheckoutSessionUseCase.name);
+  private readonly logger: ContextLogger;
   constructor(
     private readonly stripeService: StripeService,
     private readonly subscriptionsRepository: SubscriptionsRepository,
     private readonly customersRepository: CustomersRepository,
     private readonly configService: ConfigService<Configuration, true>,
     private readonly prisma: PrismaService,
-  ) {}
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(CreateCheckoutSessionUseCase.name);
+  }
 
   async execute({
     dto: { userId, planId },
@@ -86,6 +90,7 @@ export class CreateCheckoutSessionUseCase
     } catch {
       this.logger.warn(
         `Saving to db checkout session with id ${stripeResult.value.sessionId} FAILED`,
+        this.execute.name,
       );
 
       return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred');
