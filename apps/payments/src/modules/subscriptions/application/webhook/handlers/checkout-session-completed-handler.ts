@@ -13,15 +13,17 @@ import { OutboxRepository } from '../../../../outbox/repositories/outbox.reposit
 import { Notification } from '../../../../../common/notification/notification';
 import { PrismaService } from '../../../../database/prisma.service';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { extractSubscriptionIdFromCS } from './utils/extract-subscription-id';
 import { extractEventDate } from './utils/extract-date-from-event-created';
 import { InternalServerException } from '../../../../../../../snapflow-core/src/common/exceptions/domain-exceptions';
 import { extractCustomerId } from './utils/extract-customer-id';
+import { LoggerFactory } from '../../../../logger/logger.factory';
+import { ContextLogger } from '../../../../logger/context-logger';
 
 @Injectable()
 export class CheckoutSessionCompletedHandler implements WebhookHandler {
-  private readonly logger = new Logger(CheckoutSessionCompletedHandler.name);
+  private readonly logger: ContextLogger;
   type = StripeEvents.CheckoutSessionCompleted;
   constructor(
     private stripeService: StripeService,
@@ -30,7 +32,10 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
     private outboxRepository: OutboxRepository,
     private subscriptionsRepository: SubscriptionsRepository,
     private prisma: PrismaService,
-  ) {}
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(CheckoutSessionCompletedHandler.name);
+  }
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.CheckoutSessionCompleted;
   }
@@ -74,7 +79,10 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
     const stripeCusId = extractCustomerId(stripeSubscription.customer);
     if (!stripeCusId) {
-      this.logger.warn(`Customer with subscription: ${stripeSubscription.id} not found`);
+      this.logger.warn(
+        `Customer with subscription: ${stripeSubscription.id} not found`,
+        this.handle.name,
+      );
       return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred.');
     }
 
@@ -93,7 +101,10 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           tx,
         );
       if (!subscription) {
-        this.logger.warn(`Subscription with id ${payment.subscriptionId} not found`);
+        this.logger.warn(
+          `Subscription with id ${payment.subscriptionId} not found`,
+          this.handle.name,
+        );
         throw new InternalServerException();
       }
 
@@ -101,7 +112,10 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
         subscription.customerId,
       );
       if (!customer) {
-        this.logger.warn(`Customer with id ${subscription.customerId} not found`);
+        this.logger.warn(
+          `Customer with id ${subscription.customerId} not found`,
+          this.handle.name,
+        );
         throw new InternalServerException();
       }
 
