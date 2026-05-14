@@ -39,12 +39,16 @@ function createPaymentFailedPayload(
 
 describe('PaymentsUserSyncService (unit)', () => {
   let service: PaymentsUserSyncService;
-  let usersRepositoryMock: Record<keyof Pick<UsersRepository, 'updateAccountType'>, jest.Mock>;
+  let usersRepositoryMock: Record<
+    keyof Pick<UsersRepository, 'updateAccountType' | 'findUserById'>,
+    jest.Mock
+  >;
   let loggerMock: { log: jest.Mock; warn: jest.Mock; error: jest.Mock; debug: jest.Mock };
 
   beforeEach(async () => {
     usersRepositoryMock = {
       updateAccountType: jest.fn().mockResolvedValue(undefined),
+      findUserById: jest.fn().mockResolvedValue({ id: 1 }),
     };
 
     loggerMock = {
@@ -87,6 +91,7 @@ describe('PaymentsUserSyncService (unit)', () => {
           accountType: AccountType.BUSINESS,
           subscriptionActiveUntil: new Date('2026-05-01T00:00:00Z'),
         });
+        expect(usersRepositoryMock.findUserById).not.toHaveBeenCalled();
         expect(loggerMock.warn).not.toHaveBeenCalled();
       });
 
@@ -103,6 +108,7 @@ describe('PaymentsUserSyncService (unit)', () => {
           accountType: AccountType.BUSINESS,
           subscriptionActiveUntil: null,
         });
+        expect(usersRepositoryMock.findUserById).not.toHaveBeenCalled();
       });
     });
 
@@ -113,6 +119,7 @@ describe('PaymentsUserSyncService (unit)', () => {
         });
 
         expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('Invalid'));
+        expect(usersRepositoryMock.findUserById).not.toHaveBeenCalled();
         expect(usersRepositoryMock.updateAccountType).not.toHaveBeenCalled();
       });
     });
@@ -134,7 +141,13 @@ describe('PaymentsUserSyncService (unit)', () => {
         expect(warnMessage).toContain(payload.failureMessage);
         expect(warnMessage).toContain(String(payload.attemptCount));
         expect(warnMessage).toContain(payload.nextPaymentAttempt);
-        expect(usersRepositoryMock.updateAccountType).not.toHaveBeenCalled();
+        expect(usersRepositoryMock.findUserById).toHaveBeenCalledWith(payload.userId);
+        expect(usersRepositoryMock.updateAccountType).toHaveBeenCalledTimes(1);
+        expect(usersRepositoryMock.updateAccountType).toHaveBeenCalledWith({
+          userId: 1,
+          accountType: AccountType.PERSONAL,
+          subscriptionActiveUntil: null,
+        });
       });
 
       it('опциональные поля null -> logger.warn с "n/a"', async () => {
@@ -149,27 +162,35 @@ describe('PaymentsUserSyncService (unit)', () => {
         expect(loggerMock.warn).toHaveBeenCalledTimes(1);
         const warnMessage = loggerMock.warn.mock.calls[0][0] as string;
         expect(warnMessage).toContain('n/a');
+        expect(usersRepositoryMock.findUserById).toHaveBeenCalledWith(payload.userId);
+        expect(usersRepositoryMock.updateAccountType).toHaveBeenCalledWith({
+          userId: 1,
+          accountType: AccountType.PERSONAL,
+          subscriptionActiveUntil: null,
+        });
+      });
+
+      describe('валидация payload', () => {
+        it('невалидный payload -> logger.warn, без побочных эффектов', async () => {
+          await service.applyRoutingKey(PaymentsRoutingKey.SubscriptionRenewalFailed, {});
+
+          expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('Invalid'));
+          expect(usersRepositoryMock.findUserById).not.toHaveBeenCalled();
+          expect(usersRepositoryMock.updateAccountType).not.toHaveBeenCalled();
+        });
       });
     });
 
-    describe('валидация payload', () => {
-      it('невалидный payload -> logger.warn, без побочных эффектов', async () => {
-        await service.applyRoutingKey(PaymentsRoutingKey.SubscriptionRenewalFailed, {});
+    describe('applyRoutingKey() — неизвестный routing key', () => {
+      it('произвольный routing key -> logger.warn "Unhandled routing key"', async () => {
+        await service.applyRoutingKey('SOME_UNKNOWN_KEY' as PaymentsRoutingKey, {});
 
-        expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('Invalid'));
+        expect(loggerMock.warn).toHaveBeenCalledWith(
+          expect.stringContaining('Unhandled routing key'),
+        );
+        expect(usersRepositoryMock.findUserById).not.toHaveBeenCalled();
         expect(usersRepositoryMock.updateAccountType).not.toHaveBeenCalled();
       });
-    });
-  });
-
-  describe('applyRoutingKey() — неизвестный routing key', () => {
-    it('произвольный routing key -> logger.warn "Unhandled routing key"', async () => {
-      await service.applyRoutingKey('SOME_UNKNOWN_KEY' as PaymentsRoutingKey, {});
-
-      expect(loggerMock.warn).toHaveBeenCalledWith(
-        expect.stringContaining('Unhandled routing key'),
-      );
-      expect(usersRepositoryMock.updateAccountType).not.toHaveBeenCalled();
     });
   });
 });
