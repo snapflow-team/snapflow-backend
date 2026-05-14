@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Inject, Logger } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { HandleStripeWebhookApplicationDto } from '../dto/handle-stripe-webhook.application-dto';
 import { StripeService } from '../services/stripe.service';
@@ -10,6 +10,8 @@ import { StripeEvents } from '../constants/stripe-events.constants';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
 import { WEBHOOK_HANDLERS } from '../../../../core/providers/provide-tokens/webhook-handlers.inject-token';
 import { WebhookHandler } from '../webhook/webhook.handler';
+import { LoggerFactory } from '../../../logger/logger.factory';
+import { ContextLogger } from '../../../logger/context-logger';
 
 const SUPPORTED_WEBHOOK_EVENTS: ReadonlySet<string> = new Set([
   StripeEvents.CheckoutSessionCompleted,
@@ -27,13 +29,16 @@ export class HandleStripeWebhookCommand {
 export class HandleStripeWebhookUseCase
   implements ICommandHandler<HandleStripeWebhookCommand, Notification<void>>
 {
-  private readonly logger: Logger = new Logger(HandleStripeWebhookUseCase.name);
+  private readonly logger: ContextLogger;
 
   constructor(
     private readonly stripeService: StripeService,
     @Inject(REDIS_CLIENT_INJECT_TOKEN) private readonly redis: Redis,
     @Inject(WEBHOOK_HANDLERS) private readonly handlers: WebhookHandler[],
-  ) {}
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(HandleStripeWebhookUseCase.name);
+  }
 
   async execute({
     dto: { rawBody, signature },
@@ -52,6 +57,7 @@ export class HandleStripeWebhookUseCase
     if (!SUPPORTED_WEBHOOK_EVENTS.has(event.type)) {
       this.logger.warn(
         `Unsupported webhook event type "${event.type}" (eventId=${event.id}). Skipping.`,
+        this.execute.name,
       );
 
       return Notification.ok();
@@ -64,7 +70,7 @@ export class HandleStripeWebhookUseCase
     const locked: string | null = await this.redis.set(idempotencyKey, '1', 'EX', 86400, 'NX');
 
     if (!locked) {
-      this.logger.warn(`Event ${event.id} already processed. Skipping.`);
+      this.logger.warn(`Event ${event.id} already processed. Skipping.`, this.execute.name);
       return Notification.ok();
     }
 
@@ -73,19 +79,17 @@ export class HandleStripeWebhookUseCase
     try {
       //Подбираем нужный хэндлер под конкретный ивент
       const handler = this.handlers.find((handler) => handler.supports(event));
-      this.logger.debug(`We handling event ${event.type}`);
+      this.logger.debug(`We handling event ${event.type}`, this.execute.name);
       if (!handler) {
         this.logger.warn(
           `Suitable handler for this event ${event.type} not found, despite we support this event`,
+          this.execute.name,
         );
         return Notification.ok();
       }
       result = await handler.handle(event);
     } catch (error) {
-      const errorMessage: string = error instanceof Error ? error.message : 'Unknown error';
-      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
-
-      this.logger.error(`Failed: ${errorMessage}`, errorStack);
+      this.logger.error(error, this.execute.name);
 
       await this.redis.del(idempotencyKey);
 
