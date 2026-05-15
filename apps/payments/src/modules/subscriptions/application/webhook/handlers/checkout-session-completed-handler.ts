@@ -20,10 +20,9 @@ import { StripeCSModes } from '../../services/types/stripe-checkout-session-mode
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
 import { checkIsMetadata } from '../../type-guards/check-is-stripe-metadata.type-guard';
 import { SubscriptionRenewedEvent } from '../../../../../../../../libs/contracts/payments/payment-subscription-renewed.event';
-import { extractCustomerId } from './utils/extract-customer-id';
-import { extractSubscriptionIdFromCS } from './utils/extract-subscription-id';
-import { extractEventDate } from './utils/extract-date-from-event-created';
-
+import { extractSubscriptionIdFromCS } from './utils/extract-subscription-id.helper';
+import { extractCustomerId } from './utils/extract-customer-id.helper';
+import { extractEventDate } from './utils/extract-date-from-event-created.helper';
 
 @Injectable()
 export class CheckoutSessionCompletedHandler implements WebhookHandler {
