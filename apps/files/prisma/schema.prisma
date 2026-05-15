@@ -9,11 +9,13 @@ datasource db {
 
 enum FileStatus {
   PENDING
+  PENDING_CLEANUP
   UPLOADED
 }
 
 enum OutboxEventStatus {
   PENDING
+  PROCESSING
   PROCESSED
   FAILED
 }

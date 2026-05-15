@@ -1,7 +1,5 @@
 import { IsEmail, IsString, Matches } from 'class-validator';
-import {
-  IsStringWithTrim
-} from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
+import { IsStringWithTrim } from '../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
 import { Trim } from '../../../../../../../../libs/common/decorators/transform/trim.decorator';
 import { ApiProperty } from '@nestjs/swagger';
 

@@ -11,6 +11,9 @@ export class BusinessRulesSettings {
   @IsNumber()
   sessionCleanupRetentionDays: number;
 
+  @IsNumber()
+  outboxRetentionDays: number;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.appEmail = environmentVariables.EMAIL_APP;
     this.appPassword = environmentVariables.EMAIL_APP_PASSWORD;
@@ -18,5 +21,7 @@ export class BusinessRulesSettings {
     this.sessionCleanupRetentionDays = Number.parseInt(
       environmentVariables.SESSION_CLEANUP_RETENTION_DAYS,
     );
+
+    this.outboxRetentionDays = Number.parseInt(environmentVariables.OUTBOX_RETENTION_DAYS);
   }
 }

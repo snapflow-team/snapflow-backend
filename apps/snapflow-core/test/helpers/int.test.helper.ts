@@ -108,12 +108,15 @@ export class IntTestHelper {
   async createUserWithProfile(prisma: PrismaService, suffix: string) {
     const user = await TestEntityFactory.createTestUser(prisma, { suffix });
     const profileRepo = this.get<ProfilesRepository>(ProfilesRepository);
-    const profileId = (
-      await profileRepo.createProfile({ userId: user.id, username: user.username })
-    ).id;
+    const username = `user_${suffix}`;
+    const profileId = (await profileRepo.createProfile({ userId: user.id })).id;
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { username },
+    });
+
     await profileRepo.updateProfile({
       profileId,
-      username: `user_${suffix}`,
       firstName: `First_${suffix}`,
       lastName: `Last_${suffix}`,
       dateOfBirth: new Date(),

@@ -95,10 +95,77 @@ describe('GetAllSessionsQueryHandler (Интеграция)', () => {
       data: { deletedAt: new Date() },
     });
 
-    const result = await queryHandler.execute(new GetAllSessionsQuery(user.id));
+    const result = await queryHandler.execute(new GetAllSessionsQuery(user.id, 'device-1'));
 
     expect(result).toHaveLength(2);
     expect(result.map((x) => x.deviceId).sort()).toEqual(['device-1', 'device-2']);
     expect(result.every((x) => x.ip.startsWith('127.0.0.'))).toBe(true);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          deviceId: 'device-1',
+          browserName: expect.any(String),
+          browserVersion: expect.any(String),
+          osName: expect.any(String),
+          osVersion: expect.any(String),
+          deviceName: expect.any(String),
+          deviceType: expect.any(String),
+          lastActive: expect.any(String),
+          isCurrent: true,
+        }),
+        expect.objectContaining({
+          deviceId: 'device-2',
+          browserName: expect.any(String),
+          browserVersion: expect.any(String),
+          osName: expect.any(String),
+          osVersion: expect.any(String),
+          deviceName: expect.any(String),
+          deviceType: expect.any(String),
+          lastActive: expect.any(String),
+          isCurrent: false,
+        }),
+      ]),
+    );
+  });
+
+  it('должен возвращать fallback-значения для legacy-сессии с null в новых полях', async () => {
+    const user: User = await TestEntityFactory.createTestUser(prisma, { suffix: 'legacy' });
+    const iat = new Date('2026-01-01T10:00:00.000Z');
+
+    await prisma.session.create({
+      data: {
+        deviceId: 'legacy-device-id',
+        deviceName: 'Legacy browser on Legacy OS',
+        browserName: null,
+        browserVersion: null,
+        osName: null,
+        osVersion: null,
+        deviceType: null,
+        ip: '10.10.10.10',
+        iat,
+        exp: new Date('2026-01-01T11:00:00.000Z'),
+        user: {
+          connect: {
+            id: user.id,
+          },
+        },
+      },
+    });
+
+    const result = await queryHandler.execute(new GetAllSessionsQuery(user.id, 'legacy-device-id'));
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      deviceId: 'legacy-device-id',
+      browserName: 'Unknown browser',
+      browserVersion: '',
+      osName: 'Unknown OS',
+      osVersion: '',
+      deviceName: 'Legacy browser on Legacy OS',
+      deviceType: 'desktop',
+      ip: '10.10.10.10',
+      lastActive: iat.toISOString(),
+      isCurrent: true,
+    });
   });
 });

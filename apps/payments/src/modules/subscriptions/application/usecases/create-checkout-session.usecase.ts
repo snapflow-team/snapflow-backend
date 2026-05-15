@@ -3,11 +3,20 @@ import { StripeService } from '../services/stripe.service';
 import { Notification } from '../../../../common/notification/notification';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../../setup/configuration/configuration';
-import { BusinessRulesSettings, Plan, } from '../../../../setup/configuration/business-rules-settings';
+import {
+  BusinessRulesSettings,
+  Plan,
+} from '../../../../setup/configuration/business-rules-settings';
 import { CreateCheckoutSessionApplicationDto } from '../dto/create-checkout-session.application-dto';
 import { StripeCheckoutSessionResult } from '../types/stripe-checkout-session-result.type';
 import { SubscriptionsRepository } from '../../infrastructure/subscriptions.repository';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
+import { CustomersRepository } from '../../infrastructure/customers.repository';
+import { Customer } from '@generated/prisma-payments';
+import { PrismaService } from '../../../database/prisma.service';
+import { CreateCheckoutSessionDTO } from '../services/types/CreateCheckoutSessionDTO';
+import { Logger } from '@nestjs/common';
+import { extractStripeCustomerId } from '../utils/extract-stripe-customer-id';
 
 export class CreateCheckoutSessionCommand {
   constructor(public readonly dto: CreateCheckoutSessionApplicationDto) {}
@@ -17,10 +26,13 @@ export class CreateCheckoutSessionCommand {
 export class CreateCheckoutSessionUseCase
   implements ICommandHandler<CreateCheckoutSessionCommand, Notification<string>>
 {
+  private readonly logger = new Logger(CreateCheckoutSessionUseCase.name);
   constructor(
     private readonly stripeService: StripeService,
     private readonly subscriptionsRepository: SubscriptionsRepository,
+    private readonly customersRepository: CustomersRepository,
     private readonly configService: ConfigService<Configuration, true>,
+    private readonly prisma: PrismaService,
   ) {}
 
   async execute({
@@ -44,20 +56,69 @@ export class CreateCheckoutSessionUseCase
       return notification;
     }
 
-    const stripeResult: Notification<StripeCheckoutSessionResult> =
-      await this.stripeService.createCheckoutSession(plan.stripePriceId, plan.id, userId);
+    const activeSubscription =
+      await this.subscriptionsRepository.findActiveOrPastDueByUserId(userId);
+    if (activeSubscription) {
+      return Notification.fail(
+        NotificationResultCode.BadRequest,
+        'User already have active subscription',
+      );
+    }
 
+    const customer: Customer | null = await this.customersRepository.findByUserId(userId);
+
+    const stripeCusId: string | undefined = extractStripeCustomerId(customer);
+
+    const dto: CreateCheckoutSessionDTO = {
+      userId,
+      planId: plan.id,
+      stripePriceId: plan.stripePriceId,
+      //Если у нас покупатель есть, то цепляем его, если нет то undefined
+      stripeCusId: stripeCusId,
+    };
+
+    const stripeResult = await this.stripeService.createCheckoutSession(dto);
     if (stripeResult.hasErrors)
       return Notification.copyErrors<StripeCheckoutSessionResult, string>(stripeResult);
 
-    // vilyamz: что если репозиторий вернет ошибку?
-    await this.subscriptionsRepository.createPendingOrder({
-      userId,
-      planId,
-      amount: plan.priceInCents,
-      externalId: stripeResult.value.sessionId,
-    });
+    try {
+      await this.saveCheckoutSession(customer, stripeResult.value.sessionId, plan, userId);
+    } catch {
+      this.logger.warn(
+        `Saving to db checkout session with id ${stripeResult.value.sessionId} FAILED`,
+      );
+
+      return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred');
+    }
 
     return Notification.ok(stripeResult.value.url);
+  }
+
+  private async saveCheckoutSession(
+    customer: Customer | null,
+    sessionId: string,
+    plan: Plan,
+    userId: number,
+  ) {
+    await this.prisma.$transaction(async (tx) => {
+      let customerId: number;
+
+      if (!customer) {
+        const createdCustomer = await this.customersRepository.createPartialCustomer(userId, tx);
+        customerId = createdCustomer.id;
+      } else {
+        customerId = customer.id;
+      }
+
+      await this.subscriptionsRepository.createPendingOrder(
+        {
+          customerId,
+          planId: plan.id,
+          amount: plan.priceInCents,
+          externalId: sessionId,
+        },
+        tx,
+      );
+    });
   }
 }

@@ -1,14 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AccountType } from '@generated/prisma-snapflow';
 import {
-  PaymentCompletedEvent,
   PaymentsRoutingKey,
+  SubscriptionActivatedEvent,
+  SubscriptionRenewalFailedEvent,
 } from '../../../../../../libs/contracts/payments';
 import {
-  isPaymentCompletedEvent,
-  isPaymentFailedEvent,
+  isCheckoutSessionExpiredEvent,
+  isSubscriptionActivatedEvent,
+  isSubscriptionCancelledEvent,
+  isSubscriptionRenewalFailedEvent,
 } from './type-guards/payments-events.type-guards';
 import { UsersRepository } from '../../user-accounts/users/infrastructure/users.repository';
+import { SubscriptionCancelledEvent } from '../../../../../../libs/contracts/payments/payments-subscription-cancelled.event';
 
 @Injectable()
 export class PaymentsUserSyncService {
@@ -18,17 +22,16 @@ export class PaymentsUserSyncService {
 
   async applyRoutingKey(routingKey: PaymentsRoutingKey, payload: unknown): Promise<void> {
     switch (routingKey) {
-      case PaymentsRoutingKey.PaymentCompleted:
-        if (!isPaymentCompletedEvent(payload)) {
+      case PaymentsRoutingKey.SubscriptionActivated:
+        if (!isSubscriptionActivatedEvent(payload)) {
           this.logger.warn(`Invalid ${routingKey} payload`);
 
           return;
         }
-
         await this.upsertBusinessSubscription(payload);
         break;
-      case PaymentsRoutingKey.PaymentFailed: {
-        if (!isPaymentFailedEvent(payload)) {
+      case PaymentsRoutingKey.SubscriptionRenewalFailed: {
+        if (!isSubscriptionRenewalFailedEvent(payload)) {
           this.logger.warn(`Invalid ${routingKey} payload`);
 
           return;
@@ -36,6 +39,26 @@ export class PaymentsUserSyncService {
         this.logger.warn(
           `Payment failed for user ${payload.userId} (subscription=${payload.subscriptionId}, invoice=${payload.stripeInvoiceId}, code=${payload.failureCode ?? 'n/a'}, message=${payload.failureMessage ?? 'n/a'}, attempts=${payload.attemptCount ?? 'n/a'}, nextAttempt=${payload.nextPaymentAttempt ?? 'n/a'})`,
         );
+        await this.deleteBusinessSubscription(payload);
+        break;
+      }
+      case PaymentsRoutingKey.CheckoutSessionExpired: {
+        if (!isCheckoutSessionExpiredEvent(payload)) {
+          this.logger.warn(`Invalid ${routingKey} payload`);
+
+          return;
+        }
+        this.logger.warn(
+          `Checkout session expired for user ${payload.userId}, plan: ${payload.planId}, description: ${payload.description}`,
+        );
+        break;
+      }
+      case PaymentsRoutingKey.SubscriptionCancelled: {
+        if (!isSubscriptionCancelledEvent(payload)) {
+          this.logger.warn(`Invalid ${routingKey} payload`);
+          return;
+        }
+        await this.deleteBusinessSubscription(payload);
         break;
       }
       default:
@@ -43,7 +66,7 @@ export class PaymentsUserSyncService {
     }
   }
 
-  private async upsertBusinessSubscription(data: PaymentCompletedEvent): Promise<void> {
+  private async upsertBusinessSubscription(data: SubscriptionActivatedEvent): Promise<void> {
     const subscriptionActiveUntil: Date | null =
       data.currentPeriodEnd !== undefined
         ? data.currentPeriodEnd === null
@@ -55,6 +78,20 @@ export class PaymentsUserSyncService {
       userId: data.userId,
       accountType: AccountType.BUSINESS,
       subscriptionActiveUntil,
+    });
+  }
+  private async deleteBusinessSubscription(
+    data: SubscriptionRenewalFailedEvent | SubscriptionCancelledEvent,
+  ): Promise<void> {
+    const user = await this.usersRepository.findUserById(data.userId);
+    if (!user) {
+      this.logger.error(`User ${data.userId} not found for deleting business subscription status`);
+      return;
+    }
+    await this.usersRepository.updateAccountType({
+      userId: user.id,
+      accountType: AccountType.PERSONAL,
+      subscriptionActiveUntil: null,
     });
   }
 }

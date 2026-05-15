@@ -5,9 +5,7 @@ import { AuthTestManager } from '../managers/auth.test-manager';
 import { AppTestManager } from '../managers/app.test-manager';
 import request, { Response } from 'supertest';
 import { HttpStatus } from '@nestjs/common';
-import {
-  UpdateProfileInputDto
-} from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
+import { UpdateProfileInputDto } from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
 import { JwtService } from '@nestjs/jwt';
@@ -16,7 +14,7 @@ import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../src/setup/configuration/configuration';
 import { ApiSettings } from '../../src/setup/configuration/api-settings';
-import { UserProfile } from '@generated/prisma-snapflow';
+import { User, UserProfile } from '@generated/prisma-snapflow';
 
 describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
   let appTestManager: AppTestManager;
@@ -95,7 +93,10 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       throw new Error('Profile was not created');
     }
 
-    expect(profile.username).toBe(dto.username);
+    const user: User | null = await appTestManager.prisma.user.findFirst({
+      where: { id: userId },
+    });
+    expect(user?.username).toBe(dto.username);
     expect(profile.firstName).toBe(dto.firstName);
     expect(profile.lastName).toBe(dto.lastName);
     expect(profile.dateOfBirth?.toISOString().split('T')[0]).toBe(dto.dateOfBirth);
@@ -131,7 +132,10 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       throw new Error('Profile was not created');
     }
 
-    expect(profile.username).toBe(dto.username);
+    const user: User | null = await appTestManager.prisma.user.findFirst({
+      where: { id: userId },
+    });
+    expect(user?.username).toBe(dto.username);
     expect(profile.firstName).toBe(dto.firstName);
     expect(profile.lastName).toBe(dto.lastName);
 
@@ -195,7 +199,10 @@ describe('ProfileController - updateProfile() (PUT: /users/profile)', () => {
       throw new Error('Profile was not created');
     }
 
-    expect(profileAfter?.username).toBe('updated_name');
+    const userAfter: User | null = await appTestManager.prisma.user.findFirst({
+      where: { id: userId },
+    });
+    expect(userAfter?.username).toBe('updated_name');
     expect(profileAfter?.city).toBe('SPB');
 
     // не должны поменяться:
