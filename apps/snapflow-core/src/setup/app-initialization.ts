@@ -7,12 +7,11 @@ import { ApiSettings } from './configuration/api-settings';
 import { globalPrefixSetup } from './global-prefix.setup';
 import { cookieSetup } from './cookie.setup';
 import { pipesSetup } from './pipes.setup';
-import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { corsSetup } from './cors.setup';
 import { globalExceptionFilterSetup } from './global-exception-filter.setup';
 import { swaggerSetup } from './swagger.setup';
 
-export const applyAppInitialization = (app: INestApplication): void => {
+export const applyAppInitialization = async (app: INestApplication): Promise<void> => {
   const configService: ConfigService<Configuration, true> = app.get(
     ConfigService<Configuration, true>,
   );
@@ -27,11 +26,4 @@ export const applyAppInitialization = (app: INestApplication): void => {
   globalPrefixSetup(app);
   swaggerSetup(app, swaggerSettings, envSetting);
   globalExceptionFilterSetup(app, apiSettings.sendInternalServerErrorDetails);
-
-  if (envSetting.isDevelopment) {
-    console.log('🚀 Development mode enabled');
-    console.log(
-      `📚 Swagger available at: http://localhost:${apiSettings.port}/${GLOBAL_PREFIX}/${swaggerSettings.swaggerPath}`,
-    );
-  }
 };

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { Notification } from '../../../../common/notification/notification';
@@ -10,6 +10,8 @@ import { NotificationResultCode } from '../../../../common/notification/notifica
 import { CreateCheckoutSessionDto } from './types/create-checkout-session.dto';
 import { $Enums, PaymentProvider } from '@generated/prisma-payments';
 import { InvoicePayment } from '../types/invoice-payment.type';
+import { LoggerFactory } from '../../../logger/logger.factory';
+import { ContextLogger } from '../../../logger/context-logger';
 import { DateService } from '../../../../../../../libs/common/services/date.service';
 import { CheckoutSessionMetadata } from '../types/checkout-session-metadata.type';
 import { StripeCSModes } from './types/stripe-checkout-session-modes.enum';
@@ -19,14 +21,16 @@ import PaymentStatus = $Enums.PaymentStatus;
 export class StripeService {
   private readonly stripe: Stripe;
   private readonly apiSettings: ApiSettings;
-  private readonly logger: Logger = new Logger(StripeService.name);
+  private readonly logger: ContextLogger;
 
   constructor(
     configService: ConfigService<Configuration, true>,
+    loggerFactory: LoggerFactory,
     private dateService: DateService,
   ) {
     this.apiSettings = configService.get<ApiSettings>('apiSettings');
     this.stripe = new Stripe(this.apiSettings.stripeSecretKey);
+    this.logger = loggerFactory.create(StripeService.name);
   }
 
   async getSubscription(stripeSubId: string): Promise<Stripe.Subscription> {
@@ -44,13 +48,7 @@ export class StripeService {
 
       return this.getBillingPeriodFromSubscriptionObject(sub);
     } catch (error) {
-      const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
-      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
-
-      this.logger.error(
-        `Failed to retrieve Stripe subscription ${stripeSubscriptionId}: ${errorMessage}`,
-        errorStack,
-      );
+      this.logger.error(error, this.retrieveSubscriptionBillingPeriod.name);
 
       return Notification.fail(
         NotificationResultCode.InternalServerError,
@@ -68,13 +66,7 @@ export class StripeService {
       });
       return this.retrievePayment(invoice);
     } catch (error) {
-      const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
-      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
-
-      this.logger.error(
-        `Failed to retrieve Stripe invoice ${stripeInvoiceId}: ${errorMessage}`,
-        errorStack,
-      );
+      this.logger.error(error, this.retrieveSucceededPaymentFromInvoice.name);
 
       return Notification.fail(
         NotificationResultCode.InternalServerError,
@@ -93,10 +85,7 @@ export class StripeService {
 
       return Notification.ok(event);
     } catch (error) {
-      const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
-      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
-
-      this.logger.error(`Webhook signature verification failed: ${errorMessage}`, errorStack);
+      this.logger.error(error, this.constructEvent.name);
 
       return Notification.fail(NotificationResultCode.BadRequest, 'Invalid webhook signature');
     }
@@ -116,25 +105,28 @@ export class StripeService {
         customer: dto.stripeCusId,
       });
       if (dto.mode === StripeCSModes.Payment) {
-        this.logger.debug(`checkout session for extending: ${session.id}`);
+        this.logger.debug(
+          `checkout session for extending: ${session.id}`,
+          this.createCheckoutSession.name,
+        );
       }
       if (!session.url) {
-        this.logger.error(`Failed to create stripe checkout session: ${session.id}`);
+        this.logger.error(
+          `Failed to create stripe checkout session: ${session.id}`,
+          this.createCheckoutSession.name,
+        );
         return Notification.fail<StripeCheckoutSessionResult>(
           NotificationResultCode.InternalServerError,
           'Failed to create new subscription with payments provider',
         );
       }
-      this.logger.debug(`Created checkout session: ${session.id}`);
+      this.logger.debug(`Created checkout session: ${session.id}`, this.createCheckoutSession.name);
       return Notification.ok({
         url: session.url,
         sessionId: session.id,
       });
     } catch (error) {
-      const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
-      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
-
-      this.logger.error(`Failed to create Stripe checkout session: ${errorMessage}`, errorStack);
+      this.logger.error(error, this.createCheckoutSession.name);
 
       return Notification.fail<StripeCheckoutSessionResult>(
         NotificationResultCode.InternalServerError,
@@ -153,12 +145,7 @@ export class StripeService {
 
       return Notification.ok();
     } catch (error) {
-      const errorMessage: string = error instanceof Error ? error.message : 'Unknown Stripe error';
-      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
-
-      this.logger.warn(
-        `Failed to update autoRenewal for ${stripeSubId}, error: ${errorMessage}, ${errorStack}`,
-      );
+      this.logger.error(error, this.updateAutoRenewal.name);
 
       return Notification.fail(
         NotificationResultCode.InternalServerError,

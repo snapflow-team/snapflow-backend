@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { OutboxEvent, OutboxEventType } from '@generated/prisma-snapflow';
 import { OutboxRepository } from '../repositories/outbox.repository';
@@ -8,19 +8,24 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { BusinessRulesSettings } from '../../../../setup/configuration/business-rules-settings';
 import { OutboxProcessing } from '../constants/outbox.constants';
+import { LoggerFactory } from '../../../logger/logger.factory';
+import { ContextLogger } from '../../../logger/context-logger';
 
 @Injectable()
 export class OutboxProcessorService {
-  private readonly logger: Logger = new Logger(OutboxProcessorService.name);
   private isProcessing: boolean = false;
+  private readonly logger: ContextLogger;
 
   constructor(
     private readonly outboxRepository: OutboxRepository,
     private readonly filesClient: FilesClient,
     private readonly configService: ConfigService<Configuration, true>,
-  ) {}
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(OutboxProcessorService.name);
+  }
 
-  @Cron(CronExpression.EVERY_10_HOURS)
+  @Cron(CronExpression.EVERY_12_HOURS)
   async processOutboxEvents() {
     if (this.isProcessing) return;
     this.isProcessing = true;
@@ -32,7 +37,10 @@ export class OutboxProcessorService {
 
       if (pendingEvents.length === 0) return;
 
-      this.logger.debug(`Found ${pendingEvents.length} pending outbox events. Processing...`);
+      this.logger.log(
+        `Found ${pendingEvents.length} pending outbox events. Processing...`,
+        this.processOutboxEvents.name,
+      );
 
       for (const event of pendingEvents) {
         try {
@@ -50,16 +58,13 @@ export class OutboxProcessorService {
           await this.outboxRepository.markAsProcessed(event.id);
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown files service error';
-          this.logger.error(`Failed to process event ${event.id}: ${message}`);
+          this.logger.error(error, `${this.processOutboxEvents.name}:eventId=${event.id}`);
 
           await this.outboxRepository.releaseToPending(event.id, message);
         }
       }
     } catch (error) {
-      this.logger.error(
-        'Critical failure in outbox processor loop',
-        error instanceof Error ? error.stack : '',
-      );
+      this.logger.error(error, this.processOutboxEvents.name);
     } finally {
       this.isProcessing = false;
     }
@@ -76,7 +81,7 @@ export class OutboxProcessorService {
         this.logger.warn(`Recovery: ${recoveredCount} stale events moved back to PENDING.`);
       }
     } catch (error) {
-      this.logger.error('Failed to recover stale events', error);
+      this.logger.error(error, this.handleStaleEvents.name);
     }
   }
 

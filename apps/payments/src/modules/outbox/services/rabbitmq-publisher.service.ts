@@ -1,19 +1,32 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import amqp, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
 import { ConfirmChannel } from 'amqplib';
 import { PAYMENTS_EXCHANGE } from '../../../../../../libs/contracts/payments';
+import { AsyncLocalStorageService } from '../../../common/async-local-storage/async-local-storage.service';
+import {
+  REQUEST_ID_HEADER,
+  REQUEST_ID_KEY,
+} from '../../../../../../libs/common/constants/request-id.constants';
+import { LoggerFactory } from '../../logger/logger.factory';
+import { ContextLogger } from '../../logger/context-logger';
 
 @Injectable()
 export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger: Logger = new Logger(RabbitMQPublisherService.name);
+  private readonly logger: ContextLogger;
 
   private connection: AmqpConnectionManager;
   private channelWrapper: ChannelWrapper;
 
-  constructor(private readonly configService: ConfigService<Configuration, true>) {}
+  constructor(
+    private readonly configService: ConfigService<Configuration, true>,
+    private readonly asyncLocalStorageService: AsyncLocalStorageService,
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(RabbitMQPublisherService.name);
+  }
 
   async onModuleInit() {
     this.connect();
@@ -29,11 +42,14 @@ export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {
     this.connection = amqp.connect([rabbitMqUrl]);
 
     this.connection.on('connect', () => {
-      this.logger.log('\x1b[36mSuccessfully connected to RabbitMQ\x1b[0m');
+      this.logger.log('Successfully connected to RabbitMQ', this.connect.name);
     });
 
     this.connection.on('disconnect', ({ err }) => {
-      this.logger.error('Disconnected from RabbitMQ. Manager will try to reconnect...', err);
+      this.logger.error(
+        err instanceof Error ? err : new Error('Disconnected from RabbitMQ'),
+        this.connect.name,
+      );
     });
 
     this.channelWrapper = this.connection.createChannel({
@@ -44,14 +60,24 @@ export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async publish(exchange: string, routingKey: string, payload: any): Promise<void> {
+  async publish(exchange: string, routingKey: string, payload: unknown): Promise<void> {
     try {
+      const requestIdValue: unknown = this.asyncLocalStorageService.getStore()?.get(REQUEST_ID_KEY);
+      const requestId: string | undefined =
+        typeof requestIdValue === 'string' ? requestIdValue : undefined;
+
       await this.channelWrapper.publish(exchange, routingKey, payload, {
         persistent: true,
+        ...(requestId !== undefined ? { headers: { [REQUEST_ID_HEADER]: requestId } } : {}),
       });
     } catch (error) {
-      this.logger.error(`Publish error to ${exchange} with key ${routingKey}:`, error);
-      throw new Error(`Failed to publish to RabbitMQ: ${error.message}`);
+      this.logger.error(
+        error instanceof Error ? error : new Error(String(error)),
+        this.publish.name,
+      );
+      throw new Error(
+        `Failed to publish to RabbitMQ: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -63,9 +89,9 @@ export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {
       if (this.connection) {
         await this.connection.close();
       }
-      this.logger.log('\x1b[36mRabbitMQ connection gracefully closed\x1b[0m');
+      this.logger.log('RabbitMQ connection gracefully closed', this.close.name);
     } catch (e) {
-      this.logger.error('Error during RabbitMQ shutdown', e);
+      this.logger.error(e, this.close.name);
     }
   }
 }

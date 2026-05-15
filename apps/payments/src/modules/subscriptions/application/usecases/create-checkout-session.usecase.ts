@@ -15,10 +15,11 @@ import { CustomersRepository } from '../../infrastructure/customers.repository';
 import { Customer, Subscription, SubscriptionStatus } from '@generated/prisma-payments';
 import { PrismaService } from '../../../database/prisma.service';
 import { CreateCheckoutSessionDto } from '../services/types/create-checkout-session.dto';
-import { Logger } from '@nestjs/common';
+import { LoggerFactory } from '../../../logger/logger.factory';
+import { ContextLogger } from '../../../logger/context-logger';
 import { extractStripeCustomerId } from '../webhook/handlers/utils/extract-stripe-customer-id';
-import { StripeCSModes } from '../services/types/stripe-checkout-session-modes.enum';
 import { PaymentsRepository } from '../../infrastructure/payments.repository';
+import { StripeCSModes } from '../services/types/stripe-checkout-session-modes.enum';
 
 export class CreateCheckoutSessionCommand {
   constructor(public readonly dto: CreateCheckoutSessionApplicationDto) {}
@@ -28,7 +29,7 @@ export class CreateCheckoutSessionCommand {
 export class CreateCheckoutSessionUseCase
   implements ICommandHandler<CreateCheckoutSessionCommand, Notification<string>>
 {
-  private readonly logger = new Logger(CreateCheckoutSessionUseCase.name);
+  private readonly logger: ContextLogger;
   constructor(
     private readonly stripeService: StripeService,
     private readonly subscriptionsRepository: SubscriptionsRepository,
@@ -36,7 +37,10 @@ export class CreateCheckoutSessionUseCase
     private readonly configService: ConfigService<Configuration, true>,
     private readonly prisma: PrismaService,
     private readonly paymentsRepository: PaymentsRepository,
-  ) {}
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(CreateCheckoutSessionUseCase.name);
+  }
 
   async execute({
     dto: { userId, planId },
@@ -116,7 +120,8 @@ export class CreateCheckoutSessionUseCase
       });
     } catch {
       this.logger.warn(
-        `Saving new checkout session with id ${stripeResult.value.sessionId} in local db failed`,
+        `Saving to db checkout session with id ${stripeResult.value.sessionId} FAILED`,
+        this.execute.name,
       );
 
       return Notification.fail<string>(

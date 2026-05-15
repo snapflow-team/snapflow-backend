@@ -2,8 +2,8 @@ import { Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfigModule } from '@nestjs/config';
 import configuration, { loadEnv, validate } from '../setup/configuration/configuration';
+import { CryptoService } from '../../../../libs/common/services/crypto.service';
 
-/* Глобальный модуль для провайдеров и модулей необходимых во всех частях приложения (например: LoggerService, CqrsModule, etc...) */
 @Global()
 @Module({
   imports: [
@@ -15,6 +15,7 @@ import configuration, { loadEnv, validate } from '../setup/configuration/configu
       envFilePath: loadEnv(),
     }),
   ],
-  exports: [CqrsModule],
+  providers: [CryptoService],
+  exports: [CqrsModule, CryptoService],
 })
 export class CoreModule {}

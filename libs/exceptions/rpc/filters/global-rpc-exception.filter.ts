@@ -9,14 +9,29 @@ interface RpcEnvironmentSettings {
   readonly isProduction: boolean;
 }
 
+export type GlobalRpcExceptionFilterLogger = {
+  error(message: string, stack?: string): void;
+  warn(message: string): void;
+};
+
 @Catch()
 export class GlobalRpcExceptionFilter implements ExceptionFilter {
-  private readonly logger: Logger = new Logger(GlobalRpcExceptionFilter.name);
+  private readonly nestLogger: Logger = new Logger(GlobalRpcExceptionFilter.name);
+
+  private readonly defaultLogSink: GlobalRpcExceptionFilterLogger = {
+    error: (message: string, stack?: string): void => this.nestLogger.error(message, stack),
+    warn: (message: string): void => this.nestLogger.warn(message),
+  };
 
   constructor(
     private readonly serviceName: string,
     private readonly environmentSettings: RpcEnvironmentSettings,
+    private readonly externalLogger?: GlobalRpcExceptionFilterLogger,
   ) {}
+
+  private get logSink(): GlobalRpcExceptionFilterLogger {
+    return this.externalLogger ?? this.defaultLogSink;
+  }
 
   catch(exception: Error, host: ArgumentsHost): Observable<any> | any {
     const ctx: TcpContext = host.switchToRpc().getContext<TcpContext>();
@@ -50,6 +65,6 @@ export class GlobalRpcExceptionFilter implements ExceptionFilter {
       cleanStack = cleanStackTrace(exception?.stack);
     }
 
-    this.logger.error(`[RPC Pattern: ${pattern}] ${message}`, cleanStack);
+    this.logSink.error(`[RPC Pattern: ${pattern}] ${message}`, cleanStack);
   }
 }

@@ -8,7 +8,7 @@ import { CustomersRepository } from '../../../infrastructure/customers.repositor
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
 import { Notification } from '../../../../../common/notification/notification';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { extractSubscriptionId } from './utils/extract-subscription-id.helper';
 import { StripeService } from '../../services/stripe.service';
 import { BillingPeriod } from '../../types/billing-period.type';
@@ -20,10 +20,12 @@ import { extractEventDate } from './utils/extract-date-from-event-created.helper
 import { isSubscriptionRenewal } from './utils/check-is-subscription-renewal.helper';
 import { InvoicePayment } from '../../types/invoice-payment.type';
 import { SubscriptionRenewedEvent } from '../../../../../../../../libs/contracts/payments/payment-subscription-renewed.event';
+import { LoggerFactory } from '../../../../logger/logger.factory';
+import { ContextLogger } from '../../../../logger/context-logger';
 
 @Injectable()
 export class InvoicePaymentSucceededHandler implements WebhookHandler {
-  private readonly logger: Logger = new Logger(InvoicePaymentSucceededHandler.name);
+  private readonly logger: ContextLogger;
   constructor(
     private stripeService: StripeService,
     private customersRepository: CustomersRepository,
@@ -31,7 +33,10 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
     private subscriptionsRepository: SubscriptionsRepository,
     private paymentsRepository: PaymentsRepository,
     private prisma: PrismaService,
-  ) {}
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(InvoicePaymentSucceededHandler.name);
+  }
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.InvoicePaymentSucceeded;
   }
@@ -57,6 +62,7 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
     if (!stripeSubscriptionId) {
       this.logger.warn(
         `Unable to extract Stripe subscription id from invoice ${payload.id} for invoice.payment_succeeded. Skipping.`,
+        this.handle.name,
       );
       return Notification.ok();
     }
@@ -66,6 +72,7 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
     if (!localSubscription) {
       this.logger.warn(
         `No local subscription for Stripe subscription ${stripeSubscriptionId}, skipping invoice.payment_succeeded`,
+        this.handle.name,
       );
       return Notification.ok();
     }
@@ -76,7 +83,7 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
 
     const customer = await this.customersRepository.findById(localSubscription.customerId);
     if (!customer) {
-      this.logger.warn(`Customer with id ${localSubscription.customerId} not found`);
+      this.logger.warn(`Customer with id ${localSubscription.customerId} not found`, this.handle.name);
       return Notification.ok();
     }
 
@@ -94,6 +101,7 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
     if (stripePaymentResult.hasErrors) {
       this.logger.warn(
         `Parsing payment from invoice ${payload.id} failed, ${stripePaymentResult.message}`,
+        this.handle.name,
       );
       return Notification.ok();
     }
@@ -108,7 +116,10 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
         tx,
       );
       if (!renewedSubscription) {
-        this.logger.warn(`Subscription with id ${localSubscription.id} was not found and renewed`);
+        this.logger.warn(
+          `Subscription with id ${localSubscription.id} was not found and renewed`,
+          this.handle.name,
+        );
         throw new InternalServerException();
       }
 

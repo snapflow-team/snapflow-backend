@@ -6,8 +6,8 @@ import { RedisProvider } from './providers/redis.provider';
 import { REDIS_CLIENT_INJECT_TOKEN } from './providers/provide-tokens/redis-client.inject-token';
 import { HttpModule } from '@nestjs/axios';
 import { NotificationResultCodeMapper } from '../common/notification/notification-result-code.mapper';
+import { CryptoService } from '../../../../libs/common/services/crypto.service';
 
-/* Глобальный модуль для провайдеров и модулей необходимых во всех частях приложения (например: LoggerService, CqrsModule, etc...) */
 @Global()
 @Module({
   imports: [
@@ -20,7 +20,13 @@ import { NotificationResultCodeMapper } from '../common/notification/notificatio
       envFilePath: loadEnv(),
     }),
   ],
-  providers: [NotificationResultCodeMapper, RedisProvider],
-  exports: [HttpModule, CqrsModule, NotificationResultCodeMapper, REDIS_CLIENT_INJECT_TOKEN],
+  providers: [NotificationResultCodeMapper, RedisProvider, CryptoService],
+  exports: [
+    HttpModule,
+    CqrsModule,
+    NotificationResultCodeMapper,
+    REDIS_CLIENT_INJECT_TOKEN,
+    CryptoService,
+  ],
 })
 export class CoreModule {}

@@ -13,18 +13,20 @@ import { OutboxRepository } from '../../../../outbox/repositories/outbox.reposit
 import { Notification } from '../../../../../common/notification/notification';
 import { PrismaService } from '../../../../database/prisma.service';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
-import { Injectable, Logger } from '@nestjs/common';
-import { extractSubscriptionIdFromCS } from './utils/extract-subscription-id.helper';
-import { extractEventDate } from './utils/extract-date-from-event-created.helper';
-import { extractCustomerId } from './utils/extract-customer-id.helper';
+import { Injectable } from '@nestjs/common';
+import { LoggerFactory } from '../../../../logger/logger.factory';
+import { ContextLogger } from '../../../../logger/context-logger';
 import { StripeCSModes } from '../../services/types/stripe-checkout-session-modes.enum';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
 import { checkIsMetadata } from '../../type-guards/check-is-stripe-metadata.type-guard';
 import { SubscriptionRenewedEvent } from '../../../../../../../../libs/contracts/payments/payment-subscription-renewed.event';
+import { extractSubscriptionIdFromCS } from './utils/extract-subscription-id.helper';
+import { extractCustomerId } from './utils/extract-customer-id.helper';
+import { extractEventDate } from './utils/extract-date-from-event-created.helper';
 
 @Injectable()
 export class CheckoutSessionCompletedHandler implements WebhookHandler {
-  private readonly logger = new Logger(CheckoutSessionCompletedHandler.name);
+  private readonly logger: ContextLogger;
   type = StripeEvents.CheckoutSessionCompleted;
   constructor(
     private stripeService: StripeService,
@@ -34,7 +36,10 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
     private subscriptionsRepository: SubscriptionsRepository,
     private prisma: PrismaService,
     private dateService: DateService,
-  ) {}
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(CheckoutSessionCompletedHandler.name);
+  }
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.CheckoutSessionCompleted;
   }
@@ -106,7 +111,10 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
     const stripeCusId = extractCustomerId(stripeSubscription.customer);
     if (!stripeCusId) {
-      this.logger.warn(`Stripe customer with subscription: ${stripeSubscription.id} not found`);
+      this.logger.warn(
+        `Customer with subscription: ${stripeSubscription.id} not found`,
+        this.handle.name,
+      );
 
       return Notification.fail(
         NotificationResultCode.BadRequest,

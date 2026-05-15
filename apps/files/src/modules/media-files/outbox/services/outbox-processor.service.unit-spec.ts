@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { Logger } from '@nestjs/common';
 import { OutboxProcessorService } from './outbox-processor.service';
 import { OutboxRepository } from '../repositories/outbox.repository';
 import { StorageService } from '../../infrastructure/storage/storage.service';
 import { OutboxEvent, OutboxEventStatus, OutboxEventType } from '@generated/prisma-files';
 import { OutboxProcessing } from '../constants/outbox.constants';
+import { LoggerFactory } from '../../../logger/logger.factory';
 
 function createMockEvent(overrides: Partial<OutboxEvent> = {}): OutboxEvent {
   return {
@@ -25,6 +25,7 @@ describe('OutboxProcessorService (Unit)', () => {
   let storageServiceMock: Record<keyof StorageService, jest.Mock>;
   let outboxRepositoryMock: Record<keyof OutboxRepository, jest.Mock>;
   let configServiceMock: Record<keyof ConfigService, jest.Mock>;
+  let loggerMock: { log: jest.Mock; error: jest.Mock; warn: jest.Mock };
 
   beforeAll(() => {
     // Фиксируем системное время для предсказуемых тестов очистки (cleanup)
@@ -37,6 +38,12 @@ describe('OutboxProcessorService (Unit)', () => {
   });
 
   beforeEach(async () => {
+    loggerMock = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+    };
+
     storageServiceMock = {
       deleteFile: jest.fn(),
     } as any;
@@ -60,15 +67,14 @@ describe('OutboxProcessorService (Unit)', () => {
         { provide: StorageService, useValue: storageServiceMock },
         { provide: OutboxRepository, useValue: outboxRepositoryMock },
         { provide: ConfigService, useValue: configServiceMock },
+        {
+          provide: LoggerFactory,
+          useValue: { create: jest.fn().mockReturnValue(loggerMock) },
+        },
       ],
     }).compile();
 
     service = module.get<OutboxProcessorService>(OutboxProcessorService);
-
-    // Мокаем Logger, чтобы он не спамил в консоль во время успешных тестов
-    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -167,9 +173,9 @@ describe('OutboxProcessorService (Unit)', () => {
       await service.processOutboxEvents();
 
       expect(outboxRepositoryMock.lockEventsForProcessing).toHaveBeenCalledTimes(2);
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Critical failure in outbox processor loop',
-        expect.stringContaining('DB down'),
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'DB down' }),
+        'processOutboxEvents',
       );
     });
   });
@@ -200,7 +206,10 @@ describe('OutboxProcessorService (Unit)', () => {
       expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
         OutboxProcessing.STALE_THRESHOLD_MINUTES,
       );
-      expect(Logger.prototype.warn).toHaveBeenCalledWith(expect.stringContaining('3'));
+      expect(loggerMock.warn).toHaveBeenCalledWith(
+        expect.stringContaining('3'),
+        'handleStaleEvents',
+      );
     });
 
     it('при нулевом recoverStaleEvents не логирует warn', async () => {
@@ -211,7 +220,7 @@ describe('OutboxProcessorService (Unit)', () => {
       expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
         OutboxProcessing.STALE_THRESHOLD_MINUTES,
       );
-      expect(Logger.prototype.warn).not.toHaveBeenCalled();
+      expect(loggerMock.warn).not.toHaveBeenCalled();
     });
 
     it('при ошибке recoverStaleEvents не пробрасывает исключение', async () => {
@@ -220,10 +229,7 @@ describe('OutboxProcessorService (Unit)', () => {
 
       await expect(service.handleStaleEvents()).resolves.toBeUndefined();
 
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Failed to recover stale events',
-        repoError,
-      );
+      expect(loggerMock.error).toHaveBeenCalledWith(repoError, 'handleStaleEvents');
     });
   });
 });
