@@ -21,25 +21,26 @@ async function bootstrap() {
   const configService: ConfigService<Configuration, true> = app.get(
     ConfigService<Configuration, true>,
   );
-  const apiSettings: ApiSettings = configService.get<ApiSettings>('apiSettings');
   const environmentSettings: EnvironmentSettings =
     configService.get<EnvironmentSettings>('environmentSettings');
-  const swaggerSettings: SwaggerSettings = configService.get<SwaggerSettings>('swaggerSettings');
+  const { port, publicApiBaseUrl }: ApiSettings = configService.get<ApiSettings>('apiSettings');
+  const { swaggerPath }: SwaggerSettings = configService.get<SwaggerSettings>('swaggerSettings');
 
   applyAppInitialization(app);
 
-  const port: number = apiSettings.port;
   const env: string = environmentSettings.currentEnv;
+  const swaggerDocUrl: string = `${publicApiBaseUrl}/${GLOBAL_PREFIX}/${swaggerPath}`;
+  const showSwaggerInBanner: boolean =
+    environmentSettings.isDevelopment || environmentSettings.isStaging;
 
   await app.listen(port, () => {
     const startedAt: string = new Date().toLocaleString();
-    const swaggerDocUrl: string = `http://localhost:${port}/${GLOBAL_PREFIX}/${swaggerSettings.swaggerPath}`;
     printPaymentsStartupBannerToConsole({
       env,
       port,
       swaggerDocUrl,
       startedAt,
-      showSwagger: environmentSettings.isDevelopment,
+      showSwagger: showSwaggerInBanner,
     });
   });
 }
