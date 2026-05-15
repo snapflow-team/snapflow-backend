@@ -19,6 +19,7 @@ import { CustomerSubscriptionDeletedHandler } from './application/webhook/handle
 import { UpdateAutoRenewalUseCase } from './application/usecases/update-auto-renewal.usecase';
 import { GetMyPaymentsQueryHandler } from './application/queries/get-my-payments.query-handler';
 import { PaymentsQueryRepository } from './infrastructure/query/paments.query-repository';
+import { DateService } from '../../../../../libs/common/services/date.service';
 
 const controllers = [SubscriptionsController, StripeWebhookController];
 const queries = [GetPlansQueryHandler, GetMyPaymentsQueryHandler];
@@ -34,7 +35,7 @@ const webhookHandlers = [
   InvoicePaymentFailedHandler,
   CustomerSubscriptionDeletedHandler,
 ];
-const services = [StripeService];
+const services = [StripeService, DateService];
 const repositories = [
   SubscriptionsRepository,
   PaymentsRepository,

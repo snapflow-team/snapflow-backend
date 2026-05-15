@@ -29,7 +29,7 @@ export class CustomersRepository {
   }
 
   //Это метод для создания кастомера, который еще не имеет stripeCusId, так как еще пока не был создан в страйп
-  async createPartialCustomer(
+  async createPendingCustomer(
     userId: number,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Customer> {

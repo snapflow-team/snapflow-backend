@@ -10,11 +10,13 @@ import {
   isSubscriptionActivatedEvent,
   isSubscriptionCancelledEvent,
   isSubscriptionRenewalFailedEvent,
+  isSubscriptionRenewedEvent,
 } from './type-guards/payments-events.type-guards';
 import { UsersRepository } from '../../user-accounts/users/infrastructure/users.repository';
 import { SubscriptionCancelledEvent } from '../../../../../../libs/contracts/payments/payments-subscription-cancelled.event';
 import { LoggerFactory } from '../../logger/logger.factory';
 import { ContextLogger } from '../../logger/context-logger';
+import { SubscriptionRenewedEvent } from '../../../../../../libs/contracts/payments/payment-subscription-renewed.event';
 
 @Injectable()
 export class PaymentsUserSyncService {
@@ -37,6 +39,17 @@ export class PaymentsUserSyncService {
         }
         await this.upsertBusinessSubscription(payload);
         break;
+
+      case PaymentsRoutingKey.SubscriptionRenewed: {
+        if (!isSubscriptionRenewedEvent(payload)) {
+          this.logger.warn(`Invalid ${routingKey} payload`);
+
+          return;
+        }
+        await this.renewBusinessSubscription(payload);
+        break;
+      }
+
       case PaymentsRoutingKey.SubscriptionRenewalFailed: {
         if (!isSubscriptionRenewalFailedEvent(payload)) {
           this.logger.warn(`Invalid ${routingKey} payload`);
@@ -49,6 +62,7 @@ export class PaymentsUserSyncService {
         await this.deleteBusinessSubscription(payload);
         break;
       }
+
       case PaymentsRoutingKey.CheckoutSessionExpired: {
         if (!isCheckoutSessionExpiredEvent(payload)) {
           this.logger.warn(`Invalid ${routingKey} payload`);
@@ -60,6 +74,7 @@ export class PaymentsUserSyncService {
         );
         break;
       }
+
       case PaymentsRoutingKey.SubscriptionCancelled: {
         if (!isSubscriptionCancelledEvent(payload)) {
           this.logger.warn(`Invalid ${routingKey} payload`);
@@ -72,7 +87,14 @@ export class PaymentsUserSyncService {
         this.logger.warn(`Unhandled routing key: ${routingKey}`);
     }
   }
+  private async renewBusinessSubscription(data: SubscriptionRenewedEvent): Promise<void> {
+    const subscriptionActiveUntil: Date = new Date(data.currentPeriodEnd);
 
+    await this.usersRepository.updatePeriodEnd({
+      userId: data.userId,
+      subscriptionActiveUntil,
+    });
+  }
   private async upsertBusinessSubscription(data: SubscriptionActivatedEvent): Promise<void> {
     const subscriptionActiveUntil: Date | null =
       data.currentPeriodEnd !== undefined
