@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { RemoteAuthGuard } from '../auth/guards/remote-auth.guard';
 import { OutboxModule } from '../outbox/outbox.module';
+import { OutboxCommandsModule } from '../outbox-commands/outbox-commands.module';
 import { InboxModule } from '../inbox/inbox.module';
 import { SubscriptionsController } from './api/subscriptions.controller';
 import { GetPlansQueryHandler } from './application/queries/get-plans.query-handler';
@@ -48,7 +49,7 @@ const repositories = [
 const guards = [RemoteAuthGuard];
 
 @Module({
-  imports: [OutboxModule, forwardRef(() => InboxModule)],
+  imports: [OutboxModule, forwardRef(() => OutboxCommandsModule), forwardRef(() => InboxModule)],
   controllers: [...controllers],
   providers: [
     ...useCases,

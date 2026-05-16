@@ -8,6 +8,7 @@ import { BillingPeriod } from '../../types/billing-period.type';
 import { PaymentsRepository } from '../../../infrastructure/payments.repository';
 import {
   Customer,
+  OutboxCommandType,
   OutboxEventType,
   Payment,
   Prisma,
@@ -16,6 +17,8 @@ import {
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
 import { SubscriptionActivatedEvent } from '../../../../../../../../libs/contracts/payments';
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
+import { OutboxCommandRepository } from '../../../../outbox-commands/repositories/outbox-command.repository';
+import { StripeExtendSubscriptionPayload } from '../../../../outbox-commands/executors/stripe-extend-subscription.payload';
 import { Notification } from '../../../../../common/notification/notification';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
 import { Injectable } from '@nestjs/common';
@@ -38,6 +41,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
     private paymentsRepository: PaymentsRepository,
     private customersRepository: CustomersRepository,
     private outboxRepository: OutboxRepository,
+    private outboxCommandRepository: OutboxCommandRepository,
     private subscriptionsRepository: SubscriptionsRepository,
     private dateService: DateService,
     loggerFactory: LoggerFactory,
@@ -176,7 +180,14 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           tx,
         );
 
-        await this.stripeService.extendSubscription(stripeSubscriptionId, newEnd);
+        await this.outboxCommandRepository.saveCommand(
+          OutboxCommandType.STRIPE_EXTEND_SUBSCRIPTION,
+          {
+            stripeSubscriptionId,
+            newEndIso: newEnd.toISOString(),
+          } satisfies StripeExtendSubscriptionPayload,
+          tx,
+        );
 
         return Notification.ok();
       }
