@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { StripeEvents } from '../../constants/stripe-events.constants';
 import { isInvoiceObject } from '../../type-guards/stripe-webhook.type-guards';
 import { NotificationResultCode } from '../../../../../common/notification/notification-result-code';
-import { OutboxEventType, Subscription } from '@generated/prisma-payments';
+import { OutboxEventType, Prisma, Subscription } from '@generated/prisma-payments';
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
 import { Notification } from '../../../../../common/notification/notification';
@@ -13,7 +13,6 @@ import { extractSubscriptionId } from './utils/extract-subscription-id.helper';
 import { StripeService } from '../../services/stripe.service';
 import { BillingPeriod } from '../../types/billing-period.type';
 import { PaymentsRepository } from '../../../infrastructure/payments.repository';
-import { PrismaService } from '../../../../database/prisma.service';
 import { InternalServerException } from '../../../../../../../snapflow-core/src/common/exceptions/domain-exceptions';
 import { checkIsOldEvent } from './utils/check-is-old-event.helper';
 import { extractEventDate } from './utils/extract-date-from-event-created.helper';
@@ -32,7 +31,6 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
     private outboxRepository: OutboxRepository,
     private subscriptionsRepository: SubscriptionsRepository,
     private paymentsRepository: PaymentsRepository,
-    private prisma: PrismaService,
     loggerFactory: LoggerFactory,
   ) {
     this.logger = loggerFactory.create(InvoicePaymentSucceededHandler.name);
@@ -40,7 +38,10 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.InvoicePaymentSucceeded;
   }
-  async handle(event: Stripe.Event): Promise<Notification<void>> {
+  async handle(
+    event: Stripe.Event,
+    tx: Prisma.TransactionClient,
+  ): Promise<Notification<void>> {
     const payload = event.data.object;
 
     if (!isInvoiceObject(payload)) {
@@ -108,41 +109,39 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
 
     const paymentInfo: InvoicePayment = stripePaymentResult.value;
 
-    await this.prisma.$transaction(async (tx) => {
-      const renewedSubscription = await this.subscriptionsRepository.renewSubscription(
-        localSubscription.id,
-        newCurrentPeriod,
-        extractEventDate(event),
-        tx,
+    const renewedSubscription = await this.subscriptionsRepository.renewSubscription(
+      localSubscription.id,
+      newCurrentPeriod,
+      extractEventDate(event),
+      tx,
+    );
+    if (!renewedSubscription) {
+      this.logger.warn(
+        `Subscription with id ${localSubscription.id} was not found and renewed`,
+        this.handle.name,
       );
-      if (!renewedSubscription) {
-        this.logger.warn(
-          `Subscription with id ${localSubscription.id} was not found and renewed`,
-          this.handle.name,
-        );
-        throw new InternalServerException();
-      }
+      throw new InternalServerException();
+    }
 
-      await this.paymentsRepository.createSucceededPayment(
-        {
-          amount: paymentInfo.amount,
-          planId: renewedSubscription.planId,
-          subscriptionId: renewedSubscription.id,
-        },
-        tx,
-      );
+    await this.paymentsRepository.createSucceededPayment(
+      {
+        amount: paymentInfo.amount,
+        planId: renewedSubscription.planId,
+        subscriptionId: renewedSubscription.id,
+      },
+      tx,
+    );
 
-      await this.outboxRepository.saveEvent(
-        OutboxEventType.SUBSCRIPTION_RENEWED,
-        {
-          userId: customer.userId,
-          planId: localSubscription.planId,
-          subscriptionId: localSubscription.id,
-          currentPeriodEnd: newCurrentPeriod.end.toISOString(),
-        } satisfies SubscriptionRenewedEvent,
-        tx,
-      );
-    });
+    await this.outboxRepository.saveEvent(
+      OutboxEventType.SUBSCRIPTION_RENEWED,
+      {
+        userId: customer.userId,
+        planId: localSubscription.planId,
+        subscriptionId: localSubscription.id,
+        currentPeriodEnd: newCurrentPeriod.end.toISOString(),
+      } satisfies SubscriptionRenewedEvent,
+      tx,
+    );
 
     return Notification.ok();
   }

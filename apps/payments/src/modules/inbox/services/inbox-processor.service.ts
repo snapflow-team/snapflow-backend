@@ -92,7 +92,7 @@ export class InboxProcessorService {
       }
 
       await this.prisma.$transaction(async (tx) => {
-        const result: Notification<void> = await handler.handle(stripeEvent);
+        const result: Notification<void> = await handler.handle(stripeEvent, tx);
 
         if (result.hasErrors) {
           NotificationExceptionMapper.throw(result);

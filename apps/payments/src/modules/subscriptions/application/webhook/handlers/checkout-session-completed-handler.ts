@@ -6,12 +6,17 @@ import { NotificationResultCode } from '../../../../../common/notification/notif
 import { StripeService } from '../../services/stripe.service';
 import { BillingPeriod } from '../../types/billing-period.type';
 import { PaymentsRepository } from '../../../infrastructure/payments.repository';
-import { Customer, OutboxEventType, Payment, Subscription } from '@generated/prisma-payments';
+import {
+  Customer,
+  OutboxEventType,
+  Payment,
+  Prisma,
+  Subscription,
+} from '@generated/prisma-payments';
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
 import { SubscriptionActivatedEvent } from '../../../../../../../../libs/contracts/payments';
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
 import { Notification } from '../../../../../common/notification/notification';
-import { PrismaService } from '../../../../database/prisma.service';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
 import { Injectable } from '@nestjs/common';
 import { LoggerFactory } from '../../../../logger/logger.factory';
@@ -34,7 +39,6 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
     private customersRepository: CustomersRepository,
     private outboxRepository: OutboxRepository,
     private subscriptionsRepository: SubscriptionsRepository,
-    private prisma: PrismaService,
     private dateService: DateService,
     loggerFactory: LoggerFactory,
   ) {
@@ -44,7 +48,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
     return event.type === StripeEvents.CheckoutSessionCompleted;
   }
 
-  async handle(event: Stripe.Event): Promise<Notification<void>> {
+  async handle(event: Stripe.Event, tx: Prisma.TransactionClient): Promise<Notification<void>> {
     const payload = event.data.object;
 
     if (!isCheckoutSessionObject(payload)) {
@@ -152,58 +156,55 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           +payload.metadata.subscriptionDuration,
         );
 
-        await this.prisma.$transaction(async (tx) => {
-          await this.paymentsRepository.markAsPaid(localPayment.id, tx);
+        await this.paymentsRepository.markAsPaid(localPayment.id, tx);
 
-          await this.subscriptionsRepository.extendSubscription(
-            localPayment.subscriptionId,
-            newEnd,
-            extractEventDate(event),
-          );
+        await this.subscriptionsRepository.extendSubscription(
+          localPayment.subscriptionId,
+          newEnd,
+          extractEventDate(event),
+          tx,
+        );
 
-          await this.outboxRepository.saveEvent(
-            OutboxEventType.SUBSCRIPTION_RENEWED,
-            {
-              userId: localCustomer.userId,
-              planId: localSubscription.planId,
-              subscriptionId: localSubscription.id,
-              currentPeriodEnd: newEnd.toISOString(),
-            } satisfies SubscriptionRenewedEvent,
-            tx,
-          );
+        await this.outboxRepository.saveEvent(
+          OutboxEventType.SUBSCRIPTION_RENEWED,
+          {
+            userId: localCustomer.userId,
+            planId: localSubscription.planId,
+            subscriptionId: localSubscription.id,
+            currentPeriodEnd: newEnd.toISOString(),
+          } satisfies SubscriptionRenewedEvent,
+          tx,
+        );
 
-          await this.stripeService.extendSubscription(stripeSubscriptionId, newEnd);
-        });
+        await this.stripeService.extendSubscription(stripeSubscriptionId, newEnd);
 
         return Notification.ok();
       }
       case StripeCSModes.Subscription: {
         //Если у нас приходит платеж на оформление подписки
-        await this.prisma.$transaction(async (tx) => {
-          await this.paymentsRepository.markAsPaid(localPayment.id, tx);
+        await this.paymentsRepository.markAsPaid(localPayment.id, tx);
 
-          await this.subscriptionsRepository.activateSubscription(
-            {
-              subscriptionId: localPayment.subscriptionId,
-              stripeSubId: stripeSubscriptionId,
-              currentPeriod,
-              lastStripeEventAt: extractEventDate(event),
-              stripeCusId: stripeCusId,
-            },
-            tx,
-          );
+        await this.subscriptionsRepository.activateSubscription(
+          {
+            subscriptionId: localPayment.subscriptionId,
+            stripeSubId: stripeSubscriptionId,
+            currentPeriod,
+            lastStripeEventAt: extractEventDate(event),
+            stripeCusId: stripeCusId,
+          },
+          tx,
+        );
 
-          await this.outboxRepository.saveEvent(
-            OutboxEventType.SUBSCRIPTION_ACTIVATED,
-            {
-              userId: localCustomer.userId,
-              planId: localSubscription.planId,
-              subscriptionId: localSubscription.id,
-              currentPeriodEnd: localSubscription.currentPeriodEnd?.toISOString() ?? null,
-            } satisfies SubscriptionActivatedEvent,
-            tx,
-          );
-        });
+        await this.outboxRepository.saveEvent(
+          OutboxEventType.SUBSCRIPTION_ACTIVATED,
+          {
+            userId: localCustomer.userId,
+            planId: localSubscription.planId,
+            subscriptionId: localSubscription.id,
+            currentPeriodEnd: localSubscription.currentPeriodEnd?.toISOString() ?? null,
+          } satisfies SubscriptionActivatedEvent,
+          tx,
+        );
 
         return Notification.ok();
       }

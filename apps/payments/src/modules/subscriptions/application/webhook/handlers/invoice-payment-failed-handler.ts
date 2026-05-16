@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { StripeEvents } from '../../constants/stripe-events.constants';
 import { isInvoiceObject } from '../../type-guards/stripe-webhook.type-guards';
 import { NotificationResultCode } from '../../../../../common/notification/notification-result-code';
-import { OutboxEventType, Subscription } from '@generated/prisma-payments';
+import { OutboxEventType, Prisma, Subscription } from '@generated/prisma-payments';
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
 import { SubscriptionRenewalFailedEvent } from '../../../../../../../../libs/contracts/payments';
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
@@ -15,7 +15,6 @@ import { extractInvoiceFailureDetails } from './utils/extract-invoice-failure-de
 import { extractCustomerId } from './utils/extract-customer-id.helper';
 import { checkIsOldEvent } from './utils/check-is-old-event.helper';
 import { extractEventDate } from './utils/extract-date-from-event-created.helper';
-import { PrismaService } from '../../../../database/prisma.service';
 import { isSubscriptionRenewal } from './utils/check-is-subscription-renewal.helper';
 import { LoggerFactory } from '../../../../logger/logger.factory';
 import { ContextLogger } from '../../../../logger/context-logger';
@@ -27,7 +26,6 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
     private customersRepository: CustomersRepository,
     private outboxRepository: OutboxRepository,
     private subscriptionsRepository: SubscriptionsRepository,
-    private prisma: PrismaService,
     loggerFactory: LoggerFactory,
   ) {
     this.logger = loggerFactory.create(InvoicePaymentFailedHandler.name);
@@ -35,7 +33,10 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.InvoicePaymentFailed;
   }
-  async handle(event: Stripe.Event): Promise<Notification<void>> {
+  async handle(
+    event: Stripe.Event,
+    tx: Prisma.TransactionClient,
+  ): Promise<Notification<void>> {
     const payload = event.data.object;
 
     if (!isInvoiceObject(payload)) {
@@ -90,31 +91,29 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
       );
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await this.subscriptionsRepository.setToPastDue(
-        localSubscription.id,
-        extractEventDate(event),
-        tx,
-      );
+    await this.subscriptionsRepository.setToPastDue(
+      localSubscription.id,
+      extractEventDate(event),
+      tx,
+    );
 
-      const stripeCusId = extractCustomerId(payload.customer);
-      if (!stripeCusId) {
-        this.logger.warn(`No customer in invoice: ${payload.id}`, this.handle.name);
-        return Notification.fail(NotificationResultCode.InternalServerError, 'some error occurred');
-      }
+    const stripeCusId = extractCustomerId(payload.customer);
+    if (!stripeCusId) {
+      this.logger.warn(`No customer in invoice: ${payload.id}`, this.handle.name);
+      return Notification.fail(NotificationResultCode.InternalServerError, 'some error occurred');
+    }
 
-      const customer = await this.customersRepository.findByStripeCustomerId(stripeCusId);
-      if (!customer) {
-        this.logger.warn(
-          `No local customer found by stripeCusId : ${stripeCusId}`,
-          this.handle.name,
-        );
-        return Notification.fail(NotificationResultCode.InternalServerError, 'some error occurred');
-      }
+    const customer = await this.customersRepository.findByStripeCustomerId(stripeCusId, tx);
+    if (!customer) {
+      this.logger.warn(`No local customer found by stripeCusId : ${stripeCusId}`, this.handle.name);
+      return Notification.fail(NotificationResultCode.InternalServerError, 'some error occurred');
+    }
 
-      const { failureCode, failureMessage } = extractInvoiceFailureDetails(payload);
+    const { failureCode, failureMessage } = extractInvoiceFailureDetails(payload);
 
-      await this.outboxRepository.saveEvent(OutboxEventType.SUBSCRIPTION_RENEWAL_FAILED, {
+    await this.outboxRepository.saveEvent(
+      OutboxEventType.SUBSCRIPTION_RENEWAL_FAILED,
+      {
         userId: customer.userId,
         planId: localSubscription.planId,
         subscriptionId: localSubscription.id,
@@ -126,8 +125,9 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
             : new Date(payload.next_payment_attempt * 1000).toISOString(),
         failureCode,
         failureMessage,
-      } satisfies SubscriptionRenewalFailedEvent);
-    });
+      } satisfies SubscriptionRenewalFailedEvent,
+      tx,
+    );
 
     return Notification.ok();
   }

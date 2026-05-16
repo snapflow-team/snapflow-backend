@@ -12,6 +12,8 @@ import { WEBHOOK_HANDLERS } from '../../../../core/providers/provide-tokens/webh
 import { WebhookHandler } from '../webhook/webhook.handler';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
+import { PrismaService } from '../../../database/prisma.service';
+import { NotificationExceptionMapper } from '../../../../common/notification/notification-exception.mapper';
 
 const SUPPORTED_WEBHOOK_EVENTS: ReadonlySet<string> = new Set([
   StripeEvents.CheckoutSessionCompleted,
@@ -33,6 +35,7 @@ export class HandleStripeWebhookUseCase
 
   constructor(
     private readonly stripeService: StripeService,
+    private readonly prisma: PrismaService,
     @Inject(REDIS_CLIENT_INJECT_TOKEN) private readonly redis: Redis,
     @Inject(WEBHOOK_HANDLERS) private readonly handlers: WebhookHandler[],
     loggerFactory: LoggerFactory,
@@ -91,7 +94,15 @@ export class HandleStripeWebhookUseCase
         return Notification.ok();
       }
 
-      result = await handler.handle(event);
+      result = await this.prisma.$transaction(async (tx) => {
+        const handlerResult: Notification<void> = await handler.handle(event, tx);
+
+        if (handlerResult.hasErrors) {
+          NotificationExceptionMapper.throw(handlerResult);
+        }
+
+        return handlerResult;
+      });
     } catch (error) {
       this.logger.error(error, this.execute.name);
 
