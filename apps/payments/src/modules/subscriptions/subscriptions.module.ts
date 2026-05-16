@@ -9,7 +9,6 @@ import { CreateCheckoutSessionUseCase } from './application/usecases/create-chec
 import { StripeService } from './application/services/stripe.service';
 import { SubscriptionsRepository } from './infrastructure/subscriptions.repository';
 import { StripeWebhookController } from './api/stripe-webhook.controller';
-import { HandleStripeWebhookUseCase } from './application/usecases/handle-stripe-webhook.usecase';
 import { ReceiveStripeWebhookUseCase } from './application/usecases/receive-stripe-webhook.usecase';
 import { PaymentsRepository } from './infrastructure/payments.repository';
 import { CustomersRepository } from './infrastructure/customers.repository';
@@ -28,7 +27,6 @@ const controllers = [SubscriptionsController, StripeWebhookController];
 const queries = [GetPlansQueryHandler, GetMyPaymentsQueryHandler];
 const useCases = [
   CreateCheckoutSessionUseCase,
-  HandleStripeWebhookUseCase,
   ReceiveStripeWebhookUseCase,
   UpdateAutoRenewalUseCase,
 ];
