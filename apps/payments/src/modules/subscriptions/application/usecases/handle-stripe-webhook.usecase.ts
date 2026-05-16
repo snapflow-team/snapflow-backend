@@ -79,14 +79,18 @@ export class HandleStripeWebhookUseCase
     try {
       //Подбираем нужный хэндлер под конкретный ивент
       const handler = this.handlers.find((handler) => handler.supports(event));
+
       this.logger.debug(`We handling event ${event.type}`, this.execute.name);
+
       if (!handler) {
         this.logger.warn(
           `Suitable handler for this event ${event.type} not found, despite we support this event`,
           this.execute.name,
         );
+
         return Notification.ok();
       }
+
       result = await handler.handle(event);
     } catch (error) {
       this.logger.error(error, this.execute.name);
