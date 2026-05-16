@@ -6,7 +6,7 @@ import { NotificationResultCode } from '../../../../../common/notification/notif
 import { StripeService } from '../../services/stripe.service';
 import { BillingPeriod } from '../../types/billing-period.type';
 import { PaymentsRepository } from '../../../infrastructure/payments.repository';
-import { Customer, OutboxEventType, Payment } from '@generated/prisma-payments';
+import { Customer, OutboxEventType, Payment, Subscription } from '@generated/prisma-payments';
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
 import { SubscriptionActivatedEvent } from '../../../../../../../../libs/contracts/payments';
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
@@ -43,6 +43,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.CheckoutSessionCompleted;
   }
+
   async handle(event: Stripe.Event): Promise<Notification<void>> {
     const payload = event.data.object;
 
@@ -57,7 +58,10 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
     const stripeSubscriptionId: string | null = extractSubscriptionIdFromCS(payload);
     if (!stripeSubscriptionId) {
-      this.logger.warn(`Stripe subscription in checkout session ${payload.id} is null`);
+      this.logger.warn(
+        `Stripe subscription in checkout session ${payload.id} is null`,
+        this.handle.name,
+      );
 
       return Notification.fail(
         NotificationResultCode.BadRequest,
@@ -67,7 +71,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
     const localPayment: Payment | null = await this.paymentsRepository.findByExternalId(externalId);
     if (!localPayment) {
-      this.logger.warn(`Local payments with externalId ${externalId} not found`);
+      this.logger.warn(`Local payments with externalId ${externalId} not found`, this.handle.name);
 
       return Notification.fail(
         NotificationResultCode.InternalServerError,
@@ -75,11 +79,14 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
       );
     }
 
-    const localSubscription = await this.subscriptionsRepository.findById(
+    const localSubscription: Subscription | null = await this.subscriptionsRepository.findById(
       localPayment.subscriptionId,
     );
     if (!localSubscription) {
-      this.logger.warn(`Local subscription with id ${localPayment.subscriptionId} not found`);
+      this.logger.warn(
+        `Local subscription with id ${localPayment.subscriptionId} not found`,
+        this.handle.name,
+      );
 
       return Notification.fail(
         NotificationResultCode.InternalServerError,
@@ -91,7 +98,10 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
       localSubscription.customerId,
     );
     if (!localCustomer) {
-      this.logger.warn(`Local customer with id ${localSubscription.customerId} not found`);
+      this.logger.warn(
+        `Local customer with id ${localSubscription.customerId} not found`,
+        this.handle.name,
+      );
 
       return Notification.fail(
         NotificationResultCode.InternalServerError,
@@ -121,11 +131,15 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
         `Stripe customer with subscription: ${stripeSubscription.id} not found`,
       );
     }
+
     switch (payload.mode) {
       //Если у нас приходит платеж на продление подписки
       case StripeCSModes.Payment: {
         if (!checkIsMetadata(payload.metadata)) {
-          this.logger.log(`No metadata for stripe checkout session ${externalId}`);
+          this.logger.log(
+            `No metadata for stripe checkout session ${externalId}`,
+            this.handle.name,
+          );
 
           return Notification.fail(
             NotificationResultCode.InternalServerError,
@@ -160,6 +174,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
           await this.stripeService.extendSubscription(stripeSubscriptionId, newEnd);
         });
+
         return Notification.ok();
       }
       case StripeCSModes.Subscription: {
@@ -189,6 +204,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
             tx,
           );
         });
+
         return Notification.ok();
       }
       default: {
