@@ -1,10 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  InboxEvent,
-  InboxEventStatus,
-  PaymentProvider,
-  Prisma,
-} from '@generated/prisma-payments';
+import { InboxEvent, InboxEventStatus, PaymentProvider, Prisma } from '@generated/prisma-payments';
 import { PrismaService } from '../../database/prisma.service';
 import { InboxProcessing } from '../constants/inbox.constants';
 import Stripe from 'stripe';
@@ -49,7 +44,16 @@ export class InboxRepository {
         LIMIT ${limit}
         FOR UPDATE SKIP LOCKED
       )
-      RETURNING *;
+      RETURNING
+        "event_id" AS "eventId",
+        "provider",
+        "payload",
+        "status",
+        "attempts",
+        "error",
+        "received_at" AS "receivedAt",
+        "processed_at" AS "processedAt",
+        "updated_at" AS "updatedAt";
     `;
   }
 

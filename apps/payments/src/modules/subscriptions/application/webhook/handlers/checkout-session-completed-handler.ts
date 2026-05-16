@@ -212,7 +212,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
             userId: localCustomer.userId,
             planId: localSubscription.planId,
             subscriptionId: localSubscription.id,
-            currentPeriodEnd: localSubscription.currentPeriodEnd?.toISOString() ?? null,
+            currentPeriodEnd: currentPeriod.end.toISOString(),
           } satisfies SubscriptionActivatedEvent,
           tx,
         );
