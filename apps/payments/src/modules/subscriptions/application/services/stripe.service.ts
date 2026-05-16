@@ -154,13 +154,21 @@ export class StripeService {
     }
   }
 
-  async extendSubscription(stripeSubId: string, newEnd: Date): Promise<void> {
-    await this.stripe.subscriptions.update(stripeSubId, {
-      //Ставим новую дату протухания подписки
-      trial_end: this.dateService.convertDateToSeconds(newEnd),
-      //Задаем поведению страйпу, чтобы он не делал никаких попыток досчитать что-то прямо сейчас
-      proration_behavior: 'none',
-    });
+  async extendSubscription(
+    stripeSubId: string,
+    newEnd: Date,
+    options?: { idempotencyKey?: string },
+  ): Promise<void> {
+    await this.stripe.subscriptions.update(
+      stripeSubId,
+      {
+        //Ставим новую дату протухания подписки
+        trial_end: this.dateService.convertDateToSeconds(newEnd),
+        //Задаем поведению страйпу, чтобы он не делал никаких попыток досчитать что-то прямо сейчас
+        proration_behavior: 'none',
+      },
+      options?.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : undefined,
+    );
   }
 
   private getBillingPeriodFromSubscriptionObject(

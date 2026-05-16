@@ -5,6 +5,7 @@ import { CoreModule } from './core/core.module';
 import { PrismaModule } from './modules/database/prisma.module';
 import { OutboxModule } from './modules/outbox/outbox.module';
 import { InboxModule } from './modules/inbox/inbox.module';
+import { OutboxCommandsModule } from './modules/outbox-commands/outbox-commands.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from './modules/logger/logger.module';
@@ -18,6 +19,7 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
     PrismaModule,
     OutboxModule,
     InboxModule,
+    OutboxCommandsModule,
     SubscriptionsModule,
   ],
   controllers: [PaymentsController],

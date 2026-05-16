@@ -82,6 +82,6 @@ const guards = [RemoteAuthGuard];
       ],
     },
   ],
-  exports: [WEBHOOK_HANDLERS],
+  exports: [WEBHOOK_HANDLERS, StripeService],
 })
 export class SubscriptionsModule {}
