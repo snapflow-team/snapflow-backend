@@ -79,6 +79,6 @@ const guards = [RemoteAuthGuard];
       ],
     },
   ],
-  exports: [],
+  exports: [WEBHOOK_HANDLERS],
 })
 export class SubscriptionsModule {}
