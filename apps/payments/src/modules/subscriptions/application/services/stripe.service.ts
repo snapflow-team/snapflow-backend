@@ -159,7 +159,16 @@ export class StripeService {
     newEnd: Date,
     options?: { idempotencyKey?: string },
   ): Promise<void> {
-    await this.stripe.subscriptions.update(
+    const idempotencyKey = options?.idempotencyKey;
+
+    if (idempotencyKey) {
+      this.logger.debug(
+        `Stripe subscriptions.update subscriptionId=${stripeSubId} idempotencyKey=${idempotencyKey}`,
+        this.extendSubscription.name,
+      );
+    }
+
+    const subscription = await this.stripe.subscriptions.update(
       stripeSubId,
       {
         //Ставим новую дату протухания подписки
@@ -167,8 +176,15 @@ export class StripeService {
         //Задаем поведению страйпу, чтобы он не делал никаких попыток досчитать что-то прямо сейчас
         proration_behavior: 'none',
       },
-      options?.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : undefined,
+      idempotencyKey ? { idempotencyKey } : undefined,
     );
+
+    if (idempotencyKey) {
+      this.logger.log(
+        `Stripe subscriptions.update succeeded subscriptionId=${subscription.id} status=${subscription.status} idempotencyKey=${idempotencyKey}`,
+        this.extendSubscription.name,
+      );
+    }
   }
 
   private getBillingPeriodFromSubscriptionObject(

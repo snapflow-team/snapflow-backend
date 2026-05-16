@@ -101,7 +101,15 @@ describe('OutboxCommandProcessorService (unit)', () => {
       expect(outboxCommandRepositoryMock.markAsProcessed).toHaveBeenCalledWith('cmd-uuid-ok');
       expect(outboxCommandRepositoryMock.markAsFailed).not.toHaveBeenCalled();
       expect(loggerMock.debug).toHaveBeenCalledWith(
+        expect.stringContaining('Picked 1 outbox commands for processing'),
+        'processOutboxCommands',
+      );
+      expect(loggerMock.debug).toHaveBeenCalledWith(
         expect.stringContaining('idempotencyKey=cmd-uuid-ok'),
+        'processOutboxCommands',
+      );
+      expect(loggerMock.debug).toHaveBeenCalledWith(
+        expect.stringMatching(/Outbox command cmd-uuid-ok type=.* processed in \d+ms/),
         'processOutboxCommands',
       );
     });

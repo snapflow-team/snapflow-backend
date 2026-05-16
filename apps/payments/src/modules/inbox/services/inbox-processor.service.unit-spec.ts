@@ -110,6 +110,14 @@ describe('InboxProcessorService (unit)', () => {
       );
       expect(inboxRepositoryMock.markAsProcessed).toHaveBeenCalledWith('evt_ok', txMock);
       expect(inboxRepositoryMock.markAsFailed).not.toHaveBeenCalled();
+      expect(loggerMock.debug).toHaveBeenCalledWith(
+        expect.stringContaining('Picked 1 inbox events for processing'),
+        'processInboxEvents',
+      );
+      expect(loggerMock.debug).toHaveBeenCalledWith(
+        expect.stringMatching(/Event evt_ok type=.* processed in \d+ms/),
+        'processInboxEvents',
+      );
     });
 
     it('если handler не найден, помечает событие PROCESSED без транзакции', async () => {
