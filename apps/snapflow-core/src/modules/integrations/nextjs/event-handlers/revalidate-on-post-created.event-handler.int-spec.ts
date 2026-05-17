@@ -1,24 +1,34 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { CqrsModule } from '@nestjs/cqrs';
-import { of, throwError } from 'rxjs'; // Для мока Axios
+import { CommandBus, CqrsModule } from '@nestjs/cqrs';
+import { of, throwError } from 'rxjs';
 import { RevalidateOnPostCreatedEventHandler } from './revalidate-on-post-created.event-handler';
+import { RevalidateOnNewSignupEventHandler } from './revalidate-on-new-signup.event-handler';
 import { NextjsRevalidationService } from '../nextjs-revalidation.service';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
 import { CryptoService } from '../../../../../../../libs/common/services/crypto.service';
 import { NextjsEndpoints } from '../constants/nextjs-endpoints';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { HomeRevalidationCountersStore } from '../infrastructure/home-revalidation-counters.store';
-import { RecordHomeRevalidationActivityUseCase } from '../application/record-home-revalidation-activity-usecase';
-import { HOME_REVALIDATION_REDIS_KEYS } from '../constants/home-revalidation.constants';
+import {
+  RecordHomeRevalidationActivityCommand,
+  RecordHomeRevalidationActivityUseCase,
+} from '../application/record-home-revalidation-activity-usecase';
+import {
+  HOME_REVALIDATION_REDIS_KEYS,
+  HomeRevalidationActivitySource,
+} from '../constants/home-revalidation.constants';
 
-describe('RevalidateOnPostCreatedEventHandler (Integration)', () => {
+const REVALIDATE_URL = `https://front.mock.com${NextjsEndpoints.Revalidate}`;
+
+describe('Home revalidation (Integration)', () => {
   let module: TestingModule;
-  let eventHandler: RevalidateOnPostCreatedEventHandler;
+  let postEventHandler: RevalidateOnPostCreatedEventHandler;
+  let signupEventHandler: RevalidateOnNewSignupEventHandler;
+  let commandBus: CommandBus;
   let httpServicePostMock: jest.Mock;
 
-  // Внутреннее состояние нашего мокового Redis
   let mockRedisStore: Record<string, number> = {};
 
   const mockRedisClient = {
@@ -32,7 +42,7 @@ describe('RevalidateOnPostCreatedEventHandler (Integration)', () => {
 
       return value === undefined ? null : String(value);
     }),
-    set: jest.fn().mockImplementation(async (key: string, value: any) => {
+    set: jest.fn().mockImplementation(async (key: string, value: unknown) => {
       mockRedisStore[key] = Number(value);
       return 'OK';
     }),
@@ -43,12 +53,13 @@ describe('RevalidateOnPostCreatedEventHandler (Integration)', () => {
   };
 
   beforeAll(async () => {
-    httpServicePostMock = jest.fn().mockReturnValue(of({ data: 'ok' })); // Возвращаем успешный Observable
+    httpServicePostMock = jest.fn().mockReturnValue(of({ data: 'ok' }));
 
     module = await Test.createTestingModule({
       imports: [CqrsModule],
       providers: [
         RevalidateOnPostCreatedEventHandler,
+        RevalidateOnNewSignupEventHandler,
         NextjsRevalidationService,
         HomeRevalidationCountersStore,
         RecordHomeRevalidationActivityUseCase,
@@ -95,14 +106,13 @@ describe('RevalidateOnPostCreatedEventHandler (Integration)', () => {
 
     await module.init();
 
-    eventHandler = module.get<RevalidateOnPostCreatedEventHandler>(
-      RevalidateOnPostCreatedEventHandler,
-    );
+    postEventHandler = module.get(RevalidateOnPostCreatedEventHandler);
+    signupEventHandler = module.get(RevalidateOnNewSignupEventHandler);
+    commandBus = module.get(CommandBus);
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Очищаем "Redis" перед каждым тестом
     mockRedisStore = {
       [HOME_REVALIDATION_REDIS_KEYS.posts]: 0,
       [HOME_REVALIDATION_REDIS_KEYS.signups]: 0,
@@ -114,68 +124,128 @@ describe('RevalidateOnPostCreatedEventHandler (Integration)', () => {
     await module.close();
   });
 
-  describe('Позитивные сценарии', () => {
-    it('должен только инкрементировать счетчик в Redis, если создано менее 4 постов (запрос на ревалидацию НЕ отправляется)', async () => {
-      // 1. Устанавливаем счетчик в 1
+  const expectRevalidationRequest = () => {
+    expect(mockCryptoService.generateJwtToken).toHaveBeenCalledTimes(1);
+    expect(httpServicePostMock).toHaveBeenCalledTimes(1);
+    expect(httpServicePostMock).toHaveBeenCalledWith(
+      REVALIDATE_URL,
+      {},
+      { headers: { Authorization: 'Bearer mocked_jwt_token' } },
+    );
+  };
+
+  const expectBothCountersReset = () => {
+    expect(mockRedisClient.set).toHaveBeenCalledWith(HOME_REVALIDATION_REDIS_KEYS.posts, 0);
+    expect(mockRedisClient.set).toHaveBeenCalledWith(HOME_REVALIDATION_REDIS_KEYS.signups, 0);
+    expect(mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts]).toBe(0);
+    expect(mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups]).toBe(0);
+  };
+
+  describe('RevalidateOnPostCreatedEventHandler', () => {
+    it('должен только инкрементировать счётчик постов, если создано менее 4 постов', async () => {
       mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = 1;
 
-      // 2. Вызываем обработчик события
-      await eventHandler.handle();
+      await postEventHandler.handle();
 
-      // 3. Проверяем, что счетчик увеличился до 2
       expect(mockRedisClient.incr).toHaveBeenCalledWith(HOME_REVALIDATION_REDIS_KEYS.posts);
       expect(mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts]).toBe(2);
-
-      // 4. Проверяем, что запрос на фронт НЕ улетел
       expect(httpServicePostMock).not.toHaveBeenCalled();
       expect(mockCryptoService.generateJwtToken).not.toHaveBeenCalled();
     });
 
-    it('должен отправить HTTP-запрос на ревалидацию и обнулить Redis, если это 4-й созданный пост', async () => {
-      // 1. Устанавливаем счетчик в 3 (следующий пост будет 4-м)
+    it('должен отправить HTTP на /api/revalidate-home и обнулить оба счётчика при 4-м посте', async () => {
       mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = 3;
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 2;
 
-      await eventHandler.handle();
+      await postEventHandler.handle();
 
-      // 3. Проверяем, что счетчик инкрементировался
       expect(mockRedisClient.incr).toHaveBeenCalledWith(HOME_REVALIDATION_REDIS_KEYS.posts);
+      expectRevalidationRequest();
+      expectBothCountersReset();
+    });
 
-      // 4. Проверяем, что токен сгенерирован и HTTP-запрос улетел на правильный URL
-      expect(mockCryptoService.generateJwtToken).toHaveBeenCalledTimes(1);
+    it('не должен сбрасывать счётчики, если HTTP-запрос завершился ошибкой', async () => {
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = 3;
+      httpServicePostMock.mockReturnValueOnce(throwError(() => new Error('Next.js is down')));
+
+      await expect(postEventHandler.handle()).resolves.not.toThrow();
+
       expect(httpServicePostMock).toHaveBeenCalledTimes(1);
-      expect(httpServicePostMock).toHaveBeenCalledWith(
-        `https://front.mock.com${NextjsEndpoints.Revalidate}`,
-        {},
-        { headers: { Authorization: 'Bearer mocked_jwt_token' } },
-      );
-
-      // 5. Проверяем, что оба счётчика в Redis сброшены на 0
-      expect(mockRedisClient.set).toHaveBeenCalledWith(HOME_REVALIDATION_REDIS_KEYS.posts, 0);
-      expect(mockRedisClient.set).toHaveBeenCalledWith(HOME_REVALIDATION_REDIS_KEYS.signups, 0);
-      expect(mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts]).toBe(0);
-      expect(mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups]).toBe(0);
+      expect(mockRedisClient.set).not.toHaveBeenCalled();
+      expect(mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts]).toBe(4);
     });
   });
 
-  describe('Негативные сценарии', () => {
-    it('не должен падать (перехватывать ошибку), если HTTP-запрос на Next.js фронтенд завершился ошибкой', async () => {
-      // 1. Подготавливаем 4-й пост, чтобы триггернуть запрос
+  describe('RevalidateOnNewSignupEventHandler', () => {
+    it('должен только инкрементировать счётчик регистраций, если создано менее 5 регистраций', async () => {
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 2;
+
+      await signupEventHandler.handle();
+
+      expect(mockRedisClient.incr).toHaveBeenCalledWith(HOME_REVALIDATION_REDIS_KEYS.signups);
+      expect(mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups]).toBe(3);
+      expect(httpServicePostMock).not.toHaveBeenCalled();
+      expect(mockCryptoService.generateJwtToken).not.toHaveBeenCalled();
+    });
+
+    it('должен отправить HTTP на /api/revalidate-home и обнулить оба счётчика при 5-й регистрации', async () => {
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 4;
       mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = 3;
 
-      // Настраиваем axios так, чтобы он выкинул ошибку сети
+      await signupEventHandler.handle();
+
+      expect(mockRedisClient.incr).toHaveBeenCalledWith(HOME_REVALIDATION_REDIS_KEYS.signups);
+      expectRevalidationRequest();
+      expectBothCountersReset();
+    });
+
+    it('не должен сбрасывать счётчики, если HTTP-запрос завершился ошибкой', async () => {
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 4;
       httpServicePostMock.mockReturnValueOnce(throwError(() => new Error('Next.js is down')));
 
-      // 2. Обработчик не должен прокидывать ошибку наверх (приложение не должно падать)
-      await expect(eventHandler.handle()).resolves.not.toThrow();
+      await expect(signupEventHandler.handle()).resolves.not.toThrow();
 
-      // 3. Убеждаемся, что попытка отправить запрос была
       expect(httpServicePostMock).toHaveBeenCalledTimes(1);
-
-      // 4. Проверяем, что сброс в 0 НЕ вызывался (так как вернулся false)
       expect(mockRedisClient.set).not.toHaveBeenCalled();
+      expect(mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups]).toBe(5);
+    });
+  });
 
-      // 5. Счетчик должен остаться на значении 4 (так как мы сделали incr, но не сделали set 0)
-      expect(mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts]).toBe(4);
+  describe('RecordHomeRevalidationActivityUseCase (OR threshold)', () => {
+    it('должен триггерить ревалидацию по порогу регистраций, даже если постов меньше 4', async () => {
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = 1;
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 4;
+
+      await commandBus.execute(
+        new RecordHomeRevalidationActivityCommand(HomeRevalidationActivitySource.Signup),
+      );
+
+      expectRevalidationRequest();
+      expectBothCountersReset();
+    });
+
+    it('должен триггерить ревалидацию по порогу постов, даже если регистраций меньше 5', async () => {
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = 3;
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 1;
+
+      await commandBus.execute(
+        new RecordHomeRevalidationActivityCommand(HomeRevalidationActivitySource.Post),
+      );
+
+      expectRevalidationRequest();
+      expectBothCountersReset();
+    });
+
+    it('не должен триггерить ревалидацию, пока оба счётчика ниже порогов', async () => {
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = 2;
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 3;
+
+      await commandBus.execute(
+        new RecordHomeRevalidationActivityCommand(HomeRevalidationActivitySource.Post),
+      );
+
+      expect(mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts]).toBe(3);
+      expect(httpServicePostMock).not.toHaveBeenCalled();
     });
   });
 });
