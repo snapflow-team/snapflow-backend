@@ -91,8 +91,14 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
     }
 
     await this.prisma.$transaction(async (tx) => {
+      const nextPaymentAt =
+        payload.next_payment_attempt === null
+          ? null
+          : new Date(payload.next_payment_attempt * 1000);
+
       await this.subscriptionsRepository.setToPastDue(
         localSubscription.id,
+        nextPaymentAt,
         extractEventDate(event),
         tx,
       );
@@ -120,10 +126,7 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
         subscriptionId: localSubscription.id,
         stripeInvoiceId: payload.id,
         attemptCount: payload.attempt_count,
-        nextPaymentAttempt:
-          payload.next_payment_attempt === null
-            ? null
-            : new Date(payload.next_payment_attempt * 1000).toISOString(),
+        nextPaymentAttempt: nextPaymentAt === null ? null : nextPaymentAt.toISOString(),
         failureCode,
         failureMessage,
       } satisfies SubscriptionRenewalFailedEvent);
