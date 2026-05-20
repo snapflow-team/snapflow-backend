@@ -17,6 +17,13 @@ export class SubscriptionViewDto {
   status: SubscriptionStatus;
 
   @ApiProperty({
+    description: 'Флаг автопродления подписки',
+    example: 'true',
+    enum: SubscriptionStatus,
+  })
+  autoRenewal: boolean;
+
+  @ApiProperty({
     description: 'Тип аккаунта (PERSONAL или BUSINESS)',
     example: 'BUSINESS',
     enum: AccountType,
@@ -61,6 +68,7 @@ export class SubscriptionViewDto {
 
     dto.subscriptionId = subscription.id.toString();
     dto.status = subscription.status;
+    dto.autoRenewal = subscription.autoRenewal;
     dto.accountType = subscription.accountType;
     dto.subscriptionType = subscription.planId;
     dto.subscriptionLabel =
