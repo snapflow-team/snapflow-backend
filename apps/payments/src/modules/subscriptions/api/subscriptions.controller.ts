@@ -31,6 +31,9 @@ import { GetMyPaymentsSwagger } from './swagger/get-my-payments.swagger';
 import { UpdateAutoRenewalInputDto } from './input-dto/update-auto-renewal.input-dto';
 import { UpdateAutoRenewalCommand } from '../application/usecases/update-auto-renewal.usecase';
 import { UpdateAutoRenewalSwagger } from './swagger/update-auto-renewal.swagger';
+import { GetMyCurrentSubscriptionQuery } from '../application/queries/get-my-current-subscription.query-handler';
+import { SubscriptionViewDto } from './view-dto/subscription.view-dto';
+import { GetMyCurrentSubscriptionSwagger } from './swagger/get-my-current-subscription.swagger';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -55,6 +58,17 @@ export class SubscriptionsController {
   ): Promise<PaginatedViewDto<PaymentViewDto>> {
     return this.queryBus.execute<GetMyPaymentsQuery, PaginatedViewDto<PaymentViewDto>>(
       new GetMyPaymentsQuery(userId, query),
+    );
+  }
+
+  @Get('current')
+  @GetMyCurrentSubscriptionSwagger()
+  @UseGuards(RemoteAuthGuard)
+  async getMyCurrentSubscription(
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+  ): Promise<SubscriptionViewDto | null> {
+    return this.queryBus.execute<GetMyCurrentSubscriptionQuery, SubscriptionViewDto | null>(
+      new GetMyCurrentSubscriptionQuery(userId),
     );
   }
 
@@ -92,6 +106,7 @@ export class SubscriptionsController {
     if (notification.hasErrors) {
       NotificationExceptionMapper.throw(notification);
     }
+
     return;
   }
 }

@@ -18,11 +18,17 @@ import { WEBHOOK_HANDLERS } from '../../core/providers/provide-tokens/webhook-ha
 import { CustomerSubscriptionDeletedHandler } from './application/webhook/handlers/customer-subscription-deleted-handler';
 import { UpdateAutoRenewalUseCase } from './application/usecases/update-auto-renewal.usecase';
 import { GetMyPaymentsQueryHandler } from './application/queries/get-my-payments.query-handler';
-import { PaymentsQueryRepository } from './infrastructure/query/paments.query-repository';
+import { PaymentsQueryRepository } from './infrastructure/query/payments.query-repository';
 import { DateService } from '../../../../../libs/common/services/date.service';
+import { GetMyCurrentSubscriptionQueryHandler } from './application/queries/get-my-current-subscription.query-handler';
+import { SubscriptionsQueryRepository } from './infrastructure/query/subscriptions.query-repository';
 
 const controllers = [SubscriptionsController, StripeWebhookController];
-const queries = [GetPlansQueryHandler, GetMyPaymentsQueryHandler];
+const queries = [
+  GetPlansQueryHandler,
+  GetMyPaymentsQueryHandler,
+  GetMyCurrentSubscriptionQueryHandler,
+];
 const useCases = [
   CreateCheckoutSessionUseCase,
   HandleStripeWebhookUseCase,
@@ -38,6 +44,7 @@ const webhookHandlers = [
 const services = [StripeService, DateService];
 const repositories = [
   SubscriptionsRepository,
+  SubscriptionsQueryRepository,
   PaymentsRepository,
   PaymentsQueryRepository,
   CustomersRepository,
