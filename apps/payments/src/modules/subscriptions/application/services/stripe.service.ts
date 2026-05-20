@@ -163,6 +163,10 @@ export class StripeService {
     });
   }
 
+  async cancelSubscription(stripeSubId: string): Promise<void> {
+    await this.stripe.subscriptions.cancel(stripeSubId);
+  }
+
   private getBillingPeriodFromSubscriptionObject(
     sub: Stripe.Subscription,
   ): Notification<BillingPeriod> {
