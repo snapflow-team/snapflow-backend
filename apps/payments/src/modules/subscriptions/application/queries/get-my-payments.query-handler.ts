@@ -2,7 +2,7 @@ import { GetPaymentsQueryParams } from '../../api/input-dto/get-payments-query-p
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PaginatedViewDto } from '../../../../common/dto/paginated.view-dto';
 import { PaymentViewDto } from '../../api/view-dto/payment.view-dto';
-import { PaymentsQueryRepository } from '../../infrastructure/query/paments.query-repository';
+import { PaymentsQueryRepository } from '../../infrastructure/query/payments.query-repository';
 
 export class GetMyPaymentsQuery {
   constructor(

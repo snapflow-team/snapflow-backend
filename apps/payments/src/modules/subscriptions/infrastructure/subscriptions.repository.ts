@@ -83,12 +83,14 @@ export class SubscriptionsRepository {
   async updateAutoRenewal(
     subscriptionId: number,
     autoRenewal: boolean,
+    nextPaymentAt: Date | null,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription> {
     return tx.subscription.update({
       where: { id: subscriptionId, deletedAt: null },
       data: {
-        autoRenewal: autoRenewal,
+        autoRenewal,
+        nextPaymentAt,
       },
     });
   }
@@ -106,6 +108,7 @@ export class SubscriptionsRepository {
         currentPeriodStart: dto.currentPeriod.start,
         currentPeriodEnd: dto.currentPeriod.end,
         lastStripeEventAt: dto.lastStripeEventAt,
+        nextPaymentAt: dto.currentPeriod.end,
 
         customer: {
           update: {
@@ -132,6 +135,7 @@ export class SubscriptionsRepository {
       data: {
         status: SubscriptionStatus.CANCELLED,
         autoRenewal: false,
+        nextPaymentAt: null,
         lastStripeEventAt,
       },
     });
@@ -139,6 +143,7 @@ export class SubscriptionsRepository {
 
   async setToPastDue(
     subscriptionId: number,
+    nextPaymentAt: Date | null,
     lastStripeEventAt: Date,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription | null> {
@@ -153,6 +158,7 @@ export class SubscriptionsRepository {
       data: {
         status: SubscriptionStatus.PAST_DUE,
         accountType: AccountType.PERSONAL,
+        nextPaymentAt,
         lastStripeEventAt,
       },
     });
@@ -177,6 +183,7 @@ export class SubscriptionsRepository {
         status: SubscriptionStatus.ACTIVE,
         currentPeriodStart: period.start,
         currentPeriodEnd: period.end,
+        nextPaymentAt: period.end,
         lastStripeEventAt,
       },
     });
@@ -193,6 +200,7 @@ export class SubscriptionsRepository {
       where: { id: subscriptionId },
       data: {
         currentPeriodEnd: newEnd,
+        nextPaymentAt: newEnd,
         lastStripeEventAt,
       },
     });
