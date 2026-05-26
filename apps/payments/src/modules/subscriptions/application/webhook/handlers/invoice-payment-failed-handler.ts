@@ -119,10 +119,7 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
         subscriptionId: localSubscription.id,
         stripeInvoiceId: payload.id,
         attemptCount: payload.attempt_count,
-        nextPaymentAttempt:
-          payload.next_payment_attempt === null
-            ? null
-            : new Date(payload.next_payment_attempt * 1000).toISOString(),
+        nextPaymentAttempt: nextPaymentAt === null ? null : nextPaymentAt.toISOString(),
         failureCode,
         failureMessage,
       } satisfies SubscriptionRenewalFailedEvent,

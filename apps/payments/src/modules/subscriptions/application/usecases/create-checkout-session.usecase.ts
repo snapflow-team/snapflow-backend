@@ -81,7 +81,7 @@ export class CreateCheckoutSessionUseCase
       case SubscriptionStatus.PAST_DUE: {
         return Notification.fail<string>(
           NotificationResultCode.BadRequest,
-          'Failed to extend subscription for user with PAST_DUE subscription status. User have to pay for his previous payment',
+          'Failed to extend subscription for user with PAST_DUE or PENDING subscription status. User have to pay for his previous debt',
         );
       }
 

@@ -72,6 +72,7 @@ model Subscription {
   autoRenewal        Boolean            @default(true) @map("auto_renewal")
   currentPeriodStart DateTime?          @map("current_period_start")
   currentPeriodEnd   DateTime?          @map("current_period_end")
+  nextPaymentAt      DateTime?          @map("next_payment_at")
   lastStripeEventAt  DateTime?          @map("last_stripe_event_at")
 
   createdAt DateTime  @default(now()) @map("created_at")

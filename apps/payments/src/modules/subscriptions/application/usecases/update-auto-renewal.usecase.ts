@@ -6,6 +6,7 @@ import { NotificationResultCode } from '../../../../common/notification/notifica
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
 import { UpdateAutoRenewalApplicationDto } from '../dto/update-auto-renewal.application-dto';
+import { SubscriptionStatus } from '@generated/prisma-payments';
 
 export class UpdateAutoRenewalCommand {
   constructor(public readonly dto: UpdateAutoRenewalApplicationDto) {}
@@ -49,16 +50,28 @@ export class UpdateAutoRenewalUseCase
       return Notification.ok();
     }
 
-    const stripeResult = await this.stripeService.updateAutoRenewal(
-      localSubscription.stripeSubId,
-      autoRenewal,
-    );
-    if (stripeResult.hasErrors) {
-      return Notification.copyErrors(stripeResult);
+    //Если подписка находится в pastDue и пользователь отменил автопродление, то автоматически останавливаем подписку
+    if (!autoRenewal && localSubscription.status === SubscriptionStatus.PAST_DUE) {
+      await this.stripeService.cancelSubscription(localSubscription.stripeSubId);
+      return Notification.ok();
     }
 
+    const nextPayment = autoRenewal ? localSubscription.currentPeriodEnd : null;
+
     try {
-      await this.subscriptionsRepository.updateAutoRenewal(localSubscription.id, autoRenewal);
+      await this.subscriptionsRepository.updateAutoRenewal(
+        localSubscription.id,
+        autoRenewal,
+        nextPayment,
+      );
+
+      const stripeResult = await this.stripeService.updateAutoRenewal(
+        localSubscription.stripeSubId,
+        autoRenewal,
+      );
+      if (stripeResult.hasErrors) {
+        return Notification.copyErrors(stripeResult);
+      }
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Some error occurred';
 
