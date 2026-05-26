@@ -217,7 +217,7 @@ export class StripeService {
     if (!succeededPayment) {
       return Notification.fail(
         NotificationResultCode.BadRequest,
-        `This invoice ${invoice.id} have no succeeded payments`,
+        `Invoice ${invoice.id} have no succeeded payments`,
       );
     }
 

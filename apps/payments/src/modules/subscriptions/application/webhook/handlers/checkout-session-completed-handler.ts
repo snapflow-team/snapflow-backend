@@ -66,25 +66,17 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
     const stripeSubscriptionId: string | null = extractSubscriptionIdFromCS(payload);
     if (!stripeSubscriptionId) {
-      this.logger.warn(
-        `Stripe subscription in checkout session ${payload.id} is null`,
-        this.handle.name,
-      );
+      const message = `Stripe subscription in checkout session ${payload.id} doesn't exist`;
+      this.logger.warn(message, this.handle.name);
 
-      return Notification.fail(
-        NotificationResultCode.BadRequest,
-        `Stripe checkout session ${externalId} does not contain subscription id`,
-      );
+      return Notification.fail(NotificationResultCode.BadRequest, message);
     }
 
     const localPayment: Payment | null = await this.paymentsRepository.findByExternalId(externalId);
     if (!localPayment) {
-      this.logger.warn(`Local payments with externalId ${externalId} not found`, this.handle.name);
+      this.logger.warn(`Local payment with externalId ${externalId} not found`, this.handle.name);
 
-      return Notification.fail(
-        NotificationResultCode.InternalServerError,
-        'Some error occurred with payment provider',
-      );
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     const localSubscription: Subscription | null = await this.subscriptionsRepository.findById(
@@ -96,10 +88,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
         this.handle.name,
       );
 
-      return Notification.fail(
-        NotificationResultCode.InternalServerError,
-        'Some error occurred with payment provider',
-      );
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     const localCustomer: Customer | null = await this.customersRepository.findById(
@@ -111,10 +100,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
         this.handle.name,
       );
 
-      return Notification.fail(
-        NotificationResultCode.InternalServerError,
-        'Some error occurred with payment provider',
-      );
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     const periodResult: Notification<BillingPeriod> =
@@ -134,10 +120,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
         this.handle.name,
       );
 
-      return Notification.fail(
-        NotificationResultCode.BadRequest,
-        `Stripe customer with subscription: ${stripeSubscription.id} not found`,
-      );
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     switch (payload.mode) {
@@ -149,10 +132,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
             this.handle.name,
           );
 
-          return Notification.fail(
-            NotificationResultCode.InternalServerError,
-            'Some error occurred with payment provider',
-          );
+          return Notification.fail(NotificationResultCode.InternalServerError);
         }
 
         const newEnd = this.dateService.addDaysToDate(
@@ -219,9 +199,8 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
         return Notification.ok();
       }
-      default: {
+      default:
         return Notification.ok();
-      }
     }
   }
 }

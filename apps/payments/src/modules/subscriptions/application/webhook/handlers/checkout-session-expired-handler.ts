@@ -24,10 +24,7 @@ export class CheckoutSessionExpiredHandler implements WebhookHandler {
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.CheckoutSessionExpired;
   }
-  async handle(
-    event: Stripe.Event,
-    tx: Prisma.TransactionClient,
-  ): Promise<Notification<void>> {
+  async handle(event: Stripe.Event, tx: Prisma.TransactionClient): Promise<Notification<void>> {
     const payload = event.data.object;
 
     if (!isCheckoutSessionObject(payload)) {
@@ -49,7 +46,6 @@ export class CheckoutSessionExpiredHandler implements WebhookHandler {
       );
     }
 
-    //todo(vitaliy) нужно ли нам фэйлить платеж?
     await this.paymentsRepository.markAsFailed(payment.id, tx);
 
     const subscription: Subscription | null = await this.subscriptionsRepository.cancelSubscription(
@@ -63,14 +59,15 @@ export class CheckoutSessionExpiredHandler implements WebhookHandler {
         `Subscription with id ${payment.subscriptionId} not found`,
       );
     }
-    const customer = await this.customersRepository.findById(subscription.customerId, tx);
 
+    const customer = await this.customersRepository.findById(subscription.customerId, tx);
     if (!customer) {
       return Notification.fail(
         NotificationResultCode.InternalServerError,
         `Customer with id ${subscription.customerId} not found`,
       );
     }
+
     await this.outboxRepository.saveEvent(
       OutboxEventType.CHECKOUT_SESSION_EXPIRED,
       {
