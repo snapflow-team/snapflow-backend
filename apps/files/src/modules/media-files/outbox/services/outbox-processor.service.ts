@@ -24,7 +24,7 @@ export class OutboxProcessorService {
     this.logger = loggerFactory.create(OutboxProcessorService.name);
   }
 
-  @Cron(CronExpression.EVERY_10_HOURS)
+  @Cron(CronExpression.EVERY_MINUTE)
   async processOutboxEvents() {
     if (this.isProcessing) return;
     this.isProcessing = true;
@@ -96,11 +96,11 @@ export class OutboxProcessorService {
     const deletedCount: number =
       await this.outboxRepository.deleteProcessedEventsOlderThan(dateThreshold);
 
-      if (deletedCount > 0) {
-        this.logger.log(
-          `Cleaned up ${deletedCount} processed outbox events older than ${outboxRetentionDays} days.`,
-          this.cleanupProcessedEvents.name,
-        );
-      }
+    if (deletedCount > 0) {
+      this.logger.log(
+        `Cleaned up ${deletedCount} processed outbox events older than ${outboxRetentionDays} days.`,
+        this.cleanupProcessedEvents.name,
+      );
+    }
   }
 }
