@@ -1,10 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { Redis } from 'ioredis';
 import { lastValueFrom } from 'rxjs';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
-import { REDIS_CLIENT_INJECT_TOKEN } from '../../../core/providers/provide-tokens/redis-client.inject-token';
 import { Configuration } from '../../../setup/configuration/configuration';
 import * as jwt from 'jsonwebtoken';
 import { NextjsEndpoints } from './constants/nextjs-endpoints';
@@ -18,7 +16,6 @@ export class NextjsRevalidationService {
   private readonly apiSettings: ApiSettings;
 
   constructor(
-    @Inject(REDIS_CLIENT_INJECT_TOKEN) private readonly redis: Redis,
     private readonly httpService: HttpService,
     private readonly cryptoService: CryptoService,
     private readonly configService: ConfigService<Configuration, true>,
@@ -28,20 +25,7 @@ export class NextjsRevalidationService {
     this.logger = loggerFactory.create(NextjsRevalidationService.name);
   }
 
-  async checkAndRevalidatePosts() {
-    const count: number = await this.redis.incr('revalidate:posts_count');
-    this.logger.log(`New post created. Current un-revalidated count: ${count}`);
-
-    if (count >= 4) {
-      const isSuccess: boolean = await this.triggerRevalidation();
-
-      if (isSuccess) {
-        await this.redis.set('revalidate:posts_count', 0);
-      }
-    }
-  }
-
-  private async triggerRevalidation(): Promise<boolean> {
+  async triggerRevalidation(): Promise<boolean> {
     try {
       const secret: string = this.apiSettings.nextjsRevalidationSecret;
       const frontendUrl: string = this.apiSettings.baseFrontUrl;
