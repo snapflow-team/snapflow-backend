@@ -86,8 +86,6 @@ export class CreateCheckoutSessionUseCase
       }
 
       case SubscriptionStatus.CANCELLED: {
-        this.logger.debug(`now we processing pending or cancelled subscription`, this.execute.name);
-
         return this.createNewSubscription(userId, plan);
       }
     }
