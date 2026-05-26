@@ -6,12 +6,20 @@ import { NotificationResultCode } from '../../../../../common/notification/notif
 import { StripeService } from '../../services/stripe.service';
 import { BillingPeriod } from '../../types/billing-period.type';
 import { PaymentsRepository } from '../../../infrastructure/payments.repository';
-import { Customer, OutboxEventType, Payment } from '@generated/prisma-payments';
+import {
+  Customer,
+  OutboxCommandType,
+  OutboxEventType,
+  Payment,
+  Prisma,
+  Subscription,
+} from '@generated/prisma-payments';
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
 import { SubscriptionActivatedEvent } from '../../../../../../../../libs/contracts/payments';
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
+import { OutboxCommandRepository } from '../../../../outbox-commands/repositories/outbox-command.repository';
+import { StripeExtendSubscriptionPayload } from '../../../../outbox-commands/executors/stripe-extend-subscription.payload';
 import { Notification } from '../../../../../common/notification/notification';
-import { PrismaService } from '../../../../database/prisma.service';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
 import { Injectable } from '@nestjs/common';
 import { LoggerFactory } from '../../../../logger/logger.factory';
@@ -33,8 +41,8 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
     private paymentsRepository: PaymentsRepository,
     private customersRepository: CustomersRepository,
     private outboxRepository: OutboxRepository,
+    private outboxCommandRepository: OutboxCommandRepository,
     private subscriptionsRepository: SubscriptionsRepository,
-    private prisma: PrismaService,
     private dateService: DateService,
     loggerFactory: LoggerFactory,
   ) {
@@ -43,7 +51,8 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.CheckoutSessionCompleted;
   }
-  async handle(event: Stripe.Event): Promise<Notification<void>> {
+
+  async handle(event: Stripe.Event, tx: Prisma.TransactionClient): Promise<Notification<void>> {
     const payload = event.data.object;
 
     if (!isCheckoutSessionObject(payload)) {
@@ -57,46 +66,41 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
     const stripeSubscriptionId: string | null = extractSubscriptionIdFromCS(payload);
     if (!stripeSubscriptionId) {
-      this.logger.warn(`Stripe subscription in checkout session ${payload.id} is null`);
+      const message = `Stripe subscription in checkout session ${payload.id} doesn't exist`;
+      this.logger.warn(message, this.handle.name);
 
-      return Notification.fail(
-        NotificationResultCode.BadRequest,
-        `Stripe checkout session ${externalId} does not contain subscription id`,
-      );
+      return Notification.fail(NotificationResultCode.BadRequest, message);
     }
 
     const localPayment: Payment | null = await this.paymentsRepository.findByExternalId(externalId);
     if (!localPayment) {
-      this.logger.warn(`Local payments with externalId ${externalId} not found`);
+      this.logger.warn(`Local payment with externalId ${externalId} not found`, this.handle.name);
 
-      return Notification.fail(
-        NotificationResultCode.InternalServerError,
-        'Some error occurred with payment provider',
-      );
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
-    const localSubscription = await this.subscriptionsRepository.findById(
+    const localSubscription: Subscription | null = await this.subscriptionsRepository.findById(
       localPayment.subscriptionId,
     );
     if (!localSubscription) {
-      this.logger.warn(`Local subscription with id ${localPayment.subscriptionId} not found`);
-
-      return Notification.fail(
-        NotificationResultCode.InternalServerError,
-        'Some error occurred with payment provider',
+      this.logger.warn(
+        `Local subscription with id ${localPayment.subscriptionId} not found`,
+        this.handle.name,
       );
+
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     const localCustomer: Customer | null = await this.customersRepository.findById(
       localSubscription.customerId,
     );
     if (!localCustomer) {
-      this.logger.warn(`Local customer with id ${localSubscription.customerId} not found`);
-
-      return Notification.fail(
-        NotificationResultCode.InternalServerError,
-        'Some error occurred with payment provider',
+      this.logger.warn(
+        `Local customer with id ${localSubscription.customerId} not found`,
+        this.handle.name,
       );
+
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     const periodResult: Notification<BillingPeriod> =
@@ -116,21 +120,19 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
         this.handle.name,
       );
 
-      return Notification.fail(
-        NotificationResultCode.BadRequest,
-        `Stripe customer with subscription: ${stripeSubscription.id} not found`,
-      );
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
+
     switch (payload.mode) {
       //Если у нас приходит платеж на продление подписки
       case StripeCSModes.Payment: {
         if (!checkIsMetadata(payload.metadata)) {
-          this.logger.log(`No metadata for stripe checkout session ${externalId}`);
-
-          return Notification.fail(
-            NotificationResultCode.InternalServerError,
-            'Some error occurred with payment provider',
+          this.logger.log(
+            `No metadata for stripe checkout session ${externalId}`,
+            this.handle.name,
           );
+
+          return Notification.fail(NotificationResultCode.InternalServerError);
         }
 
         const newEnd = this.dateService.addDaysToDate(
@@ -138,62 +140,67 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           +payload.metadata.subscriptionDuration,
         );
 
-        await this.prisma.$transaction(async (tx) => {
-          await this.paymentsRepository.markAsPaid(localPayment.id, tx);
+        await this.paymentsRepository.markAsPaid(localPayment.id, tx);
 
-          await this.subscriptionsRepository.extendSubscription(
-            localPayment.subscriptionId,
-            newEnd,
-            extractEventDate(event),
-          );
+        await this.subscriptionsRepository.extendSubscription(
+          localPayment.subscriptionId,
+          newEnd,
+          extractEventDate(event),
+          tx,
+        );
 
-          await this.outboxRepository.saveEvent(
-            OutboxEventType.SUBSCRIPTION_RENEWED,
-            {
-              userId: localCustomer.userId,
-              planId: localSubscription.planId,
-              subscriptionId: localSubscription.id,
-              currentPeriodEnd: newEnd.toISOString(),
-            } satisfies SubscriptionRenewedEvent,
-            tx,
-          );
+        await this.outboxRepository.saveEvent(
+          OutboxEventType.SUBSCRIPTION_RENEWED,
+          {
+            userId: localCustomer.userId,
+            planId: localSubscription.planId,
+            subscriptionId: localSubscription.id,
+            currentPeriodEnd: newEnd.toISOString(),
+          } satisfies SubscriptionRenewedEvent,
+          tx,
+        );
 
-          await this.stripeService.extendSubscription(stripeSubscriptionId, newEnd);
-        });
+        await this.outboxCommandRepository.saveCommand(
+          OutboxCommandType.STRIPE_EXTEND_SUBSCRIPTION,
+          {
+            stripeSubscriptionId,
+            newEndIso: newEnd.toISOString(),
+          } satisfies StripeExtendSubscriptionPayload,
+          tx,
+        );
+
         return Notification.ok();
       }
       case StripeCSModes.Subscription: {
         //Если у нас приходит платеж на оформление подписки
-        await this.prisma.$transaction(async (tx) => {
-          await this.paymentsRepository.markAsPaid(localPayment.id, tx);
+        await this.paymentsRepository.markAsPaid(localPayment.id, tx);
 
-          await this.subscriptionsRepository.activateSubscription(
-            {
-              subscriptionId: localPayment.subscriptionId,
-              stripeSubId: stripeSubscriptionId,
-              currentPeriod,
-              lastStripeEventAt: extractEventDate(event),
-              stripeCusId: stripeCusId,
-            },
-            tx,
-          );
+        await this.subscriptionsRepository.activateSubscription(
+          {
+            subscriptionId: localPayment.subscriptionId,
+            stripeSubId: stripeSubscriptionId,
+            currentPeriod,
+            lastStripeEventAt: extractEventDate(event),
+            stripeCusId: stripeCusId,
+          },
+          tx,
+        );
 
-          await this.outboxRepository.saveEvent(
-            OutboxEventType.SUBSCRIPTION_ACTIVATED,
-            {
-              userId: localCustomer.userId,
-              planId: localSubscription.planId,
-              subscriptionId: localSubscription.id,
-              currentPeriodEnd: localSubscription.currentPeriodEnd?.toISOString() ?? null,
-            } satisfies SubscriptionActivatedEvent,
-            tx,
-          );
-        });
+        await this.outboxRepository.saveEvent(
+          OutboxEventType.SUBSCRIPTION_ACTIVATED,
+          {
+            userId: localCustomer.userId,
+            planId: localSubscription.planId,
+            subscriptionId: localSubscription.id,
+            currentPeriodEnd: currentPeriod.end.toISOString(),
+          } satisfies SubscriptionActivatedEvent,
+          tx,
+        );
+
         return Notification.ok();
       }
-      default: {
+      default:
         return Notification.ok();
-      }
     }
   }
 }

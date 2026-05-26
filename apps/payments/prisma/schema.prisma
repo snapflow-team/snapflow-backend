@@ -45,6 +45,24 @@ enum OutboxEventStatus {
   FAILED
 }
 
+enum InboxEventStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+enum OutboxCommandType {
+  STRIPE_EXTEND_SUBSCRIPTION
+}
+
+enum OutboxCommandStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
 model Subscription {
   id                 Int                @id @default(autoincrement())
   planId             String             @map("plan_id")
@@ -104,6 +122,36 @@ model OutboxEvent {
 
   @@index([status, createdAt])
   @@map("outbox_events")
+}
+
+model InboxEvent {
+  eventId     String           @id @map("event_id")
+  provider    PaymentProvider
+  payload     Json             @db.JsonB
+  status      InboxEventStatus @default(PENDING)
+  attempts    Int              @default(0)
+  error       String?          @db.Text
+  receivedAt  DateTime         @default(now()) @map("received_at")
+  processedAt DateTime?        @map("processed_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@index([status, receivedAt])
+  @@map("inbox_events")
+}
+
+model OutboxCommand {
+  id          String              @id @default(uuid()) @db.Uuid
+  type        OutboxCommandType
+  payload     Json                @db.JsonB
+  status      OutboxCommandStatus @default(PENDING)
+  attempts    Int                 @default(0)
+  error       String?             @db.Text
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  processedAt DateTime?           @map("processed_at")
+
+  @@index([status, createdAt])
+  @@map("outbox_commands")
 }
 
 model Customer {

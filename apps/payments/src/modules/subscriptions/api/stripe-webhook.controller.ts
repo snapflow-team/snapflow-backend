@@ -4,7 +4,7 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { Request } from 'express';
 import { BadRequestException } from '../../../common/exceptions/domain-exceptions';
-import { HandleStripeWebhookCommand } from '../application/usecases/handle-stripe-webhook.usecase';
+import { ReceiveStripeWebhookCommand } from '../application/usecases/receive-stripe-webhook.usecase';
 import { NotificationExceptionMapper } from '../../../common/notification/notification-exception.mapper';
 import { Notification } from '../../../common/notification/notification';
 
@@ -27,8 +27,8 @@ export class StripeWebhookController {
       throw new BadRequestException('Raw body is not available');
     }
 
-    const result: Notification = await this.commandBus.execute(
-      new HandleStripeWebhookCommand({ rawBody: req.rawBody, signature: signature }),
+    const result: Notification<void> = await this.commandBus.execute(
+      new ReceiveStripeWebhookCommand({ rawBody: req.rawBody, signature }),
     );
 
     if (result.hasErrors) {

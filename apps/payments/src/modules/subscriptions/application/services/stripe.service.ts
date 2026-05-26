@@ -154,13 +154,37 @@ export class StripeService {
     }
   }
 
-  async extendSubscription(stripeSubId: string, newEnd: Date): Promise<void> {
-    await this.stripe.subscriptions.update(stripeSubId, {
-      //Ставим новую дату протухания подписки
-      trial_end: this.dateService.convertDateToSeconds(newEnd),
-      //Задаем поведению страйпу, чтобы он не делал никаких попыток досчитать что-то прямо сейчас
-      proration_behavior: 'none',
-    });
+  async extendSubscription(
+    stripeSubId: string,
+    newEnd: Date,
+    options?: { idempotencyKey?: string },
+  ): Promise<void> {
+    const idempotencyKey = options?.idempotencyKey;
+
+    if (idempotencyKey) {
+      this.logger.debug(
+        `Stripe subscriptions.update subscriptionId=${stripeSubId} idempotencyKey=${idempotencyKey}`,
+        this.extendSubscription.name,
+      );
+    }
+
+    const subscription = await this.stripe.subscriptions.update(
+      stripeSubId,
+      {
+        //Ставим новую дату протухания подписки
+        trial_end: this.dateService.convertDateToSeconds(newEnd),
+        //Задаем поведению страйпу, чтобы он не делал никаких попыток досчитать что-то прямо сейчас
+        proration_behavior: 'none',
+      },
+      idempotencyKey ? { idempotencyKey } : undefined,
+    );
+
+    if (idempotencyKey) {
+      this.logger.log(
+        `Stripe subscriptions.update succeeded subscriptionId=${subscription.id} status=${subscription.status} idempotencyKey=${idempotencyKey}`,
+        this.extendSubscription.name,
+      );
+    }
   }
 
   async cancelSubscription(stripeSubId: string): Promise<void> {
@@ -197,7 +221,7 @@ export class StripeService {
     if (!succeededPayment) {
       return Notification.fail(
         NotificationResultCode.BadRequest,
-        `This invoice ${invoice.id} have no succeeded payments`,
+        `Invoice ${invoice.id} have no succeeded payments`,
       );
     }
 

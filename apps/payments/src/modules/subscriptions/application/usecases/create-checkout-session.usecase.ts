@@ -49,6 +49,7 @@ export class CreateCheckoutSessionUseCase
       this.configService.get<BusinessRulesSettings>('businessRulesSettings');
 
     const plan: Plan | undefined = businessRules.getPlans().find((plan) => plan.id === planId);
+
     if (!plan) {
       const notification: Notification<string> = Notification.fail<string>(
         NotificationResultCode.BadRequest,
@@ -59,14 +60,18 @@ export class CreateCheckoutSessionUseCase
         'planId',
         `The selected tariff plan "${planId}" no exists in the system`,
       );
+
       return notification;
     }
 
     const localSubscription = await this.subscriptionsRepository.findLastByUserId(userId);
+
     if (!localSubscription) {
-      this.logger.debug(`now we processing not created subscription yet`);
+      this.logger.debug(`now we processing not created subscription yet`, this.execute.name);
+
       return this.createNewSubscription(userId, plan);
     }
+
     switch (localSubscription.status) {
       case SubscriptionStatus.ACTIVE: {
         return this.extendSubscription(userId, plan, localSubscription);
@@ -85,6 +90,7 @@ export class CreateCheckoutSessionUseCase
       }
     }
   }
+
   private async createNewSubscription(userId: number, plan: Plan) {
     const customer: Customer | null = await this.customersRepository.findByUserId(userId);
 
@@ -100,6 +106,7 @@ export class CreateCheckoutSessionUseCase
     };
 
     const stripeResult = await this.stripeService.createCheckoutSession(dto);
+
     if (stripeResult.hasErrors)
       return Notification.copyErrors<StripeCheckoutSessionResult, string>(stripeResult);
 
@@ -131,16 +138,23 @@ export class CreateCheckoutSessionUseCase
 
     return Notification.ok<string>(stripeResult.value.url);
   }
+
   private async extendSubscription(userId: number, plan: Plan, activeSubscription: Subscription) {
     this.logger.debug(
       `now we processing extending subscription flow in createCheckoutSessionUseCase`,
+      this.extendSubscription.name,
     );
+
     const customer: Customer | null = await this.customersRepository.findByUserId(userId);
 
     const stripeCusId: string | undefined = extractStripeCustomerId(customer);
+
     //Если у нас подписка в ожидании, то есть stripeSubId еще не инициализирован, и эта подписка уже была оформлена, то внутренний рассинхрон
     if (!activeSubscription.stripeSubId) {
-      this.logger.warn(`Trying to extend pending subscription ${activeSubscription.id}`);
+      this.logger.warn(
+        `Trying to extend pending subscription ${activeSubscription.id}`,
+        this.extendSubscription.name,
+      );
 
       return Notification.fail<string>(
         NotificationResultCode.InternalServerError,
@@ -152,6 +166,7 @@ export class CreateCheckoutSessionUseCase
     if (!customer || !stripeCusId) {
       this.logger.warn(
         `Trying to extend subscription ${activeSubscription.id} for pending or unexisting customer `,
+        this.extendSubscription.name,
       );
 
       return Notification.fail<string>(
@@ -171,6 +186,7 @@ export class CreateCheckoutSessionUseCase
     };
 
     const stripeResult = await this.stripeService.createCheckoutSession(dto);
+
     if (stripeResult.hasErrors)
       return Notification.copyErrors<StripeCheckoutSessionResult, string>(stripeResult);
 
@@ -180,13 +196,19 @@ export class CreateCheckoutSessionUseCase
         plan: plan,
         externalId: stripeResult.value.sessionId,
       });
-      this.logger.debug(`external id in extend subscription ${stripeResult.value.sessionId}`);
+
+      this.logger.debug(
+        `external id in extend subscription ${stripeResult.value.sessionId}`,
+        this.extendSubscription.name,
+      );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Some error occurred';
 
       this.logger.warn(
         `Saving new checkout session with id ${stripeResult.value.sessionId} in local db failed`,
+        this.extendSubscription.name,
       );
+
       return Notification.fail<string>(NotificationResultCode.InternalServerError, errorMessage);
     }
 

@@ -3,11 +3,10 @@ import Stripe from 'stripe';
 import { StripeEvents } from '../../constants/stripe-events.constants';
 import { isSubscriptionObject } from '../../type-guards/stripe-webhook.type-guards';
 import { NotificationResultCode } from '../../../../../common/notification/notification-result-code';
-import { OutboxEventType, Subscription } from '@generated/prisma-payments';
+import { OutboxEventType, Prisma, Subscription } from '@generated/prisma-payments';
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
 import { Notification } from '../../../../../common/notification/notification';
-import { PrismaService } from '../../../../database/prisma.service';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
 import { Injectable } from '@nestjs/common';
 import { extractEventDate } from './utils/extract-date-from-event-created.helper';
@@ -25,7 +24,6 @@ export class CustomerSubscriptionDeletedHandler implements WebhookHandler {
     private customersRepository: CustomersRepository,
     private outboxRepository: OutboxRepository,
     private subscriptionsRepository: SubscriptionsRepository,
-    private prisma: PrismaService,
     loggerFactory: LoggerFactory,
   ) {
     this.logger = loggerFactory.create(CustomerSubscriptionDeletedHandler.name);
@@ -33,7 +31,10 @@ export class CustomerSubscriptionDeletedHandler implements WebhookHandler {
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.SubscriptionDeleted;
   }
-  async handle(event: Stripe.Event): Promise<Notification<void>> {
+  async handle(
+    event: Stripe.Event,
+    tx: Prisma.TransactionClient,
+  ): Promise<Notification<void>> {
     const payload = event.data.object;
 
     if (!isSubscriptionObject(payload)) {
@@ -70,39 +71,36 @@ export class CustomerSubscriptionDeletedHandler implements WebhookHandler {
       return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred');
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      const subscription: Subscription | null =
-        await this.subscriptionsRepository.cancelSubscription(
-          localSubscription.id,
-          extractEventDate(event),
-          tx,
-        );
-      if (!subscription) {
-        return Notification.fail(
-          NotificationResultCode.InternalServerError,
-          `Subscription with id ${localSubscription.id} not found`,
-        );
-      }
-
-      const customer = await this.customersRepository.findById(subscription.customerId);
-      if (!customer) {
-        return Notification.fail(
-          NotificationResultCode.InternalServerError,
-          `Customer with id ${subscription.customerId} not found`,
-        );
-      }
-
-      await this.outboxRepository.saveEvent(
-        OutboxEventType.SUBSCRIPTION_CANCELLED,
-        {
-          userId: customer.userId,
-          planId: subscription.planId,
-          subscriptionId: subscription.id,
-          cancelledAt: cancelledAt,
-        } satisfies SubscriptionCancelledEvent,
-        tx,
+    const subscription: Subscription | null = await this.subscriptionsRepository.cancelSubscription(
+      localSubscription.id,
+      extractEventDate(event),
+      tx,
+    );
+    if (!subscription) {
+      return Notification.fail(
+        NotificationResultCode.InternalServerError,
+        `Subscription with id ${localSubscription.id} not found`,
       );
-    });
+    }
+
+    const customer = await this.customersRepository.findById(subscription.customerId, tx);
+    if (!customer) {
+      return Notification.fail(
+        NotificationResultCode.InternalServerError,
+        `Customer with id ${subscription.customerId} not found`,
+      );
+    }
+
+    await this.outboxRepository.saveEvent(
+      OutboxEventType.SUBSCRIPTION_CANCELLED,
+      {
+        userId: customer.userId,
+        planId: subscription.planId,
+        subscriptionId: subscription.id,
+        cancelledAt: cancelledAt,
+      } satisfies SubscriptionCancelledEvent,
+      tx,
+    );
 
     return Notification.ok();
   }

@@ -15,7 +15,7 @@ export class Notification<T = null> {
 
   static fail<T = null>(
     code: NotificationResultCodeType,
-    operationMessage: string,
+    operationMessage: string = 'Some error occurred with payment provider',
   ): Notification<T> {
     const notification = new Notification<T>();
     notification._code = code;
