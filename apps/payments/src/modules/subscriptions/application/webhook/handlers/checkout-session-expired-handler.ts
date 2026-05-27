@@ -41,7 +41,7 @@ export class CheckoutSessionExpiredHandler implements WebhookHandler {
 
     if (!payment) {
       return Notification.fail(
-        NotificationResultCode.NotFound,
+        NotificationResultCode.InternalServerError,
         `Payment with externalId ${externalId} not found`,
       );
     }

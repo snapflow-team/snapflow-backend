@@ -147,14 +147,14 @@ export class SubscriptionsRepository {
     nextPaymentAt: Date | null,
     lastStripeEventAt: Date,
     tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<Subscription | null> {
+  ): Promise<boolean> {
     const subscription = await tx.subscription.findUnique({
       where: { id: subscriptionId },
     });
     if (!subscription) {
-      return null;
+      return false;
     }
-    return tx.subscription.update({
+    const result = await tx.subscription.update({
       where: { id: subscriptionId },
       data: {
         status: SubscriptionStatus.PAST_DUE,
@@ -163,6 +163,7 @@ export class SubscriptionsRepository {
         lastStripeEventAt,
       },
     });
+    return !!result;
   }
 
   //Метод для автопродления подписки страйпом автоматически по истечении периода подписки(autoRenewal: true)

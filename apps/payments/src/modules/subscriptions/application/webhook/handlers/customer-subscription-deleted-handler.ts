@@ -31,10 +31,7 @@ export class CustomerSubscriptionDeletedHandler implements WebhookHandler {
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.SubscriptionDeleted;
   }
-  async handle(
-    event: Stripe.Event,
-    tx: Prisma.TransactionClient,
-  ): Promise<Notification<void>> {
+  async handle(event: Stripe.Event, tx: Prisma.TransactionClient): Promise<Notification<void>> {
     const payload = event.data.object;
 
     if (!isSubscriptionObject(payload)) {
@@ -65,7 +62,7 @@ export class CustomerSubscriptionDeletedHandler implements WebhookHandler {
     const cancelledAt = extractCancelledAt(payload.canceled_at);
     if (!cancelledAt) {
       this.logger.warn(
-        `This subscription have no canceled_at value ${stripeSubId}`,
+        `This subscription has no canceled_at value ${stripeSubId}`,
         this.handle.name,
       );
       return Notification.fail(NotificationResultCode.InternalServerError, 'Some error occurred');
@@ -97,7 +94,7 @@ export class CustomerSubscriptionDeletedHandler implements WebhookHandler {
         userId: customer.userId,
         planId: subscription.planId,
         subscriptionId: subscription.id,
-        cancelledAt: cancelledAt,
+        cancelledAt: cancelledAt.toISOString(),
       } satisfies SubscriptionCancelledEvent,
       tx,
     );

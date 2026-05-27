@@ -33,8 +33,14 @@ export class StripeService {
     this.logger = loggerFactory.create(StripeService.name);
   }
 
-  async getSubscription(stripeSubId: string): Promise<Stripe.Subscription> {
-    return await this.stripe.subscriptions.retrieve(stripeSubId);
+  async getSubscription(stripeSubId: string): Promise<Notification<Stripe.Subscription>> {
+    try {
+      return Notification.ok(await this.stripe.subscriptions.retrieve(stripeSubId));
+    } catch (error) {
+      this.logger.error(error, this.retrieveSubscriptionBillingPeriod.name);
+
+      return Notification.fail(NotificationResultCode.InternalServerError);
+    }
   }
 
   async retrieveSubscriptionBillingPeriod(
