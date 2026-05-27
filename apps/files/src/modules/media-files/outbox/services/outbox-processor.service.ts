@@ -96,11 +96,11 @@ export class OutboxProcessorService {
     const deletedCount: number =
       await this.outboxRepository.deleteProcessedEventsOlderThan(dateThreshold);
 
-      if (deletedCount > 0) {
-        this.logger.log(
-          `Cleaned up ${deletedCount} processed outbox events older than ${outboxRetentionDays} days.`,
-          this.cleanupProcessedEvents.name,
-        );
-      }
+    if (deletedCount > 0) {
+      this.logger.log(
+        `Cleaned up ${deletedCount} processed outbox events older than ${outboxRetentionDays} days.`,
+        this.cleanupProcessedEvents.name,
+      );
+    }
   }
 }

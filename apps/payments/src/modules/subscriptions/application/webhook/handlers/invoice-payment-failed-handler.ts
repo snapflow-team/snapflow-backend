@@ -33,10 +33,7 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.InvoicePaymentFailed;
   }
-  async handle(
-    event: Stripe.Event,
-    tx: Prisma.TransactionClient,
-  ): Promise<Notification<void>> {
+  async handle(event: Stripe.Event, tx: Prisma.TransactionClient): Promise<Notification<void>> {
     const payload = event.data.object;
 
     if (!isInvoiceObject(payload)) {
@@ -91,10 +88,13 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
       );
     }
 
+    const nextPaymentAt =
+      payload.next_payment_attempt === null ? null : new Date(payload.next_payment_attempt * 1000);
+
     await this.subscriptionsRepository.setToPastDue(
       localSubscription.id,
+      nextPaymentAt,
       extractEventDate(event),
-      tx,
     );
 
     const stripeCusId = extractCustomerId(payload.customer);

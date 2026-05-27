@@ -19,7 +19,6 @@ export class SubscriptionViewDto {
   @ApiProperty({
     description: 'Флаг автопродления подписки',
     example: 'true',
-    enum: SubscriptionStatus,
   })
   autoRenewal: boolean;
 
@@ -47,21 +46,17 @@ export class SubscriptionViewDto {
     description: 'Дата окончания подписки (ISO-8601) или null',
     example: '2026-05-21T10:30:00.000Z',
     nullable: true,
+    format: 'date-time',
   })
   expireAt: string | null;
 
   @ApiProperty({
     description: 'Дата следующего платежа (ISO-8601) или null',
     example: '2026-04-21T10:30:00.000Z',
+    nullable: true,
+    format: 'date-time',
   })
   nextPayment: string | null;
-
-  // @ApiProperty({
-  //   description: 'Платежный провайдер',
-  //   example: PaymentProvider.STRIPE,
-  //   enum: PaymentProvider,
-  // })
-  // provider: PaymentProvider;
 
   static mapToView(subscription: Subscription): SubscriptionViewDto {
     const dto = new this();
