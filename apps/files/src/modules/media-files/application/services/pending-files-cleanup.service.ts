@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { File } from '@generated/prisma-files';
@@ -7,17 +7,22 @@ import { S3Settings } from '../../../../setup/configuration/s3.settings';
 import { PendingFilesCleanup } from '../constants/pending-files-cleanup.constants';
 import { FilesRepository } from '../../infrastructure/repositories/files.repository';
 import { StorageService } from '../../infrastructure/storage/storage.service';
+import { LoggerFactory } from '../../../logger/logger.factory';
+import { ContextLogger } from '../../../logger/context-logger';
 
 @Injectable()
 export class PendingFilesCleanupService {
-  private readonly logger: Logger = new Logger(PendingFilesCleanupService.name);
+  private readonly logger: ContextLogger;
   private isProcessing: boolean = false;
 
   constructor(
     private readonly filesRepository: FilesRepository,
     private readonly storageService: StorageService,
     private readonly configService: ConfigService<Configuration, true>,
-  ) {}
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(PendingFilesCleanupService.name);
+  }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async cleanupPendingFiles(): Promise<void> {
@@ -37,6 +42,7 @@ export class PendingFilesCleanupService {
       if (recoveredCount > 0) {
         this.logger.warn(
           `Recovered ${recoveredCount} stale PENDING_CLEANUP files back to PENDING.`,
+          this.cleanupPendingFiles.name,
         );
       }
 
@@ -66,8 +72,8 @@ export class PendingFilesCleanupService {
         } catch (error) {
           idsToRelease.push(pendingFile.id);
           this.logger.error(
-            `Failed to check object for pending file ${pendingFile.id}`,
-            error instanceof Error ? error.stack : '',
+            error instanceof Error ? error : new Error(String(error)),
+            this.cleanupPendingFiles.name,
           );
         }
       }
@@ -87,12 +93,10 @@ export class PendingFilesCleanupService {
 
       this.logger.log(
         `Pending cleanup finished. recovered=${idsToRecover.length} deleted=${deletedCount} released=${idsToRelease.length} thresholdMinutes=${stalePendingThresholdMinutes}`,
+        this.cleanupPendingFiles.name,
       );
     } catch (error) {
-      this.logger.error(
-        'Failed to cleanup stale pending files',
-        error instanceof Error ? error.stack : '',
-      );
+      this.logger.error(error, this.cleanupPendingFiles.name);
     } finally {
       this.isProcessing = false;
     }

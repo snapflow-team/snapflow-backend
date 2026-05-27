@@ -8,7 +8,7 @@ export enum PostSortBy {
 
 export class GetPostsQueryParamsDto extends BaseQueryParamsDto<PostSortBy> {
   @ApiPropertyOptional({
-    description: 'Sort by filed',
+    description: 'Sort by field',
     example: 'createdAt',
     default: 'createdAt',
   })

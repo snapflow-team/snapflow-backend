@@ -256,10 +256,10 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
     });
 
     it('должен обработать ошибку БД и залогировать её', async () => {
-      // мокируем репозиторий для выброса ошибки
+      const dbError = new Error('DB Error');
       const spy = jest
         .spyOn(sessionsRepository, 'hardDeleteOldSoftDeletedSessions')
-        .mockRejectedValue(new Error('DB Error'));
+        .mockRejectedValue(dbError);
 
       // Мокируем logger для проверки логирования ошибки
       const errorSpy = jest.spyOn(cleanupService['logger'], 'error');
@@ -267,11 +267,8 @@ describe('SessionsCleanupService (Integration, Prisma)', () => {
       // вызываем Cron метод
       await cleanupService.handHardDeleteOldSessions();
 
-      //  проверяем, что ошибка залогирована
-      expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Hard delete job failed'),
-        expect.any(String),
-      );
+      //  проверяем, что ошибка залогирована (ContextLogger: error, functionName)
+      expect(errorSpy).toHaveBeenCalledWith(dbError, 'handHardDeleteOldSessions');
 
       spy.mockRestore();
       errorSpy.mockRestore();

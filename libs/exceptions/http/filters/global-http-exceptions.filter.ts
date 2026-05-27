@@ -11,14 +11,32 @@ import type { IServerErrorResponseFactory } from '../../core';
 import { IErrorResponse, serverErrorResponseFactory } from '../../core';
 import { cleanStackTrace } from '../../core/utils/clean-stack-trace';
 
+/**
+ * Когда передан — используется вместо встроенного NestJS Logger (например CustomLogger + Winston).
+ */
+export type GlobalExceptionsFilterLogger = {
+  error(message: string, stack?: string): void;
+  warn(message: string): void;
+};
+
 @Catch()
 export class GlobalExceptionsFilter implements ExceptionFilter {
-  private readonly logger: Logger = new Logger(GlobalExceptionsFilter.name);
+  private readonly nestLogger: Logger = new Logger(GlobalExceptionsFilter.name);
+
+  private readonly defaultLogSink: GlobalExceptionsFilterLogger = {
+    error: (message: string, stack?: string): void => this.nestLogger.error(message, stack),
+    warn: (message: string): void => this.nestLogger.warn(message),
+  };
 
   constructor(
     private readonly isExposeDetails: boolean,
     private readonly customFactory?: IServerErrorResponseFactory<string>,
+    private readonly externalLogger?: GlobalExceptionsFilterLogger,
   ) {}
+
+  private get logSink(): GlobalExceptionsFilterLogger {
+    return this.externalLogger ?? this.defaultLogSink;
+  }
 
   catch(exception: Error, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -64,9 +82,9 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
       const stack = (exception as any)?.stack;
       const cleanStack = stack ? cleanStackTrace(stack) : 'Stack is not available';
 
-      this.logger.error(`${logMessage} | ${context}`, cleanStack);
+      this.logSink.error(`${logMessage} | ${context}`, cleanStack);
     } else {
-      this.logger.warn(`${logMessage} | ${context}`);
+      this.logSink.warn(`${logMessage} | ${context}`);
     }
   }
 }

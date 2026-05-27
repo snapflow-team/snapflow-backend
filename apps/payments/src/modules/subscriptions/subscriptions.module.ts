@@ -1,13 +1,15 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { RemoteAuthGuard } from '../auth/guards/remote-auth.guard';
 import { OutboxModule } from '../outbox/outbox.module';
+import { OutboxCommandsModule } from '../outbox-commands/outbox-commands.module';
+import { InboxModule } from '../inbox/inbox.module';
 import { SubscriptionsController } from './api/subscriptions.controller';
 import { GetPlansQueryHandler } from './application/queries/get-plans.query-handler';
 import { CreateCheckoutSessionUseCase } from './application/usecases/create-checkout-session.usecase';
 import { StripeService } from './application/services/stripe.service';
 import { SubscriptionsRepository } from './infrastructure/subscriptions.repository';
 import { StripeWebhookController } from './api/stripe-webhook.controller';
-import { HandleStripeWebhookUseCase } from './application/usecases/handle-stripe-webhook.usecase';
+import { ReceiveStripeWebhookUseCase } from './application/usecases/receive-stripe-webhook.usecase';
 import { PaymentsRepository } from './infrastructure/payments.repository';
 import { CustomersRepository } from './infrastructure/customers.repository';
 import { CheckoutSessionCompletedHandler } from './application/webhook/handlers/checkout-session-completed-handler';
@@ -18,13 +20,20 @@ import { WEBHOOK_HANDLERS } from '../../core/providers/provide-tokens/webhook-ha
 import { CustomerSubscriptionDeletedHandler } from './application/webhook/handlers/customer-subscription-deleted-handler';
 import { UpdateAutoRenewalUseCase } from './application/usecases/update-auto-renewal.usecase';
 import { GetMyPaymentsQueryHandler } from './application/queries/get-my-payments.query-handler';
-import { PaymentsQueryRepository } from './infrastructure/query/paments.query-repository';
+import { PaymentsQueryRepository } from './infrastructure/query/payments.query-repository';
+import { DateService } from '../../../../../libs/common/services/date.service';
+import { GetMyCurrentSubscriptionQueryHandler } from './application/queries/get-my-current-subscription.query-handler';
+import { SubscriptionsQueryRepository } from './infrastructure/query/subscriptions.query-repository';
 
 const controllers = [SubscriptionsController, StripeWebhookController];
-const queries = [GetPlansQueryHandler, GetMyPaymentsQueryHandler];
+const queries = [
+  GetPlansQueryHandler,
+  GetMyPaymentsQueryHandler,
+  GetMyCurrentSubscriptionQueryHandler,
+];
 const useCases = [
   CreateCheckoutSessionUseCase,
-  HandleStripeWebhookUseCase,
+  ReceiveStripeWebhookUseCase,
   UpdateAutoRenewalUseCase,
 ];
 const webhookHandlers = [
@@ -34,9 +43,10 @@ const webhookHandlers = [
   InvoicePaymentFailedHandler,
   CustomerSubscriptionDeletedHandler,
 ];
-const services = [StripeService];
+const services = [StripeService, DateService];
 const repositories = [
   SubscriptionsRepository,
+  SubscriptionsQueryRepository,
   PaymentsRepository,
   PaymentsQueryRepository,
   CustomersRepository,
@@ -44,7 +54,7 @@ const repositories = [
 const guards = [RemoteAuthGuard];
 
 @Module({
-  imports: [OutboxModule],
+  imports: [OutboxModule, forwardRef(() => OutboxCommandsModule), forwardRef(() => InboxModule)],
   controllers: [...controllers],
   providers: [
     ...useCases,
@@ -78,6 +88,6 @@ const guards = [RemoteAuthGuard];
       ],
     },
   ],
-  exports: [],
+  exports: [WEBHOOK_HANDLERS, StripeService],
 })
 export class SubscriptionsModule {}

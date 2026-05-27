@@ -1,3 +1,3 @@
 export enum NextjsEndpoints {
-  Revalidate = '/api/revalidate-posts',
+  Revalidate = '/api/revalidate-home',
 }

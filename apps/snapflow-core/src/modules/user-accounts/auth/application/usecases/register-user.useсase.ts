@@ -1,6 +1,7 @@
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
 import { RegistrationUserApplicationDto } from '../../../users/application/dto/registration-user.application-dto';
+import { NewSignupEvent } from '../../domain/events/new-signup.event';
 import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
@@ -73,6 +74,7 @@ export class RegisterUserUseCase implements ICommandHandler<RegisterUserCommand>
     });
 
     await this.eventBus.publish(new UserRegisteredEvent(email, confirmationCode));
+    await this.eventBus.publish(new NewSignupEvent());
   }
 
   private async isUsernameOrEmailTaken(

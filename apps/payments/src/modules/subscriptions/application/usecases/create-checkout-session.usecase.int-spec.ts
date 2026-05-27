@@ -34,7 +34,7 @@ describe('CreateCheckoutSessionUseCase (Integration)', () => {
 
   beforeEach(async () => {
     await prisma.$executeRawUnsafe(
-      'TRUNCATE TABLE payments, subscriptions, customers RESTART IDENTITY CASCADE',
+      'TRUNCATE TABLE inbox_events, outbox_commands, outbox_events, payments, subscriptions, customers RESTART IDENTITY CASCADE',
     );
 
     createCheckoutSessionMock.mockClear();

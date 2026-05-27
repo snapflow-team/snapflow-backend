@@ -1,17 +1,22 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../setup/configuration/configuration';
 import { DatabaseSettings } from '../setup/configuration/database-settings';
 import { PrismaClient } from '@generated/prisma-files';
+import { LoggerFactory } from '../modules/logger/logger.factory';
+import { ContextLogger } from '../modules/logger/context-logger';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly pool: Pool;
-  private readonly logger: Logger = new Logger(PrismaService.name);
+  private readonly logger: ContextLogger;
 
-  constructor(private readonly configService: ConfigService<Configuration, true>) {
+  constructor(
+    private readonly configService: ConfigService<Configuration, true>,
+    loggerFactory: LoggerFactory,
+  ) {
     const databaseSettings: DatabaseSettings =
       configService.get<DatabaseSettings>('databaseSettings');
 
@@ -22,15 +27,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     super({ adapter, log: databaseSettings.getLogLevels() });
 
     this.pool = pool;
+
+    this.logger = loggerFactory.create(PrismaService.name);
   }
 
   async onModuleInit() {
     try {
       await this.$connect();
 
-      this.logger.log('\x1b[36m✅ Database connected successfully\x1b[0m');
+      this.logger.log('Database connected successfully', this.onModuleInit.name);
     } catch (error) {
-      this.logger.error(`❌ Database connection failed: ${error.message}`, error.stack);
+      this.logger.error(error, this.onModuleInit.name);
 
       process.exit(1);
     }

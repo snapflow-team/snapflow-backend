@@ -1,7 +1,8 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import amqp, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
+import { randomUUID } from 'node:crypto';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { PaymentsUserSyncService } from './payments-user-sync.service';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
@@ -11,17 +12,26 @@ import {
   PaymentsRoutingKey,
 } from '../../../../../../libs/contracts/payments';
 import { parsePaymentsRoutingKey } from './type-guards/payments-events.type-guards';
+import { LoggerFactory } from '../../logger/logger.factory';
+import { ContextLogger } from '../../logger/context-logger';
+import { AsyncLocalStorageService } from '../../../common/async-local-storage/async-local-storage.service';
+import { REQUEST_ID_KEY } from '../../../../../../libs/common/constants/request-id.constants';
+import { extractRequestIdFromAmqpMsg } from '../../../../../../libs/common/messaging/amqp-headers';
 
 @Injectable()
 export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
-  private readonly logger: Logger = new Logger(PaymentsEventsConsumer.name);
+  private readonly logger: ContextLogger;
   private connection?: AmqpConnectionManager;
   private channelWrapper?: ChannelWrapper;
 
   constructor(
     private readonly configService: ConfigService<Configuration, true>,
     private readonly paymentsUserSyncService: PaymentsUserSyncService,
-  ) {}
+    private readonly asyncLocalStorageService: AsyncLocalStorageService,
+    loggerFactory: LoggerFactory,
+  ) {
+    this.logger = loggerFactory.create(PaymentsEventsConsumer.name);
+  }
 
   async onModuleInit(): Promise<void> {
     const { rabbitMqUrl, paymentsEventsQueueName }: ApiSettings =
@@ -30,7 +40,7 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
     this.connection = amqp.connect([rabbitMqUrl]);
 
     this.connection.on('connect', () => {
-      this.logger.log('\x1b[36m✅Successfully connected to RabbitMQ\x1b[0m');
+      this.logger.log('Successfully connected to RabbitMQ', this.onModuleInit.name);
     });
 
     this.channelWrapper = this.connection.createChannel({
@@ -50,9 +60,22 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
             return;
           }
 
-          void this.handleMessage(channel, msg);
+          this.dispatchMessageWithRequestContext(channel, msg);
         });
       },
+    });
+  }
+
+  /**
+   * Каждое AMQP-сообщение выполняется в своём ALS-контексте с requestId из headers
+   * (или новым UUID), чтобы логи и вложенные сервисы видели тот же requestId.
+   */
+  private dispatchMessageWithRequestContext(channel: ConfirmChannel, msg: ConsumeMessage): void {
+    const requestId: string = extractRequestIdFromAmqpMsg(msg) ?? randomUUID();
+
+    this.asyncLocalStorageService.start(() => {
+      this.asyncLocalStorageService.getStore()?.set(REQUEST_ID_KEY, requestId);
+      void this.handleMessage(channel, msg);
     });
   }
 
@@ -71,10 +94,7 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
       await this.paymentsUserSyncService.applyRoutingKey(parsedRoutingKey, payload);
       channel.ack(msg);
     } catch (error) {
-      const message: string = error instanceof Error ? error.message : 'Unknown error';
-      const errorStack: string | undefined = error instanceof Error ? error.stack : '';
-
-      this.logger.error(`Payments event handling failed: ${message}`, errorStack);
+      this.logger.error(error, this.handleMessage.name);
 
       channel.nack(msg, false, true);
     }
@@ -90,7 +110,7 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
         await this.connection.close();
       }
     } catch (error) {
-      this.logger.error('Error closing RabbitMQ connection', error);
+      this.logger.error(error, this.onModuleDestroy.name);
     }
   }
 }

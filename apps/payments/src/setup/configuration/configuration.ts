@@ -7,6 +7,7 @@ import { EnvironmentSettings } from './environment-settings';
 import { DatabaseSettings } from './database-settings';
 import { BusinessRulesSettings } from './business-rules-settings';
 import { SwaggerSettings } from './swagger-settings';
+import { LoggerSettings } from './logger-settings';
 
 export type EnvironmentVariable = { [key: string]: string };
 
@@ -46,6 +47,9 @@ export class Configuration {
   @ValidateNested()
   swaggerSettings: SwaggerSettings;
 
+  @ValidateNested()
+  loggerSettings: LoggerSettings;
+
   private constructor(configuration: Configuration) {
     Object.assign(this, configuration);
   }
@@ -57,6 +61,7 @@ export class Configuration {
       businessRulesSettings: new BusinessRulesSettings(environmentVariables),
       environmentSettings: new EnvironmentSettings(environmentVariables),
       swaggerSettings: new SwaggerSettings(environmentVariables),
+      loggerSettings: new LoggerSettings(environmentVariables),
     });
   }
 }

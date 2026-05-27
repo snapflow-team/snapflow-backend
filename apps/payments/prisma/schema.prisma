@@ -35,9 +35,28 @@ enum OutboxEventType {
   CHECKOUT_SESSION_EXPIRED
   SUBSCRIPTION_RENEWAL_FAILED
   SUBSCRIPTION_CANCELLED
+  SUBSCRIPTION_RENEWED
 }
 
 enum OutboxEventStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+enum InboxEventStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+enum OutboxCommandType {
+  STRIPE_EXTEND_SUBSCRIPTION
+}
+
+enum OutboxCommandStatus {
   PENDING
   PROCESSING
   PROCESSED
@@ -53,6 +72,7 @@ model Subscription {
   autoRenewal        Boolean            @default(true) @map("auto_renewal")
   currentPeriodStart DateTime?          @map("current_period_start")
   currentPeriodEnd   DateTime?          @map("current_period_end")
+  nextPaymentAt      DateTime?          @map("next_payment_at")
   lastStripeEventAt  DateTime?          @map("last_stripe_event_at")
 
   createdAt DateTime  @default(now()) @map("created_at")
@@ -102,6 +122,36 @@ model OutboxEvent {
 
   @@index([status, createdAt])
   @@map("outbox_events")
+}
+
+model InboxEvent {
+  eventId     String           @id @map("event_id")
+  provider    PaymentProvider
+  payload     Json             @db.JsonB
+  status      InboxEventStatus @default(PENDING)
+  attempts    Int              @default(0)
+  error       String?          @db.Text
+  receivedAt  DateTime         @default(now()) @map("received_at")
+  processedAt DateTime?        @map("processed_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@index([status, receivedAt])
+  @@map("inbox_events")
+}
+
+model OutboxCommand {
+  id          String              @id @default(uuid()) @db.Uuid
+  type        OutboxCommandType
+  payload     Json                @db.JsonB
+  status      OutboxCommandStatus @default(PENDING)
+  attempts    Int                 @default(0)
+  error       String?             @db.Text
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  processedAt DateTime?           @map("processed_at")
+
+  @@index([status, createdAt])
+  @@map("outbox_commands")
 }
 
 model Customer {

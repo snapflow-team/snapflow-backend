@@ -6,6 +6,7 @@ import { EnvironmentSettings } from './environment-settings';
 import { DatabaseSettings } from './database-settings';
 import { MicroserviceSettings } from './microservice.settings';
 import { S3Settings } from './s3.settings';
+import { LoggerSettings } from './logger-settings';
 
 export type EnvironmentVariable = { [key: string]: string };
 
@@ -42,6 +43,9 @@ export class Configuration {
   @ValidateNested()
   s3Settings: S3Settings;
 
+  @ValidateNested()
+  loggerSettings: LoggerSettings;
+
   private constructor(configuration: Configuration) {
     Object.assign(this, configuration);
   }
@@ -52,6 +56,7 @@ export class Configuration {
       databaseSettings: new DatabaseSettings(environmentVariables),
       microserviceSettings: new MicroserviceSettings(environmentVariables),
       s3Settings: new S3Settings(environmentVariables),
+      loggerSettings: new LoggerSettings(environmentVariables),
     });
   }
 }

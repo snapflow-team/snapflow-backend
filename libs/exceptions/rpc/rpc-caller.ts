@@ -1,6 +1,8 @@
 import { ClientProxy, ReadPacket } from '@nestjs/microservices';
 import { firstValueFrom, throwError, timer } from 'rxjs';
 import { catchError, retry, timeout } from 'rxjs/operators';
+
+import { RpcEnvelope } from '../../common/rpc/rpc-envelope';
 import { IRpcErrorResponse } from './rpc-exception-response';
 import { isRpcErrorResponse } from './is-rpc-error-response';
 
@@ -40,7 +42,10 @@ const DEFAULT_RETRY_DELAY_MS = 100;
  * - маппит RPC-ошибки в доменные исключения через `ExceptionMapper`.
  */
 export class RpcCaller {
-  constructor(private readonly exceptionMapper: IRpcExceptionMapper) {}
+  constructor(
+    private readonly exceptionMapper: IRpcExceptionMapper,
+    private readonly getRequestId?: () => string | null,
+  ) {}
 
   /**
    * Отправляет RPC-команду и возвращает первое значение ответа.
@@ -68,9 +73,12 @@ export class RpcCaller {
       serviceName,
     } = options;
 
+    const requestId: string | null = this.getRequestId?.() ?? null;
+    const enveloped: RpcEnvelope<TPayload> = { data: payload, meta: { requestId } };
+
     try {
       return await firstValueFrom(
-        client.send<TResponse, TPayload>(pattern, payload).pipe(
+        client.send<TResponse, RpcEnvelope<TPayload>>(pattern, enveloped).pipe(
           timeout(timeoutMs),
           retry({
             count: retryCount,

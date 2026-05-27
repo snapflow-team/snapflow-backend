@@ -2,7 +2,10 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { PlanViewDto } from '../../api/view-dto/plan.view-dto';
-import { BusinessRulesSettings, Plan, } from 'apps/payments/src/setup/configuration/business-rules-settings';
+import {
+  BusinessRulesSettings,
+  Plan,
+} from 'apps/payments/src/setup/configuration/business-rules-settings';
 
 export class GetPlansQuery {}
 
@@ -11,7 +14,7 @@ export class GetPlansQueryHandler implements IQueryHandler<GetPlansQuery, PlanVi
   private readonly plans: Plan[] = [];
 
   constructor(private readonly configService: ConfigService<Configuration, true>) {
-    this.plans = configService.get<BusinessRulesSettings>('businessRulesSettings').plans;
+    this.plans = configService.get<BusinessRulesSettings>('businessRulesSettings').getPlans();
   }
 
   async execute(): Promise<PlanViewDto[]> {
