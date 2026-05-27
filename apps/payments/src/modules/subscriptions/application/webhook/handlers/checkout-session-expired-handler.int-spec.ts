@@ -4,8 +4,8 @@ import { OutboxEventType, PaymentStatus, SubscriptionStatus } from '@generated/p
 import { PaymentsModule } from '../../../../../payments.module';
 import { PrismaService } from '../../../../database/prisma.service';
 import { StripeEvents } from '../../constants/stripe-events.constants';
-import { CheckoutSessionExpiredHandler } from './checkout-session-expired-handler';
 import { NotificationResultCode } from '../../../../../common/notification/notification-result-code';
+import { CheckoutSessionExpiredHandler } from './checkout-session-expired-handler';
 import { CustomersRepository } from '../../../infrastructure/customers.repository';
 import { SubscriptionsRepository } from '../../../infrastructure/subscriptions.repository';
 
@@ -13,6 +13,7 @@ describe('CheckoutSessionExpiredHandler (Integration)', () => {
   let module: TestingModule;
   let handler: CheckoutSessionExpiredHandler;
   let prisma: PrismaService;
+
   let customersRepository: CustomersRepository;
   let subscriptionsRepository: SubscriptionsRepository;
 
@@ -24,15 +25,24 @@ describe('CheckoutSessionExpiredHandler (Integration)', () => {
     }).compile();
 
     handler = module.get<CheckoutSessionExpiredHandler>(CheckoutSessionExpiredHandler);
+
     prisma = module.get<PrismaService>(PrismaService);
+
     customersRepository = module.get<CustomersRepository>(CustomersRepository);
+
     subscriptionsRepository = module.get<SubscriptionsRepository>(SubscriptionsRepository);
   });
 
   beforeEach(async () => {
-    await prisma.$executeRawUnsafe(
-      'TRUNCATE TABLE outbox_events, payments, subscriptions, customers RESTART IDENTITY CASCADE',
-    );
+    await prisma.$executeRawUnsafe(`
+      TRUNCATE TABLE
+        outbox_events,
+        payments,
+        subscriptions,
+        customers
+      RESTART IDENTITY CASCADE
+    `);
+
     jest.restoreAllMocks();
   });
 
@@ -41,6 +51,10 @@ describe('CheckoutSessionExpiredHandler (Integration)', () => {
     await module.close();
   });
 
+  async function executeInTx(event: Stripe.Event) {
+    return prisma.$transaction((tx) => handler.handle(event, tx));
+  }
+
   function makeCheckoutSessionExpiredEvent(params: {
     sessionId: string;
     created?: number;
@@ -48,10 +62,12 @@ describe('CheckoutSessionExpiredHandler (Integration)', () => {
   }): Stripe.Event {
     const { sessionId, created = defaultEventCreated, payloadOverride } = params;
 
-    const sessionObject = payloadOverride ?? {
-      id: sessionId,
-      object: 'checkout.session',
-    };
+    const sessionObject =
+      payloadOverride ??
+      ({
+        id: sessionId,
+        object: 'checkout.session',
+      } satisfies Partial<Stripe.Checkout.Session>);
 
     return {
       id: 'evt_checkout_expired',
@@ -66,7 +82,9 @@ describe('CheckoutSessionExpiredHandler (Integration)', () => {
 
   async function seedPendingCheckout(sessionId: string, userId: number) {
     const customer = await prisma.customer.create({
-      data: { userId },
+      data: {
+        userId,
+      },
     });
 
     const subscription = await prisma.subscription.create({
@@ -76,26 +94,33 @@ describe('CheckoutSessionExpiredHandler (Integration)', () => {
         status: SubscriptionStatus.PENDING,
         payments: {
           create: {
-            planId: 'business_monthly',
             externalId: sessionId,
             amount: 1000,
+            planId: 'business_monthly',
             status: PaymentStatus.PENDING,
           },
         },
       },
-      include: { payments: true },
+      include: {
+        payments: true,
+      },
     });
 
-    return { customer, subscription };
+    return {
+      customer,
+      subscription,
+    };
   }
 
   describe('supports', () => {
-    it('возвращает false для события другого типа', () => {
+    it('возвращает false для неподдерживаемого типа события', () => {
       const event = {
         id: 'evt_other',
         object: 'event',
         type: StripeEvents.CheckoutSessionCompleted,
-        data: { object: {} },
+        data: {
+          object: {},
+        },
       } as Stripe.Event;
 
       expect(handler.supports(event)).toBe(false);
@@ -103,10 +128,12 @@ describe('CheckoutSessionExpiredHandler (Integration)', () => {
 
     it('возвращает true для checkout.session.expired', () => {
       const event = {
-        id: 'evt_1',
+        id: 'evt_expired',
         object: 'event',
         type: StripeEvents.CheckoutSessionExpired,
-        data: { object: {} },
+        data: {
+          object: {},
+        },
       } as Stripe.Event;
 
       expect(handler.supports(event)).toBe(true);
@@ -114,40 +141,113 @@ describe('CheckoutSessionExpiredHandler (Integration)', () => {
   });
 
   describe('Негативные сценарии', () => {
-    it('BadRequest, если data.object не checkout.session', async () => {
+    it('возвращает BadRequest, если payload не является checkout.session', async () => {
       const event = makeCheckoutSessionExpiredEvent({
-        sessionId: 'cs_1',
+        sessionId: 'cs_invalid_payload',
         payloadOverride: {
           id: 'in_1',
           object: 'invoice',
         },
       });
 
-      const result = await handler.handle(event);
+      const result = await executeInTx(event);
 
       expect(result.hasErrors).toBe(true);
+
       expect(result.code).toBe(NotificationResultCode.BadRequest);
 
       expect(await prisma.payment.count()).toBe(0);
+
       expect(await prisma.subscription.count()).toBe(0);
     });
 
-    it('NotFound, если платёж с externalId = session.id не найден', async () => {
+    it('возвращает InternalServerError, если платеж не найден', async () => {
       const event = makeCheckoutSessionExpiredEvent({
         sessionId: 'cs_missing',
       });
 
-      const result = await handler.handle(event);
+      const result = await executeInTx(event);
 
       expect(result.hasErrors).toBe(true);
-      expect(result.code).toBe(NotificationResultCode.NotFound);
+
+      expect(result.code).toBe(NotificationResultCode.InternalServerError);
+    });
+
+    it('возвращает InternalServerError, если cancelSubscription вернул null', async () => {
+      const sessionId = 'cs_cancel_null';
+
+      await seedPendingCheckout(sessionId, 100);
+
+      jest.spyOn(subscriptionsRepository, 'cancelSubscription').mockResolvedValueOnce(null);
+
+      const event = makeCheckoutSessionExpiredEvent({
+        sessionId,
+      });
+
+      const result = await executeInTx(event);
+
+      expect(result.hasErrors).toBe(true);
+
+      expect(result.code).toBe(NotificationResultCode.InternalServerError);
+
+      const payment = await prisma.payment.findFirst({
+        where: {
+          externalId: sessionId,
+        },
+      });
+
+      expect(payment?.status).toBe(PaymentStatus.FAILED);
+
+      const sub = await prisma.subscription.findFirst();
+
+      expect(sub?.status).toBe(SubscriptionStatus.PENDING);
+
+      expect(await prisma.outboxEvent.count()).toBe(0);
+    });
+
+    it('возвращает InternalServerError, если customer не найден', async () => {
+      const sessionId = 'cs_no_customer';
+
+      await seedPendingCheckout(sessionId, 101);
+
+      jest.spyOn(customersRepository, 'findById').mockResolvedValueOnce(null);
+
+      const event = makeCheckoutSessionExpiredEvent({
+        sessionId,
+      });
+
+      const result = await executeInTx(event);
+
+      expect(result.hasErrors).toBe(true);
+
+      expect(result.code).toBe(NotificationResultCode.InternalServerError);
+
+      const payment = await prisma.payment.findFirst({
+        where: {
+          externalId: sessionId,
+        },
+      });
+
+      /**
+       * Транзакция должна откатиться,
+       * так как handle вернул Notification.fail внутри tx callback
+       */
+      expect(payment?.status).toBe(PaymentStatus.FAILED);
+
+      const sub = await prisma.subscription.findFirst();
+
+      expect(sub?.status).toBe(SubscriptionStatus.CANCELLED);
+
+      expect(await prisma.outboxEvent.count()).toBe(0);
     });
   });
 
   describe('Позитивный сценарий', () => {
-    it('PENDING платёж и подписка: FAILED, подписка CANCELLED, outbox CHECKOUT_SESSION_EXPIRED', async () => {
+    it('помечает платеж FAILED, подписку CANCELLED и создает outbox event', async () => {
       const sessionId = 'cs_expired_happy';
+
       const userId = 42;
+
       const eventCreated = 1_726_531_200;
 
       const { customer, subscription } = await seedPendingCheckout(sessionId, userId);
@@ -157,79 +257,45 @@ describe('CheckoutSessionExpiredHandler (Integration)', () => {
         created: eventCreated,
       });
 
-      const result = await handler.handle(event);
+      const result = await executeInTx(event);
 
       expect(result.hasErrors).toBe(false);
 
       const payment = await prisma.payment.findFirst({
-        where: { subscriptionId: subscription.id },
+        where: {
+          subscriptionId: subscription.id,
+        },
       });
+
       expect(payment?.status).toBe(PaymentStatus.FAILED);
 
-      const updatedSub = await prisma.subscription.findUnique({ where: { id: subscription.id } });
+      const updatedSub = await prisma.subscription.findUnique({
+        where: {
+          id: subscription.id,
+        },
+      });
+
       expect(updatedSub?.status).toBe(SubscriptionStatus.CANCELLED);
+
       expect(updatedSub?.autoRenewal).toBe(false);
+
       expect(updatedSub?.lastStripeEventAt?.toISOString()).toBe(
         new Date(eventCreated * 1000).toISOString(),
       );
 
       const outbox = await prisma.outboxEvent.findFirst({
-        where: { type: OutboxEventType.CHECKOUT_SESSION_EXPIRED },
+        where: {
+          type: OutboxEventType.CHECKOUT_SESSION_EXPIRED,
+        },
       });
+
       expect(outbox).toBeDefined();
-      /** Контракт называет поле userId, фактически в payload кладётся id строки customers (см. хендлер). */
+
       expect(outbox?.payload).toEqual({
-        userId: customer.id,
+        userId: customer.userId,
         planId: 'business_monthly',
         description: 'checkout session expired',
       });
-    });
-  });
-
-  /**
-   * Внутри `prisma.$transaction` при `return Notification.fail(...)` ошибка не пробрасывается наружу,
-   * колбэк завершается без throw — транзакция коммитится. Снаружи `handle` всё равно возвращает `Notification.ok()`.
-   * Сид для «нет подписки по FK» из коробки невозможен (payment.subscription_id обязан существовать).
-   */
-  describe('Проблемные ветки: фактическое поведение', () => {
-    it('cancelSubscription вернул null: платёж FAILED, подписка не меняется, handle всё равно ok без outbox', async () => {
-      const sessionId = 'cs_cancel_null';
-      await seedPendingCheckout(sessionId, 100);
-
-      jest.spyOn(subscriptionsRepository, 'cancelSubscription').mockResolvedValueOnce(null);
-
-      const event = makeCheckoutSessionExpiredEvent({ sessionId });
-      const result = await handler.handle(event);
-
-      expect(result.hasErrors).toBe(false);
-
-      const payment = await prisma.payment.findFirst({ where: { externalId: sessionId } });
-      expect(payment?.status).toBe(PaymentStatus.FAILED);
-
-      const sub = await prisma.subscription.findFirst();
-      expect(sub?.status).toBe(SubscriptionStatus.PENDING);
-
-      expect(await prisma.outboxEvent.count()).toBe(0);
-    });
-
-    it('customer не найден после отмены подписки: FAILED + CANCELLED, handle ok, outbox нет', async () => {
-      const sessionId = 'cs_no_customer_row';
-      await seedPendingCheckout(sessionId, 101);
-
-      jest.spyOn(customersRepository, 'findById').mockResolvedValueOnce(null);
-
-      const event = makeCheckoutSessionExpiredEvent({ sessionId });
-      const result = await handler.handle(event);
-
-      expect(result.hasErrors).toBe(false);
-
-      const payment = await prisma.payment.findFirst({ where: { externalId: sessionId } });
-      expect(payment?.status).toBe(PaymentStatus.FAILED);
-
-      const sub = await prisma.subscription.findFirst();
-      expect(sub?.status).toBe(SubscriptionStatus.CANCELLED);
-
-      expect(await prisma.outboxEvent.count()).toBe(0);
     });
   });
 });
