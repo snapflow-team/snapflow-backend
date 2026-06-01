@@ -55,10 +55,10 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
 
     if (!stripeSubscriptionId) {
       this.logger.warn(
-        `Unable to extract Stripe subscription id from invoice ${payload.id} for invoice.payment_failed. Skipping.`,
+        `Unable to extract Stripe subscription id from invoice ${payload.id} for invoice.payment_failed.`,
         this.handle.name,
       );
-      return Notification.ok();
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     const localSubscription: Subscription | null =
@@ -68,7 +68,7 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
         `No local subscription for Stripe subscription ${stripeSubscriptionId}`,
         this.handle.name,
       );
-      return Notification.ok();
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     if (checkIsOldEvent(event, localSubscription)) {
@@ -76,14 +76,12 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
       return Notification.ok();
     }
 
-    //Проверяем протухла ли подписка в нашей локальной бд
-    //todo(vitaliy) возможно нам стоит учитывать это протухание
     if (
       localSubscription.currentPeriodEnd &&
       localSubscription.currentPeriodEnd < new Date(Date.now())
     ) {
       this.logger.warn(
-        `Subscription: ${stripeSubscriptionId} have not been expired yet`,
+        `Subscription: ${stripeSubscriptionId} have been expired yet`,
         this.handle.name,
       );
     }
@@ -91,22 +89,29 @@ export class InvoicePaymentFailedHandler implements WebhookHandler {
     const nextPaymentAt =
       payload.next_payment_attempt === null ? null : new Date(payload.next_payment_attempt * 1000);
 
-    await this.subscriptionsRepository.setToPastDue(
+    const isSetToPastDue = await this.subscriptionsRepository.setToPastDue(
       localSubscription.id,
       nextPaymentAt,
       extractEventDate(event),
     );
+    if (!isSetToPastDue) {
+      this.logger.warn(
+        `The subscription was not set to Past Due status: ${payload.id}`,
+        this.handle.name,
+      );
+      return Notification.fail(NotificationResultCode.InternalServerError);
+    }
 
     const stripeCusId = extractCustomerId(payload.customer);
     if (!stripeCusId) {
       this.logger.warn(`No customer in invoice: ${payload.id}`, this.handle.name);
-      return Notification.fail(NotificationResultCode.InternalServerError, 'some error occurred');
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     const customer = await this.customersRepository.findByStripeCustomerId(stripeCusId, tx);
     if (!customer) {
       this.logger.warn(`No local customer found by stripeCusId : ${stripeCusId}`, this.handle.name);
-      return Notification.fail(NotificationResultCode.InternalServerError, 'some error occurred');
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     const { failureCode, failureMessage } = extractInvoiceFailureDetails(payload);

@@ -13,7 +13,7 @@ export class PaymentsRepository {
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Payment | null> {
     return tx.payment.findFirst({
-      where: { externalId },
+      where: { externalId, deletedAt: null },
     });
   }
 
@@ -51,7 +51,7 @@ export class PaymentsRepository {
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Payment> {
     return tx.payment.update({
-      where: { id: paymentId },
+      where: { id: paymentId, deletedAt: null },
       data: { status: PaymentStatus.PAID },
     });
   }
@@ -61,7 +61,7 @@ export class PaymentsRepository {
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Payment> {
     return tx.payment.update({
-      where: { id: paymentId },
+      where: { id: paymentId, deletedAt: null },
       data: { status: PaymentStatus.FAILED },
     });
   }

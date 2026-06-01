@@ -43,6 +43,7 @@ export class SubscriptionViewDto {
   subscriptionLabel: Label;
 
   @ApiProperty({
+    type: 'string',
     description: 'Дата окончания подписки (ISO-8601) или null',
     example: '2026-05-21T10:30:00.000Z',
     nullable: true,
@@ -51,6 +52,7 @@ export class SubscriptionViewDto {
   expireAt: string | null;
 
   @ApiProperty({
+    type: 'string',
     description: 'Дата следующего платежа (ISO-8601) или null',
     example: '2026-04-21T10:30:00.000Z',
     nullable: true,

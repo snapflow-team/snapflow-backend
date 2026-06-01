@@ -111,7 +111,13 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
     const currentPeriod: BillingPeriod = periodResult.value;
 
-    const stripeSubscription = await this.stripeService.getSubscription(stripeSubscriptionId);
+    const stripeSubscriptionResult = await this.stripeService.getSubscription(stripeSubscriptionId);
+    if (stripeSubscriptionResult.hasErrors) {
+      this.logger.warn(`Failed to get subscription ${stripeSubscriptionId} from stripe`);
+      return Notification.fail(NotificationResultCode.InternalServerError);
+    }
+
+    const stripeSubscription = stripeSubscriptionResult.value;
 
     const stripeCusId = extractCustomerId(stripeSubscription.customer);
     if (!stripeCusId) {

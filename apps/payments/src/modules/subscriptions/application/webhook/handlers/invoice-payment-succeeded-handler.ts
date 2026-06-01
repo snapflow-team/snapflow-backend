@@ -38,10 +38,7 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
   supports(event: Stripe.Event): boolean {
     return event.type === StripeEvents.InvoicePaymentSucceeded;
   }
-  async handle(
-    event: Stripe.Event,
-    tx: Prisma.TransactionClient,
-  ): Promise<Notification<void>> {
+  async handle(event: Stripe.Event, tx: Prisma.TransactionClient): Promise<Notification<void>> {
     const payload = event.data.object;
 
     if (!isInvoiceObject(payload)) {
@@ -84,7 +81,10 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
 
     const customer = await this.customersRepository.findById(localSubscription.customerId);
     if (!customer) {
-      this.logger.warn(`Customer with id ${localSubscription.customerId} not found`, this.handle.name);
+      this.logger.warn(
+        `Customer with id ${localSubscription.customerId} not found`,
+        this.handle.name,
+      );
       return Notification.ok();
     }
 
@@ -104,7 +104,7 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
         `Parsing payment from invoice ${payload.id} failed, ${stripePaymentResult.message}`,
         this.handle.name,
       );
-      return Notification.ok();
+      return Notification.fail(NotificationResultCode.InternalServerError);
     }
 
     const paymentInfo: InvoicePayment = stripePaymentResult.value;

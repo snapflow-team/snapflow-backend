@@ -23,6 +23,7 @@ export class PaymentViewDto {
   dateOfPayment: string;
 
   @ApiProperty({
+    type: 'string',
     description: 'Дата окончания подписки (ISO-8601) или null',
     example: '2026-05-21T10:30:00.000Z',
     nullable: true,
