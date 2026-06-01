@@ -1,7 +1,7 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { EmailTemplate } from '../templates/types';
 import { EmailTemplates } from '../templates/email.templates';
-import { UserRegisteredEvent } from '../../user-accounts/auth/domain/events/user-registered.event';
+import { UserRegisteredEvent } from '../../../user-accounts/auth/domain/events/user-registered.event';
 import { EmailService } from '../services/email.service';
 
 @EventsHandler(UserRegisteredEvent)

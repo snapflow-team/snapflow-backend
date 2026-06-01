@@ -4,13 +4,11 @@ import { HttpStatus } from '@nestjs/common';
 import { AppTestManager } from '../managers/app.test-manager';
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
-import { EmailService } from '../../src/modules/emails/services/email.service';
-import { EmailTemplate } from '../../src/modules/emails/templates/types';
+import { EmailService } from '../../src/modules/notifications/emails/services/email.service';
+import { EmailTemplate } from '../../src/modules/notifications/emails/templates/types';
 import { ProfileTestManager } from '../managers/profile.test-manager';
 import { UserProfile } from '@generated/prisma-snapflow';
-import {
-  PublicProfileViewDto
-} from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/public-profile.view-dto';
+import { PublicProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/public-profile.view-dto';
 import { PostTestManager } from '../managers/post.test-manager';
 
 describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId)', () => {

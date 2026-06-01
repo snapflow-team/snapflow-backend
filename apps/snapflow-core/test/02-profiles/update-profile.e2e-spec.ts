@@ -1,6 +1,6 @@
 import { Server } from 'http';
-import { EmailTemplate } from '../../src/modules/emails/templates/types';
-import { EmailService } from '../../src/modules/emails/services/email.service';
+import { EmailTemplate } from '../../src/modules/notifications/emails/templates/types';
+import { EmailService } from '../../src/modules/notifications/emails/services/email.service';
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { AppTestManager } from '../managers/app.test-manager';
 import request, { Response } from 'supertest';

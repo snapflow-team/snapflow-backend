@@ -43,7 +43,6 @@ import { ProfileController } from './users/profile/api/profile.controller';
 import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
 import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
 import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
-import { EmailModule } from '../emails/email-module';
 import { FilesClientModule } from '../integrations/files/files-client.module';
 import { FilesMediaController } from '../integrations/files/api/files-media.controller';
 import { MulterModule } from '@nestjs/platform-express';
@@ -55,6 +54,7 @@ import { GetPublicProfileQueryHandler } from './users/profile/application/querie
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
+import { NotificationModule } from '../notifications/notification-module';
 
 const controllers = [
   AuthController,
@@ -118,7 +118,7 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
 
 @Module({
   imports: [
-    EmailModule,
+    NotificationModule,
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({

@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { EmailService } from './services/email.service';
-import { EmailTemplates } from './templates/email.templates';
-import { SendConfirmationEmailWhenUserRegisteredEventHandler } from './event-handlers/send-confirmation-email-when-user-registered.event-handler';
-import { SendPasswordRecoveryEmailEventHandler } from './event-handlers/send-password-recovery-email.event-handler';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '@nestjs/cli/lib/configuration';
 import { BusinessRulesSettings } from '../../setup/configuration/business-rules-settings';
+import { EmailService } from './emails/services/email.service';
+import { EmailTemplates } from './emails/templates/email.templates';
+import { SendConfirmationEmailWhenUserRegisteredEventHandler } from './emails/event-handlers/send-confirmation-email-when-user-registered.event-handler';
+import { SendPasswordRecoveryEmailEventHandler } from './emails/event-handlers/send-password-recovery-email.event-handler';
+import { NotificationWebsocketGateway } from './websocket/notification-websocket.gateway';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { BusinessRulesSettings } from '../../setup/configuration/business-rules-
     EmailTemplates,
     SendConfirmationEmailWhenUserRegisteredEventHandler,
     SendPasswordRecoveryEmailEventHandler,
+    NotificationWebsocketGateway,
   ],
-  exports: [EmailService],
+  exports: [],
 })
-export class EmailModule {}
+export class NotificationModule {}
