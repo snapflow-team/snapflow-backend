@@ -58,6 +58,9 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Prisma generated client
 /generated
 
+# Admin GraphQL code-first schema
+apps/snapflow-core/src/modules/admin/admin-schema.gql
+
 # Cursor
 .cursorignore
 .cursor/
