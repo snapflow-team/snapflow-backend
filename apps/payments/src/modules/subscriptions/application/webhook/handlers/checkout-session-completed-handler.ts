@@ -31,6 +31,7 @@ import { SubscriptionRenewedEvent } from '../../../../../../../../libs/contracts
 import { extractSubscriptionIdFromCS } from './utils/extract-subscription-id.helper';
 import { extractCustomerId } from './utils/extract-customer-id.helper';
 import { extractEventDate } from './utils/extract-date-from-event-created.helper';
+import { QueueService } from '../../../../queue/queue.service';
 
 @Injectable()
 export class CheckoutSessionCompletedHandler implements WebhookHandler {
@@ -44,6 +45,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
     private outboxCommandRepository: OutboxCommandRepository,
     private subscriptionsRepository: SubscriptionsRepository,
     private dateService: DateService,
+    private queueService: QueueService,
     loggerFactory: LoggerFactory,
   ) {
     this.logger = loggerFactory.create(CheckoutSessionCompletedHandler.name);
@@ -175,6 +177,11 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           tx,
         );
 
+        await this.queueService.addSubscriptionActivatedJob({
+          userId: localCustomer.userId,
+          createdAt: currentPeriod.end,
+        });
+
         return Notification.ok();
       }
       case StripeCSModes.Subscription: {
@@ -202,6 +209,11 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           } satisfies SubscriptionActivatedEvent,
           tx,
         );
+
+        await this.queueService.addSubscriptionActivatedJob({
+          userId: localCustomer.userId,
+          createdAt: currentPeriod.end,
+        });
 
         return Notification.ok();
       }

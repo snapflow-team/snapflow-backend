@@ -38,6 +38,15 @@ enum OutboxEventType {
   DELETE_POST_MEDIA_FILE
 }
 
+enum NotificationType {
+  SUBSCRIPTION_ACTIVATED
+
+  SUBSCRIPTION_EXPIRING_7D
+  SUBSCRIPTION_EXPIRING_1D
+
+  NEXT_PAYMENT_1D
+}
+
 model OutboxEvent {
   id        String            @id @default(uuid()) @db.Uuid
   type      OutboxEventType
@@ -71,6 +80,7 @@ model User {
   authAcconts           AuthAccount[]
   posts                 Post[]
   profiles              UserProfile[]
+  notifications         Notification[]
 
   @@map("users")
 }
@@ -134,18 +144,33 @@ model EmailConfirmationCode {
   @@map("email_confirmation_codes")
 }
 
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int              @map("user_id")
+  message   String           @db.Text
+  type      NotificationType
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  deletedAt DateTime?        @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
 model Session {
-  id         Int      @id @default(autoincrement())
-  deviceId   String   @map("device_id")
-  deviceName String   @map("device_name") @db.VarChar(255)
-  browserName    String? @map("browser_name") @db.VarChar(255)
-  browserVersion String? @map("browser_version") @db.VarChar(255)
-  osName         String? @map("os_name") @db.VarChar(255)
-  osVersion      String? @map("os_version") @db.VarChar(255)
-  deviceType     String? @map("device_type") @db.VarChar(255)
-  ip         String   @db.VarChar(255)
-  iat        DateTime
-  exp        DateTime
+  id             Int      @id @default(autoincrement())
+  deviceId       String   @map("device_id")
+  deviceName     String   @map("device_name") @db.VarChar(255)
+  browserName    String?  @map("browser_name") @db.VarChar(255)
+  browserVersion String?  @map("browser_version") @db.VarChar(255)
+  osName         String?  @map("os_name") @db.VarChar(255)
+  osVersion      String?  @map("os_version") @db.VarChar(255)
+  deviceType     String?  @map("device_type") @db.VarChar(255)
+  ip             String   @db.VarChar(255)
+  iat            DateTime
+  exp            DateTime
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")

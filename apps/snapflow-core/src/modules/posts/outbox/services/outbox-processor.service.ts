@@ -70,7 +70,8 @@ export class OutboxProcessorService {
     }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  //todo вернуть
+  @Cron(CronExpression.EVERY_10_HOURS)
   async handleStaleEvents() {
     try {
       const recoveredCount: number = await this.outboxRepository.recoverStaleEvents(

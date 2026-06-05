@@ -118,7 +118,7 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
 
 @Module({
   imports: [
-    NotificationModule,
+    //NotificationModule,
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({
@@ -143,4 +143,8 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
   ],
   exports: [ProfilesRepository, UsersRepository, FilesClientModule],
 })
-export class UserAccountsModule {}
+export class UserAccountsModule {
+  constructor() {
+    console.log('UserAccountsModule was initialized.');
+  }
+}

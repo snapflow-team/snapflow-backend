@@ -24,6 +24,7 @@ import { PaymentsQueryRepository } from './infrastructure/query/payments.query-r
 import { DateService } from '../../../../../libs/common/services/date.service';
 import { GetMyCurrentSubscriptionQueryHandler } from './application/queries/get-my-current-subscription.query-handler';
 import { SubscriptionsQueryRepository } from './infrastructure/query/subscriptions.query-repository';
+import { QueueModule } from '../queue/queue.module';
 
 const controllers = [SubscriptionsController, StripeWebhookController];
 const queries = [
@@ -54,7 +55,12 @@ const repositories = [
 const guards = [RemoteAuthGuard];
 
 @Module({
-  imports: [OutboxModule, forwardRef(() => OutboxCommandsModule), forwardRef(() => InboxModule)],
+  imports: [
+    OutboxModule,
+    forwardRef(() => OutboxCommandsModule),
+    forwardRef(() => InboxModule),
+    QueueModule,
+  ],
   controllers: [...controllers],
   providers: [
     ...useCases,

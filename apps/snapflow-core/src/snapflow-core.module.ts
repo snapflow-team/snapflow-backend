@@ -21,10 +21,12 @@ import { PaymentsEventsModule } from './modules/integrations/payments/payments-e
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 import { CryptoService } from '../../../libs/common/services/crypto.service';
 import { LoggerModule } from './modules/logger/logger.module';
+import { NotificationModule } from './modules/notifications/notification-module';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
   imports: [
+    NotificationModule,
     CoreModule,
     LoggerModule,
     PrismaModule,

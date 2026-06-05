@@ -34,6 +34,7 @@ import { UpdateAutoRenewalSwagger } from './swagger/update-auto-renewal.swagger'
 import { GetMyCurrentSubscriptionQuery } from '../application/queries/get-my-current-subscription.query-handler';
 import { SubscriptionViewDto } from './view-dto/subscription.view-dto';
 import { GetMyCurrentSubscriptionSwagger } from './swagger/get-my-current-subscription.swagger';
+import { QueueService } from '../../queue/queue.service';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -41,11 +42,17 @@ export class SubscriptionsController {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
+    private readonly queueService: QueueService,
   ) {}
 
   @Get('plans')
   @GetPlansSwagger()
   async getPlans(): Promise<PlanViewDto[]> {
+    const job = await this.queueService.addSubscriptionActivatedJob({
+      userId: 1,
+      createdAt: new Date(),
+    });
+    //console.log('job in controller: ', job);
     return this.queryBus.execute(new GetPlansQuery());
   }
 

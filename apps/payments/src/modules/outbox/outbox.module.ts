@@ -6,6 +6,6 @@ import { RabbitMQPublisherService } from './services/rabbitmq-publisher.service'
 @Module({
   providers: [OutboxRepository, RabbitMQPublisherService, OutboxProcessorService],
   // refactor: экспортировать дубликат репозитория только с необходимыми методами!
-  exports: [OutboxRepository],
+  exports: [OutboxRepository, RabbitMQPublisherService],
 })
 export class OutboxModule {}

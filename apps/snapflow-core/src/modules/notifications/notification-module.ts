@@ -7,7 +7,10 @@ import { EmailService } from './emails/services/email.service';
 import { EmailTemplates } from './emails/templates/email.templates';
 import { SendConfirmationEmailWhenUserRegisteredEventHandler } from './emails/event-handlers/send-confirmation-email-when-user-registered.event-handler';
 import { SendPasswordRecoveryEmailEventHandler } from './emails/event-handlers/send-password-recovery-email.event-handler';
-import { NotificationWebsocketGateway } from './websocket/notification-websocket.gateway';
+import { WebsocketService } from './websocket/services/websocket.service';
+import { NotificationGateway } from './websocket/notification-websocket.gateway';
+import { NotificationEventsConsumer } from './websocket/notifications-events-consumer';
+import { WebsocketNotificationService } from './websocket/services/websocket-notification.service';
 
 @Module({
   imports: [
@@ -30,8 +33,15 @@ import { NotificationWebsocketGateway } from './websocket/notification-websocket
     EmailTemplates,
     SendConfirmationEmailWhenUserRegisteredEventHandler,
     SendPasswordRecoveryEmailEventHandler,
-    NotificationWebsocketGateway,
+    NotificationGateway,
+    WebsocketService,
+    WebsocketNotificationService,
+    NotificationEventsConsumer,
   ],
   exports: [],
 })
-export class NotificationModule {}
+export class NotificationModule {
+  constructor() {
+    console.log('NotificationModule loaded');
+  }
+}
