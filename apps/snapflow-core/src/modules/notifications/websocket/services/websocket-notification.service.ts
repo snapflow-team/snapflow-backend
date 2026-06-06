@@ -27,7 +27,10 @@ export class WebsocketNotificationService {
         //
         //   return;
         // }
-        console.log('Payload successful in NotificationService');
+        this.logger.log(
+          `Handling notification: routingKey=${routingKey}, userId=${payload.userId}`,
+          this.applyRoutingKey.name,
+        );
 
         this.sendMessageByWS(payload);
         break;

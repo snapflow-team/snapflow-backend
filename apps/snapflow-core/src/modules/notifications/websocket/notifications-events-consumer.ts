@@ -23,6 +23,7 @@ export class NotificationEventsConsumer implements OnModuleInit, OnModuleDestroy
   private readonly logger: ContextLogger;
   private connection?: AmqpConnectionManager;
   private channelWrapper?: ChannelWrapper;
+  private notificationsEventsQueueName?: string;
 
   constructor(
     private readonly configService: ConfigService<Configuration, true>,
@@ -34,8 +35,10 @@ export class NotificationEventsConsumer implements OnModuleInit, OnModuleDestroy
   }
 
   onModuleInit(): void {
-    const { rabbitMqUrl, paymentsEventsQueueName }: ApiSettings =
+    const { rabbitMqUrl, notificationsEventsQueueName }: ApiSettings =
       this.configService.get<ApiSettings>('apiSettings');
+
+    this.notificationsEventsQueueName = notificationsEventsQueueName;
 
     this.connection = amqp.connect([rabbitMqUrl]);
 
@@ -44,35 +47,41 @@ export class NotificationEventsConsumer implements OnModuleInit, OnModuleDestroy
     });
 
     this.connection.on('disconnect', (params) => {
-      console.error('DISCONNECTED');
-      console.error(params.err);
+      this.logger.error(
+        params.err instanceof Error ? params.err : new Error('Disconnected from RabbitMQ'),
+        this.onModuleInit.name,
+      );
     });
 
     this.channelWrapper = this.connection.createChannel({
       json: false,
       setup: async (channel: ConfirmChannel) => {
         await channel.assertExchange(PAYMENTS_EXCHANGE, 'topic', { durable: true });
-        await channel.assertQueue(paymentsEventsQueueName, { durable: true });
+        await channel.assertQueue(notificationsEventsQueueName, { durable: true });
         for (const key of ALL_NOTIFICATIONS_ROUTING_KEYS) {
-          await channel.bindQueue(paymentsEventsQueueName, PAYMENTS_EXCHANGE, key);
+          await channel.bindQueue(notificationsEventsQueueName, PAYMENTS_EXCHANGE, key);
         }
         await channel.prefetch(1);
-        await channel.consume(paymentsEventsQueueName, (msg: ConsumeMessage | null) => {
+        await channel.consume(notificationsEventsQueueName, (msg: ConsumeMessage | null) => {
           if (!msg) {
             return;
           }
 
           this.dispatchMessageWithRequestContext(channel, msg);
         });
+
+        this.logger.log(
+          `Listening on queue "${notificationsEventsQueueName}" for keys: ${ALL_NOTIFICATIONS_ROUTING_KEYS.join(', ')}`,
+          this.onModuleInit.name,
+        );
       },
     });
     this.channelWrapper.on('error', (err) => {
-      console.error('CHANNEL ERROR');
-      console.error(err);
+      this.logger.error(err instanceof Error ? err : new Error(String(err)), this.onModuleInit.name);
     });
 
     this.channelWrapper.on('close', () => {
-      console.error('CHANNEL CLOSED in notifications consumer');
+      this.logger.warn('RabbitMQ channel closed', this.onModuleInit.name);
     });
   }
 
@@ -81,7 +90,6 @@ export class NotificationEventsConsumer implements OnModuleInit, OnModuleDestroy
    * (или новым UUID), чтобы логи и вложенные сервисы видели тот же requestId.
    */
   private dispatchMessageWithRequestContext(channel: ConfirmChannel, msg: ConsumeMessage): void {
-    console.log('hello from dispatcher');
     const requestId: string = extractRequestIdFromAmqpMsg(msg) ?? randomUUID();
 
     this.asyncLocalStorageService.start(() => {
@@ -91,23 +99,35 @@ export class NotificationEventsConsumer implements OnModuleInit, OnModuleDestroy
   }
 
   private async handleMessage(channel: ConfirmChannel, msg: ConsumeMessage): Promise<void> {
-    console.log('hello from consumer');
+    const routingKey: string = msg.fields.routingKey;
+
     try {
-      const routingKey: string = msg.fields.routingKey;
       const payload: unknown = JSON.parse(msg.content.toString());
       const parsedRoutingKey: NotificationsRoutingKey | null =
         parseNotificationsRoutingKey(routingKey);
 
       if (!parsedRoutingKey) {
-        this.logger.warn(`Unhandled routing key: ${routingKey}`);
+        this.logger.warn(
+          `Unhandled routing key "${routingKey}" on queue "${this.notificationsEventsQueueName ?? 'unknown'}"`,
+          this.handleMessage.name,
+        );
         channel.ack(msg);
         return;
       }
-      console.log('event consumed in consumer');
+
+      this.logger.log(
+        `Notification event received: routingKey=${routingKey}, queue=${this.notificationsEventsQueueName}, payload=${JSON.stringify(payload)}`,
+        this.handleMessage.name,
+      );
 
       await this.notificationService.applyRoutingKey(
         parsedRoutingKey, //todo убрать as
         payload as { userId: string; createdAt: string },
+      );
+
+      this.logger.log(
+        `Notification event processed: routingKey=${parsedRoutingKey}`,
+        this.handleMessage.name,
       );
       channel.ack(msg);
     } catch (error) {
