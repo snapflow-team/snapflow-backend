@@ -13,7 +13,7 @@ export class SubscriptionProcessor extends WorkerHost {
     super();
   }
   async process(job: Job) {
-    console.log('Job process');
+    console.log('Job process!');
     console.log(job);
     switch (job.name) {
       case SubscriptionsJobsTypes.ACTIVATED:
@@ -32,9 +32,7 @@ export class SubscriptionProcessor extends WorkerHost {
     console.log('Job processed in queue processor');
 
     const createdAt: string =
-      job.data.createdAt instanceof Date
-        ? job.data.createdAt.toISOString()
-        : job.data.createdAt;
+      job.data.createdAt instanceof Date ? job.data.createdAt.toISOString() : job.data.createdAt;
 
     await this.rabbitPublisher.publish(
       PAYMENTS_EXCHANGE,
