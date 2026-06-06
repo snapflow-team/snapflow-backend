@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { OutboxRepository } from '../repositories/outbox.repository';
 import { OutboxEvent } from '@generated/prisma-payments';
 import { OutboxProcessing } from '../constants/outbox.constants';
-import { RabbitMQPublisherService } from './rabbitmq-publisher.service';
+import { RabbitMQPublisherService } from '../../rabbitmq/rabbitmq-publisher.service';
 import { PAYMENTS_EXCHANGE } from '../../../../../../libs/contracts/payments';
 import { LoggerFactory } from '../../logger/logger.factory';
 import { ContextLogger } from '../../logger/context-logger';

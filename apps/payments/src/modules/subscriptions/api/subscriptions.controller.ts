@@ -48,9 +48,9 @@ export class SubscriptionsController {
   @Get('plans')
   @GetPlansSwagger()
   async getPlans(): Promise<PlanViewDto[]> {
-    const job = await this.queueService.addSubscriptionActivatedJob({
+    await this.queueService.addSubscriptionActivatedJob({
       userId: 1,
-      createdAt: new Date(),
+      expireAt: new Date(),
     });
     //console.log('job in controller: ', job);
     return this.queryBus.execute(new GetPlansQuery());

@@ -10,9 +10,9 @@ export enum PaymentsRoutingKey {
 
 export enum NotificationsRoutingKey {
   SubscriptionActivated = 'SUBSCRIPTION_ACTIVATED_NOTIFICATION',
-  SubscriptionExpiringIn7Days = 'SubscriptionExpiringIn7Days',
-  SubscriptionExpiringIn1Day = 'SubscriptionExpiringIn1Day',
-  NextPaymentRemindIn1Day = 'NextPaymentRemindIn1',
+  SubscriptionExpiringIn7Days = 'SUBSCRIPTION_EXPIRING_IN_7_DAYS',
+  SubscriptionExpiringIn1Day = 'SUBSCRIPTION_EXPIRING_IN_1_DAY',
+  NextPaymentReminderIn1Day = 'NEXT_PAYMENT_REMINDER_IN_1_DAY',
 }
 
 export const ALL_PAYMENTS_ROUTING_KEYS: readonly PaymentsRoutingKey[] =

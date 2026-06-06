@@ -1,17 +1,17 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import amqp, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
-import { Configuration } from '../../../setup/configuration/configuration';
-import { ApiSettings } from '../../../setup/configuration/api-settings';
+import { Configuration } from '../../setup/configuration/configuration';
+import { ApiSettings } from '../../setup/configuration/api-settings';
 import { ConfirmChannel } from 'amqplib';
-import { PAYMENTS_EXCHANGE } from '../../../../../../libs/contracts/payments';
-import { AsyncLocalStorageService } from '../../../common/async-local-storage/async-local-storage.service';
+import { PAYMENTS_EXCHANGE } from '../../../../../libs/contracts/payments';
+import { AsyncLocalStorageService } from '../../common/async-local-storage/async-local-storage.service';
 import {
   REQUEST_ID_HEADER,
   REQUEST_ID_KEY,
-} from '../../../../../../libs/common/constants/request-id.constants';
-import { LoggerFactory } from '../../logger/logger.factory';
-import { ContextLogger } from '../../logger/context-logger';
+} from '../../../../../libs/common/constants/request-id.constants';
+import { LoggerFactory } from '../logger/logger.factory';
+import { ContextLogger } from '../logger/context-logger';
 
 @Injectable()
 export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {

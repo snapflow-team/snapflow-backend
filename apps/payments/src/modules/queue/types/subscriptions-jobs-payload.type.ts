@@ -1,10 +1,8 @@
 export type SubscriptionJobPayload = {
-  subscriptionId: string;
-  userId: string;
+  userId: number;
+  expireAt: Date;
 };
-export type ExpirationJobPayload = SubscriptionJobPayload & {
-  expiresAt: string;
-};
-export type PaymentReminderPayload = SubscriptionJobPayload & {
-  nextPaymentAt: string;
+export type PaymentReminderJobPayload = {
+  userId: number;
+  nextPaymentAt: Date;
 };

@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { QueueService } from './queue.service';
-import { SubscriptionProcessor } from './processors/subscription.processor';
-import { OutboxModule } from '../outbox/outbox.module';
+import { SubscriptionQueueProcessor } from './processors/subscriptionQueueProcessor';
+import { RabbitMQModule } from '../rabbitmq/rabbitmq.module';
 
 @Module({
-  //todo перераспределить зависимости нормально, Убрать отсюда outbox module
-  imports: [BullModule.registerQueue({ name: 'subscriptions-notifications' }), OutboxModule],
-  providers: [QueueService, SubscriptionProcessor],
+  imports: [BullModule.registerQueue({ name: 'subscriptions-notifications' }), RabbitMQModule],
+  providers: [QueueService, SubscriptionQueueProcessor],
   exports: [QueueService],
 })
 export class QueueModule {}

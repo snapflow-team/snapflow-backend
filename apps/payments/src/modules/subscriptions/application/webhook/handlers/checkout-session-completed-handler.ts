@@ -179,7 +179,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
         await this.queueService.addSubscriptionActivatedJob({
           userId: localCustomer.userId,
-          createdAt: currentPeriod.end,
+          expireAt: currentPeriod.end,
         });
 
         return Notification.ok();
@@ -212,7 +212,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
 
         await this.queueService.addSubscriptionActivatedJob({
           userId: localCustomer.userId,
-          createdAt: currentPeriod.end,
+          expireAt: currentPeriod.end,
         });
 
         return Notification.ok();
