@@ -28,8 +28,13 @@ export class SubscriptionProcessor extends WorkerHost {
         return;
     }
   }
-  private async handleActivatedJob(job: Job<{ userId: string; createdAt: Date }>) {
+  private async handleActivatedJob(job: Job<{ userId: number; createdAt: Date | string }>) {
     console.log('Job processed in queue processor');
+
+    const createdAt: string =
+      job.data.createdAt instanceof Date
+        ? job.data.createdAt.toISOString()
+        : job.data.createdAt;
 
     await this.rabbitPublisher.publish(
       PAYMENTS_EXCHANGE,
@@ -37,7 +42,7 @@ export class SubscriptionProcessor extends WorkerHost {
       {
         payload: {
           userId: job.data.userId,
-          createdAt: job.data.createdAt.toISOString(),
+          createdAt,
         },
       },
     );
