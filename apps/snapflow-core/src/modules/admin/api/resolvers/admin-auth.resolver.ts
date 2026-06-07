@@ -1,5 +1,6 @@
 import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { UseFilters, UseGuards } from '@nestjs/common';
+import { AdminGqlExceptionsFilter } from '../filters/admin-gql-exceptions.filter';
 import { CommandBus } from '@nestjs/cqrs';
 import type { Request, Response } from 'express';
 import { ClientInfoDto } from '../../../../../../../libs/common/dto/client-info.dto';
@@ -18,6 +19,7 @@ type AdminRequest = Request & {
   adminContext?: AdminContextDto;
 };
 
+@UseFilters(AdminGqlExceptionsFilter)
 @Resolver()
 export class AdminAuthResolver {
   constructor(
