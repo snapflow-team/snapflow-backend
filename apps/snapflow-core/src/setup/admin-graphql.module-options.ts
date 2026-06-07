@@ -18,5 +18,6 @@ export const getAdminGraphqlModuleOptions = (
     path: ADMIN_GRAPHQL_PATH,
     playground: enableDevFeatures,
     introspection: enableDevFeatures,
+    context: ({ req, res }: { req: unknown; res: unknown }) => ({ req, res }),
   };
 };
