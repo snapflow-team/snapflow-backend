@@ -27,8 +27,8 @@ export class DateService {
     //Возвращает из даты количество секунд от 1970 года
     return getUnixTime(date);
   }
-  getDelayForJob(expirationDate: Date, daysBeforeExpiration: number): number {
-    const scheduleDate = subDays(expirationDate, daysBeforeExpiration);
+  getDelayForJob(expirationDate: string, daysBeforeExpiration: number): number {
+    const scheduleDate = subDays(new Date(expirationDate), daysBeforeExpiration);
 
     return Math.max(0, scheduleDate.getTime() - Date.now());
   }
