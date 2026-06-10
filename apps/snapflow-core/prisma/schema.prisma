@@ -149,6 +149,7 @@ model Notification {
   userId    Int              @map("user_id")
   message   String           @db.Text
   type      NotificationType
+  payload   Json             @db.JsonB
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @updatedAt @map("updated_at")
   deletedAt DateTime?        @map("deleted_at")
