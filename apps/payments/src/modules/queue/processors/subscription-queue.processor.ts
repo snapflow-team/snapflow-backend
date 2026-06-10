@@ -29,6 +29,7 @@ export class SubscriptionQueueProcessor extends WorkerHost {
   }
 
   async process(job: Job) {
+    console.log('job in processor: ', job);
     try {
       switch (job.name) {
         case SubscriptionsJobsTypes.ACTIVATED:
@@ -58,6 +59,7 @@ export class SubscriptionQueueProcessor extends WorkerHost {
   }
 
   private async handleActivatedJob(job: Job<SubscriptionJobPayload>) {
+    console.log('job in processor: ', job);
     await this.rabbitPublisher.publish(
       PAYMENTS_EXCHANGE,
       NotificationsRoutingKey.SubscriptionActivated,

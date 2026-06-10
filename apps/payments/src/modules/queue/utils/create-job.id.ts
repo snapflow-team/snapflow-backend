@@ -1,3 +1,3 @@
-export function createJobId(jobType: string, userId: number, expireAt: Date) {
-  return `${jobType}-${userId.toString()}-${expireAt.toISOString()}`;
+export function createJobId(jobType: string, subscriptionId: number) {
+  return `${jobType}-${subscriptionId.toString()}`;
 }
