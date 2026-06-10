@@ -17,28 +17,6 @@ import { GLOBAL_PREFIX } from '../../../libs/common/constants/global-prefix.cons
 import { printSnapflowStartupBannerToConsole } from './modules/logger/utils/startup-banner.util';
 
 async function bootstrap() {
-  // process.on('beforeExit', (code) => {
-  //   console.log('beforeExit', code);
-  // });
-  //
-  // process.on('exit', (code) => {
-  //   console.log('exit', code);
-  // });
-  // process.on('uncaughtException', (err) => {
-  //   console.error('UNCAUGHT EXCEPTION');
-  //   console.error(err);
-  // });
-  //
-  // process.on('unhandledRejection', (reason) => {
-  //   console.error('UNHANDLED REJECTION');
-  //   console.error(reason);
-  // });
-  //
-  // process.on('warning', (warning) => {
-  //   console.error('WARNING');
-  //   console.error(warning);
-  // });
-  // console.log('BOOTSTRAP PID:', process.pid);
   const DynamicAppModule = await initSnapFlowCoreAppModule();
 
   const app = await NestFactory.create<NestExpressApplication>(DynamicAppModule, {
