@@ -32,6 +32,18 @@ export class SubscriptionsRepository {
     });
   }
 
+  async findByIdWithCustomerOrThrow(
+    subscriptionId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ) {
+    return tx.subscription.findFirstOrThrow({
+      where: { id: subscriptionId, deletedAt: null },
+      include: {
+        customer: true,
+      },
+    });
+  }
+
   async findActiveOrPastDueByUserId(userId: number, tx: Prisma.TransactionClient = this.prisma) {
     return tx.subscription.findFirst({
       where: {

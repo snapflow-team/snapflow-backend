@@ -7,6 +7,9 @@ import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
 import { UpdateAutoRenewalApplicationDto } from '../dto/update-auto-renewal.application-dto';
 import { SubscriptionStatus } from '@generated/prisma-payments';
+import { QueueService } from '../../../queue/queue.service';
+import { SubscriptionsJobsTypes } from '../../../queue/types/subscriptions.jobs.types';
+import { CustomersRepository } from '../../infrastructure/customers.repository';
 
 export class UpdateAutoRenewalCommand {
   constructor(public readonly dto: UpdateAutoRenewalApplicationDto) {}
@@ -20,6 +23,8 @@ export class UpdateAutoRenewalUseCase
   constructor(
     private readonly stripeService: StripeService,
     private readonly subscriptionsRepository: SubscriptionsRepository,
+    private readonly queueService: QueueService,
+    private readonly customersRepository: CustomersRepository,
     loggerFactory: LoggerFactory,
   ) {
     this.logger = loggerFactory.create(UpdateAutoRenewalUseCase.name);
@@ -65,12 +70,31 @@ export class UpdateAutoRenewalUseCase
         nextPayment,
       );
 
+      const updatedSubscription = await this.subscriptionsRepository.findByIdWithCustomerOrThrow(
+        localSubscription.id,
+      );
+
       const stripeResult = await this.stripeService.updateAutoRenewal(
         localSubscription.stripeSubId,
         autoRenewal,
       );
       if (stripeResult.hasErrors) {
         return Notification.copyErrors(stripeResult);
+      }
+
+      if (autoRenewal) {
+        await this.queueService.resetJob(
+          SubscriptionsJobsTypes.PAYMENT_REMINDER_1D,
+          updatedSubscription.id,
+        );
+      } else {
+        await this.queueService.addPaymentSubscriptionReminder1DayJob(
+          {
+            userId: updatedSubscription.customer.userId,
+            nextPaymentAt: nextPayment ? nextPayment.toISOString() : new Date().toISOString(),
+          },
+          updatedSubscription.id,
+        );
       }
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : 'Some error occurred';

@@ -177,9 +177,11 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           tx,
         );
 
-        await this.queueService.addSubscriptionActivatedJob({
+        await this.queueService.addSubscriptionNotifications({
           userId: localCustomer.userId,
-          expireAt: currentPeriod.end,
+          expireAt: currentPeriod.end.toISOString(),
+          nextPaymentAt: currentPeriod.end.toISOString(),
+          subscriptionId: localSubscription.id,
         });
 
         return Notification.ok();
@@ -210,9 +212,11 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           tx,
         );
 
-        await this.queueService.addSubscriptionActivatedJob({
+        await this.queueService.addSubscriptionNotifications({
           userId: localCustomer.userId,
-          expireAt: currentPeriod.end,
+          expireAt: currentPeriod.end.toISOString(),
+          nextPaymentAt: currentPeriod.end.toISOString(),
+          subscriptionId: localSubscription.id,
         });
 
         return Notification.ok();
