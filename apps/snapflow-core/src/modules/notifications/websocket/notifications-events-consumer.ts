@@ -77,7 +77,10 @@ export class NotificationEventsConsumer implements OnModuleInit, OnModuleDestroy
       },
     });
     this.channelWrapper.on('error', (err) => {
-      this.logger.error(err instanceof Error ? err : new Error(String(err)), this.onModuleInit.name);
+      this.logger.error(
+        err instanceof Error ? err : new Error(String(err)),
+        this.onModuleInit.name,
+      );
     });
 
     this.channelWrapper.on('close', () => {
@@ -115,15 +118,7 @@ export class NotificationEventsConsumer implements OnModuleInit, OnModuleDestroy
         return;
       }
 
-      this.logger.log(
-        `Notification event received: routingKey=${routingKey}, queue=${this.notificationsEventsQueueName}, payload=${JSON.stringify(payload)}`,
-        this.handleMessage.name,
-      );
-
-      await this.notificationService.applyRoutingKey(
-        parsedRoutingKey, //todo убрать as
-        payload as { userId: string; createdAt: string },
-      );
+      await this.notificationService.applyRoutingKey(parsedRoutingKey, payload);
 
       this.logger.log(
         `Notification event processed: routingKey=${parsedRoutingKey}`,

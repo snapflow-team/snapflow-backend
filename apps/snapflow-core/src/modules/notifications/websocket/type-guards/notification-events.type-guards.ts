@@ -1,8 +1,11 @@
 import {
   ALL_NOTIFICATIONS_ROUTING_KEYS,
   NotificationsRoutingKey,
-  SubscriptionActivatedEvent,
 } from '../../../../../../../libs/contracts/payments';
+import { SubscriptionActivatedNotificationEvent } from '../../../../../../../libs/contracts/payments/notifications/payment-subscription-activated-notification.event';
+import { PaymentSubscriptionExpiring7dNotificationEvent } from '../../../../../../../libs/contracts/payments/notifications/payment-subscription-expiring-7d-notification.event';
+import { PaymentSubscriptionExpiring1dNotificationEvent } from '../../../../../../../libs/contracts/payments/notifications/payment-subscription-expiring-1d-notification.event';
+import { PaymentSubscriptionNextPayment1dNotificationEvent } from '../../../../../../../libs/contracts/payments/notifications/payment-subscription-next-payment-1d-notification.event';
 
 function isRecord(payload: unknown): payload is Record<string, unknown> {
   return typeof payload === 'object' && payload !== null;
@@ -18,59 +21,34 @@ export function parseNotificationsRoutingKey(routingKey: string): NotificationsR
 
 export function isSubscriptionActivatedEvent(
   payload: unknown,
-): payload is SubscriptionActivatedEvent {
+): payload is SubscriptionActivatedNotificationEvent {
+  console.log('payload: ', payload);
   return (
-    isRecord(payload) &&
-    typeof payload.userId === 'number' &&
-    typeof payload.planId === 'string' &&
-    typeof payload.subscriptionId === 'number' &&
-    (typeof payload.currentPeriodEnd === 'string' || payload.currentPeriodEnd === null)
+    isRecord(payload) && typeof payload.userId === 'number' && typeof payload.expireAt === 'string'
   );
 }
 
-// export function isSubscriptionRenewedEvent(payload: unknown): payload is SubscriptionRenewedEvent {
-//   return (
-//     isRecord(payload) &&
-//     typeof payload.userId === 'number' &&
-//     typeof payload.planId === 'string' &&
-//     typeof payload.subscriptionId === 'number' &&
-//     typeof payload.currentPeriodEnd === 'string'
-//   );
-// }
-//
-// export function isSubscriptionRenewalFailedEvent(
-//   payload: unknown,
-// ): payload is SubscriptionRenewalFailedEvent {
-//   return (
-//     isRecord(payload) &&
-//     typeof payload.userId === 'number' &&
-//     typeof payload.planId === 'string' &&
-//     typeof payload.subscriptionId === 'number' &&
-//     typeof payload.stripeInvoiceId === 'string' &&
-//     typeof payload.attemptCount === 'number' &&
-//     (typeof payload.nextPaymentAttempt === 'string' || payload.nextPaymentAttempt === null) &&
-//     (typeof payload.failureCode === 'string' || payload.failureCode === null) &&
-//     (typeof payload.failureMessage === 'string' || payload.failureMessage === null)
-//   );
-// }
-// export function isCheckoutSessionExpiredEvent(
-//   payload: unknown,
-// ): payload is CheckoutSessionExpiredEvent {
-//   return (
-//     isRecord(payload) &&
-//     typeof payload.userId === 'number' &&
-//     typeof payload.planId === 'string' &&
-//     typeof payload.description === 'string'
-//   );
-// }
-// export function isSubscriptionCancelledEvent(
-//   payload: unknown,
-// ): payload is SubscriptionCancelledEvent {
-//   return (
-//     isRecord(payload) &&
-//     typeof payload.userId === 'number' &&
-//     typeof payload.planId === 'string' &&
-//     typeof payload.subscriptionId === 'number' &&
-//     payload.cancelledAt instanceof Date
-//   );
-// }
+export function isSubscriptionExpiring7DEvent(
+  payload: unknown,
+): payload is PaymentSubscriptionExpiring7dNotificationEvent {
+  return (
+    isRecord(payload) && typeof payload.userId === 'number' && typeof payload.expireAt === 'string'
+  );
+}
+
+export function isSubscriptionExpiring1DEvent(
+  payload: unknown,
+): payload is PaymentSubscriptionExpiring1dNotificationEvent {
+  return (
+    isRecord(payload) && typeof payload.userId === 'number' && typeof payload.expireAt === 'string'
+  );
+}
+export function isNextPaymentReminder1DNotificationEvent(
+  payload: unknown,
+): payload is PaymentSubscriptionNextPayment1dNotificationEvent {
+  return (
+    isRecord(payload) &&
+    typeof payload.userId === 'number' &&
+    typeof payload.nextPaymentAt === 'string'
+  );
+}
