@@ -14,7 +14,7 @@ export class WebsocketService {
     this.logger = loggerFactory.create(WebsocketService.name);
   }
 
-  sendToUser(userId: string, payload: any) {
+  sendToUser(userId: number, payload: any) {
     this.gateway.server.to(`user:${userId}`).emit('notification', payload);
     this.logger.log(
       `Notification sent via WebSocket to user:${userId}, type=${payload?.type ?? 'unknown'}`,

@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigService } from '@nestjs/config';
-import { Configuration } from '@nestjs/cli/lib/configuration';
 import { BusinessRulesSettings } from '../../setup/configuration/business-rules-settings';
 import { EmailService } from './emails/services/email.service';
 import { EmailTemplates } from './emails/templates/email.templates';
@@ -11,9 +10,13 @@ import { WebsocketService } from './websocket/services/websocket.service';
 import { NotificationGateway } from './websocket/notification-websocket.gateway';
 import { NotificationEventsConsumer } from './websocket/notifications-events-consumer';
 import { WebsocketNotificationService } from './websocket/services/websocket-notification.service';
+import { Configuration } from '../../setup/configuration/configuration';
+import { NotificationsRepository } from './infrastructure/notifications.repository';
+import { JwtAuthModule } from '../user-accounts/auth/jwt-auth.module';
 
 @Module({
   imports: [
+    JwtAuthModule,
     MailerModule.forRootAsync({
       inject: [ConfigService],
 
@@ -37,6 +40,7 @@ import { WebsocketNotificationService } from './websocket/services/websocket-not
     WebsocketService,
     WebsocketNotificationService,
     NotificationEventsConsumer,
+    NotificationsRepository,
   ],
   exports: [],
 })
