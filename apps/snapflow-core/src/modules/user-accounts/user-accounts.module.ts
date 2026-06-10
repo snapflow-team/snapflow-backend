@@ -11,8 +11,6 @@ import { LocalStrategy } from './auth/domain/guards/local/local.strategy';
 import { LoginUserUseCase } from './auth/application/usecases/login-user.usecase';
 import { CreateSessionUseCase } from './auth/sessions/application/usecases/create-session.usecase';
 import { SessionsRepository } from './auth/sessions/infrastructure/sessions.repository';
-import { AccessTokenProvider } from './auth/providers/access-token.provider';
-import { RefreshTokenProvider } from './auth/providers/refresh-token.provider';
 import { JwtRefreshStrategy } from './auth/domain/guards/bearer/jwt-refresh.strategy';
 import { LogoutUseCase } from './auth/application/usecases/logout.usecase';
 import { PasswordRecoveryUseCase } from './auth/application/usecases/password-recovery.usecase';
@@ -21,7 +19,6 @@ import { NewPasswordUseCase } from './auth/application/usecases/new-password.use
 import { GetMeQueryHandler } from './auth/application/queries/get-me.query-handler';
 import { JwtStrategy } from './auth/domain/guards/bearer/jwt.strategy';
 import { UsersQueryRepository } from './users/infrastructure/users.query-repository';
-import { AuthTokenService } from './auth/application/services/auth-token.service';
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
@@ -54,7 +51,7 @@ import { GetPublicProfileQueryHandler } from './users/profile/application/querie
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
-import { NotificationModule } from '../notifications/notification-module';
+import { JwtAuthModule } from './auth/jwt-auth.module';
 
 const controllers = [
   AuthController,
@@ -103,7 +100,6 @@ const services = [
   CryptoService,
   UserUtilsService,
   UserValidationService,
-  AuthTokenService,
   SessionsCleanupService,
 ];
 const repositories = [
@@ -118,7 +114,7 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
 
 @Module({
   imports: [
-    //NotificationModule,
+    JwtAuthModule,
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({
@@ -132,19 +128,9 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
     }),
   ],
   controllers: [...controllers],
-  providers: [
-    AccessTokenProvider,
-    RefreshTokenProvider,
-    ...useCases,
-    ...queries,
-    ...services,
-    ...repositories,
-    ...strategies,
-  ],
+  providers: [...useCases, ...queries, ...services, ...repositories, ...strategies],
   exports: [ProfilesRepository, UsersRepository, FilesClientModule],
 })
 export class UserAccountsModule {
-  constructor() {
-    console.log('UserAccountsModule was initialized.');
-  }
+  constructor() {}
 }
