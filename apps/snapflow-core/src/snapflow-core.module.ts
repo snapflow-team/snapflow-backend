@@ -5,6 +5,8 @@ import {
   NestModule,
   RequestMethod,
 } from '@nestjs/common';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { SnapflowCoreController } from './snapflow-core.controller';
 import { SnapflowCoreService } from './snapflow-core.service';
 import { CoreModule } from './core/core.module';
@@ -22,6 +24,8 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
 import { CryptoService } from '../../../libs/common/services/crypto.service';
 import { LoggerModule } from './modules/logger/logger.module';
 import { NotificationModule } from './modules/notifications/notification-module';
+import { AdminModule } from './modules/admin/admin.module';
+import { getAdminGraphqlModuleOptions } from './setup/admin-graphql.module-options';
 
 /* Основной модуль Snapflow Core (Users, Auth, Posts) */
 @Module({
@@ -34,6 +38,12 @@ import { NotificationModule } from './modules/notifications/notification-module'
     PostsModule,
     NextjsIntegrationModule,
     PaymentsEventsModule,
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      inject: [ConfigService],
+      useFactory: getAdminGraphqlModuleOptions,
+    }),
+    AdminModule,
     ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
