@@ -48,12 +48,6 @@ export class SubscriptionsController {
   @Get('plans')
   @GetPlansSwagger()
   async getPlans(): Promise<PlanViewDto[]> {
-    await this.queueService.addSubscriptionNotifications({
-      userId: 1,
-      expireAt: new Date().toISOString(),
-      nextPaymentAt: new Date().toISOString(),
-      subscriptionId: 1,
-    });
     return this.queryBus.execute(new GetPlansQuery());
   }
 
