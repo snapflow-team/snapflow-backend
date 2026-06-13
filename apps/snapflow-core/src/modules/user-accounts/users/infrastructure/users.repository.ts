@@ -135,6 +135,13 @@ export class UsersRepository {
     });
   }
 
+  async softDeleteById(userId: number, tx: Prisma.TransactionClient = this.prisma): Promise<void> {
+    await tx.user.update({
+      where: { id: userId },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   async updateAccountType(
     { userId: id, accountType, subscriptionActiveUntil }: UpdateAccountTypeInfrastructureDto,
     tx: Prisma.TransactionClient = this.prisma,
