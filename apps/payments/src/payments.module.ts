@@ -11,7 +11,9 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from './modules/logger/logger.module';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 import { BullModule } from '@nestjs/bullmq';
-import { QueueModule } from './modules/queue/queue.module';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from './setup/configuration/configuration';
+import { ApiSettings } from './setup/configuration/api-settings';
 
 @Module({
   imports: [
@@ -23,11 +25,14 @@ import { QueueModule } from './modules/queue/queue.module';
     InboxModule,
     OutboxCommandsModule,
     SubscriptionsModule,
-    //QueueModule,
-    BullModule.forRoot({
-      connection: {
-        host: 'localhost',
-        port: 6379,
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory(configService: ConfigService<Configuration, true>) {
+        return {
+          connection: {
+            url: configService.get<ApiSettings>('apiSettings').redisDbUrl,
+          },
+        };
       },
     }),
   ],
