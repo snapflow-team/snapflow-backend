@@ -117,7 +117,7 @@ export class NotificationEventsConsumer implements OnModuleInit, OnModuleDestroy
         channel.ack(msg);
         return;
       }
-
+      this.logger.log(`notification successfully consumed by routing key: ${parsedRoutingKey}`);
       await this.notificationService.applyRoutingKey(parsedRoutingKey, payload);
 
       this.logger.log(

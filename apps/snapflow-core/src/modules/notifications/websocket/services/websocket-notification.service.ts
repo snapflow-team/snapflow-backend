@@ -109,6 +109,9 @@ export class WebsocketNotificationService {
         message: createdNotification.message,
         createdAt: createdNotification.createdAt.toISOString(),
       });
+      this.logger.log(
+        'notification successfully sent to websocket service in websocket notification service',
+      );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '';
       this.logger.error(

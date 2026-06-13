@@ -177,12 +177,22 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           tx,
         );
 
+        this.logger.log('payload to publish queue: ');
+        console.log({
+          userId: localCustomer.userId,
+          expireAt: currentPeriod.end.toISOString(),
+          nextPaymentAt: currentPeriod.end.toISOString(),
+          subscriptionId: localSubscription.id,
+        });
         await this.queueService.addSubscriptionNotifications({
           userId: localCustomer.userId,
           expireAt: currentPeriod.end.toISOString(),
           nextPaymentAt: currentPeriod.end.toISOString(),
           subscriptionId: localSubscription.id,
         });
+        this.logger.log(
+          'notification successful published to queue in checkout complete handler: ',
+        );
 
         return Notification.ok();
       }
@@ -212,12 +222,22 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           tx,
         );
 
+        this.logger.log('payload to publish queue: ');
+        console.log({
+          userId: localCustomer.userId,
+          expireAt: currentPeriod.end.toISOString(),
+          nextPaymentAt: currentPeriod.end.toISOString(),
+          subscriptionId: localSubscription.id,
+        });
         await this.queueService.addSubscriptionNotifications({
           userId: localCustomer.userId,
           expireAt: currentPeriod.end.toISOString(),
           nextPaymentAt: currentPeriod.end.toISOString(),
           subscriptionId: localSubscription.id,
         });
+        this.logger.log(
+          'notification successful published to queue in checkout complete handler: ',
+        );
 
         return Notification.ok();
       }
