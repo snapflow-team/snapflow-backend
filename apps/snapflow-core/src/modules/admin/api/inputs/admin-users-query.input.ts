@@ -1,5 +1,5 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
-import { IsOptional, Min } from 'class-validator';
+import { IsEnum, IsOptional, IsString, Min } from 'class-validator';
 import { adminUsersQueryDefaults } from '../../constants/admin-query.defaults';
 import { AdminSortDirection } from '../../domain/enums/admin-sort-direction.enum';
 import { AdminUsersSortField } from '../../domain/enums/admin-users-sort-field.enum';
@@ -17,17 +17,23 @@ export class AdminUsersQueryInput {
   pageSize?: number;
 
   @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
   search?: string;
 
   @Field(() => AdminUsersSortField, {
     nullable: true,
     defaultValue: adminUsersQueryDefaults.sortBy,
   })
+  @IsOptional()
+  @IsEnum(AdminUsersSortField)
   sortBy?: AdminUsersSortField;
 
   @Field(() => AdminSortDirection, {
     nullable: true,
     defaultValue: adminUsersQueryDefaults.sortDirection,
   })
+  @IsOptional()
+  @IsEnum(AdminSortDirection)
   sortDirection?: AdminSortDirection;
 }
