@@ -1,10 +1,10 @@
 import { registerEnumType } from '@nestjs/graphql';
 
 export enum AdminPaymentsSortField {
-  CreatedAt = 'createdAt',
+  Username = 'username',
+  Date = 'date',
+  Amount = 'amount',
   Provider = 'provider',
-  Status = 'status',
-  Plan = 'planId',
 }
 
 registerEnumType(AdminPaymentsSortField, {
