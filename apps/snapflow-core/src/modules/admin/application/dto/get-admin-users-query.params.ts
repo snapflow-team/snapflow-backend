@@ -1,9 +1,4 @@
-import {
-  ADMIN_DEFAULT_PAGE,
-  ADMIN_DEFAULT_PAGE_SIZE,
-  ADMIN_DEFAULT_SORT_DIRECTION,
-  ADMIN_DEFAULT_USERS_SORT_BY,
-} from '../../constants/admin-query.defaults';
+import { adminUsersQueryDefaults } from '../../constants/admin-query.defaults';
 import { AdminSortDirection } from '../../domain/enums/admin-sort-direction.enum';
 import { AdminUsersSortField } from '../../domain/enums/admin-users-sort-field.enum';
 
@@ -21,11 +16,11 @@ export class GetAdminUsersQueryParams {
     sortBy?: AdminUsersSortField;
     sortDirection?: AdminSortDirection;
   }) {
-    this.page = params.page ?? ADMIN_DEFAULT_PAGE;
-    this.pageSize = params.pageSize ?? ADMIN_DEFAULT_PAGE_SIZE;
+    this.page = params.page ?? adminUsersQueryDefaults.page;
+    this.pageSize = params.pageSize ?? adminUsersQueryDefaults.pageSize;
     this.search = params.search?.trim() || undefined;
-    this.sortBy = params.sortBy ?? ADMIN_DEFAULT_USERS_SORT_BY;
-    this.sortDirection = params.sortDirection ?? ADMIN_DEFAULT_SORT_DIRECTION;
+    this.sortBy = params.sortBy ?? adminUsersQueryDefaults.sortBy;
+    this.sortDirection = params.sortDirection ?? adminUsersQueryDefaults.sortDirection;
   }
 
   calculateSkip(): number {
