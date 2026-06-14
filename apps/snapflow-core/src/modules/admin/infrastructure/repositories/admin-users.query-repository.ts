@@ -7,6 +7,12 @@ import { AdminUserListItemModel } from '../../api/models/admin-user-list-item.mo
 import { PageInfoModel } from '../../api/models/page-info.model';
 import { PaginatedAdminUsersModel } from '../../api/models/paginated-admin-users.model';
 
+export type AdminUserBrief = {
+  username: string;
+  avatarUrl: string | null;
+  profileId: number | null;
+};
+
 @Injectable()
 export class AdminUsersQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -96,5 +102,56 @@ export class AdminUsersQueryRepository {
       createdAt: user.createdAt,
       profileId: user.profiles[0]?.id ?? null,
     };
+  }
+
+  async findUserIdsByUsernameSearch(search: string): Promise<number[]> {
+    const users = await this.prisma.user.findMany({
+      where: {
+        deletedAt: null,
+        username: {
+          contains: search,
+          mode: 'insensitive',
+        },
+      },
+      select: { id: true },
+    });
+
+    return users.map((user) => user.id);
+  }
+
+  async findUsersByIds(ids: number[]): Promise<Map<number, AdminUserBrief>> {
+    const uniqueIds: number[] = [...new Set(ids)];
+
+    if (uniqueIds.length === 0) {
+      return new Map();
+    }
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: { in: uniqueIds },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        username: true,
+        profiles: {
+          where: { deletedAt: null },
+          select: { id: true, avatarUrl: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    return new Map(
+      users.map((user): [number, AdminUserBrief] => [
+        user.id,
+        {
+          username: user.username,
+          avatarUrl: user.profiles[0]?.avatarUrl ?? null,
+          profileId: user.profiles[0]?.id ?? null,
+        },
+      ]),
+    );
   }
 }
