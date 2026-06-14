@@ -1,22 +1,17 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
 import { IsOptional, Min } from 'class-validator';
-import {
-  ADMIN_DEFAULT_PAGE,
-  ADMIN_DEFAULT_PAGE_SIZE,
-  ADMIN_DEFAULT_SORT_DIRECTION,
-  ADMIN_DEFAULT_USERS_SORT_BY,
-} from '../../constants/admin-query.defaults';
+import { adminUsersQueryDefaults } from '../../constants/admin-query.defaults';
 import { AdminSortDirection } from '../../domain/enums/admin-sort-direction.enum';
 import { AdminUsersSortField } from '../../domain/enums/admin-users-sort-field.enum';
 
 @InputType()
 export class AdminUsersQueryInput {
-  @Field(() => Int, { defaultValue: ADMIN_DEFAULT_PAGE })
+  @Field(() => Int, { defaultValue: adminUsersQueryDefaults.page })
   @IsOptional()
   @Min(1)
   page?: number;
 
-  @Field(() => Int, { defaultValue: ADMIN_DEFAULT_PAGE_SIZE })
+  @Field(() => Int, { defaultValue: adminUsersQueryDefaults.pageSize })
   @IsOptional()
   @Min(1)
   pageSize?: number;
@@ -26,13 +21,13 @@ export class AdminUsersQueryInput {
 
   @Field(() => AdminUsersSortField, {
     nullable: true,
-    defaultValue: ADMIN_DEFAULT_USERS_SORT_BY,
+    defaultValue: adminUsersQueryDefaults.sortBy,
   })
   sortBy?: AdminUsersSortField;
 
   @Field(() => AdminSortDirection, {
     nullable: true,
-    defaultValue: ADMIN_DEFAULT_SORT_DIRECTION,
+    defaultValue: adminUsersQueryDefaults.sortDirection,
   })
   sortDirection?: AdminSortDirection;
 }
