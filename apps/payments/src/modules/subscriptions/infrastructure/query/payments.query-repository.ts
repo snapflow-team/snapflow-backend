@@ -7,7 +7,7 @@ import { PaymentStatus } from '@generated/prisma-payments';
 import {
   InternalPaymentsPaginatedResponse,
   InternalPaymentsSortField,
-} from 'libs/contracts/payments';
+} from '../../../../../../../libs/contracts/payments';
 import { GetInternalPaymentsQueryParamsInputDto } from '../../api/input-dto/get-internal-payments-query-params.input-dto';
 
 const internalPaymentsSortFieldToDbColumn: Record<InternalPaymentsSortField, string> = {

@@ -4,7 +4,7 @@ import { Request } from 'express';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
 import { UnauthorizedException } from '../../../common/exceptions/domain-exceptions';
-import { INTERNAL_API_SECRET_HEADER } from 'libs/contracts/payments';
+import { INTERNAL_API_SECRET_HEADER } from '../../../../../../libs/contracts/payments';
 
 @Injectable()
 export class InternalApiSecretGuard implements CanActivate {

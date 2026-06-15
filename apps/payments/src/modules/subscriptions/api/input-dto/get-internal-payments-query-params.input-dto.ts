@@ -5,7 +5,7 @@ import {
   internalPaymentsQueryDefaults,
   InternalPaymentsSortDirection,
   InternalPaymentsSortField,
-} from 'libs/contracts/payments';
+} from '../../../../../../../libs/contracts/payments';
 
 export class GetInternalPaymentsQueryParamsInputDto implements GetInternalPaymentsQueryParams {
   @Type(() => Number)
