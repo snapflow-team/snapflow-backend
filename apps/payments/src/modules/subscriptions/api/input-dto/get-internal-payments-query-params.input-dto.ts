@@ -1,7 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import { IsArray, IsEnum, IsNumber, IsOptional, Min } from 'class-validator';
 import {
-  calculateInternalPaymentsSkip,
   GetInternalPaymentsQueryParams,
   internalPaymentsQueryDefaults,
   InternalPaymentsSortDirection,
@@ -43,6 +42,6 @@ export class GetInternalPaymentsQueryParamsInputDto implements GetInternalPaymen
   userIds?: number[];
 
   calculateSkip(): number {
-    return calculateInternalPaymentsSkip(this.page, this.pageSize);
+    return (this.page - 1) * this.pageSize;
   }
 }
