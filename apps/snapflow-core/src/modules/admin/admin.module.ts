@@ -10,6 +10,8 @@ import { AdminPaymentsResolver } from './api/resolvers/admin-payments.resolver';
 import { AdminLoginUseCase } from './application/usecases/admin-login.usecase';
 import { AdminLogoutUseCase } from './application/usecases/admin-logout.usecase';
 import { DeleteUserByAdminUseCase } from './application/usecases/delete-user-by-admin.usecase';
+import { BanUserByAdminUseCase } from './application/usecases/ban-user-by-admin.usecase';
+import { UnbanUserByAdminUseCase } from './application/usecases/unban-user-by-admin.usecase';
 import { GetAdminUsersQueryHandler } from './application/queries/get-admin-users.query-handler';
 import { GetAdminUserDetailsQueryHandler } from './application/queries/get-admin-user-details.query-handler';
 import { GetAdminPaymentsQueryHandler } from './application/queries/get-admin-payments.query-handler';
@@ -30,6 +32,8 @@ import { AdminPaymentsHttpClient } from './infrastructure/clients/admin-payments
     AdminLoginUseCase,
     AdminLogoutUseCase,
     DeleteUserByAdminUseCase,
+    BanUserByAdminUseCase,
+    UnbanUserByAdminUseCase,
     GetAdminUsersQueryHandler,
     GetAdminUserDetailsQueryHandler,
     GetAdminPaymentsQueryHandler,
