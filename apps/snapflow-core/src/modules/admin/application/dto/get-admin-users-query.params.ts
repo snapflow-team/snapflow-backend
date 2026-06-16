@@ -1,5 +1,6 @@
 import { adminUsersQueryDefaults } from '../../constants/admin-query.defaults';
 import { AdminSortDirection } from '../../domain/enums/admin-sort-direction.enum';
+import { AdminUsersBanStatusFilter } from '../../domain/enums/admin-users-ban-status-filter.enum';
 import { AdminUsersSortField } from '../../domain/enums/admin-users-sort-field.enum';
 
 export class GetAdminUsersQueryParams {
@@ -8,6 +9,7 @@ export class GetAdminUsersQueryParams {
   search?: string;
   sortBy: AdminUsersSortField;
   sortDirection: AdminSortDirection;
+  banStatusFilter: AdminUsersBanStatusFilter;
 
   constructor(params: {
     page?: number;
@@ -15,12 +17,14 @@ export class GetAdminUsersQueryParams {
     search?: string;
     sortBy?: AdminUsersSortField;
     sortDirection?: AdminSortDirection;
+    banStatusFilter?: AdminUsersBanStatusFilter;
   }) {
     this.page = params.page ?? adminUsersQueryDefaults.page;
     this.pageSize = params.pageSize ?? adminUsersQueryDefaults.pageSize;
     this.search = params.search?.trim() || undefined;
     this.sortBy = params.sortBy ?? adminUsersQueryDefaults.sortBy;
     this.sortDirection = params.sortDirection ?? adminUsersQueryDefaults.sortDirection;
+    this.banStatusFilter = params.banStatusFilter ?? adminUsersQueryDefaults.banStatusFilter;
   }
 
   calculateSkip(): number {
