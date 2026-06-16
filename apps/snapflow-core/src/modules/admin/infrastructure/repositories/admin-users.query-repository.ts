@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@generated/prisma-snapflow';
 import { PrismaService } from '../../../../database/prisma.service';
 import { GetAdminUsersQueryParams } from '../../application/dto/get-admin-users-query.params';
+import { AdminUsersBanStatusFilter } from '../../domain/enums/admin-users-ban-status-filter.enum';
 import { AdminUserDetailsModel } from '../../api/models/admin-user-details.model';
 import { AdminUserListItemModel } from '../../api/models/admin-user-list-item.model';
 import { PageInfoModel } from '../../api/models/page-info.model';
@@ -18,7 +19,7 @@ export class AdminUsersQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findMany(params: GetAdminUsersQueryParams): Promise<PaginatedAdminUsersModel> {
-    const { page, pageSize, search } = params;
+    const { page, pageSize, search, banStatusFilter } = params;
 
     const where: Prisma.UserWhereInput = {
       deletedAt: null,
@@ -28,6 +29,8 @@ export class AdminUsersQueryRepository {
           mode: 'insensitive',
         },
       }),
+      ...(banStatusFilter === AdminUsersBanStatusFilter.Blocked && { isBanned: true }),
+      ...(banStatusFilter === AdminUsersBanStatusFilter.NotBlocked && { isBanned: false }),
     };
 
     const [users, totalCount] = await Promise.all([
