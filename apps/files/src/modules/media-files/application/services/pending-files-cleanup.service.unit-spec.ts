@@ -261,11 +261,7 @@ describe('PendingFilesCleanupService (Unit)', () => {
       expect(filesRepositoryMock.confirmManyUploads).not.toHaveBeenCalled();
       expect(filesRepositoryMock.deleteByIds).not.toHaveBeenCalled();
       expect(loggerMock.error).toHaveBeenCalledTimes(3);
-      expect(loggerMock.error).toHaveBeenNthCalledWith(
-        1,
-        expect.any(Error),
-        'cleanupPendingFiles',
-      );
+      expect(loggerMock.error).toHaveBeenNthCalledWith(1, expect.any(Error), 'cleanupPendingFiles');
     });
 
     it('смешанный сценарий: recover + delete + release с правильным порядком', async () => {
@@ -284,10 +280,9 @@ describe('PendingFilesCleanupService (Unit)', () => {
       expect(filesRepositoryMock.releaseManyToPending).toHaveBeenCalledWith(['f3']);
       expect(filesRepositoryMock.deleteByIds).toHaveBeenCalledWith(['f2']);
 
-      const confirmOrder = (filesRepositoryMock.confirmManyUploads as jest.Mock).mock.invocationCallOrder[0];
-      const releaseOrder = (filesRepositoryMock.releaseManyToPending as jest.Mock).mock
-        .invocationCallOrder[0];
-      const deleteOrder = (filesRepositoryMock.deleteByIds as jest.Mock).mock.invocationCallOrder[0];
+      const confirmOrder = filesRepositoryMock.confirmManyUploads.mock.invocationCallOrder[0];
+      const releaseOrder = filesRepositoryMock.releaseManyToPending.mock.invocationCallOrder[0];
+      const deleteOrder = filesRepositoryMock.deleteByIds.mock.invocationCallOrder[0];
 
       expect(confirmOrder).toBeLessThan(releaseOrder);
       expect(releaseOrder).toBeLessThan(deleteOrder);
@@ -444,7 +439,9 @@ describe('PendingFilesCleanupService (Unit)', () => {
     });
 
     it('не-Error в верхнем catch: Logger.error получает пустой stack', async () => {
-      filesRepositoryMock.recoverStaleProcessing.mockRejectedValueOnce('oops').mockResolvedValueOnce(0);
+      filesRepositoryMock.recoverStaleProcessing
+        .mockRejectedValueOnce('oops')
+        .mockResolvedValueOnce(0);
 
       await expect(service.cleanupPendingFiles()).resolves.toBeUndefined();
       await expect(service.cleanupPendingFiles()).resolves.toBeUndefined();
