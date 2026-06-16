@@ -4,10 +4,10 @@ import { Server } from 'http';
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { HttpStatus } from '@nestjs/common';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
-import { EmailService } from '../../src/modules/emails/services/email.service';
-import { EmailTemplate } from '../../src/modules/emails/templates/types';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
+import { EmailService } from '../../src/modules/notifications/emails/services/email.service';
+import { EmailTemplate } from '../../src/modules/notifications/emails/templates/types';
 
 const BAN_REASON = 'Bad behavior';
 const BANNED_USER_MESSAGE = `The account has been blocked for the following reason: ${BAN_REASON}`;
