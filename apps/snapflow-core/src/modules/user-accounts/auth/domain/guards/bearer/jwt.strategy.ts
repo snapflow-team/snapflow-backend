@@ -8,6 +8,7 @@ import { ApiSettings } from '../../../../../../setup/configuration/api-settings'
 import { UsersRepository } from '../../../../users/infrastructure/users.repository';
 import { UnauthorizedException } from '../../../../../../common/exceptions/domain-exceptions';
 import { User } from '@generated/prisma-snapflow';
+import { isAuthUserActive } from '../../utils/assert-auth-user-active';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -32,8 +33,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: { userId: number }): Promise<UserContextDto> {
     const user: User | null = await this.usersRepository.findUserById(payload.userId);
-
-    if (!user) {
+    if (!isAuthUserActive(user)) {
       throw new UnauthorizedException('User is not authenticated');
     }
 

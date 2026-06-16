@@ -5,7 +5,9 @@ import { SessionsRepository } from '../../sessions/infrastructure/sessions.repos
 import { PayloadRefreshToken } from '../types/payload-refresh-token.type';
 import { AuthTokens } from '../../domain/types/auth-tokens.type';
 import { UnauthorizedException } from '../../../../../common/exceptions/domain-exceptions';
-import { Prisma, Session } from '@generated/prisma-snapflow';
+import { Prisma, Session, User } from '@generated/prisma-snapflow';
+import { UsersRepository } from '../../../users/infrastructure/users.repository';
+import { isAuthUserActive } from '../../domain/utils/assert-auth-user-active';
 
 export class RefreshTokenCommand {
   constructor(public readonly session: SessionContextDto) {}
@@ -16,6 +18,7 @@ export class RefreshTokenUseCase implements ICommandHandler<RefreshTokenCommand>
   constructor(
     private readonly authTokenService: AuthTokenService,
     private readonly sessionsRepository: SessionsRepository,
+    private readonly usersRepository: UsersRepository,
   ) {}
 
   async execute(command: RefreshTokenCommand): Promise<AuthTokens> {
@@ -25,6 +28,11 @@ export class RefreshTokenUseCase implements ICommandHandler<RefreshTokenCommand>
 
     if (!session || session.userId !== userId) {
       throw new UnauthorizedException();
+    }
+
+    const user: User | null = await this.usersRepository.findUserById(userId);
+    if (!isAuthUserActive(user)) {
+      throw new UnauthorizedException('User is not authenticated');
     }
 
     const accessToken = this.authTokenService.generateAccessToken(userId);
