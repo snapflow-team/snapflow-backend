@@ -83,7 +83,6 @@ export function printSnapflowStartupBannerToConsole(params: StartupBannerParams)
   ];
 
   for (const line of lines) {
-    // eslint-disable-next-line no-console -- нарочный баннер в TTY, не через winston
     console.log(line);
   }
 }

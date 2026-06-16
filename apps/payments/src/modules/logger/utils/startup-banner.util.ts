@@ -89,7 +89,6 @@ export function printPaymentsStartupBannerToConsole(params: PaymentsStartupBanne
   ];
 
   for (const line of lines) {
-    // eslint-disable-next-line no-console -- намеренный баннер в TTY
     console.log(line);
   }
 }
