@@ -9,6 +9,9 @@ import { EmailTemplate } from '../../src/modules/emails/templates/types';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
 
+const BAN_REASON = 'Bad behavior';
+const BANNED_USER_MESSAGE = `The account has been blocked for the following reason: ${BAN_REASON}`;
+
 describe('AuthController - banned user access restrictions', () => {
   let appTestManager: AppTestManager;
   let authTestManager: AuthTestManager;
@@ -44,7 +47,7 @@ describe('AuthController - banned user access restrictions', () => {
       where: { id: createdUser.id },
       data: {
         isBanned: true,
-        banReason: 'Bad behavior',
+        banReason: BAN_REASON,
         bannedAt: new Date(),
       },
     });
@@ -52,14 +55,14 @@ describe('AuthController - banned user access restrictions', () => {
     const resMe: Response = await request(server)
       .get(`/${GLOBAL_PREFIX}/auth/me`)
       .set('Authorization', `Bearer ${accessToken}`)
-      .expect(HttpStatus.UNAUTHORIZED);
+      .expect(HttpStatus.FORBIDDEN);
 
     expect(resMe.body).toEqual<ErrorResponseDto>({
       timestamp: expect.any(String),
       path: `/${GLOBAL_PREFIX}/auth/me`,
       method: 'GET',
-      message: 'User is not authenticated',
-      code: SnapFlowDomainExceptionCode.Unauthorized,
+      message: BANNED_USER_MESSAGE,
+      code: SnapFlowDomainExceptionCode.Forbidden,
       extensions: [],
     });
   });
@@ -71,7 +74,7 @@ describe('AuthController - banned user access restrictions', () => {
       where: { id: createdUser.id },
       data: {
         isBanned: true,
-        banReason: 'Bad behavior',
+        banReason: BAN_REASON,
         bannedAt: new Date(),
       },
     });
@@ -79,14 +82,14 @@ describe('AuthController - banned user access restrictions', () => {
     const resRefresh: Response = await request(server)
       .post(`/${GLOBAL_PREFIX}/auth/refresh-token`)
       .set('Cookie', `refreshToken=${refreshToken}`)
-      .expect(HttpStatus.UNAUTHORIZED);
+      .expect(HttpStatus.FORBIDDEN);
 
     expect(resRefresh.body).toEqual<ErrorResponseDto>({
       timestamp: expect.any(String),
       path: `/${GLOBAL_PREFIX}/auth/refresh-token`,
       method: 'POST',
-      message: 'User is not authenticated',
-      code: SnapFlowDomainExceptionCode.Unauthorized,
+      message: BANNED_USER_MESSAGE,
+      code: SnapFlowDomainExceptionCode.Forbidden,
       extensions: [],
     });
   });
