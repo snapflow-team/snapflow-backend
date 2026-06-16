@@ -1,5 +1,6 @@
 import { AdminPaymentsSortField } from '../domain/enums/admin-payments-sort-field.enum';
 import { AdminSortDirection } from '../domain/enums/admin-sort-direction.enum';
+import { AdminUsersBanStatusFilter } from '../domain/enums/admin-users-ban-status-filter.enum';
 import { AdminUsersSortField } from '../domain/enums/admin-users-sort-field.enum';
 
 export const adminUsersQueryDefaults = {
@@ -7,6 +8,7 @@ export const adminUsersQueryDefaults = {
   pageSize: 8,
   sortBy: AdminUsersSortField.CreatedAt,
   sortDirection: AdminSortDirection.Descending,
+  banStatusFilter: AdminUsersBanStatusFilter.NotSelected,
 } as const;
 
 export const adminPaymentsQueryDefaults = {
