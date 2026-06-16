@@ -34,7 +34,8 @@ describe('UpdateAutoRenewalUseCase (Integration)', () => {
       'TRUNCATE TABLE inbox_events, outbox_commands, outbox_events, payments, subscriptions, customers RESTART IDENTITY CASCADE',
     );
 
-    updateAutoRenewalMock.mockClear();
+    updateAutoRenewalMock.mockReset();
+    jest.restoreAllMocks();
   });
 
   afterAll(async () => {
