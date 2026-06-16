@@ -149,4 +149,50 @@ describe('AdminUsersResolver - adminUsers() (POST: /admin/graphql)', () => {
     expect(resAsc.body.data.adminUsers.items[0].id).toBe(older.id);
     expect(resAsc.body.data.adminUsers.items[1].id).toBe(newer.id);
   });
+
+  it('должен фильтровать пользователей по banStatusFilter (Blocked/NotBlocked/NotSelected)', async () => {
+    const blockedUser = await adminUsersTestManager.createUser({ username: 'blocked_user' });
+    const notBlockedUser = await adminUsersTestManager.createUser({ username: 'not_blocked_user' });
+
+    await appTestManager.prisma.user.update({
+      where: { id: blockedUser.id },
+      data: {
+        isBanned: true,
+        banReason: 'Bad behavior',
+        bannedAt: new Date(),
+      },
+    });
+
+    const blockedRes: Response = await adminUsersTestManager.gql(
+      ADMIN_USERS_QUERY,
+      { input: { banStatusFilter: 'Blocked', sortBy: 'Username', sortDirection: 'Ascending' } },
+      sessionCookie,
+    );
+
+    expect(blockedRes.status).toBe(HttpStatus.OK);
+    expect(blockedRes.body.errors).toBeUndefined();
+    expect(blockedRes.body.data.adminUsers.items).toHaveLength(1);
+    expect(blockedRes.body.data.adminUsers.items[0].username).toBe('blocked_user');
+
+    const notBlockedRes: Response = await adminUsersTestManager.gql(
+      ADMIN_USERS_QUERY,
+      { input: { banStatusFilter: 'NotBlocked', sortBy: 'Username', sortDirection: 'Ascending' } },
+      sessionCookie,
+    );
+
+    expect(notBlockedRes.status).toBe(HttpStatus.OK);
+    expect(notBlockedRes.body.errors).toBeUndefined();
+    expect(notBlockedRes.body.data.adminUsers.items).toHaveLength(1);
+    expect(notBlockedRes.body.data.adminUsers.items[0].username).toBe(notBlockedUser.username);
+
+    const allRes: Response = await adminUsersTestManager.gql(
+      ADMIN_USERS_QUERY,
+      { input: { banStatusFilter: 'NotSelected', sortBy: 'Username', sortDirection: 'Ascending' } },
+      sessionCookie,
+    );
+
+    expect(allRes.status).toBe(HttpStatus.OK);
+    expect(allRes.body.errors).toBeUndefined();
+    expect(allRes.body.data.adminUsers.pageInfo.totalCount).toBe(2);
+  });
 });
