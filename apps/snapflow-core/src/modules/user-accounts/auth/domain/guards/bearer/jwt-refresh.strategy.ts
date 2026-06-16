@@ -11,7 +11,7 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../../../setup/configuration/api-settings';
 import { UsersRepository } from '../../../../users/infrastructure/users.repository';
-import { isAuthUserActive } from '../../utils/assert-auth-user-active';
+import { assertAuthUserActive } from '../../utils/assert-auth-user-active';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
@@ -48,9 +48,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     }
 
     const user: User | null = await this.usersRepository.findUserById(userId);
-    if (!isAuthUserActive(user)) {
-      throw new UnauthorizedException('User is not authenticated');
-    }
+    assertAuthUserActive(user);
 
     return {
       userId,

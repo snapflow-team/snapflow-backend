@@ -6,9 +6,8 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../../../setup/configuration/api-settings';
 import { UsersRepository } from '../../../../users/infrastructure/users.repository';
-import { UnauthorizedException } from '../../../../../../common/exceptions/domain-exceptions';
 import { User } from '@generated/prisma-snapflow';
-import { isAuthUserActive } from '../../utils/assert-auth-user-active';
+import { assertAuthUserActive } from '../../utils/assert-auth-user-active';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -33,9 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: { userId: number }): Promise<UserContextDto> {
     const user: User | null = await this.usersRepository.findUserById(payload.userId);
-    if (!isAuthUserActive(user)) {
-      throw new UnauthorizedException('User is not authenticated');
-    }
+    assertAuthUserActive(user);
 
     return {
       id: user.id,

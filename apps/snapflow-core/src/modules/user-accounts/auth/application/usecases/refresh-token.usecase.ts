@@ -7,7 +7,7 @@ import { AuthTokens } from '../../domain/types/auth-tokens.type';
 import { UnauthorizedException } from '../../../../../common/exceptions/domain-exceptions';
 import { Prisma, Session, User } from '@generated/prisma-snapflow';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
-import { isAuthUserActive } from '../../domain/utils/assert-auth-user-active';
+import { assertAuthUserActive } from '../../domain/utils/assert-auth-user-active';
 
 export class RefreshTokenCommand {
   constructor(public readonly session: SessionContextDto) {}
@@ -31,9 +31,7 @@ export class RefreshTokenUseCase implements ICommandHandler<RefreshTokenCommand>
     }
 
     const user: User | null = await this.usersRepository.findUserById(userId);
-    if (!isAuthUserActive(user)) {
-      throw new UnauthorizedException('User is not authenticated');
-    }
+    assertAuthUserActive(user);
 
     const accessToken = this.authTokenService.generateAccessToken(userId);
     const refreshToken = this.authTokenService.generateRefreshToken(userId, deviceId);

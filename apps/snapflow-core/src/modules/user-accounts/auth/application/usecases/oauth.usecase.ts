@@ -10,13 +10,10 @@ import { SessionsRepository } from '../../sessions/infrastructure/sessions.repos
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
 import { PrismaService } from '../../../../../database/prisma.service';
 import { OAuthApplicationDto } from '../dto/oauth.application-dto';
-import {
-  BadRequestException,
-  UnauthorizedException,
-} from '../../../../../common/exceptions/domain-exceptions';
+import { BadRequestException } from '../../../../../common/exceptions/domain-exceptions';
 import { AuthAccount, ConfirmationStatus, Prisma, User } from '@generated/prisma-snapflow';
 import { NewSignupEvent } from '../../domain/events/new-signup.event';
-import { isAuthUserActive } from '../../domain/utils/assert-auth-user-active';
+import { assertAuthUserActive } from '../../domain/utils/assert-auth-user-active';
 
 export class OAuthCommand {
   constructor(public readonly dto: OAuthApplicationDto) {}
@@ -55,9 +52,7 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
           userId,
           tx,
         );
-        if (!isAuthUserActive(existingUserByAuthAccount)) {
-          throw new UnauthorizedException('User is not authenticated');
-        }
+        assertAuthUserActive(existingUserByAuthAccount);
       } else {
         if (!email) {
           throw new BadRequestException(`${provider} user has no email`);
@@ -67,9 +62,7 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
           await this.usersRepository.findUserByEmailWithEmailConfirmation(email, tx);
 
         if (existingUser) {
-          if (!isAuthUserActive(existingUser)) {
-            throw new UnauthorizedException('User is not authenticated');
-          }
+          assertAuthUserActive(existingUser);
           userId = existingUser.id;
 
           if (!existingUser.emailConfirmationCode) {
