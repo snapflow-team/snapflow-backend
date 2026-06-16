@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { of, throwError } from 'rxjs';
 import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
-import { CryptoService } from '../../../../../../../libs/common/services/crypto.service';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
+import { NextjsRevalidationService } from '../nextjs-revalidation.service';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { NextjsEndpoints } from '../constants/nextjs-endpoints';
 import {
@@ -68,7 +68,12 @@ describe('RecordHomeRevalidationActivityUseCase (Интеграционные т
     ]);
 
     useCase = testHelper.get(RecordHomeRevalidationActivityUseCase);
-    generateJwtTokenSpy = jest.spyOn(testHelper.get(CryptoService), 'generateJwtToken');
+    const revalidationService = testHelper.get(NextjsRevalidationService);
+    generateJwtTokenSpy = jest.spyOn(
+      (revalidationService as unknown as { cryptoService: { generateJwtToken: () => string } })
+        .cryptoService,
+      'generateJwtToken',
+    );
 
     const configService = testHelper.get<ConfigService<Configuration, true>>(ConfigService);
     const apiSettings = configService.get<ApiSettings>('apiSettings');
@@ -76,7 +81,7 @@ describe('RecordHomeRevalidationActivityUseCase (Интеграционные т
   });
 
   afterAll(async () => {
-    generateJwtTokenSpy.mockRestore();
+    generateJwtTokenSpy?.mockRestore();
     await testHelper.close();
   });
 
