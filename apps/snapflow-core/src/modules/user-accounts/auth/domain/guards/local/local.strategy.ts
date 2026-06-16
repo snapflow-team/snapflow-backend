@@ -7,6 +7,7 @@ import { CryptoService } from '../../../../../../../../../libs/common/services/c
 import { UserWithEmailConfirmation } from '../../../../users/types/user-with-confirmation.type';
 import { UnauthorizedException } from '../../../../../../common/exceptions/domain-exceptions';
 import { ConfirmationStatus } from '@generated/prisma-snapflow';
+import { assertAuthUserActive } from '../../utils/assert-auth-user-active';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
@@ -40,6 +41,8 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     ) {
       throw new UnauthorizedException('The user has not verified his email');
     }
+
+    assertAuthUserActive(user);
 
     return { id: user.id };
   }
