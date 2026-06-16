@@ -13,6 +13,10 @@ import { GetAdminUsersQueryParams } from '../../application/dto/get-admin-users-
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { AdminMutationResultModel } from '../models/admin-mutation-result.model';
 import { DeleteUserByAdminCommand } from '../../application/usecases/delete-user-by-admin.usecase';
+import { BanUserByAdminCommand } from '../../application/usecases/ban-user-by-admin.usecase';
+import { UnbanUserByAdminCommand } from '../../application/usecases/unban-user-by-admin.usecase';
+import { UserBanReason } from '../../domain/enums/user-ban-reason.enum';
+import { BanUserByAdminApplicationDto } from '../../application/dto/ban-user-by-admin-application.dto';
 
 @UseFilters(AdminGqlExceptionsFilter)
 @Resolver(() => AdminUserListItemModel)
@@ -49,6 +53,30 @@ export class AdminUsersResolver {
     @Args('userId', { type: () => Int }) userId: number,
   ): Promise<AdminMutationResultModel> {
     await this.commandBus.execute(new DeleteUserByAdminCommand(userId));
+
+    return { success: true };
+  }
+
+  @UseGuards(AdminGqlAuthGuard)
+  @Mutation(() => AdminMutationResultModel)
+  async banUser(
+    @Args('userId', { type: () => Int }) userId: number,
+    @Args('reason', { type: () => UserBanReason }) reason: UserBanReason,
+    @Args('customReason', { type: () => String, nullable: true }) customReason?: string,
+  ): Promise<AdminMutationResultModel> {
+    await this.commandBus.execute(
+      new BanUserByAdminCommand(new BanUserByAdminApplicationDto(userId, reason, customReason)),
+    );
+
+    return { success: true };
+  }
+
+  @UseGuards(AdminGqlAuthGuard)
+  @Mutation(() => AdminMutationResultModel)
+  async unbanUser(
+    @Args('userId', { type: () => Int }) userId: number,
+  ): Promise<AdminMutationResultModel> {
+    await this.commandBus.execute(new UnbanUserByAdminCommand(userId));
 
     return { success: true };
   }
