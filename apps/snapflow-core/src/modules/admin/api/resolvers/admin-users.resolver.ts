@@ -42,6 +42,7 @@ export class AdminUsersResolver {
       search: input?.search,
       sortBy: input?.sortBy,
       sortDirection: input?.sortDirection,
+      banStatusFilter: input?.banStatusFilter,
     });
 
     return this.queryBus.execute(new GetAdminUsersQuery(params));
