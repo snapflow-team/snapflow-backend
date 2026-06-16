@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { OutboxEvent, OutboxEventStatus, OutboxEventType } from '@generated/prisma-payments';
 import { OutboxProcessorService } from './outbox-processor.service';
 import { OutboxRepository } from '../repositories/outbox.repository';
-import { RabbitMQPublisherService } from './rabbitmq-publisher.service';
+import { RabbitMQPublisherService } from '../../rabbitmq/rabbitmq-publisher.service';
 import { PAYMENTS_EXCHANGE } from '../../../../../../libs/contracts/payments';
 import { OutboxProcessing } from '../constants/outbox.constants';
 import { LoggerFactory } from '../../logger/logger.factory';

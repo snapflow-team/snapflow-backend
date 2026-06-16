@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { EmailTemplate } from './types';
 import { ConfigService } from '@nestjs/config';
-import { Configuration } from '../../../setup/configuration/configuration';
-import { EnvironmentSettings } from '../../../setup/configuration/environment-settings';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { EnvironmentSettings } from '../../../../setup/configuration/environment-settings';
 
 //todo(refactor) нужен ли этот класс вообще , может быть лучше удалить его и унести в emailService?
 @Injectable()

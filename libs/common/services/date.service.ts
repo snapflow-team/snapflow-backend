@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { add, differenceInYears, Duration, getUnixTime, isBefore } from 'date-fns';
+import { add, differenceInYears, Duration, getUnixTime, isBefore, subDays } from 'date-fns';
 
 @Injectable()
 export class DateService {
@@ -26,5 +26,10 @@ export class DateService {
   convertDateToSeconds(date: Date): number {
     //Возвращает из даты количество секунд от 1970 года
     return getUnixTime(date);
+  }
+  getDelayForJob(expirationDate: string, daysBeforeExpiration: number): number {
+    const scheduleDate = subDays(new Date(expirationDate), daysBeforeExpiration);
+
+    return Math.max(0, scheduleDate.getTime() - Date.now());
   }
 }

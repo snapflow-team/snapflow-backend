@@ -5,8 +5,8 @@ import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users
 import request from 'supertest';
 import { HttpStatus } from '@nestjs/common';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
-import { EmailService } from '../../src/modules/emails/services/email.service';
-import { EmailTemplate } from '../../src/modules/emails/templates/types';
+import { EmailService } from '../../src/modules/notifications/emails/services/email.service';
+import { EmailTemplate } from '../../src/modules/notifications/emails/templates/types';
 
 describe('SessionsController - getAllSessions() (GET: /sessions)', () => {
   let appTestManager: AppTestManager;

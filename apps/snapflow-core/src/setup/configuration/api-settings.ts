@@ -99,6 +99,9 @@ export class ApiSettings {
   @IsString()
   paymentsEventsQueueName: string;
 
+  @IsString()
+  notificationsEventsQueueName: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
@@ -145,6 +148,7 @@ export class ApiSettings {
     this.rabbitMqUrl = environmentVariables.RABBITMQ_URL;
 
     this.paymentsEventsQueueName = environmentVariables.PAYMENTS_EVENTS_QUEUE_NAME;
+    this.notificationsEventsQueueName = environmentVariables.NOTIFICATIONS_EVENTS_QUEUE_NAME;
   }
 
   getJwtOptions() {

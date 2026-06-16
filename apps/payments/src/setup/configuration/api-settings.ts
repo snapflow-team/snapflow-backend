@@ -69,4 +69,8 @@ export class ApiSettings {
     }
     return this.allowedOriginsRaw.split(',').map((item) => item.trim());
   }
+
+  get redisDbUrl(): string {
+    return this.environmentVariables.REDIS_URL;
+  }
 }

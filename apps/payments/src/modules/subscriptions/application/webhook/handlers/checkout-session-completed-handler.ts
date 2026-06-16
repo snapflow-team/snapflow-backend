@@ -31,6 +31,7 @@ import { SubscriptionRenewedEvent } from '../../../../../../../../libs/contracts
 import { extractSubscriptionIdFromCS } from './utils/extract-subscription-id.helper';
 import { extractCustomerId } from './utils/extract-customer-id.helper';
 import { extractEventDate } from './utils/extract-date-from-event-created.helper';
+import { QueueService } from '../../../../queue/queue.service';
 
 @Injectable()
 export class CheckoutSessionCompletedHandler implements WebhookHandler {
@@ -44,6 +45,7 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
     private outboxCommandRepository: OutboxCommandRepository,
     private subscriptionsRepository: SubscriptionsRepository,
     private dateService: DateService,
+    private queueService: QueueService,
     loggerFactory: LoggerFactory,
   ) {
     this.logger = loggerFactory.create(CheckoutSessionCompletedHandler.name);
@@ -175,6 +177,23 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
           tx,
         );
 
+        this.logger.log('payload to publish queue: ');
+        console.log({
+          userId: localCustomer.userId,
+          expireAt: currentPeriod.end.toISOString(),
+          nextPaymentAt: currentPeriod.end.toISOString(),
+          subscriptionId: localSubscription.id,
+        });
+        await this.queueService.addSubscriptionNotifications({
+          userId: localCustomer.userId,
+          expireAt: currentPeriod.end.toISOString(),
+          nextPaymentAt: currentPeriod.end.toISOString(),
+          subscriptionId: localSubscription.id,
+        });
+        this.logger.log(
+          'notification successful published to queue in checkout complete handler: ',
+        );
+
         return Notification.ok();
       }
       case StripeCSModes.Subscription: {
@@ -201,6 +220,23 @@ export class CheckoutSessionCompletedHandler implements WebhookHandler {
             currentPeriodEnd: currentPeriod.end.toISOString(),
           } satisfies SubscriptionActivatedEvent,
           tx,
+        );
+
+        this.logger.log('payload to publish queue: ');
+        console.log({
+          userId: localCustomer.userId,
+          expireAt: currentPeriod.end.toISOString(),
+          nextPaymentAt: currentPeriod.end.toISOString(),
+          subscriptionId: localSubscription.id,
+        });
+        await this.queueService.addSubscriptionNotifications({
+          userId: localCustomer.userId,
+          expireAt: currentPeriod.end.toISOString(),
+          nextPaymentAt: currentPeriod.end.toISOString(),
+          subscriptionId: localSubscription.id,
+        });
+        this.logger.log(
+          'notification successful published to queue in checkout complete handler: ',
         );
 
         return Notification.ok();

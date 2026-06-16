@@ -21,6 +21,7 @@ import { InvoicePayment } from '../../types/invoice-payment.type';
 import { SubscriptionRenewedEvent } from '../../../../../../../../libs/contracts/payments/payment-subscription-renewed.event';
 import { LoggerFactory } from '../../../../logger/logger.factory';
 import { ContextLogger } from '../../../../logger/context-logger';
+import { QueueService } from '../../../../queue/queue.service';
 
 @Injectable()
 export class InvoicePaymentSucceededHandler implements WebhookHandler {
@@ -31,6 +32,7 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
     private outboxRepository: OutboxRepository,
     private subscriptionsRepository: SubscriptionsRepository,
     private paymentsRepository: PaymentsRepository,
+    private queueService: QueueService,
     loggerFactory: LoggerFactory,
   ) {
     this.logger = loggerFactory.create(InvoicePaymentSucceededHandler.name);
@@ -142,6 +144,13 @@ export class InvoicePaymentSucceededHandler implements WebhookHandler {
       } satisfies SubscriptionRenewedEvent,
       tx,
     );
+
+    await this.queueService.addSubscriptionNotifications({
+      userId: customer.userId,
+      expireAt: newCurrentPeriod.end.toISOString(),
+      nextPaymentAt: newCurrentPeriod.end.toISOString(),
+      subscriptionId: renewedSubscription.id,
+    });
 
     return Notification.ok();
   }

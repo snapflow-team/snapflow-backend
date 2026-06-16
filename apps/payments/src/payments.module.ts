@@ -10,6 +10,10 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from './modules/logger/logger.module';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
+import { BullModule } from '@nestjs/bullmq';
+import { ConfigService } from '@nestjs/config';
+import { Configuration } from './setup/configuration/configuration';
+import { ApiSettings } from './setup/configuration/api-settings';
 
 @Module({
   imports: [
@@ -21,6 +25,16 @@ import { RequestContextMiddleware } from './common/middleware/request-context.mi
     InboxModule,
     OutboxCommandsModule,
     SubscriptionsModule,
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory(configService: ConfigService<Configuration, true>) {
+        return {
+          connection: {
+            url: configService.get<ApiSettings>('apiSettings').redisDbUrl,
+          },
+        };
+      },
+    }),
   ],
   controllers: [PaymentsController],
   providers: [PaymentsService, RequestContextMiddleware],

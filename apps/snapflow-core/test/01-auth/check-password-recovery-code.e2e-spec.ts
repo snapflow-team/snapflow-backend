@@ -2,14 +2,12 @@ import { AppTestManager } from '../managers/app.test-manager';
 import { Server } from 'http';
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { CryptoService } from '../../../../libs/common/services/crypto.service';
-import { EmailService } from '../../src/modules/emails/services/email.service';
-import { EmailTemplate } from '../../src/modules/emails/templates/types';
+import { EmailService } from '../../src/modules/notifications/emails/services/email.service';
+import { EmailTemplate } from '../../src/modules/notifications/emails/templates/types';
 import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
-import {
-  RegistrationUserInputDto
-} from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
+import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';

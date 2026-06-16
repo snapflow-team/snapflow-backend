@@ -34,6 +34,7 @@ import { UpdateAutoRenewalSwagger } from './swagger/update-auto-renewal.swagger'
 import { GetMyCurrentSubscriptionQuery } from '../application/queries/get-my-current-subscription.query-handler';
 import { SubscriptionViewDto } from './view-dto/subscription.view-dto';
 import { GetMyCurrentSubscriptionSwagger } from './swagger/get-my-current-subscription.swagger';
+import { QueueService } from '../../queue/queue.service';
 
 @ApiTags('Subscriptions')
 @Controller('subscriptions')
@@ -41,6 +42,7 @@ export class SubscriptionsController {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
+    private readonly queueService: QueueService,
   ) {}
 
   @Get('plans')

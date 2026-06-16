@@ -33,7 +33,8 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
     this.logger = loggerFactory.create(PaymentsEventsConsumer.name);
   }
 
-  async onModuleInit(): Promise<void> {
+  onModuleInit(): void {
+    console.log('CONSUMER PID:', process.pid);
     const { rabbitMqUrl, paymentsEventsQueueName }: ApiSettings =
       this.configService.get<ApiSettings>('apiSettings');
 
@@ -63,6 +64,14 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
           this.dispatchMessageWithRequestContext(channel, msg);
         });
       },
+    });
+    this.channelWrapper.on('error', (err) => {
+      console.error('CHANNEL ERROR');
+      console.error(err);
+    });
+
+    this.channelWrapper.on('close', () => {
+      console.error('CHANNEL CLOSED in payments consumer');
     });
   }
 
