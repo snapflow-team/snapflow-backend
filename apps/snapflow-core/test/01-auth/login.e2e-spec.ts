@@ -10,6 +10,11 @@ import { HttpStatus } from '@nestjs/common';
 import { TestUtils } from '../helpers/test.utils';
 import { RegistrationUserInputDto } from '../../src/modules/user-accounts/auth/api/input-dto/registration-user.input-dto';
 import { TestDtoFactory } from '../helpers/test.dto-factory';
+import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
+import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
+
+const BAN_REASON = 'Bad behavior';
+const BANNED_USER_MESSAGE = `The account has been blocked for the following reason: ${BAN_REASON}`;
 
 describe('AuthController - login() (POST: /auth/login)', () => {
   let appTestManager: AppTestManager;
@@ -214,6 +219,42 @@ describe('AuthController - login() (POST: /auth/login)', () => {
     expect(resLogin.headers['set-cookie']).toBeUndefined();
 
     // 🔸 Проверяем, что мок функция отправки email была вызвана корректно
+    expect(sendEmailMock).toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('не следует выполнять вход, если пользователь забанен', async () => {
+    const [user]: UserWithEmailConfirmation[] =
+      await authTestManager.registrationWithConfirmation();
+
+    await appTestManager.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        isBanned: true,
+        banReason: BAN_REASON,
+        bannedAt: new Date(),
+      },
+    });
+
+    const resLogin: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .send({
+        email: user.email,
+        password: 'Qwerty_1',
+      })
+      .expect(HttpStatus.FORBIDDEN);
+
+    expect(resLogin.body).toEqual<ErrorResponseDto>({
+      timestamp: expect.any(String),
+      path: `/${GLOBAL_PREFIX}/auth/login`,
+      method: 'POST',
+      message: BANNED_USER_MESSAGE,
+      code: SnapFlowDomainExceptionCode.Forbidden,
+      extensions: [],
+    });
+
+    expect(resLogin.headers['set-cookie']).toBeUndefined();
+
     expect(sendEmailMock).toHaveBeenCalled();
     expect(sendEmailMock).toHaveBeenCalledTimes(1);
   });

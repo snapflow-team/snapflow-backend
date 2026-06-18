@@ -13,6 +13,7 @@ import { OAuthApplicationDto } from '../dto/oauth.application-dto';
 import { BadRequestException } from '../../../../../common/exceptions/domain-exceptions';
 import { AuthAccount, ConfirmationStatus, Prisma, User } from '@generated/prisma-snapflow';
 import { NewSignupEvent } from '../../domain/events/new-signup.event';
+import { assertAuthUserActive } from '../../domain/utils/assert-auth-user-active';
 
 export class OAuthCommand {
   constructor(public readonly dto: OAuthApplicationDto) {}
@@ -47,6 +48,11 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
 
       if (existingAuthAccount) {
         userId = existingAuthAccount.userId;
+        const existingUserByAuthAccount: User | null = await this.usersRepository.findUserById(
+          userId,
+          tx,
+        );
+        assertAuthUserActive(existingUserByAuthAccount);
       } else {
         if (!email) {
           throw new BadRequestException(`${provider} user has no email`);
@@ -56,6 +62,7 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
           await this.usersRepository.findUserByEmailWithEmailConfirmation(email, tx);
 
         if (existingUser) {
+          assertAuthUserActive(existingUser);
           userId = existingUser.id;
 
           if (!existingUser.emailConfirmationCode) {

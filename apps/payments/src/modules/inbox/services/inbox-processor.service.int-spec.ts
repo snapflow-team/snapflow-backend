@@ -55,10 +55,12 @@ describe('InboxProcessorService (Integration)', () => {
 
     retrieveSubscriptionBillingPeriodMock.mockReset();
     getSubscriptionMock.mockReset();
-    getSubscriptionMock.mockResolvedValue({
-      id: 'sub_default',
-      customer: 'cus_default',
-    });
+    getSubscriptionMock.mockResolvedValue(
+      Notification.ok({
+        id: 'sub_default',
+        customer: 'cus_default',
+      } as Stripe.Subscription),
+    );
   });
 
   afterAll(async () => {
@@ -140,10 +142,12 @@ describe('InboxProcessorService (Integration)', () => {
       Notification.ok({ start: periodStart, end: periodEnd } satisfies BillingPeriod),
     );
 
-    getSubscriptionMock.mockResolvedValue({
-      id: stripeSubId,
-      customer: 'cus_inbox_sub_1',
-    });
+    getSubscriptionMock.mockResolvedValue(
+      Notification.ok({
+        id: stripeSubId,
+        customer: 'cus_inbox_sub_1',
+      } as Stripe.Subscription),
+    );
 
     await inboxProcessor.processInboxEvents();
 
@@ -215,10 +219,12 @@ describe('InboxProcessorService (Integration)', () => {
       Notification.ok({ start: periodStart, end: periodEnd } satisfies BillingPeriod),
     );
 
-    getSubscriptionMock.mockResolvedValue({
-      id: stripeSubId,
-      customer: 'cus_inbox_pay_1',
-    });
+    getSubscriptionMock.mockResolvedValue(
+      Notification.ok({
+        id: stripeSubId,
+        customer: 'cus_inbox_pay_1',
+      } as Stripe.Subscription),
+    );
 
     await inboxProcessor.processInboxEvents();
 

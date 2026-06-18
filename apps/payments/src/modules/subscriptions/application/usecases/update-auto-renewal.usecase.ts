@@ -64,6 +64,14 @@ export class UpdateAutoRenewalUseCase
     const nextPayment = autoRenewal ? localSubscription.currentPeriodEnd : null;
 
     try {
+      const stripeResult = await this.stripeService.updateAutoRenewal(
+        localSubscription.stripeSubId,
+        autoRenewal,
+      );
+      if (stripeResult.hasErrors) {
+        return Notification.copyErrors(stripeResult);
+      }
+
       await this.subscriptionsRepository.updateAutoRenewal(
         localSubscription.id,
         autoRenewal,
@@ -73,14 +81,6 @@ export class UpdateAutoRenewalUseCase
       const updatedSubscription = await this.subscriptionsRepository.findByIdWithCustomerOrThrow(
         localSubscription.id,
       );
-
-      const stripeResult = await this.stripeService.updateAutoRenewal(
-        localSubscription.stripeSubId,
-        autoRenewal,
-      );
-      if (stripeResult.hasErrors) {
-        return Notification.copyErrors(stripeResult);
-      }
 
       if (autoRenewal) {
         await this.queueService.resetJob(

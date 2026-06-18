@@ -1,5 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { RemoteAuthGuard } from '../auth/guards/remote-auth.guard';
+import { InternalApiSecretGuard } from '../auth/guards/internal-api-secret.guard';
+import { InternalPaymentsController } from './api/internal-payments.controller';
 import { OutboxModule } from '../outbox/outbox.module';
 import { OutboxCommandsModule } from '../outbox-commands/outbox-commands.module';
 import { InboxModule } from '../inbox/inbox.module';
@@ -20,16 +22,18 @@ import { WEBHOOK_HANDLERS } from '../../core/providers/provide-tokens/webhook-ha
 import { CustomerSubscriptionDeletedHandler } from './application/webhook/handlers/customer-subscription-deleted-handler';
 import { UpdateAutoRenewalUseCase } from './application/usecases/update-auto-renewal.usecase';
 import { GetMyPaymentsQueryHandler } from './application/queries/get-my-payments.query-handler';
+import { GetAllPaymentsQueryHandler } from './application/queries/get-all-payments.query-handler';
 import { PaymentsQueryRepository } from './infrastructure/query/payments.query-repository';
 import { DateService } from '../../../../../libs/common/services/date.service';
 import { GetMyCurrentSubscriptionQueryHandler } from './application/queries/get-my-current-subscription.query-handler';
 import { SubscriptionsQueryRepository } from './infrastructure/query/subscriptions.query-repository';
 import { QueueModule } from '../queue/queue.module';
 
-const controllers = [SubscriptionsController, StripeWebhookController];
+const controllers = [SubscriptionsController, StripeWebhookController, InternalPaymentsController];
 const queries = [
   GetPlansQueryHandler,
   GetMyPaymentsQueryHandler,
+  GetAllPaymentsQueryHandler,
   GetMyCurrentSubscriptionQueryHandler,
 ];
 const useCases = [
@@ -52,7 +56,7 @@ const repositories = [
   PaymentsQueryRepository,
   CustomersRepository,
 ];
-const guards = [RemoteAuthGuard];
+const guards = [RemoteAuthGuard, InternalApiSecretGuard];
 
 @Module({
   imports: [

@@ -41,6 +41,9 @@ export class ApiSettings {
   @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
   stripeCancelUrl: string;
 
+  @IsString()
+  internalApiSecret: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
@@ -61,6 +64,7 @@ export class ApiSettings {
     this.stripeWebhookSecret = environmentVariables.STRIPE_WEBHOOK_SECRET;
     this.stripeSuccessUrl = environmentVariables.STRIPE_SUCCESS_URL;
     this.stripeCancelUrl = environmentVariables.STRIPE_CANCEL_URL;
+    this.internalApiSecret = environmentVariables.INTERNAL_API_SECRET;
   }
 
   get allowedOrigins(): string[] | boolean {

@@ -6,7 +6,7 @@ import {
 import { StripeService } from '../services/stripe.service';
 import { Notification } from '../../../../common/notification/notification';
 import { NotificationResultCode } from '../../../../common/notification/notification-result-code';
-import { PaymentStatus, SubscriptionStatus } from '@generated/prisma-payments';
+import { PaymentStatus, Subscription, SubscriptionStatus } from '@generated/prisma-payments';
 import { PrismaService } from '../../../database/prisma.service';
 import { PaymentsModule } from '../../../../payments.module';
 import { SubscriptionsRepository } from '../../infrastructure/subscriptions.repository';
@@ -37,7 +37,8 @@ describe('CreateCheckoutSessionUseCase (Integration)', () => {
       'TRUNCATE TABLE inbox_events, outbox_commands, outbox_events, payments, subscriptions, customers RESTART IDENTITY CASCADE',
     );
 
-    createCheckoutSessionMock.mockClear();
+    createCheckoutSessionMock.mockReset();
+    jest.restoreAllMocks();
   });
 
   afterAll(async () => {
@@ -141,26 +142,25 @@ describe('CreateCheckoutSessionUseCase (Integration)', () => {
       const command = new CreateCheckoutSessionCommand({ userId, planId });
 
       const result = await useCase.execute(command);
-      console.log(result);
+
       expect(result).toBeInstanceOf(Notification);
       expect(result.code).toBe(NotificationResultCode.InternalServerError);
     });
-    it('должен упасть с ошибкой, если у пользователя есть активная подписка', async () => {
-      const userId = 400;
+
+    it('должен вернуть BadRequest, если у пользователя есть подписка в статусе PENDING или PAST_DUE', async () => {
+      const userId = 500;
       const planId = 'business_monthly';
 
-      const mockedActiveSubscription = {};
-      // Имитируем что при поиске активных подписок, у нас вернулся null
-      jest
-        .spyOn(subscriptionRepository, 'findActiveOrPastDueByUserId')
-        .mockResolvedValueOnce(mockedActiveSubscription as any);
+      jest.spyOn(subscriptionRepository, 'findLastByUserId').mockResolvedValueOnce({
+        status: SubscriptionStatus.PENDING,
+      } as Subscription);
 
       const command = new CreateCheckoutSessionCommand({ userId, planId });
-
       const result = await useCase.execute(command);
-      console.log(result);
+
       expect(result).toBeInstanceOf(Notification);
       expect(result.code).toBe(NotificationResultCode.BadRequest);
+      expect(createCheckoutSessionMock).not.toHaveBeenCalled();
     });
   });
 });

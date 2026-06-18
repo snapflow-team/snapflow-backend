@@ -1,7 +1,6 @@
 import { AppTestManager } from '../managers/app.test-manager';
 import { Server } from 'http';
 import { AuthTestManager } from '../managers/auth.test-manager';
-import { CryptoService } from '../../../../libs/common/services/crypto.service';
 import { EmailService } from '../../src/modules/notifications/emails/services/email.service';
 import { EmailTemplate } from '../../src/modules/notifications/emails/templates/types';
 import request, { Response } from 'supertest';
@@ -18,7 +17,6 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
   let authTestManager: AuthTestManager;
   let server: Server;
   let sendEmailMock: jest.Mock;
-  let spyGenerateUUID: jest.SpyInstance<string, []>;
 
   beforeAll(async () => {
     appTestManager = new AppTestManager();
@@ -35,8 +33,6 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
     sendEmailMock = jest
       .spyOn(EmailService.prototype, 'sendEmail')
       .mockResolvedValue() as jest.Mock<Promise<void>, [string, EmailTemplate]>;
-
-    spyGenerateUUID = jest.spyOn(CryptoService.prototype, 'generateUUID');
   });
 
   beforeEach(async () => {
@@ -48,8 +44,6 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
 
   afterAll(async () => {
     await appTestManager.close();
-
-    spyGenerateUUID.mockRestore();
   });
 
   it('должен вернуть 204, если код восстановления пароля валиден', async () => {
@@ -65,9 +59,24 @@ describe('AuthController - checkPasswordRecoveryCode() (POST: /auth/check-passwo
       recaptchaToken: 'recaptcha-token',
     });
 
-    // 🔸 Берем реально сгенерированный код восстановления из шпиона generateUUID
-    const recoveryCode = spyGenerateUUID.mock.results[1].value;
-    console.log(recoveryCode);
+    // 🔸 Берем реально сохраненный код восстановления из БД
+    const userWithRecoveryCode = await appTestManager.prisma.user.findFirst({
+      where: {
+        email: dtos[0].email,
+        deletedAt: null,
+      },
+      include: {
+        passwordRecoveryCode: true,
+      },
+    });
+
+    const recoveryCode = userWithRecoveryCode?.passwordRecoveryCode?.recoveryCode;
+
+    if (!recoveryCode) {
+      throw new Error(
+        `Recovery code not found for user with email "${dtos[0].email}" after password recovery`,
+      );
+    }
     // 🔻 Выполняем POST-запрос на проверку recoveryCode
     const resCheckPasswordRecoveryCode: Response = await request(server)
       .post(`/${GLOBAL_PREFIX}/auth/check-password-recovery-code`)

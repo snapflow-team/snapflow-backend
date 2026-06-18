@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { of, throwError } from 'rxjs';
 import { IntTestHelper } from '../../../../../test/helpers/int.test.helper';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
-import { CryptoService } from '../../../../../../../libs/common/services/crypto.service';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
+import { NextjsRevalidationService } from '../nextjs-revalidation.service';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { NextjsEndpoints } from '../constants/nextjs-endpoints';
 import {
@@ -23,7 +23,7 @@ describe('RecordHomeRevalidationActivityUseCase (Интеграционные т
   let httpServicePostMock: jest.Mock;
   let generateJwtTokenSpy: jest.SpyInstance;
   let revalidateUrl: string;
-  let mockRedisStore: Record<string, number> = {};
+  const mockRedisStore: Record<string, number> = {};
 
   const mockRedisClient = {
     incr: jest.fn().mockImplementation(async (key: string) => {
@@ -68,7 +68,12 @@ describe('RecordHomeRevalidationActivityUseCase (Интеграционные т
     ]);
 
     useCase = testHelper.get(RecordHomeRevalidationActivityUseCase);
-    generateJwtTokenSpy = jest.spyOn(testHelper.get(CryptoService), 'generateJwtToken');
+    const revalidationService = testHelper.get(NextjsRevalidationService);
+    generateJwtTokenSpy = jest.spyOn(
+      (revalidationService as unknown as { cryptoService: { generateJwtToken: () => string } })
+        .cryptoService,
+      'generateJwtToken',
+    );
 
     const configService = testHelper.get<ConfigService<Configuration, true>>(ConfigService);
     const apiSettings = configService.get<ApiSettings>('apiSettings');
@@ -76,7 +81,7 @@ describe('RecordHomeRevalidationActivityUseCase (Интеграционные т
   });
 
   afterAll(async () => {
-    generateJwtTokenSpy.mockRestore();
+    generateJwtTokenSpy?.mockRestore();
     await testHelper.close();
   });
 
@@ -157,8 +162,7 @@ describe('RecordHomeRevalidationActivityUseCase (Интеграционные т
     });
 
     it('(Success) должен вызвать ревалидацию и обнулить оба счётчика на 4-м посте', async () => {
-      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] =
-        HOME_REVALIDATION_THRESHOLDS.posts - 1;
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = HOME_REVALIDATION_THRESHOLDS.posts - 1;
       mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 2;
 
       await useCase.execute(
@@ -170,8 +174,7 @@ describe('RecordHomeRevalidationActivityUseCase (Интеграционные т
     });
 
     it('(Success) должен вызвать ревалидацию по порогу постов при малом числе регистраций', async () => {
-      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] =
-        HOME_REVALIDATION_THRESHOLDS.posts - 1;
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = HOME_REVALIDATION_THRESHOLDS.posts - 1;
       mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 1;
 
       await useCase.execute(
@@ -184,8 +187,7 @@ describe('RecordHomeRevalidationActivityUseCase (Интеграционные т
 
     it('(Success) должен вызвать ревалидацию по OR, если регистрации уже достигли порога', async () => {
       mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = 1;
-      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] =
-        HOME_REVALIDATION_THRESHOLDS.signups;
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = HOME_REVALIDATION_THRESHOLDS.signups;
 
       await useCase.execute(
         new RecordHomeRevalidationActivityCommand(HomeRevalidationActivitySource.Post),
@@ -196,8 +198,7 @@ describe('RecordHomeRevalidationActivityUseCase (Интеграционные т
     });
 
     it('(Success) не должен сбрасывать счётчики при ошибке HTTP', async () => {
-      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] =
-        HOME_REVALIDATION_THRESHOLDS.posts - 1;
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = HOME_REVALIDATION_THRESHOLDS.posts - 1;
       mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 3;
       httpServicePostMock.mockReturnValueOnce(throwError(() => new Error('Next.js is down')));
 
@@ -284,8 +285,7 @@ describe('RecordHomeRevalidationActivityUseCase (Интеграционные т
 
     it('(Success) должен вызвать ревалидацию по OR, если посты уже достигли порога', async () => {
       mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.signups] = 1;
-      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] =
-        HOME_REVALIDATION_THRESHOLDS.posts;
+      mockRedisStore[HOME_REVALIDATION_REDIS_KEYS.posts] = HOME_REVALIDATION_THRESHOLDS.posts;
 
       await useCase.execute(
         new RecordHomeRevalidationActivityCommand(HomeRevalidationActivitySource.Signup),
