@@ -193,17 +193,17 @@ model Session {
 }
 
 model AdminSession {
-  id             String   @id @default(uuid()) @db.Uuid
-  deviceName     String   @map("device_name") @db.VarChar(255)
-  browserName    String?  @map("browser_name") @db.VarChar(255)
-  browserVersion String?  @map("browser_version") @db.VarChar(255)
-  osName         String?  @map("os_name") @db.VarChar(255)
-  osVersion      String?  @map("os_version") @db.VarChar(255)
-  deviceType     String?  @map("device_type") @db.VarChar(255)
-  ip             String   @db.VarChar(255)
-  expiresAt      DateTime @map("expires_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id             String    @id @default(uuid()) @db.Uuid
+  deviceName     String    @map("device_name") @db.VarChar(255)
+  browserName    String?   @map("browser_name") @db.VarChar(255)
+  browserVersion String?   @map("browser_version") @db.VarChar(255)
+  osName         String?   @map("os_name") @db.VarChar(255)
+  osVersion      String?   @map("os_version") @db.VarChar(255)
+  deviceType     String?   @map("device_type") @db.VarChar(255)
+  ip             String    @db.VarChar(255)
+  expiresAt      DateTime  @map("expires_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
   deletedAt      DateTime? @map("deleted_at")
 
   @@index([expiresAt])
@@ -271,6 +271,9 @@ model UserFollow {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  /// ВНИМАНИЕ: Пара (followerId, followingId) имеет уникальное ограничение в БД только среди активных записей (Soft Delete).
+  /// @@unique не добавляется в схему намеренно, так как уникальность реализована partial unique index.
+  /// Добавлено в миграции: 20260622120000_add_social_models_follow_comment_like
   follower    User @relation("UserFollowsAsFollower", fields: [followerId], references: [id], onDelete: Cascade)
   followerId  Int  @map("follower_id")
   following   User @relation("UserFollowsAsFollowing", fields: [followingId], references: [id], onDelete: Cascade)
@@ -307,6 +310,9 @@ model PostLike {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  /// ВНИМАНИЕ: Пара (postId, userId) имеет уникальное ограничение в БД только среди активных записей (Soft Delete).
+  /// @@unique не добавляется в схему намеренно, так как уникальность реализована partial unique index.
+  /// Добавлено в миграции: 20260622120000_add_social_models_follow_comment_like
   post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId Int  @map("post_id")
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -322,6 +328,9 @@ model CommentLike {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  /// ВНИМАНИЕ: Пара (commentId, userId) имеет уникальное ограничение в БД только среди активных записей (Soft Delete).
+  /// @@unique не добавляется в схему намеренно, так как уникальность реализована partial unique index.
+  /// Добавлено в миграции: 20260622120000_add_social_models_follow_comment_like
   comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
   commentId Int     @map("comment_id")
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
