@@ -7,18 +7,7 @@ export type CursorPayload = {
 
 const INVALID_CURSOR_MESSAGE = 'Invalid cursor';
 
-/**
- * Opaque cursor для keyset-пагинации time-sorted сущностей.
- *
- * Prisma guideline (для будущих endpoint-реализаций):
- * - orderBy: [{ createdAt: 'desc' }, { id: 'desc' }]
- * - take: limit + 1
- * - where (если cursor задан): (createdAt < cursor.createdAt) OR
- *   (createdAt = cursor.createdAt AND id < cursor.id)
- * - если получено limit + 1: hasMore = true, items = first(limit),
- *   nextCursor = encodeCursor(lastItem)
- * - иначе: hasMore = false, nextCursor = null
- */
+/** Opaque cursor для keyset-пагинации. Prisma-паттерн — см. `cursor-pagination.util.ts`. */
 function throwInvalidCursor(): never {
   throw new ValidationException([{ field: 'cursor', message: INVALID_CURSOR_MESSAGE }]);
 }

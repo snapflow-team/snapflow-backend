@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+/**
+ * Базовый cursor-ответ. Не включает totalCount/pagesCount.
+ * Prisma keyset-паттерн для заполнения — `libs/common/utils/cursor-pagination.util.ts`.
+ */
 export abstract class CursorPaginatedViewDto<T> {
   @ApiProperty({
     description: 'Элементы текущей страницы',
