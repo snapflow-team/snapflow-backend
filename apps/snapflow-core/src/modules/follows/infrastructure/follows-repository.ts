@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@generated/prisma-snapflow';
+import { Prisma, UserFollow } from '@generated/prisma-snapflow';
 import { PrismaService } from '../../../database/prisma.service';
 
 @Injectable()
@@ -7,7 +7,7 @@ export class FollowsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async follow(followerId: number, followingId: number): Promise<void> {
-    const existing = await this.prisma.userFollow.findFirst({
+    const existing: UserFollow | null = await this.prisma.userFollow.findFirst({
       where: { followerId, followingId },
     });
 
@@ -32,7 +32,7 @@ export class FollowsRepository {
         throw error;
       }
 
-      const activeFollow = await this.prisma.userFollow.findFirst({
+      const activeFollow: UserFollow | null = await this.prisma.userFollow.findFirst({
         where: { followerId, followingId, deletedAt: null },
       });
 
@@ -40,7 +40,7 @@ export class FollowsRepository {
         return;
       }
 
-      const softDeletedFollow = await this.prisma.userFollow.findFirst({
+      const softDeletedFollow: UserFollow | null = await this.prisma.userFollow.findFirst({
         where: { followerId, followingId },
       });
 
@@ -54,7 +54,7 @@ export class FollowsRepository {
   }
 
   async unfollow(followerId: number, followingId: number): Promise<void> {
-    const existing = await this.prisma.userFollow.findFirst({
+    const existing: UserFollow | null = await this.prisma.userFollow.findFirst({
       where: { followerId, followingId, deletedAt: null },
     });
 
