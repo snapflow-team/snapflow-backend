@@ -51,8 +51,8 @@ export class PublicProfileViewDto {
     dto.avatarUrl = profile.avatarUrl;
     dto.aboutMe = profile.aboutMe;
     dto.userMetadata = {
-      followingCount: 0,
-      followersCount: 0,
+      followingCount: profile.user._count.following,
+      followersCount: profile.user._count.followers,
       publicationsCount: profile.user._count.posts,
     };
 
