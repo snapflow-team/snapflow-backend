@@ -1,14 +1,35 @@
 ﻿import { applyDecorators } from '@nestjs/common';
-import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiParam, ApiQuery, } from '@nestjs/swagger';
-import { PostsPageViewDto } from '../view-dto/posts-page.view-dto';
+import {
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
+import { ErrorResponseDto } from '../../../../common/exceptions/error-response-body.dto';
+import { UserPostsPageViewDto } from '../view-dto/user-posts-page.view-dto';
 
 export function GetProfilePostsSwagger() {
   return applyDecorators(
-    ApiOperation({ summary: 'Получить публичные посты пользователя с пагинацией' }),
+    ApiOperation({
+      summary: 'Получить публичные посты пользователя (cursor-пагинация)',
+      description:
+        'Возвращает опубликованные посты пользователя. Первый запрос без cursor, далее передавать nextCursor из предыдущего ответа.',
+    }),
     ApiParam({ name: 'userId', type: String, description: 'Идентификатор пользователя' }),
-    ApiQuery({ name: 'pageNumber', required: false, type: Number, example: 1 }),
-    ApiQuery({ name: 'pageSize', required: false, type: Number, example: 8 }),
-    ApiOkResponse({ description: 'Список постов пользователя', type: PostsPageViewDto }),
+    ApiQuery({
+      name: 'cursor',
+      required: false,
+      type: String,
+      description: 'Первый запрос без cursor, далее передавать nextCursor из предыдущего ответа',
+    }),
+    ApiQuery({ name: 'limit', required: false, type: Number, example: 8 }),
+    ApiOkResponse({ description: 'Страница постов пользователя', type: UserPostsPageViewDto }),
+    ApiBadRequestResponse({
+      description: 'Ошибка валидации query-параметров (limit < 1) или некорректный cursor.',
+      type: ErrorResponseDto,
+    }),
     ApiNotFoundResponse({ description: 'Пользователь не найден' }),
   );
 }
