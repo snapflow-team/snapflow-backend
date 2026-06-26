@@ -46,6 +46,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { UploadAvatarUseCase } from './users/profile/application/usecases/upload-avatar.usecase';
 import { DeleteAvatarUseCase } from './users/profile/application/usecases/delete-avatar.usecase';
 import { GetTotalCountRegisteredUsersQueryHandler } from './users/application/queries/get-total-count-registered-users.query-handler';
+import { SearchUsersQueryHandler } from './users/application/queries/search-users.query-handler';
 import { UsersController } from './users/api/users.controller';
 import { GetPublicProfileQueryHandler } from './users/profile/application/queries/get-public-profile.query-handler';
 import { ConfigService } from '@nestjs/config';
@@ -89,6 +90,7 @@ const useCases = [
 const queries = [
   GetMeQueryHandler,
   GetTotalCountRegisteredUsersQueryHandler,
+  SearchUsersQueryHandler,
 
   GetProfileQueryHandler,
   GetPublicProfileQueryHandler,
