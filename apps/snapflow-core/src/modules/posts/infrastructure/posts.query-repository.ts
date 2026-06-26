@@ -4,7 +4,17 @@ import { PostViewDto } from '../api/view-dto/post.view-dto';
 import { PostStatus, Prisma } from '@generated/prisma-snapflow';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
 import { GetPostsQueryParamsDto } from '../api/input-dto/get-posts.query-params.dto';
+import { GetUserPostsQueryParamsDto } from '../api/input-dto/get-user-posts.query-params.dto';
+import { UserPostsPageViewDto } from '../api/view-dto/user-posts-page.view-dto';
 import { SortDirection } from '../../../../../../libs/dto/base-query.params.dto';
+import {
+  buildCursorPaginatedResult,
+  buildKeysetCursorFilter,
+  CursorPaginatedResult,
+  getKeysetTake,
+  KEYSET_ORDER_BY_CREATED_AT_DESC,
+} from '../../../../../../libs/common/utils/cursor-pagination.util';
+import { CursorPayload, decodeCursor } from '../../../../../../libs/common/utils/cursor.util';
 import { PostWithMediaAndUserMetadata } from './types/post-with-media-and-user-metadata.type';
 
 @Injectable()
@@ -12,60 +22,60 @@ export class PostsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findUserPosts(
-    params: GetPostsQueryParamsDto,
+    params: GetUserPostsQueryParamsDto,
     userId: number,
-  ): Promise<PaginatedViewDto<PostViewDto>> {
+  ): Promise<UserPostsPageViewDto> {
+    const { limit } = params;
+    const cursorPayload: CursorPayload | undefined = params.cursor
+      ? decodeCursor(params.cursor)
+      : undefined;
+
     const where: Prisma.PostWhereInput = {
       deletedAt: null,
       status: PostStatus.PUBLISHED,
       userId,
+      ...(cursorPayload
+        ? (buildKeysetCursorFilter(cursorPayload, { parseId: Number }) as Prisma.PostWhereInput)
+        : {}),
     };
 
-    const { pageNumber, pageSize, sortBy, sortDirection } = params;
-
-    const [posts, totalCount] = await Promise.all([
-      this.prisma.post.findMany({
-        where,
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              profiles: {
-                where: { deletedAt: null },
-                select: { id: true, avatarUrl: true },
-              },
-            },
-          },
-          postMedias: {
-            where: { deletedAt: null },
-            orderBy: { position: 'asc' },
-            select: {
-              id: true,
-              fileId: true,
-              url: true,
+    const posts: PostWithMediaAndUserMetadata[] = await this.prisma.post.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profiles: {
+              where: { deletedAt: null },
+              select: { id: true, avatarUrl: true },
             },
           },
         },
-        orderBy: {
-          [sortBy]: sortDirection === SortDirection.Descending ? 'desc' : 'asc',
+        postMedias: {
+          where: { deletedAt: null },
+          orderBy: { position: 'asc' },
+          select: {
+            id: true,
+            fileId: true,
+            url: true,
+          },
         },
-        skip: params.calculateSkip(),
-        take: pageSize,
-      }),
-      this.prisma.post.count({ where }),
-    ]);
+      },
+      orderBy: [...KEYSET_ORDER_BY_CREATED_AT_DESC],
+      take: getKeysetTake(limit),
+    });
 
-    const pagesCount: number = Math.ceil(totalCount / pageSize);
-    const items: PostViewDto[] = posts.map(
-      (p: PostWithMediaAndUserMetadata): PostViewDto => PostViewDto.mapToView(p),
-    );
+    const paginated: CursorPaginatedResult<PostWithMediaAndUserMetadata> =
+      buildCursorPaginatedResult(posts, limit, (post) => ({
+        createdAt: post.createdAt,
+        id: String(post.id),
+      }));
+
     return {
-      pageSize,
-      page: pageNumber,
-      totalCount,
-      pagesCount,
-      items,
+      items: paginated.items.map((p) => PostViewDto.mapToView(p)),
+      nextCursor: paginated.nextCursor,
+      hasMore: paginated.hasMore,
     };
   }
 
