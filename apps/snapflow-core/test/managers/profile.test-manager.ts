@@ -12,10 +12,19 @@ export class ProfileTestManager {
     private readonly server: Server,
   ) {}
 
-  async findProfileByProfileId(profileId: number): Promise<PublicProfileViewDto> {
-    const res: Response = await request(this.server)
-      .get(`/${GLOBAL_PREFIX}/users/profile/${profileId.toString()}`)
-      .expect(HttpStatus.OK);
+  async findProfileByProfileId(
+    profileId: number,
+    accessToken?: string,
+  ): Promise<PublicProfileViewDto> {
+    const req = request(this.server).get(
+      `/${GLOBAL_PREFIX}/users/profile/${profileId.toString()}`,
+    );
+
+    if (accessToken) {
+      req.set('Authorization', `Bearer ${accessToken}`);
+    }
+
+    const res: Response = await req.expect(HttpStatus.OK);
 
     return res.body as PublicProfileViewDto;
   }
