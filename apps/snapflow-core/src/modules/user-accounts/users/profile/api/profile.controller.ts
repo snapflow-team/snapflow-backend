@@ -32,6 +32,8 @@ import { ApiUploadAvatar } from './swagger/upload-avatar.swagger';
 import { DeleteAvatarCommand } from '../application/usecases/delete-avatar.usecase';
 import { ApiDeleteAvatar } from './swagger/delete-avatar.swagger';
 import { Public } from '../../../decorators/public.decorator';
+import { OptionalAuth } from '../../../decorators/optional-auth.decorator';
+import { ExtractOptionalUserFromRequest } from '../../../auth/domain/guards/decorators/extract-optional-user-from-request.decorator';
 import { PublicProfileViewDto } from './dto/view-dto/public-profile.view-dto';
 import { GetPublicProfileQuery } from '../application/queries/get-public-profile.query-handler';
 import { ApiGetPublicProfile } from './swagger/get-public-profile.swagger';
@@ -71,11 +73,13 @@ export class ProfileController {
 
   @Get(':profileId')
   @Public()
+  @OptionalAuth()
   @ApiGetPublicProfile()
   async getPublicProfile(
     @Param('profileId', ParseIntPipe) profileId: number,
+    @ExtractOptionalUserFromRequest() viewer: UserContextDto | null,
   ): Promise<PublicProfileViewDto> {
-    return await this.queryBus.execute(new GetPublicProfileQuery(profileId));
+    return await this.queryBus.execute(new GetPublicProfileQuery(profileId, viewer?.id));
   }
 
   // Avatar -------------------------------------
