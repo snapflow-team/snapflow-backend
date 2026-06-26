@@ -31,7 +31,8 @@ import { DeletePostCommand } from '../application/usecases/delete-post.use.case'
 import { UpdatePostInputDto } from './input-dto/update-post.input.dto';
 import { GetUserPostsQuery } from '../application/queries/get-user-posts.query-handler';
 import { GetPostsQueryParamsDto } from './input-dto/get-posts.query-params.dto';
-import { PostsPageViewDto } from './view-dto/posts-page.view-dto';
+import { GetUserPostsQueryParamsDto } from './input-dto/get-user-posts.query-params.dto';
+import { UserPostsPageViewDto } from './view-dto/user-posts-page.view-dto';
 import { PostStatus } from '@generated/prisma-snapflow';
 import { GetPostsQuery } from '../application/queries/get-posts.query-handler';
 import { GetPublicPostsSwagger } from './swagger/get-public-posts.swagger';
@@ -116,8 +117,8 @@ export class PostsController {
   @GetProfilePostsSwagger()
   async getProfilePosts(
     @Param('userId', ParseIntPipe) userId: number,
-    @Query() dto: GetPostsQueryParamsDto,
-  ): Promise<PaginatedViewDto<PostsPageViewDto>> {
+    @Query() dto: GetUserPostsQueryParamsDto,
+  ): Promise<UserPostsPageViewDto> {
     return this.queryBus.execute(new GetUserPostsQuery(dto, userId));
   }
 
