@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UserAccountsModule } from '../user-accounts/user-accounts.module';
 import { UsersFollowController } from './api/users-follow.controller';
 import { FollowUserUseCase } from './application/usecases/follow-user.usecase';
@@ -11,7 +11,7 @@ const queries = [];
 const repositories = [FollowsRepository, FollowsQueryRepository];
 
 @Module({
-  imports: [UserAccountsModule],
+  imports: [forwardRef(() => UserAccountsModule)],
   controllers: [UsersFollowController],
   providers: [...useCases, ...queries, ...repositories],
   exports: [FollowsQueryRepository],

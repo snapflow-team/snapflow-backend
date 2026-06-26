@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UsersRepository } from './users/infrastructure/users.repository';
 import { AuthController } from './auth/api/auth.controller';
 import { RegisterUserUseCase } from './auth/application/usecases/register-user.useсase';
@@ -53,6 +53,7 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
 import { JwtAuthModule } from './auth/jwt-auth.module';
+import { FollowsModule } from '../follows/follows.module';
 
 const controllers = [
   AuthController,
@@ -117,6 +118,7 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
 @Module({
   imports: [
     JwtAuthModule,
+    forwardRef(() => FollowsModule),
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({
