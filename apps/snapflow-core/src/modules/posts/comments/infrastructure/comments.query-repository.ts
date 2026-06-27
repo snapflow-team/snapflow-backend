@@ -33,6 +33,7 @@ export class CommentsQueryRepository {
   async findPostComments(
     postId: number,
     params: GetPostCommentsQueryParamsDto,
+    viewerId?: number,
   ): Promise<PostCommentsPageViewDto> {
     const { limit } = params;
     const cursorPayload: CursorPayload | undefined = params.cursor
@@ -64,8 +65,15 @@ export class CommentsQueryRepository {
       }),
     );
 
+    const likedCommentIds = await this.getLikedCommentIdsByViewer(
+      paginated.items.map((comment) => comment.id),
+      viewerId,
+    );
+
     return {
-      items: paginated.items.map((comment) => CommentItemViewDto.mapToView(comment)),
+      items: paginated.items.map((comment) =>
+        CommentItemViewDto.mapToView(comment, likedCommentIds.has(comment.id)),
+      ),
       nextCursor: paginated.nextCursor,
       hasMore: paginated.hasMore,
     };
@@ -111,5 +119,25 @@ export class CommentsQueryRepository {
       nextCursor: paginated.nextCursor,
       hasMore: paginated.hasMore,
     };
+  }
+
+  private async getLikedCommentIdsByViewer(
+    commentIds: number[],
+    viewerId?: number,
+  ): Promise<Set<number>> {
+    if (viewerId === undefined || commentIds.length === 0) {
+      return new Set();
+    }
+
+    const likes = await this.prisma.commentLike.findMany({
+      where: {
+        commentId: { in: commentIds },
+        userId: viewerId,
+        deletedAt: null,
+      },
+      select: { commentId: true },
+    });
+
+    return new Set(likes.map((like) => like.commentId));
   }
 }

@@ -11,9 +11,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { ExtractOptionalUserFromRequest } from '../../../user-accounts/auth/domain/guards/decorators/extract-optional-user-from-request.decorator';
 import { ExtractUserFromRequest } from '../../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../../user-accounts/auth/domain/guards/dto/user-context.dto';
 import { JwtAuthGuard } from '../../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
+import { OptionalAuth } from '../../../user-accounts/decorators/optional-auth.decorator';
 import { Public } from '../../../user-accounts/decorators/public.decorator';
 import { CreateCommentInputDto } from './input-dto/create-comment.input-dto';
 import { GetPostCommentsQueryParamsDto } from './input-dto/get-post-comments.query-params.dto';
@@ -60,13 +62,15 @@ export class PostCommentsController {
 
   @Get(':postId/comments')
   @Public()
+  @OptionalAuth()
   @GetPostCommentsSwagger()
   async getPostComments(
     @Param('postId', ParseIntPipe) postId: number,
     @Query() query: GetPostCommentsQueryParamsDto,
+    @ExtractOptionalUserFromRequest() viewer: UserContextDto | null,
   ): Promise<PostCommentsPageViewDto> {
     return this.queryBus.execute<GetPostCommentsQuery, PostCommentsPageViewDto>(
-      new GetPostCommentsQuery(query, postId),
+      new GetPostCommentsQuery(query, postId, viewer?.id),
     );
   }
 

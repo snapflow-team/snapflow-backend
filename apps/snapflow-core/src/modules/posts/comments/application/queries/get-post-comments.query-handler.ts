@@ -10,6 +10,7 @@ export class GetPostCommentsQuery {
   constructor(
     public readonly query: GetPostCommentsQueryParamsDto,
     public readonly postId: number,
+    public readonly viewerId?: number,
   ) {}
 }
 
@@ -20,13 +21,17 @@ export class GetPostCommentsQueryHandler implements IQueryHandler<GetPostComment
     private readonly commentsQueryRepository: CommentsQueryRepository,
   ) {}
 
-  async execute({ query, postId }: GetPostCommentsQuery): Promise<PostCommentsPageViewDto> {
+  async execute({
+    query,
+    postId,
+    viewerId,
+  }: GetPostCommentsQuery): Promise<PostCommentsPageViewDto> {
     const post: Post | null = await this.postsRepository.findById(postId);
 
     if (!post) {
       throw new NotFoundException('Post not found');
     }
 
-    return this.commentsQueryRepository.findPostComments(postId, query);
+    return this.commentsQueryRepository.findPostComments(postId, query, viewerId);
   }
 }
