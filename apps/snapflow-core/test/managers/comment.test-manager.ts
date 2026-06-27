@@ -1,4 +1,4 @@
-import { Comment } from '@generated/prisma-snapflow';
+import { Comment, CommentLike } from '@generated/prisma-snapflow';
 import { HttpStatus } from '@nestjs/common';
 import { Server } from 'http';
 import request, { Response } from 'supertest';
@@ -133,5 +133,46 @@ export class CommentTestManager {
       where: { id: commentId },
       data: { deletedAt: new Date() },
     });
+  }
+
+  async toggleLike(
+    accessToken: string,
+    postId: number,
+    commentId: number,
+    expectedStatus: number = HttpStatus.NO_CONTENT,
+  ): Promise<Response> {
+    return request(this.server)
+      .post(`/${GLOBAL_PREFIX}/posts/${postId}/comments/${commentId}/like`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(expectedStatus);
+  }
+
+  async findLikeRecord(commentId: number, userId: number): Promise<CommentLike | null> {
+    return this.prisma.commentLike.findFirst({
+      where: { commentId, userId },
+    });
+  }
+
+  async isActiveLike(commentId: number, userId: number): Promise<boolean> {
+    const like = await this.findLikeRecord(commentId, userId);
+
+    return like !== null && like.deletedAt === null;
+  }
+
+  async getCommentFromPostComments(
+    postId: number,
+    commentId: number,
+    accessToken?: string,
+  ): Promise<CommentItemViewDto> {
+    const page = await this.getPostCommentsBody(postId, {}, accessToken);
+    const comment = page.items.find((item) => item.id === commentId.toString());
+
+    if (!comment) {
+      throw new Error(
+        `getCommentFromPostComments(): comment ${commentId} not found in GET /posts/${postId}/comments`,
+      );
+    }
+
+    return comment;
   }
 }
