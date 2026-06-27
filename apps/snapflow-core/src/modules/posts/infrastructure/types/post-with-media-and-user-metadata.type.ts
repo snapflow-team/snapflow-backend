@@ -23,6 +23,7 @@ export const postWithMediaAndUserMetadataInclude = {
   _count: {
     select: {
       likes: { where: { deletedAt: null } },
+      comments: { where: { deletedAt: null } },
     },
   },
   likes: {

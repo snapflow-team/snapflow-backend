@@ -54,6 +54,13 @@ export class PostViewDto {
   likesCount: number;
 
   @ApiProperty({
+    type: Number,
+    example: 5,
+    description: 'Общее количество комментариев (включая ответы)',
+  })
+  commentsCount: number;
+
+  @ApiProperty({
     type: Boolean,
     example: false,
     description: 'Поставил ли текущий пользователь лайк',
@@ -81,6 +88,7 @@ export class PostViewDto {
       avatarUrl: post.user.profiles[0]?.avatarUrl ?? null,
     });
     dto.likesCount = post._count.likes;
+    dto.commentsCount = post._count.comments;
     dto.isLikedByCurrentUser = isLikedByCurrentUser;
     dto.recentLikers = post.likes.map((like) =>
       RecentLikerViewDto.mapToView({
