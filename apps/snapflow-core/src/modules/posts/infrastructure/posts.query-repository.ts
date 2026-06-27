@@ -27,6 +27,7 @@ export class PostsQueryRepository {
   async findUserPosts(
     params: GetUserPostsQueryParamsDto,
     userId: number,
+    viewerId?: number,
   ): Promise<UserPostsPageViewDto> {
     const { limit } = params;
     const cursorPayload: CursorPayload | undefined = params.cursor
@@ -55,14 +56,22 @@ export class PostsQueryRepository {
         id: String(post.id),
       }));
 
+    const likedPostIds = await this.getLikedPostIdsByViewer(
+      paginated.items.map((post) => post.id),
+      viewerId,
+    );
+
     return {
-      items: paginated.items.map((p) => PostViewDto.mapToView(p)),
+      items: paginated.items.map((post) => PostViewDto.mapToView(post, likedPostIds.has(post.id))),
       nextCursor: paginated.nextCursor,
       hasMore: paginated.hasMore,
     };
   }
 
-  async findPosts(query: GetPostsQueryParamsDto): Promise<PaginatedViewDto<PostViewDto>> {
+  async findPosts(
+    query: GetPostsQueryParamsDto,
+    viewerId?: number,
+  ): Promise<PaginatedViewDto<PostViewDto>> {
     const { pageNumber, pageSize, sortBy, sortDirection } = query;
 
     const [posts, totalCount] = await Promise.all([
@@ -87,8 +96,13 @@ export class PostsQueryRepository {
     ]);
     const pagesCount: number = Math.ceil(totalCount / pageSize);
 
-    const items: PostViewDto[] = posts.map(
-      (post: PostWithMediaAndUserMetadata): PostViewDto => PostViewDto.mapToView(post),
+    const likedPostIds = await this.getLikedPostIdsByViewer(
+      posts.map((post) => post.id),
+      viewerId,
+    );
+
+    const items: PostViewDto[] = posts.map((post) =>
+      PostViewDto.mapToView(post, likedPostIds.has(post.id)),
     );
     return {
       pageSize,
@@ -99,7 +113,7 @@ export class PostsQueryRepository {
     };
   }
 
-  async findPostById(postId: number): Promise<PostViewDto | null> {
+  async findPostById(postId: number, viewerId?: number): Promise<PostViewDto | null> {
     const post: PostWithMediaAndUserMetadata | null = await this.prisma.post.findFirst({
       where: {
         id: postId,
@@ -110,7 +124,13 @@ export class PostsQueryRepository {
       include: postWithMediaAndUserMetadataInclude,
     });
 
-    return post ? PostViewDto.mapToView(post) : null;
+    if (!post) {
+      return null;
+    }
+
+    const isLikedByCurrentUser: boolean = viewerId ? await this.isLikedBy(postId, viewerId) : false;
+
+    return PostViewDto.mapToView(post, isLikedByCurrentUser);
   }
 
   async findDraftByUserId(userId: number): Promise<PostViewDto | null> {
@@ -124,6 +144,35 @@ export class PostsQueryRepository {
       orderBy: { createdAt: 'desc' },
     });
 
-    return post ? PostViewDto.mapToView(post) : null;
+    return post ? PostViewDto.mapToView(post, false) : null;
+  }
+
+  private async isLikedBy(postId: number, viewerId: number): Promise<boolean> {
+    const like = await this.prisma.postLike.findFirst({
+      where: { postId, userId: viewerId, deletedAt: null },
+      select: { id: true },
+    });
+
+    return like !== null;
+  }
+
+  private async getLikedPostIdsByViewer(
+    postIds: number[],
+    viewerId?: number,
+  ): Promise<Set<number>> {
+    if (viewerId === undefined || postIds.length === 0) {
+      return new Set();
+    }
+
+    const likes = await this.prisma.postLike.findMany({
+      where: {
+        postId: { in: postIds },
+        userId: viewerId,
+        deletedAt: null,
+      },
+      select: { postId: true },
+    });
+
+    return new Set(likes.map((like) => like.postId));
   }
 }
