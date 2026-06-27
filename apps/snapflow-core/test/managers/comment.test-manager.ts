@@ -64,6 +64,35 @@ export class CommentTestManager {
     return res.body as PostCommentsPageViewDto;
   }
 
+  async getCommentReplies(
+    postId: number,
+    commentId: number,
+    query: { cursor?: string; limit?: number } = {},
+    accessToken?: string,
+    expectedStatus: number = HttpStatus.OK,
+  ): Promise<Response> {
+    const req = request(this.server)
+      .get(`/${GLOBAL_PREFIX}/posts/${postId}/comments/${commentId}/replies`)
+      .query(query);
+
+    if (accessToken) {
+      req.set('Authorization', `Bearer ${accessToken}`);
+    }
+
+    return req.expect(expectedStatus);
+  }
+
+  async getCommentRepliesBody(
+    postId: number,
+    commentId: number,
+    query: { cursor?: string; limit?: number } = {},
+    accessToken?: string,
+  ): Promise<PostCommentsPageViewDto> {
+    const res: Response = await this.getCommentReplies(postId, commentId, query, accessToken);
+
+    return res.body as PostCommentsPageViewDto;
+  }
+
   async seedRootComment(data: {
     postId: number;
     userId: number;
