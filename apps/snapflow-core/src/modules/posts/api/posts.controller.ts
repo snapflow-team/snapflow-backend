@@ -46,6 +46,10 @@ import { GetDraftPostsSwagger } from './swagger/get-draft-posts.swagger';
 import { SaveDraftCommand } from '../application/usecases/save-draft.usecase';
 import { TogglePostLikeCommand } from '../application/usecases/toggle-post-like.usecase';
 import { TogglePostLikeSwagger } from './swagger/toggle-post-like.swagger';
+import { GetFeedQueryParamsDto } from './input-dto/get-feed.query-params.dto';
+import { FeedPageViewDto } from './view-dto/feed-page.view-dto';
+import { GetFeedQuery } from '../application/queries/get-feed.query-handler';
+import { GetFeedSwagger } from './swagger/get-feed.swagger';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -128,6 +132,15 @@ export class PostsController {
   @GetDraftPostsSwagger()
   async getDraft(@ExtractUserFromRequest() { id: userId }: UserContextDto): Promise<PostViewDto> {
     return this.queryBus.execute<GetDraftQuery, PostViewDto>(new GetDraftQuery(userId));
+  }
+
+  @Get('feed')
+  @GetFeedSwagger()
+  async getFeed(
+    @Query() query: GetFeedQueryParamsDto,
+    @ExtractUserFromRequest() { id: viewerId }: UserContextDto,
+  ): Promise<FeedPageViewDto> {
+    return this.queryBus.execute<GetFeedQuery, FeedPageViewDto>(new GetFeedQuery(query, viewerId));
   }
 
   @Get('user/:userId')
