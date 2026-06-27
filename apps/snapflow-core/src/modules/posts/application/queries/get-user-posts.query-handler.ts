@@ -7,6 +7,7 @@ export class GetUserPostsQuery {
   constructor(
     public readonly query: GetUserPostsQueryParamsDto,
     public readonly userId: number,
+    public readonly viewerId?: number,
   ) {}
 }
 
@@ -14,7 +15,7 @@ export class GetUserPostsQuery {
 export class GetUserPostsQueryHandler implements IQueryHandler<GetUserPostsQuery> {
   constructor(private readonly postsQueryRepository: PostsQueryRepository) {}
 
-  async execute({ query, userId }: GetUserPostsQuery): Promise<UserPostsPageViewDto> {
-    return this.postsQueryRepository.findUserPosts(query, userId);
+  async execute({ query, userId, viewerId }: GetUserPostsQuery): Promise<UserPostsPageViewDto> {
+    return this.postsQueryRepository.findUserPosts(query, userId, viewerId);
   }
 }

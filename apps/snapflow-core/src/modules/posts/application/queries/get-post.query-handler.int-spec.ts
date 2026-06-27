@@ -50,6 +50,36 @@ describe('GetPostQueryHandler', () => {
       avatarUrl: null,
     });
     expect(foundPost.owner).not.toHaveProperty('ownerId');
+    expect(foundPost.likesCount).toBe(0);
+    expect(foundPost.isLikedByCurrentUser).toBe(false);
+    expect(foundPost.recentLikers).toEqual([]);
+  });
+
+  it('(Success) isLikedByCurrentUser=true, если viewerId лайкнул пост', async () => {
+    const author = await testHelper.createUserWithProfile(prisma, 'author');
+    const viewer = await testHelper.createUserWithProfile(prisma, 'viewer');
+    const postId = await testHelper.createPost(author.id, ['f'], PostStatus.PUBLISHED, 'Liked post');
+
+    await prisma.postLike.create({ data: { postId, userId: viewer.id } });
+
+    const foundPost = await queryHandler.execute(new GetPostQuery(postId, viewer.id));
+
+    expect(foundPost.likesCount).toBe(1);
+    expect(foundPost.isLikedByCurrentUser).toBe(true);
+    expect(foundPost.recentLikers).toEqual([{ userId: viewer.id.toString(), avatarUrl: null }]);
+  });
+
+  it('(Success) isLikedByCurrentUser=false без viewerId', async () => {
+    const author = await testHelper.createUserWithProfile(prisma, 'author_guest');
+    const viewer = await testHelper.createUserWithProfile(prisma, 'viewer_guest');
+    const postId = await testHelper.createPost(author.id, ['f'], PostStatus.PUBLISHED);
+
+    await prisma.postLike.create({ data: { postId, userId: viewer.id } });
+
+    const foundPost = await queryHandler.execute(new GetPostQuery(postId));
+
+    expect(foundPost.likesCount).toBe(1);
+    expect(foundPost.isLikedByCurrentUser).toBe(false);
   });
 
   it('(NotFound) должен выбросить ошибку для несуществующего поста', async () => {

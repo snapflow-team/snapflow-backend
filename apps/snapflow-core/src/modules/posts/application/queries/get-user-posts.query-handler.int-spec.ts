@@ -58,6 +58,9 @@ describe('GetProfilePostsQueryHandler', () => {
       }),
     );
     expect(result.items[0].owner).not.toHaveProperty('ownerId');
+    expect(result.items[0].likesCount).toBe(0);
+    expect(result.items[0].isLikedByCurrentUser).toBe(false);
+    expect(result.items[0].recentLikers).toEqual([]);
     expect(result.hasMore).toBe(true);
     expect(result.nextCursor).toBeTruthy();
   });

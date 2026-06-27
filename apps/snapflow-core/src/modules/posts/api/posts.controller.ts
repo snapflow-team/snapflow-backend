@@ -28,6 +28,8 @@ import { DeletePostSwagger } from './swagger/delete-post.swagger';
 import { GetProfilePostsSwagger } from './swagger/get-profile-posts.swagger';
 import { GetPostByIdSwagger } from './swagger/get-post.swagger';
 import { Public } from '../../user-accounts/decorators/public.decorator';
+import { OptionalAuth } from '../../user-accounts/decorators/optional-auth.decorator';
+import { ExtractOptionalUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-optional-user-from-request.decorator';
 import { EditPostCommand } from '../application/usecases/edit-post.use.case';
 import { DeletePostCommand } from '../application/usecases/delete-post.use.case';
 import { UpdatePostInputDto } from './input-dto/update-post.input.dto';
@@ -130,25 +132,36 @@ export class PostsController {
 
   @Get('user/:userId')
   @Public()
+  @OptionalAuth()
   @GetProfilePostsSwagger()
   async getProfilePosts(
     @Param('userId', ParseIntPipe) userId: number,
     @Query() dto: GetUserPostsQueryParamsDto,
+    @ExtractOptionalUserFromRequest() viewer: UserContextDto | null,
   ): Promise<UserPostsPageViewDto> {
-    return this.queryBus.execute(new GetUserPostsQuery(dto, userId));
+    return this.queryBus.execute(new GetUserPostsQuery(dto, userId, viewer?.id));
   }
 
   @Get(':id')
   @GetPostByIdSwagger()
   @Public()
-  async getPostById(@Param('id', ParseIntPipe) postId: number): Promise<PostViewDto> {
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
+  @OptionalAuth()
+  async getPostById(
+    @Param('id', ParseIntPipe) postId: number,
+    @ExtractOptionalUserFromRequest() viewer: UserContextDto | null,
+  ): Promise<PostViewDto> {
+    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, viewer?.id));
   }
 
   @Get()
   @Public()
+  @OptionalAuth()
   @GetPublicPostsSwagger()
-  async getPosts(@Query() query: GetPostsQueryParamsDto): Promise<PaginatedViewDto<PostViewDto>> {
-    return this.queryBus.execute(new GetPostsQuery(query));
+  // TODO (задача 9): пробросить viewerId в Feed, когда появится эндпоинт ленты
+  async getPosts(
+    @Query() query: GetPostsQueryParamsDto,
+    @ExtractOptionalUserFromRequest() viewer: UserContextDto | null,
+  ): Promise<PaginatedViewDto<PostViewDto>> {
+    return this.queryBus.execute(new GetPostsQuery(query, viewer?.id));
   }
 }

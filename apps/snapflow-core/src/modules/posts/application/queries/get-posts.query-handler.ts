@@ -5,14 +5,17 @@ import { PostViewDto } from '../../api/view-dto/post.view-dto';
 import { GetPostsQueryParamsDto } from '../../api/input-dto/get-posts.query-params.dto';
 
 export class GetPostsQuery {
-  constructor(public readonly query: GetPostsQueryParamsDto) {}
+  constructor(
+    public readonly query: GetPostsQueryParamsDto,
+    public readonly viewerId?: number,
+  ) {}
 }
 
 @QueryHandler(GetPostsQuery)
 export class GetPostsQueryHandler implements IQueryHandler<GetPostsQuery> {
   constructor(private readonly postsQueryRepository: PostsQueryRepository) {}
 
-  async execute({ query }: GetPostsQuery): Promise<PaginatedViewDto<PostViewDto>> {
-    return this.postsQueryRepository.findPosts(query);
+  async execute({ query, viewerId }: GetPostsQuery): Promise<PaginatedViewDto<PostViewDto>> {
+    return this.postsQueryRepository.findPosts(query, viewerId);
   }
 }
