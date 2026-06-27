@@ -14,7 +14,9 @@ import { GetUserPostsQueryHandler } from './application/queries/get-user-posts.q
 import { SaveDraftUseCase } from './application/usecases/save-draft.usecase';
 import { TogglePostLikeUseCase } from './application/usecases/toggle-post-like.usecase';
 import { CreateCommentUseCase } from './comments/application/usecases/create-comment.usecase';
+import { ToggleCommentLikeUseCase } from './comments/application/usecases/toggle-comment-like.usecase';
 import { PostLikesRepository } from './infrastructure/post-likes.repository';
+import { CommentLikesRepository } from './comments/infrastructure/comment-likes.repository';
 import { CommentsRepository } from './comments/infrastructure/comments.repository';
 import { CommentsQueryRepository } from './comments/infrastructure/comments.query-repository';
 import { GetPostCommentsQueryHandler } from './comments/application/queries/get-post-comments.query-handler';
@@ -30,6 +32,7 @@ const useCases = [
   SaveDraftUseCase,
   TogglePostLikeUseCase,
   CreateCommentUseCase,
+  ToggleCommentLikeUseCase,
 ];
 const queries = [
   GetPostQueryHandler,
@@ -45,6 +48,7 @@ const repositories = [
   PostsRepository,
   PostsQueryRepository,
   PostLikesRepository,
+  CommentLikesRepository,
   CommentsRepository,
   CommentsQueryRepository,
   OutboxRepository,
