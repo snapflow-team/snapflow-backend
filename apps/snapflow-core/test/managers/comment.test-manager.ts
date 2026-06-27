@@ -43,9 +43,7 @@ export class CommentTestManager {
     accessToken?: string,
     expectedStatus: number = HttpStatus.OK,
   ): Promise<Response> {
-    const req = request(this.server)
-      .get(`/${GLOBAL_PREFIX}/posts/${postId}/comments`)
-      .query(query);
+    const req = request(this.server).get(`/${GLOBAL_PREFIX}/posts/${postId}/comments`).query(query);
 
     if (accessToken) {
       req.set('Authorization', `Bearer ${accessToken}`);

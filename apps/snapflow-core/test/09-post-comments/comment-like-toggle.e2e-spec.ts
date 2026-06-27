@@ -129,7 +129,7 @@ describe('PostCommentsController - toggleCommentLike() (POST: /posts/:postId/com
   });
 
   it('должен вернуть isLikedByCurrentUser=false для гостя на GET /posts/:postId/comments', async () => {
-    const { author, authorAccessToken, postId, commentId } =
+    const { authorAccessToken, postId, commentId } =
       await createAuthorWithPublishedPostAndComment();
 
     await commentTestManager.toggleLike(authorAccessToken, postId, commentId);

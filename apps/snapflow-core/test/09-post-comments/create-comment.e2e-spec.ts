@@ -101,6 +101,8 @@ describe('PostCommentsController - createComment() (POST: /posts/:postId/comment
       },
       parentId: null,
       repliesCount: 0,
+      likesCount: 0,
+      isLikedByCurrentUser: false,
     });
 
     const dbComment = await appTestManager.prisma.comment.findFirstOrThrow({
