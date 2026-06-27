@@ -15,7 +15,10 @@ import {
   KEYSET_ORDER_BY_CREATED_AT_DESC,
 } from '../../../../../../libs/common/utils/cursor-pagination.util';
 import { CursorPayload, decodeCursor } from '../../../../../../libs/common/utils/cursor.util';
-import { PostWithMediaAndUserMetadata } from './types/post-with-media-and-user-metadata.type';
+import {
+  PostWithMediaAndUserMetadata,
+  postWithMediaAndUserMetadataInclude,
+} from './types/post-with-media-and-user-metadata.type';
 
 @Injectable()
 export class PostsQueryRepository {
@@ -41,27 +44,7 @@ export class PostsQueryRepository {
 
     const posts: PostWithMediaAndUserMetadata[] = await this.prisma.post.findMany({
       where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            profiles: {
-              where: { deletedAt: null },
-              select: { id: true, avatarUrl: true },
-            },
-          },
-        },
-        postMedias: {
-          where: { deletedAt: null },
-          orderBy: { position: 'asc' },
-          select: {
-            id: true,
-            fileId: true,
-            url: true,
-          },
-        },
-      },
+      include: postWithMediaAndUserMetadataInclude,
       orderBy: [...KEYSET_ORDER_BY_CREATED_AT_DESC],
       take: getKeysetTake(limit),
     });
@@ -88,27 +71,7 @@ export class PostsQueryRepository {
           deletedAt: null,
           status: PostStatus.PUBLISHED,
         },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              profiles: {
-                where: { deletedAt: null },
-                select: { id: true, avatarUrl: true },
-              },
-            },
-          },
-          postMedias: {
-            where: { deletedAt: null },
-            orderBy: { position: 'asc' },
-            select: {
-              id: true,
-              fileId: true,
-              url: true,
-            },
-          },
-        },
+        include: postWithMediaAndUserMetadataInclude,
         orderBy: {
           [sortBy]: sortDirection === SortDirection.Descending ? 'desc' : 'asc',
         },
@@ -144,27 +107,7 @@ export class PostsQueryRepository {
         deletedAt: null,
         user: { deletedAt: null },
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            profiles: {
-              where: { deletedAt: null },
-              select: { id: true, avatarUrl: true },
-            },
-          },
-        },
-        postMedias: {
-          where: { deletedAt: null },
-          orderBy: { position: 'asc' },
-          select: {
-            id: true,
-            fileId: true,
-            url: true,
-          },
-        },
-      },
+      include: postWithMediaAndUserMetadataInclude,
     });
 
     return post ? PostViewDto.mapToView(post) : null;
@@ -177,27 +120,7 @@ export class PostsQueryRepository {
         status: PostStatus.DRAFT,
         deletedAt: null,
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            profiles: {
-              where: { deletedAt: null },
-              select: { id: true, avatarUrl: true },
-            },
-          },
-        },
-        postMedias: {
-          where: { deletedAt: null },
-          orderBy: { position: 'asc' },
-          select: {
-            id: true,
-            fileId: true,
-            url: true,
-          },
-        },
-      },
+      include: postWithMediaAndUserMetadataInclude,
       orderBy: { createdAt: 'desc' },
     });
 
