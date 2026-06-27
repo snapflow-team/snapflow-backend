@@ -70,4 +70,46 @@ export class CommentsQueryRepository {
       hasMore: paginated.hasMore,
     };
   }
+
+  async findCommentReplies(
+    postId: number,
+    commentId: number,
+    params: GetPostCommentsQueryParamsDto,
+  ): Promise<PostCommentsPageViewDto> {
+    const { limit } = params;
+    const cursorPayload: CursorPayload | undefined = params.cursor
+      ? decodeCursor(params.cursor)
+      : undefined;
+
+    const where: Prisma.CommentWhereInput = {
+      postId,
+      parentId: commentId,
+      deletedAt: null,
+      ...(cursorPayload
+        ? (buildKeysetCursorFilter(cursorPayload, { parseId: Number }) as Prisma.CommentWhereInput)
+        : {}),
+    };
+
+    const comments: CommentWithUserMetadata[] = await this.prisma.comment.findMany({
+      where,
+      include: commentWithUserMetadataInclude,
+      orderBy: [...KEYSET_ORDER_BY_CREATED_AT_DESC],
+      take: getKeysetTake(limit),
+    });
+
+    const paginated: CursorPaginatedResult<CommentWithUserMetadata> = buildCursorPaginatedResult(
+      comments,
+      limit,
+      (comment) => ({
+        createdAt: comment.createdAt,
+        id: String(comment.id),
+      }),
+    );
+
+    return {
+      items: paginated.items.map((comment) => CommentItemViewDto.mapToView(comment)),
+      nextCursor: paginated.nextCursor,
+      hasMore: paginated.hasMore,
+    };
+  }
 }

@@ -19,6 +19,7 @@ import { CommentsRepository } from './comments/infrastructure/comments.repositor
 import { CommentsQueryRepository } from './comments/infrastructure/comments.query-repository';
 import { GetPostCommentsQueryHandler } from './comments/application/queries/get-post-comments.query-handler';
 import { GetCommentQueryHandler } from './comments/application/queries/get-comment.query-handler';
+import { GetCommentRepliesQueryHandler } from './comments/application/queries/get-comment-replies.query-handler';
 import { OutboxRepository } from './outbox/repositories/outbox.repository';
 import { OutboxProcessorService } from './outbox/services/outbox-processor.service';
 
@@ -37,6 +38,7 @@ const queries = [
   GetUserPostsQueryHandler,
   GetPostCommentsQueryHandler,
   GetCommentQueryHandler,
+  GetCommentRepliesQueryHandler,
 ];
 const services = [OutboxProcessorService];
 const repositories = [
