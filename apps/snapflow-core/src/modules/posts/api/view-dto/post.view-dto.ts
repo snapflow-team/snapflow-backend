@@ -2,13 +2,14 @@ import { ApiProperty } from '@nestjs/swagger';
 import { PostMediaViewDto } from './post-media.view-dto';
 import { PostWithMediaAndUserMetadata } from '../../infrastructure/types/post-with-media-and-user-metadata.type';
 import { OwnerViewDto } from './owner.view-dto';
+import { RecentLikerViewDto } from './recent-liker.view-dto';
 import { PostStatus } from '@generated/prisma-snapflow';
 
 export class PostViewDto {
   @ApiProperty({
     type: String,
     example: 101,
-    description: 'Post identifier',
+    description: 'Идентификатор публикации',
   })
   id: string;
 
@@ -16,7 +17,7 @@ export class PostViewDto {
     type: String,
     example: 'My new post',
     nullable: true,
-    description: 'Post description',
+    description: 'Описание публикации',
   })
   description: string | null;
 
@@ -25,27 +26,47 @@ export class PostViewDto {
     enumName: 'PostStatus',
     example: 'PUBLISHED',
     enum: PostStatus,
-    description: 'Post status',
+    description: 'Статус публикации',
   })
   status: PostStatus;
 
   @ApiProperty({
     type: String,
     example: '2026-02-15T18:59:28.562Z',
-    description: 'Post creation date in ISO format',
+    description: 'Дата создания публикации в формате ISO',
   })
   createdAt: string;
 
   @ApiProperty({
     type: [PostMediaViewDto],
-    description: 'Post media list',
+    description: 'Список медиа публикации',
   })
   postMedias: PostMediaViewDto[];
 
   @ApiProperty({ type: OwnerViewDto })
   owner: OwnerViewDto;
 
-  static mapToView(post: PostWithMediaAndUserMetadata): PostViewDto {
+  @ApiProperty({
+    type: Number,
+    example: 12,
+    description: 'Общее количество лайков',
+  })
+  likesCount: number;
+
+  @ApiProperty({
+    type: Boolean,
+    example: false,
+    description: 'Поставил ли текущий пользователь лайк',
+  })
+  isLikedByCurrentUser: boolean;
+
+  @ApiProperty({
+    type: [RecentLikerViewDto],
+    description: 'До 3 последних поставивших лайк (сначала самые новые)',
+  })
+  recentLikers: RecentLikerViewDto[];
+
+  static mapToView(post: PostWithMediaAndUserMetadata, isLikedByCurrentUser = false): PostViewDto {
     const dto = new PostViewDto();
 
     dto.id = post.id.toString();
@@ -59,6 +80,15 @@ export class PostViewDto {
       username: post.user.username,
       avatarUrl: post.user.profiles[0]?.avatarUrl ?? null,
     });
+    dto.likesCount = post._count.likes;
+    dto.isLikedByCurrentUser = isLikedByCurrentUser;
+    dto.recentLikers = post.likes.map((like) =>
+      RecentLikerViewDto.mapToView({
+        userId: like.user.id,
+        avatarUrl: like.user.profiles[0]?.avatarUrl ?? null,
+      }),
+    );
+
     return dto;
   }
 }
