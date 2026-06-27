@@ -12,7 +12,14 @@ import { AdminSessionsRepository } from '../../infrastructure/repositories/admin
 import { ADMIN_SESSION_COOKIE_NAME } from '../../constants/admin-auth.constants';
 import { AdminSession } from '@generated/prisma-snapflow';
 
+type WebSocketRequest = {
+  //req : { extra: request: {..}}}
+  extra?: {
+    request?: AdminRequest;
+  };
+};
 type AdminRequest = Request & {
+  //req: {...}
   adminContext?: AdminContextDto;
 };
 
@@ -25,12 +32,13 @@ export class AdminGqlAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req: AdminRequest = this.getRequest(context);
-    const rawSessionId: any = req.cookies?.[ADMIN_SESSION_COOKIE_NAME];
-    const sessionId: string | undefined =
-      typeof rawSessionId === 'string' && rawSessionId.length > 0 ? rawSessionId : undefined;
+    const gqlContext: GqlExecutionContext = GqlExecutionContext.create(context);
+    const ctx = gqlContext.getContext<{ req: AdminRequest | WebSocketRequest }>();
 
+    const sessionId: string | null = this.parseSessionId(ctx.req);
+    console.log('sessionId', sessionId);
     if (!sessionId) {
+      console.log('We are in that branch');
       throw new UnauthorizedException('Admin is not authenticated');
     }
 
@@ -48,17 +56,59 @@ export class AdminGqlAuthGuard implements CanActivate {
 
     await this.adminSessionsRepository.extendExpiresAt(sessionId, expiresAt);
 
-    req.adminContext = {
-      role: AdminRole.SuperAdmin,
-      sessionId,
-    };
-
+    if (this.isAdminRequest(ctx.req)) {
+      ctx.req.adminContext = {
+        role: AdminRole.SuperAdmin,
+        sessionId,
+      };
+    }
     return true;
   }
 
-  private getRequest(context: ExecutionContext): AdminRequest {
-    const gqlContext: GqlExecutionContext = GqlExecutionContext.create(context);
+  private parseSessionId(req: AdminRequest | WebSocketRequest) {
+    if (this.isAdminRequest(req)) {
+      const rawSessionId: any = req.cookies?.[ADMIN_SESSION_COOKIE_NAME];
 
-    return gqlContext.getContext<{ req: AdminRequest }>().req;
+      return typeof rawSessionId === 'string' && rawSessionId.length > 0 ? rawSessionId : null;
+    }
+    if (this.isWebsocketRequest(req)) {
+      const rawHeaders = req.extra?.request?.rawHeaders;
+
+      if (!rawHeaders) {
+        return null;
+      }
+
+      const cookieIndex = rawHeaders.findIndex((item) => item.toLowerCase() === 'cookie');
+
+      const cookieString = cookieIndex !== -1 ? rawHeaders[cookieIndex + 1] : null;
+      if (!cookieString) {
+        return null;
+      }
+
+      const adminSessionIdCookie = cookieString
+        .split('; ')
+        .find((cookieStr) => cookieStr.startsWith('adminSessionId'))
+        ?.split('=')[1];
+
+      return adminSessionIdCookie ? adminSessionIdCookie : null;
+    } else {
+      return null;
+    }
+  }
+
+  private isAdminRequest(req: unknown): req is AdminRequest {
+    return typeof req === 'object' && req !== null && 'cookies' in req;
+  }
+
+  private isWebsocketRequest(req: unknown): req is WebSocketRequest {
+    return (
+      typeof req === 'object' &&
+      req !== null &&
+      'extra' in req &&
+      typeof req.extra === 'object' &&
+      req.extra !== null &&
+      'request' in req.extra &&
+      typeof req.extra.request === 'object'
+    );
   }
 }
