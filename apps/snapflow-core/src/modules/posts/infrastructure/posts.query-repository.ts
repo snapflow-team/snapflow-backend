@@ -4,7 +4,9 @@ import { PostViewDto } from '../api/view-dto/post.view-dto';
 import { PostStatus, Prisma } from '@generated/prisma-snapflow';
 import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto';
 import { GetPostsQueryParamsDto } from '../api/input-dto/get-posts.query-params.dto';
+import { GetFeedQueryParamsDto } from '../api/input-dto/get-feed.query-params.dto';
 import { GetUserPostsQueryParamsDto } from '../api/input-dto/get-user-posts.query-params.dto';
+import { FeedPageViewDto } from '../api/view-dto/feed-page.view-dto';
 import { UserPostsPageViewDto } from '../api/view-dto/user-posts-page.view-dto';
 import { SortDirection } from '../../../../../../libs/dto/base-query.params.dto';
 import {
@@ -23,6 +25,51 @@ import {
 @Injectable()
 export class PostsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findFeedPosts(
+    params: GetFeedQueryParamsDto,
+    followingIds: number[],
+    viewerId: number,
+  ): Promise<FeedPageViewDto> {
+    const { limit } = params;
+    const cursorPayload: CursorPayload | undefined = params.cursor
+      ? decodeCursor(params.cursor)
+      : undefined;
+
+    const where: Prisma.PostWhereInput = {
+      deletedAt: null,
+      status: PostStatus.PUBLISHED,
+      userId: { in: followingIds },
+      user: { deletedAt: null, isBanned: false },
+      ...(cursorPayload
+        ? (buildKeysetCursorFilter(cursorPayload, { parseId: Number }) as Prisma.PostWhereInput)
+        : {}),
+    };
+
+    const posts: PostWithMediaAndUserMetadata[] = await this.prisma.post.findMany({
+      where,
+      include: postWithMediaAndUserMetadataInclude,
+      orderBy: [...KEYSET_ORDER_BY_CREATED_AT_DESC],
+      take: getKeysetTake(limit),
+    });
+
+    const paginated: CursorPaginatedResult<PostWithMediaAndUserMetadata> =
+      buildCursorPaginatedResult(posts, limit, (post) => ({
+        createdAt: post.createdAt,
+        id: String(post.id),
+      }));
+
+    const likedPostIds = await this.getLikedPostIdsByViewer(
+      paginated.items.map((post) => post.id),
+      viewerId,
+    );
+
+    return {
+      items: paginated.items.map((post) => PostViewDto.mapToView(post, likedPostIds.has(post.id))),
+      nextCursor: paginated.nextCursor,
+      hasMore: paginated.hasMore,
+    };
+  }
 
   async findUserPosts(
     params: GetUserPostsQueryParamsDto,
