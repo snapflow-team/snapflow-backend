@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ExtractUserFromRequest } from '../../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../../user-accounts/auth/domain/guards/dto/user-context.dto';
@@ -9,12 +20,14 @@ import { GetPostCommentsQueryParamsDto } from './input-dto/get-post-comments.que
 import { CommentItemViewDto } from './view-dto/comment-item.view-dto';
 import { PostCommentsPageViewDto } from './view-dto/post-comments-page.view-dto';
 import { CreateCommentCommand } from '../application/usecases/create-comment.usecase';
+import { ToggleCommentLikeCommand } from '../application/usecases/toggle-comment-like.usecase';
 import { GetCommentQuery } from '../application/queries/get-comment.query-handler';
 import { GetCommentRepliesQuery } from '../application/queries/get-comment-replies.query-handler';
 import { GetPostCommentsQuery } from '../application/queries/get-post-comments.query-handler';
 import { CreateCommentSwagger } from './swagger/create-comment.swagger';
 import { GetCommentRepliesSwagger } from './swagger/get-comment-replies.swagger';
 import { GetPostCommentsSwagger } from './swagger/get-post-comments.swagger';
+import { ToggleCommentLikeSwagger } from './swagger/toggle-comment-like.swagger';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -54,6 +67,19 @@ export class PostCommentsController {
   ): Promise<PostCommentsPageViewDto> {
     return this.queryBus.execute<GetPostCommentsQuery, PostCommentsPageViewDto>(
       new GetPostCommentsQuery(query, postId),
+    );
+  }
+
+  @Post(':postId/comments/:commentId/like')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ToggleCommentLikeSwagger()
+  async toggleCommentLike(
+    @Param('postId', ParseIntPipe) postId: number,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+  ): Promise<void> {
+    await this.commandBus.execute<ToggleCommentLikeCommand, void>(
+      new ToggleCommentLikeCommand(userId, postId, commentId),
     );
   }
 
