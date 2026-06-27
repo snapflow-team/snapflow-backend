@@ -10,8 +10,10 @@ import { CommentItemViewDto } from './view-dto/comment-item.view-dto';
 import { PostCommentsPageViewDto } from './view-dto/post-comments-page.view-dto';
 import { CreateCommentCommand } from '../application/usecases/create-comment.usecase';
 import { GetCommentQuery } from '../application/queries/get-comment.query-handler';
+import { GetCommentRepliesQuery } from '../application/queries/get-comment-replies.query-handler';
 import { GetPostCommentsQuery } from '../application/queries/get-post-comments.query-handler';
 import { CreateCommentSwagger } from './swagger/create-comment.swagger';
+import { GetCommentRepliesSwagger } from './swagger/get-comment-replies.swagger';
 import { GetPostCommentsSwagger } from './swagger/get-post-comments.swagger';
 
 @Controller('posts')
@@ -52,6 +54,19 @@ export class PostCommentsController {
   ): Promise<PostCommentsPageViewDto> {
     return this.queryBus.execute<GetPostCommentsQuery, PostCommentsPageViewDto>(
       new GetPostCommentsQuery(query, postId),
+    );
+  }
+
+  @Get(':postId/comments/:commentId/replies')
+  @Public()
+  @GetCommentRepliesSwagger()
+  async getCommentReplies(
+    @Param('postId', ParseIntPipe) postId: number,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Query() query: GetPostCommentsQueryParamsDto,
+  ): Promise<PostCommentsPageViewDto> {
+    return this.queryBus.execute<GetCommentRepliesQuery, PostCommentsPageViewDto>(
+      new GetCommentRepliesQuery(query, postId, commentId),
     );
   }
 }
