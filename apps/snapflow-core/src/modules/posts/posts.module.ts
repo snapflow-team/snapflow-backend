@@ -11,10 +11,18 @@ import { PostsController } from './api/posts.controller';
 import { UserAccountsModule } from '../user-accounts/user-accounts.module';
 import { GetUserPostsQueryHandler } from './application/queries/get-user-posts.query-handler';
 import { SaveDraftUseCase } from './application/usecases/save-draft.usecase';
+import { TogglePostLikeUseCase } from './application/usecases/toggle-post-like.usecase';
+import { PostLikesRepository } from './infrastructure/post-likes.repository';
 import { OutboxRepository } from './outbox/repositories/outbox.repository';
 import { OutboxProcessorService } from './outbox/services/outbox-processor.service';
 
-const useCases = [CreatePostUseCase, EditPostUseCase, DeletePostUseCase, SaveDraftUseCase];
+const useCases = [
+  CreatePostUseCase,
+  EditPostUseCase,
+  DeletePostUseCase,
+  SaveDraftUseCase,
+  TogglePostLikeUseCase,
+];
 const queries = [
   GetPostQueryHandler,
   GetPostsQueryHandler,
@@ -22,7 +30,7 @@ const queries = [
   GetUserPostsQueryHandler,
 ];
 const services = [OutboxProcessorService];
-const repositories = [PostsRepository, PostsQueryRepository, OutboxRepository];
+const repositories = [PostsRepository, PostsQueryRepository, PostLikesRepository, OutboxRepository];
 
 @Module({
   imports: [UserAccountsModule],
