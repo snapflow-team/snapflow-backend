@@ -300,6 +300,9 @@ model Comment {
   replies  Comment[]     @relation("CommentReplies")
   likes    CommentLike[]
 
+  /// ВНИМАНИЕ: Partial индексы для листинга корневых комментариев и подсчёта ответов
+  /// (soft delete) добавлены в миграции: 20260627120000_add_comments_listing_indexes.
+  /// Own-first сортировка (viewer user_id) вычисляется в query/SQL; keyset — по (created_at, id).
   @@map("comments")
 }
 
