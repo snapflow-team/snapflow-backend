@@ -15,6 +15,7 @@ export const commentWithUserMetadataInclude = {
   _count: {
     select: {
       replies: { where: { deletedAt: null } },
+      likes: { where: { deletedAt: null } },
     },
   },
 } satisfies Prisma.CommentInclude;

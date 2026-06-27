@@ -41,7 +41,24 @@ export class CommentItemViewDto {
   })
   repliesCount?: number;
 
-  static mapToView(comment: CommentWithUserMetadata): CommentItemViewDto {
+  @ApiProperty({
+    type: Number,
+    example: 0,
+    description: 'Общее количество лайков',
+  })
+  likesCount: number;
+
+  @ApiProperty({
+    type: Boolean,
+    example: false,
+    description: 'Поставил ли текущий пользователь лайк',
+  })
+  isLikedByCurrentUser: boolean;
+
+  static mapToView(
+    comment: CommentWithUserMetadata,
+    isLikedByCurrentUser = false,
+  ): CommentItemViewDto {
     const dto = new CommentItemViewDto();
     dto.id = comment.id.toString();
     dto.text = comment.text;
@@ -53,6 +70,8 @@ export class CommentItemViewDto {
     });
     dto.parentId = comment.parentId?.toString() ?? null;
     dto.repliesCount = comment._count.replies;
+    dto.likesCount = comment._count.likes;
+    dto.isLikedByCurrentUser = isLikedByCurrentUser;
 
     return dto;
   }
