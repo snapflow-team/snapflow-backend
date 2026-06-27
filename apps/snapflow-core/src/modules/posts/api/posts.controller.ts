@@ -13,7 +13,9 @@
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ExtractUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
+import {
+  ExtractUserFromRequest
+} from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../user-accounts/auth/domain/guards/dto/user-context.dto';
 import { JwtAuthGuard } from '../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
 import { CreatePostInputDto } from './input-dto/create-post.input-dto';
@@ -40,6 +42,8 @@ import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto'
 import { GetDraftQuery } from '../application/queries/get-draft.query-handler';
 import { GetDraftPostsSwagger } from './swagger/get-draft-posts.swagger';
 import { SaveDraftCommand } from '../application/usecases/save-draft.usecase';
+import { TogglePostLikeCommand } from '../application/usecases/toggle-post-like.usecase';
+import { TogglePostLikeSwagger } from './swagger/toggle-post-like.swagger';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -104,6 +108,18 @@ export class PostsController {
     @ExtractUserFromRequest() user: UserContextDto,
   ): Promise<void> {
     await this.commandBus.execute<DeletePostCommand, void>(new DeletePostCommand(user.id, postId));
+  }
+
+  @Post(':postId/like')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @TogglePostLikeSwagger()
+  async togglePostLike(
+    @Param('postId', ParseIntPipe) postId: number,
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+  ): Promise<void> {
+    await this.commandBus.execute<TogglePostLikeCommand, void>(
+      new TogglePostLikeCommand(userId, postId),
+    );
   }
 
   @Get('draft')
