@@ -34,7 +34,6 @@ export class PaymentsEventsConsumer implements OnModuleInit, OnModuleDestroy {
   }
 
   onModuleInit(): void {
-    console.log('CONSUMER PID:', process.pid);
     const { rabbitMqUrl, paymentsEventsQueueName }: ApiSettings =
       this.configService.get<ApiSettings>('apiSettings');
 
