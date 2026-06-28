@@ -177,13 +177,17 @@ export class FollowsQueryRepository {
     const user = mapUser(row);
     const profile = user.profiles[0];
 
+    if (!profile) {
+      throw new Error(`Active user profile is missing for follow list row ${row.id}`);
+    }
+
     return {
       id: row.id,
       createdAt: row.createdAt,
       userId: user.id,
       username: user.username,
-      avatarUrl: profile?.avatarUrl ?? null,
-      profileId: profile!.id,
+      avatarUrl: profile.avatarUrl,
+      profileId: profile.id,
     };
   }
 }

@@ -2,7 +2,9 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FollowsQueryRepository } from '../../../../../follows/infrastructure/follows.query-repository';
 import { ProfileFollowListQueryParamsDto } from '../../api/dto/input-dto/profile-follow-list.query-params.dto';
 import { ProfileFollowListPageViewDto } from '../../api/dto/view-dto/profile-follow-list-page.view-dto';
-import { ProfileFollowListItemViewDto } from '../../api/dto/view-dto/profile-follow-list-item.view-dto';
+import { mapProfileFollowListPage } from './map-profile-follow-list-page';
+import { ProfileFollowListRow } from '../../../../../follows/infrastructure/types/profile-follow-list-row.type';
+import { CursorPaginatedResult } from '../../../../../../../../../libs/common/utils/cursor-pagination.util';
 
 export class GetProfileFollowingQuery {
   constructor(
@@ -23,18 +25,9 @@ export class GetProfileFollowingQueryHandler
     query,
     viewerUserId,
   }: GetProfileFollowingQuery): Promise<ProfileFollowListPageViewDto> {
-    const paginated = await this.followsQueryRepository.findFollowingByProfileId(profileId, query);
-    const followingIds = await this.followsQueryRepository.getFollowingIdsAmong(
-      viewerUserId,
-      paginated.items.map((item) => item.userId),
-    );
+    const paginated: CursorPaginatedResult<ProfileFollowListRow> =
+      await this.followsQueryRepository.findFollowingByProfileId(profileId, query);
 
-    return {
-      items: paginated.items.map((item) =>
-        ProfileFollowListItemViewDto.mapToView(item, followingIds.has(item.userId)),
-      ),
-      nextCursor: paginated.nextCursor,
-      hasMore: paginated.hasMore,
-    };
+    return mapProfileFollowListPage(this.followsQueryRepository, paginated, viewerUserId);
   }
 }
