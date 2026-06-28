@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+export type ProfileFollowListItemViewSource = {
+  userId: number;
+  username: string;
+  avatarUrl: string | null;
+  profileId: number;
+};
+
 export class ProfileFollowListItemViewDto {
   @ApiProperty({
     type: String,
@@ -34,4 +41,19 @@ export class ProfileFollowListItemViewDto {
     example: false,
   })
   isFollowing: boolean;
+
+  static mapToView(
+    source: ProfileFollowListItemViewSource,
+    isFollowing: boolean,
+  ): ProfileFollowListItemViewDto {
+    const dto = new this();
+
+    dto.userId = source.userId.toString();
+    dto.username = source.username;
+    dto.avatarUrl = source.avatarUrl;
+    dto.profileId = source.profileId;
+    dto.isFollowing = isFollowing;
+
+    return dto;
+  }
 }

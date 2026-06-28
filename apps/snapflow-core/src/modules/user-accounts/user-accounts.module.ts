@@ -49,6 +49,8 @@ import { GetTotalCountRegisteredUsersQueryHandler } from './users/application/qu
 import { SearchUsersQueryHandler } from './users/application/queries/search-users.query-handler';
 import { UsersController } from './users/api/users.controller';
 import { GetPublicProfileQueryHandler } from './users/profile/application/queries/get-public-profile.query-handler';
+import { GetProfileFollowingQueryHandler } from './users/profile/application/queries/get-profile-following.query-handler';
+import { GetProfileFollowersQueryHandler } from './users/profile/application/queries/get-profile-followers.query-handler';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
@@ -95,6 +97,8 @@ const queries = [
 
   GetProfileQueryHandler,
   GetPublicProfileQueryHandler,
+  GetProfileFollowingQueryHandler,
+  GetProfileFollowersQueryHandler,
 
   GetAllSessionsQueryHandler,
 ];
