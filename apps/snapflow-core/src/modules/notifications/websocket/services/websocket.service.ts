@@ -1,4 +1,4 @@
-import { NotificationGateway } from '../notification-websocket.gateway';
+import { NotificationGateway } from '../gateway/notification-websocket.gateway';
 import { Injectable } from '@nestjs/common';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';

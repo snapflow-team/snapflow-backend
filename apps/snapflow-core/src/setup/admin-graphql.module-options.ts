@@ -4,6 +4,7 @@ import { GraphQLFormattedError } from 'graphql';
 import { join } from 'path';
 import { Configuration } from './configuration/configuration';
 import { EnvironmentSettings } from './configuration/environment-settings';
+import { Request, Response } from 'express';
 
 const sanitizeGraphqlError = (formattedError: GraphQLFormattedError): GraphQLFormattedError => {
   const code = formattedError.extensions?.code;
@@ -44,5 +45,8 @@ export const getAdminGraphqlModuleOptions = (
     includeStacktraceInErrorResponses: false,
     formatError: sanitizeGraphqlError,
     context: ({ req, res }: { req: unknown; res: unknown }) => ({ req, res }),
+    subscriptions: {
+      'graphql-ws': true,
+    },
   };
 };

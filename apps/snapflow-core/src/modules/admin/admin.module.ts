@@ -21,30 +21,49 @@ import { AdminSessionsRepository } from './infrastructure/repositories/admin-ses
 import { AdminUsersQueryRepository } from './infrastructure/repositories/admin-users.query-repository';
 import { AdminSessionCookieService } from './infrastructure/services/admin-session-cookie.service';
 import { AdminPaymentsHttpClient } from './infrastructure/clients/admin-payments-http.client';
-
+import { AdminPostsResolver } from './api/resolvers/admin-posts.resolver';
+import { AdminPostsQueryRepository } from './infrastructure/repositories/admin-posts.query-repository';
+import { GetAdminPostsQueryHandler } from './application/queries/get-admin-posts.query-handler';
+import { pubSubProvider } from './providers/pub-sub.provider';
+import { PostCreatedSubscriptionEventHandler } from './application/events/handlers/post-created-subscripition.event-handler';
+const resolvers = [
+  AdminAuthResolver,
+  AdminUsersResolver,
+  AdminUserDetailsResolver,
+  AdminPaymentsResolver,
+  AdminPostsResolver,
+];
+const useCases = [
+  AdminLoginUseCase,
+  AdminLogoutUseCase,
+  DeleteUserByAdminUseCase,
+  BanUserByAdminUseCase,
+  UnbanUserByAdminUseCase,
+];
+const queryHandlers = [
+  GetAdminUsersQueryHandler,
+  GetAdminUserDetailsQueryHandler,
+  GetAdminPaymentsQueryHandler,
+  GetAdminPostsQueryHandler,
+];
+const services = [AdminSessionCookieService, AdminPaymentsHttpClient, CryptoService, DateService];
+const repositories = [
+  AdminSessionsRepository,
+  AdminUsersQueryRepository,
+  AdminPostsQueryRepository,
+];
+const guards = [AdminGqlAuthGuard, AdminGqlThrottlerGuard];
+const providers = [pubSubProvider, PostCreatedSubscriptionEventHandler];
 @Module({
   imports: [HttpModule, UserAccountsModule],
   providers: [
-    AdminAuthResolver,
-    AdminUsersResolver,
-    AdminUserDetailsResolver,
-    AdminPaymentsResolver,
-    AdminLoginUseCase,
-    AdminLogoutUseCase,
-    DeleteUserByAdminUseCase,
-    BanUserByAdminUseCase,
-    UnbanUserByAdminUseCase,
-    GetAdminUsersQueryHandler,
-    GetAdminUserDetailsQueryHandler,
-    GetAdminPaymentsQueryHandler,
-    AdminSessionsRepository,
-    AdminUsersQueryRepository,
-    AdminSessionCookieService,
-    AdminPaymentsHttpClient,
-    AdminGqlAuthGuard,
-    AdminGqlThrottlerGuard,
-    CryptoService,
-    DateService,
+    ...resolvers,
+    ...useCases,
+    ...queryHandlers,
+    ...repositories,
+    ...services,
+    ...guards,
+    ...providers,
   ],
 })
 export class AdminModule {}

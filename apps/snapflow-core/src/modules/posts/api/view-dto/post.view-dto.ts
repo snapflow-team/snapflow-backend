@@ -80,7 +80,7 @@ export class PostViewDto {
     dto.description = post.description;
     dto.status = post.status;
     dto.createdAt = post.createdAt.toISOString();
-    dto.postMedias = post.postMedias.map((m) => PostMediaViewDto.mapToView(m));
+    dto.postMedias = post.postMedias.map((pm) => PostMediaViewDto.mapToView(pm));
     dto.owner = OwnerViewDto.mapToView({
       userId: post.user.id,
       profileId: post.user.profiles[0].id,
