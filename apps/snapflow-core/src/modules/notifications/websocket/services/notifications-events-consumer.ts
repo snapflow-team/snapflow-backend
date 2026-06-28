@@ -3,20 +3,20 @@ import { ConfigService } from '@nestjs/config';
 import amqp, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
 import { randomUUID } from 'node:crypto';
-import { Configuration } from '../../../setup/configuration/configuration';
-import { ApiSettings } from '../../../setup/configuration/api-settings';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import {
   ALL_NOTIFICATIONS_ROUTING_KEYS,
   NotificationsRoutingKey,
   PAYMENTS_EXCHANGE,
-} from '../../../../../../libs/contracts/payments';
-import { LoggerFactory } from '../../logger/logger.factory';
-import { ContextLogger } from '../../logger/context-logger';
-import { AsyncLocalStorageService } from '../../../common/async-local-storage/async-local-storage.service';
-import { REQUEST_ID_KEY } from '../../../../../../libs/common/constants/request-id.constants';
-import { extractRequestIdFromAmqpMsg } from '../../../../../../libs/common/messaging/amqp-headers';
-import { parseNotificationsRoutingKey } from './type-guards/notification-events.type-guards';
-import { WebsocketNotificationService } from './services/websocket-notification.service';
+} from '../../../../../../../libs/contracts/payments';
+import { LoggerFactory } from '../../../logger/logger.factory';
+import { ContextLogger } from '../../../logger/context-logger';
+import { AsyncLocalStorageService } from '../../../../common/async-local-storage/async-local-storage.service';
+import { REQUEST_ID_KEY } from '../../../../../../../libs/common/constants/request-id.constants';
+import { extractRequestIdFromAmqpMsg } from '../../../../../../../libs/common/messaging/amqp-headers';
+import { parseNotificationsRoutingKey } from '../type-guards/notification-events.type-guards';
+import { WebsocketNotificationService } from './websocket-notification.service';
 
 @Injectable()
 export class NotificationEventsConsumer implements OnModuleInit, OnModuleDestroy {
