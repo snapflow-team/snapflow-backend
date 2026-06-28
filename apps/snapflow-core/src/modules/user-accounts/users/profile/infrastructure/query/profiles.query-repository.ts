@@ -42,6 +42,12 @@ export class ProfilesQueryRepository {
                 posts: {
                   where: { deletedAt: null, status: PostStatus.PUBLISHED },
                 },
+                followers: {
+                  where: { deletedAt: null },
+                },
+                following: {
+                  where: { deletedAt: null },
+                },
               },
             },
           },

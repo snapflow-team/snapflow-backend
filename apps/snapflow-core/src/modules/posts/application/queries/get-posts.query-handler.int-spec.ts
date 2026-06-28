@@ -72,6 +72,9 @@ describe('GetPostQueryHandler (INT)', () => {
       }),
     );
     expect(result.items[0].owner).not.toHaveProperty('ownerId');
+    expect(result.items[0].likesCount).toBe(0);
+    expect(result.items[0].isLikedByCurrentUser).toBe(false);
+    expect(result.items[0].recentLikers).toEqual([]);
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(4);
     expect(result.totalCount).toBe(10);

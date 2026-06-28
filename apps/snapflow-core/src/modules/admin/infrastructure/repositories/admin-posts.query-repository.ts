@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PostStatus, Prisma } from '@generated/prisma-snapflow';
 import { PrismaService } from '../../../../database/prisma.service';
-import { PostWithMediaAndUserMetadata } from '../../../posts/infrastructure/types/post-with-media-and-user-metadata.type';
 import { GetAdminPostsQueryParams } from '../../application/dto/get-admin-posts-query.params';
 import { PaginatedAdminPostsModel } from '../../api/models/paginated-admin-posts.model';
 import { AdminSortDirection } from '../../domain/enums/admin-sort-direction.enum';
@@ -28,8 +27,6 @@ export class AdminPostsQueryRepository {
         },
       };
     }
-    console.log(where);
-
     const [posts, totalCount] = await Promise.all([
       this.prisma.post.findMany({
         where,
@@ -69,9 +66,8 @@ export class AdminPostsQueryRepository {
     ]);
     const pagesCount: number = Math.ceil(totalCount / pageSize);
 
-    const items: AdminPostListItemModel[] = posts.map(
-      (post: PostWithMediaAndUserMetadata): AdminPostListItemModel =>
-        AdminPostListItemModel.mapToModel(post),
+    const items: AdminPostListItemModel[] = posts.map((post): AdminPostListItemModel =>
+      AdminPostListItemModel.mapToModel(post),
     );
 
     const pageInfo: PageInfoModel = {

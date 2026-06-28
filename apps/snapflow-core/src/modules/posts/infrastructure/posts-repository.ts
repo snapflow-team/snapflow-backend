@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service';
-import { PostStatus, Prisma } from '@generated/prisma-snapflow';
+import { Post, PostStatus, Prisma } from '@generated/prisma-snapflow';
 import { CreateMediaInput, PostWithMedia } from '../types/create-media.type';
 import { CreatePostWithMediaRepositoryDto } from './dto/create-post-with-media.repository-dto';
 import { UpdatePostRepositoryDto } from './dto/update-post.repository-dto';
@@ -31,6 +31,12 @@ export class PostsRepository {
       select: { id: true },
     });
     return post.id;
+  }
+
+  async findById(postId: number): Promise<Post | null> {
+    return this.prisma.post.findFirst({
+      where: { id: postId, status: PostStatus.PUBLISHED, deletedAt: null },
+    });
   }
 
   async findByIdAndUserId(postId: number, userId: number): Promise<PostWithMedia | null> {

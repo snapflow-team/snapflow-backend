@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserMetadataViewDto } from './user-metadata.view-dto';
 import { ProfileWithUserMetadata } from '../../../infrastructure/types/profile-with-user-metadata.type';
 
@@ -42,6 +42,13 @@ export class PublicProfileViewDto {
   })
   userMetadata: UserMetadataViewDto;
 
+  @ApiPropertyOptional({
+    description:
+      'Подписан ли текущий авторизованный зритель на пользователя. Отсутствует для гостя.',
+    example: false,
+  })
+  isFollowing?: boolean;
+
   static mapToView(profile: ProfileWithUserMetadata): PublicProfileViewDto {
     const dto = new this();
 
@@ -51,8 +58,8 @@ export class PublicProfileViewDto {
     dto.avatarUrl = profile.avatarUrl;
     dto.aboutMe = profile.aboutMe;
     dto.userMetadata = {
-      followingCount: 0,
-      followersCount: 0,
+      followingCount: profile.user._count.following,
+      followersCount: profile.user._count.followers,
       publicationsCount: profile.user._count.posts,
     };
 

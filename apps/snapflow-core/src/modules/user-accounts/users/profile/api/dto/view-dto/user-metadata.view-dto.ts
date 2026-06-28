@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class UserMetadataViewDto {
   @ApiProperty({
     type: Number,
-    description: 'Количество подписок пользователя',
+    description: 'Количество подписок (на скольких пользователей подписан владелец профиля)',
     example: 80,
     default: 0,
   })
@@ -11,7 +11,7 @@ export class UserMetadataViewDto {
 
   @ApiProperty({
     type: Number,
-    description: 'Количество подписчиков',
+    description: 'Количество подписчиков владельца профиля',
     example: 120,
     default: 0,
   })

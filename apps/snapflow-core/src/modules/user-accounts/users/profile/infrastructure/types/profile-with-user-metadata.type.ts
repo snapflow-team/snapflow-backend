@@ -7,6 +7,8 @@ export type ProfileWithUserMetadata = Prisma.UserProfileGetPayload<{
         _count: {
           select: {
             posts: true;
+            followers: true;
+            following: true;
           };
         };
       };

@@ -1,7 +1,6 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { AdminPostMediaModel } from './admin-post-media.model';
 import { AdminPostOwnerModel } from './admin-post-owner.model';
-import { PostWithMediaAndUserMetadata } from '../../../posts/infrastructure/types/post-with-media-and-user-metadata.type';
 
 @ObjectType()
 export class AdminPostListItemModel {
@@ -20,7 +19,7 @@ export class AdminPostListItemModel {
   @Field(() => AdminPostOwnerModel)
   owner: AdminPostOwnerModel;
 
-  static mapToModel(post: PostWithMediaAndUserMetadata): AdminPostListItemModel {
+  static mapToModel(post: AdminPostListItemSource): AdminPostListItemModel {
     const model = new AdminPostListItemModel();
 
     model.id = post.id;
@@ -36,3 +35,22 @@ export class AdminPostListItemModel {
     return model;
   }
 }
+
+type AdminPostListItemSource = {
+  id: number;
+  description: string | null;
+  createdAt: Date;
+  postMedias: {
+    id: number;
+    fileId: string;
+    url: string;
+  }[];
+  user: {
+    id: number;
+    username: string;
+    profiles: {
+      id: number;
+      avatarUrl: string | null;
+    }[];
+  };
+};

@@ -8,25 +8,58 @@ import { PostsRepository } from './infrastructure/posts-repository';
 import { PostsQueryRepository } from './infrastructure/posts.query-repository';
 import { Module } from '@nestjs/common';
 import { PostsController } from './api/posts.controller';
+import { PostCommentsController } from './comments/api/post-comments.controller';
 import { UserAccountsModule } from '../user-accounts/user-accounts.module';
+import { GetFeedQueryHandler } from './application/queries/get-feed.query-handler';
 import { GetUserPostsQueryHandler } from './application/queries/get-user-posts.query-handler';
+import { FollowsModule } from '../follows/follows.module';
 import { SaveDraftUseCase } from './application/usecases/save-draft.usecase';
+import { TogglePostLikeUseCase } from './application/usecases/toggle-post-like.usecase';
+import { CreateCommentUseCase } from './comments/application/usecases/create-comment.usecase';
+import { ToggleCommentLikeUseCase } from './comments/application/usecases/toggle-comment-like.usecase';
+import { PostLikesRepository } from './infrastructure/post-likes.repository';
+import { CommentLikesRepository } from './comments/infrastructure/comment-likes.repository';
+import { CommentsRepository } from './comments/infrastructure/comments.repository';
+import { CommentsQueryRepository } from './comments/infrastructure/comments.query-repository';
+import { GetPostCommentsQueryHandler } from './comments/application/queries/get-post-comments.query-handler';
+import { GetCommentQueryHandler } from './comments/application/queries/get-comment.query-handler';
+import { GetCommentRepliesQueryHandler } from './comments/application/queries/get-comment-replies.query-handler';
 import { OutboxRepository } from './outbox/repositories/outbox.repository';
 import { OutboxProcessorService } from './outbox/services/outbox-processor.service';
 
-const useCases = [CreatePostUseCase, EditPostUseCase, DeletePostUseCase, SaveDraftUseCase];
+const useCases = [
+  CreatePostUseCase,
+  EditPostUseCase,
+  DeletePostUseCase,
+  SaveDraftUseCase,
+  TogglePostLikeUseCase,
+  CreateCommentUseCase,
+  ToggleCommentLikeUseCase,
+];
 const queries = [
   GetPostQueryHandler,
   GetPostsQueryHandler,
   GetDraftQueryHandler,
   GetUserPostsQueryHandler,
+  GetFeedQueryHandler,
+  GetPostCommentsQueryHandler,
+  GetCommentQueryHandler,
+  GetCommentRepliesQueryHandler,
 ];
 const services = [OutboxProcessorService];
-const repositories = [PostsRepository, PostsQueryRepository, OutboxRepository];
+const repositories = [
+  PostsRepository,
+  PostsQueryRepository,
+  PostLikesRepository,
+  CommentLikesRepository,
+  CommentsRepository,
+  CommentsQueryRepository,
+  OutboxRepository,
+];
 
 @Module({
-  imports: [UserAccountsModule],
-  controllers: [PostsController],
+  imports: [UserAccountsModule, FollowsModule],
+  controllers: [PostsController, PostCommentsController],
   providers: [...useCases, ...queries, ...services, ...repositories],
   exports: [],
 })
