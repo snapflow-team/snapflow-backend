@@ -36,9 +36,8 @@ export class AdminGqlAuthGuard implements CanActivate {
     const ctx = gqlContext.getContext<{ req: AdminRequest | WebSocketRequest }>();
 
     const sessionId: string | null = this.parseSessionId(ctx.req);
-    console.log('sessionId', sessionId);
+
     if (!sessionId) {
-      console.log('We are in that branch');
       throw new UnauthorizedException('Admin is not authenticated');
     }
 
