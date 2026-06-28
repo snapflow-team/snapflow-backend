@@ -7,8 +7,8 @@ import { EmailTemplates } from './emails/templates/email.templates';
 import { SendConfirmationEmailWhenUserRegisteredEventHandler } from './emails/event-handlers/send-confirmation-email-when-user-registered.event-handler';
 import { SendPasswordRecoveryEmailEventHandler } from './emails/event-handlers/send-password-recovery-email.event-handler';
 import { WebsocketService } from './websocket/services/websocket.service';
-import { NotificationGateway } from './websocket/notification-websocket.gateway';
-import { NotificationEventsConsumer } from './websocket/notifications-events-consumer';
+import { NotificationGateway } from './websocket/gateway/notification-websocket.gateway';
+import { NotificationEventsConsumer } from './websocket/services/notifications-events-consumer';
 import { WebsocketNotificationService } from './websocket/services/websocket-notification.service';
 import { Configuration } from '../../setup/configuration/configuration';
 import { NotificationsRepository } from './infrastructure/notifications.repository';
@@ -45,7 +45,5 @@ import { JwtAuthModule } from '../user-accounts/auth/jwt-auth.module';
   exports: [],
 })
 export class NotificationModule {
-  constructor() {
-    console.log('NotificationModule loaded');
-  }
+  constructor() {}
 }

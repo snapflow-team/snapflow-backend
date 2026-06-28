@@ -7,12 +7,12 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { ConfigService } from '@nestjs/config';
-import { Configuration } from '../../../setup/configuration/configuration';
-import { LoggerFactory } from '../../logger/logger.factory';
-import { ContextLogger } from '../../logger/context-logger';
-import { AuthTokenService } from '../../user-accounts/auth/application/services/auth-token.service';
-import { PayloadAccessToken } from '../../user-accounts/auth/application/types/payload-access-token.type';
-import { SocketDataType } from './types/socket-data.type';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { LoggerFactory } from '../../../logger/logger.factory';
+import { ContextLogger } from '../../../logger/context-logger';
+import { AuthTokenService } from '../../../user-accounts/auth/application/services/auth-token.service';
+import { PayloadAccessToken } from '../../../user-accounts/auth/application/types/payload-access-token.type';
+import { SocketDataType } from '../types/socket-data.type';
 
 @WebSocketGateway({
   namespace: 'notifications',
@@ -40,7 +40,6 @@ export class NotificationGateway
 
     server.use((socket, next) => {
       try {
-        console.log(socket.handshake);
         const token = (socket.handshake.auth?.token as string) ?? socket.handshake.headers.token;
 
         if (!token) {
@@ -102,13 +101,11 @@ export class NotificationGateway
       return;
     }
 
-    const timer = setTimeout(() => {
+    client.data.timer = setTimeout(() => {
       client.data.timer = undefined;
       client.emit('token.expired');
       client.disconnect(true);
     }, disconnectAt);
-
-    client.data.timer = timer;
   }
 
   private clearClientTimer(client: Socket<any, any, any, SocketDataType>) {
