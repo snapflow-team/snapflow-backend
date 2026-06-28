@@ -6,6 +6,9 @@ export class ApiSettings {
   port: number;
 
   @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
+  publicApiBaseUrl: string;
+
+  @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
   coreServiceUrl: string;
 
   @IsString()
@@ -38,8 +41,13 @@ export class ApiSettings {
   @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
   stripeCancelUrl: string;
 
+  @IsString()
+  internalApiSecret: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
+
+    this.publicApiBaseUrl = environmentVariables.PUBLIC_API_BASE_URL;
 
     this.coreServiceUrl = environmentVariables.CORE_SERVICE_URL;
 
@@ -56,6 +64,7 @@ export class ApiSettings {
     this.stripeWebhookSecret = environmentVariables.STRIPE_WEBHOOK_SECRET;
     this.stripeSuccessUrl = environmentVariables.STRIPE_SUCCESS_URL;
     this.stripeCancelUrl = environmentVariables.STRIPE_CANCEL_URL;
+    this.internalApiSecret = environmentVariables.INTERNAL_API_SECRET;
   }
 
   get allowedOrigins(): string[] | boolean {
@@ -63,5 +72,9 @@ export class ApiSettings {
       return true;
     }
     return this.allowedOriginsRaw.split(',').map((item) => item.trim());
+  }
+
+  get redisDbUrl(): string {
+    return this.environmentVariables.REDIS_URL;
   }
 }

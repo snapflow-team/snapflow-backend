@@ -6,6 +6,7 @@ import {
 } from '../../../../../../../libs/contracts/payments';
 import { CheckoutSessionExpiredEvent } from '../../../../../../../libs/contracts/payments/payments-checkout-sesion-expired.event';
 import { SubscriptionCancelledEvent } from '../../../../../../../libs/contracts/payments/payments-subscription-cancelled.event';
+import { SubscriptionRenewedEvent } from '../../../../../../../libs/contracts/payments/payment-subscription-renewed.event';
 
 function isRecord(payload: unknown): payload is Record<string, unknown> {
   return typeof payload === 'object' && payload !== null;
@@ -28,6 +29,16 @@ export function isSubscriptionActivatedEvent(
     typeof payload.planId === 'string' &&
     typeof payload.subscriptionId === 'number' &&
     (typeof payload.currentPeriodEnd === 'string' || payload.currentPeriodEnd === null)
+  );
+}
+
+export function isSubscriptionRenewedEvent(payload: unknown): payload is SubscriptionRenewedEvent {
+  return (
+    isRecord(payload) &&
+    typeof payload.userId === 'number' &&
+    typeof payload.planId === 'string' &&
+    typeof payload.subscriptionId === 'number' &&
+    typeof payload.currentPeriodEnd === 'string'
   );
 }
 

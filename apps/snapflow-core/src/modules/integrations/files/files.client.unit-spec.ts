@@ -4,6 +4,8 @@ import { ValidationException } from '../../../../../../libs/exceptions/core';
 import { SERVICES } from '../../../../../../libs/contracts/services.tokens';
 import { FilesClient } from './files.client';
 import { SnapFlowDomainExceptionCodeMapper } from '../../../common/exceptions/snapflow-domain-exception-mapper';
+import { AsyncLocalStorageService } from '../../../common/async-local-storage/async-local-storage.service';
+import { REQUEST_ID_KEY } from '../../../../../../libs/common/constants/request-id.constants';
 import {
   BadRequestException,
   InternalServerException,
@@ -22,13 +24,18 @@ import {
 describe('FilesClient', () => {
   let filesClient: FilesClient;
   let sendMock: jest.Mock;
+  let alsStore: Map<string, string>;
+  let alsMock: Pick<AsyncLocalStorageService, 'getStore'>;
 
   beforeEach(() => {
     sendMock = jest.fn();
+    alsStore = new Map();
+    alsMock = { getStore: () => alsStore };
 
     filesClient = new FilesClient(
       { send: sendMock } as unknown as ClientProxy,
       new SnapFlowDomainExceptionCodeMapper(),
+      alsMock as AsyncLocalStorageService,
     );
   });
 
@@ -47,7 +54,10 @@ describe('FilesClient', () => {
     const result = await filesClient.generateUploadUrl(payload);
 
     expect(result).toEqual(response);
-    expect(sendMock).toHaveBeenCalledWith({ cmd: FilesRpcCommand.GenerateUploadUrl }, payload);
+    expect(sendMock).toHaveBeenCalledWith(
+      { cmd: FilesRpcCommand.GenerateUploadUrl },
+      { data: payload, meta: { requestId: null } },
+    );
   });
 
   it('confirmUpload: возвращает ответ RPC', async () => {
@@ -58,7 +68,10 @@ describe('FilesClient', () => {
     const result = await filesClient.confirmUpload(payload);
 
     expect(result).toEqual(response);
-    expect(sendMock).toHaveBeenCalledWith({ cmd: FilesRpcCommand.ConfirmUpload }, payload);
+    expect(sendMock).toHaveBeenCalledWith(
+      { cmd: FilesRpcCommand.ConfirmUpload },
+      { data: payload, meta: { requestId: null } },
+    );
   });
 
   it('validateFiles: возвращает ответ RPC', async () => {
@@ -72,7 +85,10 @@ describe('FilesClient', () => {
     const result = await filesClient.validateFiles(payload);
 
     expect(result).toEqual(response);
-    expect(sendMock).toHaveBeenCalledWith({ cmd: FilesRpcCommand.ValidateFiles }, payload);
+    expect(sendMock).toHaveBeenCalledWith(
+      { cmd: FilesRpcCommand.ValidateFiles },
+      { data: payload, meta: { requestId: null } },
+    );
   });
 
   it('uploadFile: возвращает ответ RPC', async () => {
@@ -88,7 +104,10 @@ describe('FilesClient', () => {
     const result = await filesClient.uploadFile(payload);
 
     expect(result).toEqual(response);
-    expect(sendMock).toHaveBeenCalledWith({ cmd: FilesRpcCommand.UploadFile }, payload);
+    expect(sendMock).toHaveBeenCalledWith(
+      { cmd: FilesRpcCommand.UploadFile },
+      { data: payload, meta: { requestId: null } },
+    );
   });
 
   it('deleteFile: возвращает ответ RPC', async () => {
@@ -99,7 +118,26 @@ describe('FilesClient', () => {
     const result = await filesClient.deleteFile(payload);
 
     expect(result).toEqual(response);
-    expect(sendMock).toHaveBeenCalledWith({ cmd: FilesRpcCommand.DeleteFile }, payload);
+    expect(sendMock).toHaveBeenCalledWith(
+      { cmd: FilesRpcCommand.DeleteFile },
+      { data: payload, meta: { requestId: null } },
+    );
+  });
+
+  it('кладёт requestId из ALS в meta envelope', async () => {
+    alsStore.set(REQUEST_ID_KEY, 'req-from-als');
+    const payload: GenerateUploadUrlsRequest = {
+      userId: 42,
+      files: [{ mimeType: MimeType.PNG, size: 1024 }],
+    };
+    sendMock.mockReturnValue(of([]));
+
+    await filesClient.generateUploadUrl(payload);
+
+    expect(sendMock).toHaveBeenCalledWith(
+      { cmd: FilesRpcCommand.GenerateUploadUrl },
+      { data: payload, meta: { requestId: 'req-from-als' } },
+    );
   });
 
   it('маппит rpc-ошибку BadRequest в BadRequestException', async () => {

@@ -16,6 +16,8 @@ import {
 } from '../../../../../../libs/contracts/files';
 import { SnapFlowDomainExceptionCodeMapper } from '../../../common/exceptions/snapflow-domain-exception-mapper';
 import { RpcCaller } from '../../../../../../libs/exceptions/rpc/rpc-caller';
+import { AsyncLocalStorageService } from '../../../common/async-local-storage/async-local-storage.service';
+import { REQUEST_ID_KEY } from '../../../../../../libs/common/constants/request-id.constants';
 
 @Injectable()
 export class FilesClient {
@@ -24,8 +26,12 @@ export class FilesClient {
   constructor(
     @Inject(SERVICES.FILES) private readonly client: ClientProxy,
     exceptionMapper: SnapFlowDomainExceptionCodeMapper,
+    private readonly als: AsyncLocalStorageService,
   ) {
-    this.rpcCaller = new RpcCaller(exceptionMapper);
+    this.rpcCaller = new RpcCaller(
+      exceptionMapper,
+      () => this.als.getStore()?.get(REQUEST_ID_KEY) ?? null,
+    );
   }
 
   async generateUploadUrl(

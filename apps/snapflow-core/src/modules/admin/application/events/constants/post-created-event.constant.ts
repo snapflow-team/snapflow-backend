@@ -1,0 +1,1 @@
+export const POST_CREATED_EVENT = 'POST_CREATED_EVENT';

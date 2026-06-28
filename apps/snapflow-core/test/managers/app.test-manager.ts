@@ -5,6 +5,8 @@ import { PrismaService } from '../../src/database/prisma.service';
 import { initSnapFlowCoreAppModule } from '../../src/init-snap-flow-core-app-module';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import { applyAppInitialization } from '../../src/setup/app-initialization';
+import { CustomLogger } from '../../src/modules/logger/logger.service';
+import { NestApplication } from '@nestjs/core';
 
 /**
  * 🧪 AppTestManager
@@ -62,11 +64,14 @@ export class AppTestManager {
 
     const testingAppModule: TestingModule = await testingModuleBuilder.compile();
 
-    this.app = testingAppModule.createNestApplication();
+    this.app = testingAppModule.createNestApplication({ bufferLogs: true });
 
     this.prisma = this.app.get(PrismaService);
 
-    applyAppInitialization(this.app);
+    const appLogger: CustomLogger = this.app.get(CustomLogger);
+    this.app.useLogger(appLogger);
+
+    await applyAppInitialization(this.app);
 
     await this.app.init();
   }
@@ -144,6 +149,9 @@ export class AppTestManager {
 
   getServer() {
     return this.app.getHttpServer() as Server;
+  }
+  getApp() {
+    return this.app as NestApplication;
   }
 }
 

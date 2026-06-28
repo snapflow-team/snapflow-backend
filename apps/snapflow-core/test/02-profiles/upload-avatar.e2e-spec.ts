@@ -12,8 +12,8 @@ import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accou
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
 import { UploadFileResponse } from '../../../../libs/contracts/files';
 import { FilesClient } from '../../src/modules/integrations/files/files.client';
-import { EmailService } from '../../src/modules/emails/services/email.service';
-import { EmailTemplate } from '../../src/modules/emails/templates/types';
+import { EmailService } from '../../src/modules/notifications/emails/services/email.service';
+import { EmailTemplate } from '../../src/modules/notifications/emails/templates/types';
 import { AVATAR_IMAGE_SIZE } from '../../../../libs/common/constants/image-size.constants';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../src/setup/configuration/configuration';

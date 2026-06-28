@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { Logger } from '@nestjs/common';
 import { OutboxProcessorService } from './outbox-processor.service';
 import { OutboxRepository } from '../repositories/outbox.repository';
 import { FilesClient } from '../../../integrations/files/files.client';
+import { LoggerFactory } from '../../../logger/logger.factory';
 import { OutboxProcessing } from '../constants/outbox.constants';
 import {
   OutboxEvent,
@@ -17,6 +17,7 @@ describe('OutboxProcessorService (Unit)', () => {
   let filesClientMock: Record<keyof FilesClient, jest.Mock>;
   let outboxRepositoryMock: Record<keyof OutboxRepository, jest.Mock>;
   let configServiceMock: Record<keyof ConfigService, jest.Mock>;
+  let loggerMock: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
   beforeAll(() => {
     jest.useFakeTimers();
@@ -28,6 +29,12 @@ describe('OutboxProcessorService (Unit)', () => {
   });
 
   beforeEach(async () => {
+    loggerMock = {
+      log: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+
     filesClientMock = {
       deleteFile: jest.fn(),
     } as any;
@@ -51,14 +58,14 @@ describe('OutboxProcessorService (Unit)', () => {
         { provide: FilesClient, useValue: filesClientMock },
         { provide: OutboxRepository, useValue: outboxRepositoryMock },
         { provide: ConfigService, useValue: configServiceMock },
+        {
+          provide: LoggerFactory,
+          useValue: { create: jest.fn().mockReturnValue(loggerMock) },
+        },
       ],
     }).compile();
 
     service = module.get<OutboxProcessorService>(OutboxProcessorService);
-
-    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -236,7 +243,7 @@ describe('OutboxProcessorService (Unit)', () => {
       expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
         OutboxProcessing.STALE_THRESHOLD_MINUTES,
       );
-      expect(Logger.prototype.warn).toHaveBeenCalledWith(expect.stringContaining('3 stale events'));
+      expect(loggerMock.warn).toHaveBeenCalledWith(expect.stringContaining('3 stale events'));
     });
 
     it('при нулевом recoveredCount не логирует warn', async () => {
@@ -247,7 +254,7 @@ describe('OutboxProcessorService (Unit)', () => {
       expect(outboxRepositoryMock.recoverStaleEvents).toHaveBeenCalledWith(
         OutboxProcessing.STALE_THRESHOLD_MINUTES,
       );
-      expect(Logger.prototype.warn).not.toHaveBeenCalled();
+      expect(loggerMock.warn).not.toHaveBeenCalled();
     });
 
     it('при ошибке recoverStaleEvents не пробрасывает исключение', async () => {
@@ -256,10 +263,7 @@ describe('OutboxProcessorService (Unit)', () => {
 
       await expect(service.handleStaleEvents()).resolves.toBeUndefined();
 
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Failed to recover stale events',
-        repoError,
-      );
+      expect(loggerMock.error).toHaveBeenCalledWith(repoError, 'handleStaleEvents');
     });
   });
 

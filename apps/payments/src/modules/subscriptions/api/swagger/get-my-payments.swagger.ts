@@ -1,5 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { PaginatedPaymentsSwaggerDto } from '../view-dto/paginated-payments-swagger.dto';
 
 export function GetMyPaymentsSwagger() {
@@ -10,6 +16,8 @@ export function GetMyPaymentsSwagger() {
       description:
         'Возвращает только успешные платежи (status = PAID) текущего авторизованного пользователя.',
     }),
+    ApiQuery({ name: 'pageNumber', required: false, type: Number, example: 1 }),
+    ApiQuery({ name: 'pageSize', required: false, type: Number, example: 4 }),
     ApiOkResponse({
       description: 'Пагинированный список платежей пользователя со статусом PAID',
       type: PaginatedPaymentsSwaggerDto,

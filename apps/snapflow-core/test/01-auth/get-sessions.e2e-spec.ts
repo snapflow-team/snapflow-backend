@@ -5,6 +5,8 @@ import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users
 import request from 'supertest';
 import { HttpStatus } from '@nestjs/common';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
+import { EmailService } from '../../src/modules/notifications/emails/services/email.service';
+import { EmailTemplate } from '../../src/modules/notifications/emails/templates/types';
 
 describe('SessionsController - getAllSessions() (GET: /sessions)', () => {
   let appTestManager: AppTestManager;
@@ -12,6 +14,7 @@ describe('SessionsController - getAllSessions() (GET: /sessions)', () => {
   let server: Server;
   let user: UserWithEmailConfirmation;
   let agent: ReturnType<typeof request.agent>;
+  let sendEmailMock: jest.Mock;
 
   beforeAll(async () => {
     appTestManager = new AppTestManager();
@@ -20,6 +23,10 @@ describe('SessionsController - getAllSessions() (GET: /sessions)', () => {
     server = appTestManager.getServer();
 
     authTestManager = new AuthTestManager(appTestManager.prisma, server);
+
+    sendEmailMock = jest
+      .spyOn(EmailService.prototype, 'sendEmail')
+      .mockResolvedValue() as jest.Mock<Promise<void>, [string, EmailTemplate]>;
   });
 
   beforeEach(async () => {
@@ -28,6 +35,8 @@ describe('SessionsController - getAllSessions() (GET: /sessions)', () => {
     const [registeredUser] = await authTestManager.registrationWithConfirmation();
     user = registeredUser;
     agent = request.agent(server);
+
+    sendEmailMock.mockClear();
   });
 
   afterAll(async () => {

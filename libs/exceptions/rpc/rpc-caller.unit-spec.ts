@@ -27,7 +27,10 @@ describe('RpcCaller', () => {
     const result = await rpcCaller.send<{ ok: boolean }>(client, pattern, payload);
 
     expect(result).toEqual({ ok: true });
-    expect(sendMock).toHaveBeenCalledWith(pattern, payload);
+    expect(sendMock).toHaveBeenCalledWith(pattern, {
+      data: payload,
+      meta: { requestId: null },
+    });
     expect(mapRpcToDomainException).not.toHaveBeenCalled();
   });
 
@@ -57,6 +60,20 @@ describe('RpcCaller', () => {
     expect(result).toBe('ok');
     expect(attempt).toBe(3);
     expect(mapRpcToDomainException).not.toHaveBeenCalled();
+  });
+
+  it('кладёт requestId из getRequestId в meta envelope', async () => {
+    const getRequestId = jest.fn(() => 'trace-abc');
+    const callerWithRequestId = new RpcCaller(exceptionMapper, getRequestId);
+    sendMock.mockReturnValue(of({ ok: true }));
+
+    await callerWithRequestId.send<{ ok: boolean }>(client, pattern, payload);
+
+    expect(getRequestId).toHaveBeenCalled();
+    expect(sendMock).toHaveBeenCalledWith(pattern, {
+      data: payload,
+      meta: { requestId: 'trace-abc' },
+    });
   });
 
   it('не повторяет RPC-ошибки и маппит их через ExceptionMapper', async () => {

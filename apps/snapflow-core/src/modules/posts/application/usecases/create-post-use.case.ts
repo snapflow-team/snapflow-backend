@@ -47,7 +47,7 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
       throw new BadRequestException('Post requires at least one valid media file');
     }
 
-    const result: number = await this.postsRepository.createPostWithMedia({
+    const createdPostId: number = await this.postsRepository.createPostWithMedia({
       userId,
       description: description,
       status,
@@ -60,8 +60,8 @@ export class CreatePostUseCase implements ICommandHandler<CreatePostCommand> {
       })),
     });
 
-    this.eventBus.publish(new PostCreatedEvent());
+    this.eventBus.publish(new PostCreatedEvent(createdPostId));
 
-    return result;
+    return createdPostId;
   }
 }

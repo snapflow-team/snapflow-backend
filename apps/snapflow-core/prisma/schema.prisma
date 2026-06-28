@@ -38,6 +38,15 @@ enum OutboxEventType {
   DELETE_POST_MEDIA_FILE
 }
 
+enum NotificationType {
+  SUBSCRIPTION_ACTIVATED
+
+  SUBSCRIPTION_EXPIRING_7D
+  SUBSCRIPTION_EXPIRING_1D
+
+  NEXT_PAYMENT_1D
+}
+
 model OutboxEvent {
   id        String            @id @default(uuid()) @db.Uuid
   type      OutboxEventType
@@ -61,6 +70,10 @@ model User {
   accountType             AccountType @default(PERSONAL) @map("account_type")
   subscriptionActiveUntil DateTime?   @map("subscription_active_until")
 
+  isBanned  Boolean   @default(false) @map("is_banned")
+  banReason String?   @map("ban_reason") @db.VarChar(500)
+  bannedAt  DateTime? @map("banned_at")
+
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
@@ -71,6 +84,12 @@ model User {
   authAcconts           AuthAccount[]
   posts                 Post[]
   profiles              UserProfile[]
+  notifications         Notification[]
+  followers             UserFollow[]           @relation("UserFollowsAsFollowing")
+  following             UserFollow[]           @relation("UserFollowsAsFollower")
+  comments              Comment[]
+  postLikes             PostLike[]
+  commentLikes          CommentLike[]
 
   @@map("users")
 }
@@ -134,18 +153,34 @@ model EmailConfirmationCode {
   @@map("email_confirmation_codes")
 }
 
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int              @map("user_id")
+  message   String           @db.Text
+  type      NotificationType
+  payload   Json             @db.JsonB
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  deletedAt DateTime?        @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
 model Session {
-  id         Int      @id @default(autoincrement())
-  deviceId   String   @map("device_id")
-  deviceName String   @map("device_name") @db.VarChar(255)
-  browserName    String? @map("browser_name") @db.VarChar(255)
-  browserVersion String? @map("browser_version") @db.VarChar(255)
-  osName         String? @map("os_name") @db.VarChar(255)
-  osVersion      String? @map("os_version") @db.VarChar(255)
-  deviceType     String? @map("device_type") @db.VarChar(255)
-  ip         String   @db.VarChar(255)
-  iat        DateTime
-  exp        DateTime
+  id             Int      @id @default(autoincrement())
+  deviceId       String   @map("device_id")
+  deviceName     String   @map("device_name") @db.VarChar(255)
+  browserName    String?  @map("browser_name") @db.VarChar(255)
+  browserVersion String?  @map("browser_version") @db.VarChar(255)
+  osName         String?  @map("os_name") @db.VarChar(255)
+  osVersion      String?  @map("os_version") @db.VarChar(255)
+  deviceType     String?  @map("device_type") @db.VarChar(255)
+  ip             String   @db.VarChar(255)
+  iat            DateTime
+  exp            DateTime
 
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
@@ -155,6 +190,24 @@ model Session {
   userId Int  @map("user_id")
 
   @@map("sessions")
+}
+
+model AdminSession {
+  id             String    @id @default(uuid()) @db.Uuid
+  deviceName     String    @map("device_name") @db.VarChar(255)
+  browserName    String?   @map("browser_name") @db.VarChar(255)
+  browserVersion String?   @map("browser_version") @db.VarChar(255)
+  osName         String?   @map("os_name") @db.VarChar(255)
+  osVersion      String?   @map("os_version") @db.VarChar(255)
+  deviceType     String?   @map("device_type") @db.VarChar(255)
+  ip             String    @db.VarChar(255)
+  expiresAt      DateTime  @map("expires_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  @@index([expiresAt])
+  @@map("admin_sessions")
 }
 
 model PasswordRecoveryCode {
@@ -186,6 +239,8 @@ model Post {
   user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     Int         @map("user_id")
   postMedias PostMedia[]
+  comments   Comment[]
+  likes      PostLike[]
 
   @@index([userId, createdAt])
   @@map("posts")
@@ -207,4 +262,82 @@ model PostMedia {
   postId Int    @map("post_id")
 
   @@map("post_medias")
+}
+
+model UserFollow {
+  id Int @id @default(autoincrement())
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  /// ВНИМАНИЕ: Пара (followerId, followingId) имеет уникальное ограничение в БД только среди активных записей (Soft Delete).
+  /// @@unique не добавляется в схему намеренно, так как уникальность реализована partial unique index.
+  /// Добавлено в миграции: 20260622120100_add_social_models_partial_indexes
+  follower    User @relation("UserFollowsAsFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId  Int  @map("follower_id")
+  following   User @relation("UserFollowsAsFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+  followingId Int  @map("following_id")
+
+  @@map("user_follows")
+}
+
+model Comment {
+  id Int @id @default(autoincrement())
+
+  text String @db.VarChar(300)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  post     Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId   Int           @map("post_id")
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int           @map("user_id")
+  parent   Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  parentId Int?          @map("parent_id")
+  replies  Comment[]     @relation("CommentReplies")
+  likes    CommentLike[]
+
+  /// ВНИМАНИЕ: Partial индексы для листинга корневых комментариев и подсчёта ответов
+  /// (soft delete) добавлены в миграции: 20260627120000_add_comments_listing_indexes.
+  /// Keyset-пагинация листинга корневых комментариев — по (created_at, id).
+  @@map("comments")
+}
+
+model PostLike {
+  id Int @id @default(autoincrement())
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  /// ВНИМАНИЕ: Пара (postId, userId) имеет уникальное ограничение в БД только среди активных записей (Soft Delete).
+  /// @@unique не добавляется в схему намеренно, так как уникальность реализована partial unique index.
+  /// Добавлено в миграции: 20260622120100_add_social_models_partial_indexes
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int  @map("post_id")
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @map("user_id")
+
+  @@map("post_likes")
+}
+
+model CommentLike {
+  id Int @id @default(autoincrement())
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  /// ВНИМАНИЕ: Пара (commentId, userId) имеет уникальное ограничение в БД только среди активных записей (Soft Delete).
+  /// @@unique не добавляется в схему намеренно, так как уникальность реализована partial unique index.
+  /// Добавлено в миграции: 20260622120100_add_social_models_partial_indexes
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId Int     @map("comment_id")
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int     @map("user_id")
+
+  @@map("comment_likes")
 }

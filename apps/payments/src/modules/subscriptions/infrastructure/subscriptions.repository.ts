@@ -23,6 +23,26 @@ export class SubscriptionsRepository {
       where: { stripeSubId, deletedAt: null },
     });
   }
+  async findById(
+    subscriptionId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription | null> {
+    return tx.subscription.findFirst({
+      where: { id: subscriptionId, deletedAt: null },
+    });
+  }
+
+  async findByIdWithCustomerOrThrow(
+    subscriptionId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ) {
+    return tx.subscription.findFirstOrThrow({
+      where: { id: subscriptionId, deletedAt: null },
+      include: {
+        customer: true,
+      },
+    });
+  }
 
   async findActiveOrPastDueByUserId(userId: number, tx: Prisma.TransactionClient = this.prisma) {
     return tx.subscription.findFirst({
@@ -31,7 +51,23 @@ export class SubscriptionsRepository {
           userId,
         },
         OR: [{ status: SubscriptionStatus.ACTIVE }, { status: SubscriptionStatus.PAST_DUE }],
+        deletedAt: null,
       },
+    });
+  }
+
+  async findLastByUserId(
+    userId: number,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription | null> {
+    return tx.subscription.findFirst({
+      where: {
+        customer: {
+          userId,
+        },
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -59,12 +95,14 @@ export class SubscriptionsRepository {
   async updateAutoRenewal(
     subscriptionId: number,
     autoRenewal: boolean,
+    nextPaymentAt: Date | null,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription> {
     return tx.subscription.update({
-      where: { id: subscriptionId },
+      where: { id: subscriptionId, deletedAt: null },
       data: {
-        autoRenewal: autoRenewal,
+        autoRenewal,
+        nextPaymentAt,
       },
     });
   }
@@ -73,12 +111,6 @@ export class SubscriptionsRepository {
     dto: ActivateSubscriptionDto,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription | null> {
-    const subscription = await tx.subscription.findUnique({
-      where: { id: dto.subscriptionId },
-    });
-    if (!subscription) {
-      return null;
-    }
     return tx.subscription.update({
       where: { id: dto.subscriptionId },
       data: {
@@ -88,6 +120,7 @@ export class SubscriptionsRepository {
         currentPeriodStart: dto.currentPeriod.start,
         currentPeriodEnd: dto.currentPeriod.end,
         lastStripeEventAt: dto.lastStripeEventAt,
+        nextPaymentAt: dto.currentPeriod.end,
 
         customer: {
           update: {
@@ -103,6 +136,7 @@ export class SubscriptionsRepository {
     lastStripeEventAt: Date,
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<Subscription | null> {
+    // vilyamz,vitaliy[payments]: нормально ли то, что мы выполняем два запроса в бд в рамках одного метода?
     const subscription = await tx.subscription.findUnique({
       where: { id: subscriptionId },
     });
@@ -114,6 +148,7 @@ export class SubscriptionsRepository {
       data: {
         status: SubscriptionStatus.CANCELLED,
         autoRenewal: false,
+        nextPaymentAt: null,
         lastStripeEventAt,
       },
     });
@@ -121,25 +156,29 @@ export class SubscriptionsRepository {
 
   async setToPastDue(
     subscriptionId: number,
+    nextPaymentAt: Date | null,
     lastStripeEventAt: Date,
     tx: Prisma.TransactionClient = this.prisma,
-  ): Promise<Subscription | null> {
+  ): Promise<boolean> {
     const subscription = await tx.subscription.findUnique({
       where: { id: subscriptionId },
     });
     if (!subscription) {
-      return null;
+      return false;
     }
-    return tx.subscription.update({
+    const result = await tx.subscription.update({
       where: { id: subscriptionId },
       data: {
         status: SubscriptionStatus.PAST_DUE,
         accountType: AccountType.PERSONAL,
+        nextPaymentAt,
         lastStripeEventAt,
       },
     });
+    return !!result;
   }
 
+  //Метод для автопродления подписки страйпом автоматически по истечении периода подписки(autoRenewal: true)
   async renewSubscription(
     subscriptionId: number,
     period: BillingPeriod,
@@ -158,6 +197,24 @@ export class SubscriptionsRepository {
         status: SubscriptionStatus.ACTIVE,
         currentPeriodStart: period.start,
         currentPeriodEnd: period.end,
+        nextPaymentAt: period.end,
+        lastStripeEventAt,
+      },
+    });
+  }
+
+  //Этот метод используется для продления активной подписки покупке пользователем еще подписки
+  async extendSubscription(
+    subscriptionId: number,
+    newEnd: Date,
+    lastStripeEventAt: Date,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<Subscription | null> {
+    return tx.subscription.update({
+      where: { id: subscriptionId },
+      data: {
+        currentPeriodEnd: newEnd,
+        nextPaymentAt: newEnd,
         lastStripeEventAt,
       },
     });

@@ -1,5 +1,6 @@
 import { Controller } from '@nestjs/common';
-import { MessagePattern, Payload } from '@nestjs/microservices';
+import { MessagePattern } from '@nestjs/microservices';
+import { RpcPayload } from '../../../../../../libs/common/rpc/rpc-payload.decorator';
 import type {
   ConfirmUploadRequest,
   ConfirmUploadResponse,
@@ -30,7 +31,7 @@ export class MediaController {
 
   @MessagePattern({ cmd: FilesRpcCommand.GenerateUploadUrl })
   async generateUploadUrl(
-    @Payload()
+    @RpcPayload()
     data: GenerateUploadUrlsRequest,
   ): Promise<GenerateUploadUrlResponse[]> {
     return this.commandBus.execute(new GeneratedUploadUrlCommand(data));
@@ -38,7 +39,7 @@ export class MediaController {
 
   @MessagePattern({ cmd: FilesRpcCommand.ConfirmUpload })
   async confirmUpload(
-    @Payload()
+    @RpcPayload()
     data: ConfirmUploadRequest,
   ): Promise<ConfirmUploadResponse> {
     await this.commandBus.execute(new ConfirmUploadCommand(data));
@@ -47,7 +48,7 @@ export class MediaController {
 
   @MessagePattern({ cmd: FilesRpcCommand.ValidateFiles })
   async validateFiles(
-    @Payload()
+    @RpcPayload()
     data: ValidateFilesRequest,
   ): Promise<ValidateFilesResponse> {
     return this.commandBus.execute(new ValidateFilesCommand(data));
@@ -56,7 +57,7 @@ export class MediaController {
   // todo(review): стоит ли вообще этому сервису знать что то об avatar?
   @MessagePattern({ cmd: FilesRpcCommand.UploadFile })
   async uploadAvatar(
-    @Payload()
+    @RpcPayload()
     data: UploadFileRequest,
   ): Promise<UploadFileResponse> {
     const allowedTypes = Object.values(MimetypeAvatar) as string[];
@@ -89,7 +90,7 @@ export class MediaController {
   }
 
   @MessagePattern({ cmd: FilesRpcCommand.DeleteFile })
-  async deleteFile(@Payload() data: DeleteFileRequest): Promise<DeleteFileResponse> {
+  async deleteFile(@RpcPayload() data: DeleteFileRequest): Promise<DeleteFileResponse> {
     return this.commandBus.execute(new DeleteFileCommand(data));
   }
 }

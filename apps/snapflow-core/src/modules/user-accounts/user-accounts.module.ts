@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UsersRepository } from './users/infrastructure/users.repository';
 import { AuthController } from './auth/api/auth.controller';
 import { RegisterUserUseCase } from './auth/application/usecases/register-user.useсase';
@@ -11,8 +11,6 @@ import { LocalStrategy } from './auth/domain/guards/local/local.strategy';
 import { LoginUserUseCase } from './auth/application/usecases/login-user.usecase';
 import { CreateSessionUseCase } from './auth/sessions/application/usecases/create-session.usecase';
 import { SessionsRepository } from './auth/sessions/infrastructure/sessions.repository';
-import { AccessTokenProvider } from './auth/providers/access-token.provider';
-import { RefreshTokenProvider } from './auth/providers/refresh-token.provider';
 import { JwtRefreshStrategy } from './auth/domain/guards/bearer/jwt-refresh.strategy';
 import { LogoutUseCase } from './auth/application/usecases/logout.usecase';
 import { PasswordRecoveryUseCase } from './auth/application/usecases/password-recovery.usecase';
@@ -21,7 +19,6 @@ import { NewPasswordUseCase } from './auth/application/usecases/new-password.use
 import { GetMeQueryHandler } from './auth/application/queries/get-me.query-handler';
 import { JwtStrategy } from './auth/domain/guards/bearer/jwt.strategy';
 import { UsersQueryRepository } from './users/infrastructure/users.query-repository';
-import { AuthTokenService } from './auth/application/services/auth-token.service';
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
@@ -43,18 +40,22 @@ import { ProfileController } from './users/profile/api/profile.controller';
 import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
 import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
 import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
-import { EmailModule } from '../emails/email-module';
 import { FilesClientModule } from '../integrations/files/files-client.module';
 import { FilesMediaController } from '../integrations/files/api/files-media.controller';
 import { MulterModule } from '@nestjs/platform-express';
 import { UploadAvatarUseCase } from './users/profile/application/usecases/upload-avatar.usecase';
 import { DeleteAvatarUseCase } from './users/profile/application/usecases/delete-avatar.usecase';
 import { GetTotalCountRegisteredUsersQueryHandler } from './users/application/queries/get-total-count-registered-users.query-handler';
+import { SearchUsersQueryHandler } from './users/application/queries/search-users.query-handler';
 import { UsersController } from './users/api/users.controller';
 import { GetPublicProfileQueryHandler } from './users/profile/application/queries/get-public-profile.query-handler';
+import { GetProfileFollowingQueryHandler } from './users/profile/application/queries/get-profile-following.query-handler';
+import { GetProfileFollowersQueryHandler } from './users/profile/application/queries/get-profile-followers.query-handler';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
+import { JwtAuthModule } from './auth/jwt-auth.module';
+import { FollowsModule } from '../follows/follows.module';
 
 const controllers = [
   AuthController,
@@ -92,9 +93,12 @@ const useCases = [
 const queries = [
   GetMeQueryHandler,
   GetTotalCountRegisteredUsersQueryHandler,
+  SearchUsersQueryHandler,
 
   GetProfileQueryHandler,
   GetPublicProfileQueryHandler,
+  GetProfileFollowingQueryHandler,
+  GetProfileFollowersQueryHandler,
 
   GetAllSessionsQueryHandler,
 ];
@@ -103,7 +107,6 @@ const services = [
   CryptoService,
   UserUtilsService,
   UserValidationService,
-  AuthTokenService,
   SessionsCleanupService,
 ];
 const repositories = [
@@ -118,7 +121,8 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
 
 @Module({
   imports: [
-    EmailModule,
+    JwtAuthModule,
+    forwardRef(() => FollowsModule),
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({
@@ -132,15 +136,9 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
     }),
   ],
   controllers: [...controllers],
-  providers: [
-    AccessTokenProvider,
-    RefreshTokenProvider,
-    ...useCases,
-    ...queries,
-    ...services,
-    ...repositories,
-    ...strategies,
-  ],
+  providers: [...useCases, ...queries, ...services, ...repositories, ...strategies],
   exports: [ProfilesRepository, UsersRepository, FilesClientModule],
 })
-export class UserAccountsModule {}
+export class UserAccountsModule {
+  constructor() {}
+}

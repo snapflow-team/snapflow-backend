@@ -1,4 +1,5 @@
 import { PaymentProvider } from '@generated/prisma-payments';
+import { InternalPaymentItem } from 'libs/contracts/payments';
 import { PaymentWithSubscriptionAndCustomer } from '../../types/payment-with-subscription.type';
 import { Label } from '../../../../setup/configuration/business-rules-settings';
 import { ApiProperty } from '@nestjs/swagger';
@@ -23,6 +24,7 @@ export class PaymentViewDto {
   dateOfPayment: string;
 
   @ApiProperty({
+    type: 'string',
     description: 'Дата окончания подписки (ISO-8601) или null',
     example: '2026-05-21T10:30:00.000Z',
     nullable: true,
@@ -62,5 +64,19 @@ export class PaymentViewDto {
     dto.provider = payment.provider;
 
     return dto;
+  }
+
+  static mapToInternalItem(payment: PaymentWithSubscriptionAndCustomer): InternalPaymentItem {
+    const view = this.mapToView(payment);
+
+    return {
+      userId: view.userId,
+      subscriptionId: view.subscriptionId,
+      dateOfPayment: view.dateOfPayment,
+      endDateOfSubscription: view.endDateOfSubscription,
+      price: view.price,
+      subscriptionType: view.subscriptionType,
+      provider: view.provider,
+    };
   }
 }

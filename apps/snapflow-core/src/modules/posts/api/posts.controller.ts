@@ -13,7 +13,9 @@
   UseGuards,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { ExtractUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
+import {
+  ExtractUserFromRequest
+} from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../user-accounts/auth/domain/guards/dto/user-context.dto';
 import { JwtAuthGuard } from '../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
 import { CreatePostInputDto } from './input-dto/create-post.input-dto';
@@ -26,12 +28,15 @@ import { DeletePostSwagger } from './swagger/delete-post.swagger';
 import { GetProfilePostsSwagger } from './swagger/get-profile-posts.swagger';
 import { GetPostByIdSwagger } from './swagger/get-post.swagger';
 import { Public } from '../../user-accounts/decorators/public.decorator';
+import { OptionalAuth } from '../../user-accounts/decorators/optional-auth.decorator';
+import { ExtractOptionalUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-optional-user-from-request.decorator';
 import { EditPostCommand } from '../application/usecases/edit-post.use.case';
 import { DeletePostCommand } from '../application/usecases/delete-post.use.case';
 import { UpdatePostInputDto } from './input-dto/update-post.input.dto';
 import { GetUserPostsQuery } from '../application/queries/get-user-posts.query-handler';
 import { GetPostsQueryParamsDto } from './input-dto/get-posts.query-params.dto';
-import { PostsPageViewDto } from './view-dto/posts-page.view-dto';
+import { GetUserPostsQueryParamsDto } from './input-dto/get-user-posts.query-params.dto';
+import { UserPostsPageViewDto } from './view-dto/user-posts-page.view-dto';
 import { PostStatus } from '@generated/prisma-snapflow';
 import { GetPostsQuery } from '../application/queries/get-posts.query-handler';
 import { GetPublicPostsSwagger } from './swagger/get-public-posts.swagger';
@@ -39,6 +44,12 @@ import { PaginatedViewDto } from '../../../../../../libs/dto/paginated.view-dto'
 import { GetDraftQuery } from '../application/queries/get-draft.query-handler';
 import { GetDraftPostsSwagger } from './swagger/get-draft-posts.swagger';
 import { SaveDraftCommand } from '../application/usecases/save-draft.usecase';
+import { TogglePostLikeCommand } from '../application/usecases/toggle-post-like.usecase';
+import { TogglePostLikeSwagger } from './swagger/toggle-post-like.swagger';
+import { GetFeedQueryParamsDto } from './input-dto/get-feed.query-params.dto';
+import { FeedPageViewDto } from './view-dto/feed-page.view-dto';
+import { GetFeedQuery } from '../application/queries/get-feed.query-handler';
+import { GetFeedSwagger } from './swagger/get-feed.swagger';
 
 @Controller('posts')
 @UseGuards(JwtAuthGuard)
@@ -105,33 +116,65 @@ export class PostsController {
     await this.commandBus.execute<DeletePostCommand, void>(new DeletePostCommand(user.id, postId));
   }
 
+  @Post(':postId/like')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @TogglePostLikeSwagger()
+  async togglePostLike(
+    @Param('postId', ParseIntPipe) postId: number,
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+  ): Promise<void> {
+    await this.commandBus.execute<TogglePostLikeCommand, void>(
+      new TogglePostLikeCommand(userId, postId),
+    );
+  }
+
   @Get('draft')
   @GetDraftPostsSwagger()
   async getDraft(@ExtractUserFromRequest() { id: userId }: UserContextDto): Promise<PostViewDto> {
     return this.queryBus.execute<GetDraftQuery, PostViewDto>(new GetDraftQuery(userId));
   }
 
+  @Get('feed')
+  @GetFeedSwagger()
+  async getFeed(
+    @Query() query: GetFeedQueryParamsDto,
+    @ExtractUserFromRequest() { id: viewerId }: UserContextDto,
+  ): Promise<FeedPageViewDto> {
+    return this.queryBus.execute<GetFeedQuery, FeedPageViewDto>(new GetFeedQuery(query, viewerId));
+  }
+
   @Get('user/:userId')
   @Public()
+  @OptionalAuth()
   @GetProfilePostsSwagger()
   async getProfilePosts(
     @Param('userId', ParseIntPipe) userId: number,
-    @Query() dto: GetPostsQueryParamsDto,
-  ): Promise<PaginatedViewDto<PostsPageViewDto>> {
-    return this.queryBus.execute(new GetUserPostsQuery(dto, userId));
+    @Query() dto: GetUserPostsQueryParamsDto,
+    @ExtractOptionalUserFromRequest() viewer: UserContextDto | null,
+  ): Promise<UserPostsPageViewDto> {
+    return this.queryBus.execute(new GetUserPostsQuery(dto, userId, viewer?.id));
   }
 
   @Get(':id')
   @GetPostByIdSwagger()
   @Public()
-  async getPostById(@Param('id', ParseIntPipe) postId: number): Promise<PostViewDto> {
-    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId));
+  @OptionalAuth()
+  async getPostById(
+    @Param('id', ParseIntPipe) postId: number,
+    @ExtractOptionalUserFromRequest() viewer: UserContextDto | null,
+  ): Promise<PostViewDto> {
+    return this.queryBus.execute<GetPostQuery, PostViewDto>(new GetPostQuery(postId, viewer?.id));
   }
 
   @Get()
   @Public()
+  @OptionalAuth()
   @GetPublicPostsSwagger()
-  async getPosts(@Query() query: GetPostsQueryParamsDto): Promise<PaginatedViewDto<PostViewDto>> {
-    return this.queryBus.execute(new GetPostsQuery(query));
+  // TODO (задача 9): пробросить viewerId в Feed, когда появится эндпоинт ленты
+  async getPosts(
+    @Query() query: GetPostsQueryParamsDto,
+    @ExtractOptionalUserFromRequest() viewer: UserContextDto | null,
+  ): Promise<PaginatedViewDto<PostViewDto>> {
+    return this.queryBus.execute(new GetPostsQuery(query, viewer?.id));
   }
 }

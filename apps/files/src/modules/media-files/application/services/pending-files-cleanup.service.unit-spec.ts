@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { Logger } from '@nestjs/common';
 import { File, FileStatus } from '@generated/prisma-files';
 import { PendingFilesCleanupService } from './pending-files-cleanup.service';
 import { FilesRepository } from '../../infrastructure/repositories/files.repository';
@@ -8,6 +7,7 @@ import { StorageService } from '../../infrastructure/storage/storage.service';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { S3Settings } from '../../../../setup/configuration/s3.settings';
 import { PendingFilesCleanup } from '../constants/pending-files-cleanup.constants';
+import { LoggerFactory } from '../../../logger/logger.factory';
 
 function createMockFile(overrides: Partial<File> = {}): File {
   return {
@@ -29,8 +29,15 @@ describe('PendingFilesCleanupService (Unit)', () => {
   let filesRepositoryMock: Record<keyof FilesRepository, jest.Mock>;
   let storageServiceMock: Record<keyof StorageService, jest.Mock>;
   let configServiceMock: Record<keyof ConfigService<Configuration, true>, jest.Mock>;
+  let loggerMock: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
   beforeEach(async () => {
+    loggerMock = {
+      log: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+
     filesRepositoryMock = {
       createManyPending: jest.fn(),
       createUploaded: jest.fn(),
@@ -63,14 +70,15 @@ describe('PendingFilesCleanupService (Unit)', () => {
         { provide: FilesRepository, useValue: filesRepositoryMock },
         { provide: StorageService, useValue: storageServiceMock },
         { provide: ConfigService, useValue: configServiceMock },
+        {
+          provide: LoggerFactory,
+          useValue: { create: jest.fn().mockReturnValue(loggerMock) },
+        },
       ],
     }).compile();
 
     service = module.get<PendingFilesCleanupService>(PendingFilesCleanupService);
 
-    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     jest.clearAllMocks();
   });
 
@@ -130,9 +138,9 @@ describe('PendingFilesCleanupService (Unit)', () => {
       await expect(service.cleanupPendingFiles()).resolves.toBeUndefined();
 
       expect(filesRepositoryMock.lockStalePendingForCleanup).toHaveBeenCalledTimes(2);
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Failed to cleanup stale pending files',
-        expect.stringContaining('DB lock failed'),
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'DB lock failed' }),
+        'cleanupPendingFiles',
       );
     });
   });
@@ -171,8 +179,9 @@ describe('PendingFilesCleanupService (Unit)', () => {
 
       await service.cleanupPendingFiles();
 
-      expect(Logger.prototype.warn).toHaveBeenCalledWith(
+      expect(loggerMock.warn).toHaveBeenCalledWith(
         expect.stringContaining('Recovered 3 stale PENDING_CLEANUP files'),
+        'cleanupPendingFiles',
       );
       expect(filesRepositoryMock.lockStalePendingForCleanup).toHaveBeenCalledTimes(1);
     });
@@ -183,7 +192,7 @@ describe('PendingFilesCleanupService (Unit)', () => {
 
       await service.cleanupPendingFiles();
 
-      expect(Logger.prototype.warn).not.toHaveBeenCalled();
+      expect(loggerMock.warn).not.toHaveBeenCalled();
       expect(filesRepositoryMock.lockStalePendingForCleanup).toHaveBeenCalledTimes(1);
     });
   });
@@ -199,7 +208,7 @@ describe('PendingFilesCleanupService (Unit)', () => {
       expect(filesRepositoryMock.confirmManyUploads).not.toHaveBeenCalled();
       expect(filesRepositoryMock.releaseManyToPending).not.toHaveBeenCalled();
       expect(filesRepositoryMock.deleteByIds).not.toHaveBeenCalled();
-      expect(Logger.prototype.log).not.toHaveBeenCalled();
+      expect(loggerMock.log).not.toHaveBeenCalled();
     });
   });
 
@@ -237,7 +246,10 @@ describe('PendingFilesCleanupService (Unit)', () => {
       expect(filesRepositoryMock.deleteByIds).toHaveBeenCalledWith(['f1', 'f2', 'f3']);
       expect(filesRepositoryMock.confirmManyUploads).not.toHaveBeenCalled();
       expect(filesRepositoryMock.releaseManyToPending).not.toHaveBeenCalled();
-      expect(Logger.prototype.log).toHaveBeenCalledWith(expect.stringContaining('deleted=3'));
+      expect(loggerMock.log).toHaveBeenCalledWith(
+        expect.stringContaining('deleted=3'),
+        'cleanupPendingFiles',
+      );
     });
 
     it('objectExists бросает ошибку → попадают в idsToRelease (releaseManyToPending)', async () => {
@@ -248,12 +260,8 @@ describe('PendingFilesCleanupService (Unit)', () => {
       expect(filesRepositoryMock.releaseManyToPending).toHaveBeenCalledWith(['f1', 'f2', 'f3']);
       expect(filesRepositoryMock.confirmManyUploads).not.toHaveBeenCalled();
       expect(filesRepositoryMock.deleteByIds).not.toHaveBeenCalled();
-      expect(Logger.prototype.error).toHaveBeenCalledTimes(3);
-      expect(Logger.prototype.error).toHaveBeenNthCalledWith(
-        1,
-        'Failed to check object for pending file f1',
-        expect.stringContaining('S3 unavailable'),
-      );
+      expect(loggerMock.error).toHaveBeenCalledTimes(3);
+      expect(loggerMock.error).toHaveBeenNthCalledWith(1, expect.any(Error), 'cleanupPendingFiles');
     });
 
     it('смешанный сценарий: recover + delete + release с правильным порядком', async () => {
@@ -272,15 +280,15 @@ describe('PendingFilesCleanupService (Unit)', () => {
       expect(filesRepositoryMock.releaseManyToPending).toHaveBeenCalledWith(['f3']);
       expect(filesRepositoryMock.deleteByIds).toHaveBeenCalledWith(['f2']);
 
-      const confirmOrder = (filesRepositoryMock.confirmManyUploads as jest.Mock).mock.invocationCallOrder[0];
-      const releaseOrder = (filesRepositoryMock.releaseManyToPending as jest.Mock).mock
-        .invocationCallOrder[0];
-      const deleteOrder = (filesRepositoryMock.deleteByIds as jest.Mock).mock.invocationCallOrder[0];
+      const confirmOrder = filesRepositoryMock.confirmManyUploads.mock.invocationCallOrder[0];
+      const releaseOrder = filesRepositoryMock.releaseManyToPending.mock.invocationCallOrder[0];
+      const deleteOrder = filesRepositoryMock.deleteByIds.mock.invocationCallOrder[0];
 
       expect(confirmOrder).toBeLessThan(releaseOrder);
       expect(releaseOrder).toBeLessThan(deleteOrder);
-      expect(Logger.prototype.log).toHaveBeenCalledWith(
+      expect(loggerMock.log).toHaveBeenCalledWith(
         expect.stringContaining('recovered=1 deleted=1 released=1 thresholdMinutes=20'),
+        'cleanupPendingFiles',
       );
     });
 
@@ -290,11 +298,7 @@ describe('PendingFilesCleanupService (Unit)', () => {
       await service.cleanupPendingFiles();
 
       expect(filesRepositoryMock.releaseManyToPending).toHaveBeenCalledWith(['f1', 'f2', 'f3']);
-      expect(Logger.prototype.error).toHaveBeenNthCalledWith(
-        1,
-        'Failed to check object for pending file f1',
-        '',
-      );
+      expect(loggerMock.error).toHaveBeenNthCalledWith(1, expect.any(Error), 'cleanupPendingFiles');
     });
   });
 
@@ -313,8 +317,9 @@ describe('PendingFilesCleanupService (Unit)', () => {
 
       await service.cleanupPendingFiles();
 
-      expect(Logger.prototype.log).toHaveBeenCalledWith(
+      expect(loggerMock.log).toHaveBeenCalledWith(
         expect.stringContaining('recovered=1 deleted=0 released=0 thresholdMinutes=20'),
+        'cleanupPendingFiles',
       );
     });
 
@@ -329,8 +334,9 @@ describe('PendingFilesCleanupService (Unit)', () => {
       await service.cleanupPendingFiles();
 
       expect(filesRepositoryMock.deleteByIds).toHaveBeenCalledWith(['f1', 'f2']);
-      expect(Logger.prototype.log).toHaveBeenCalledWith(
+      expect(loggerMock.log).toHaveBeenCalledWith(
         expect.stringContaining('recovered=0 deleted=0 released=0 thresholdMinutes=20'),
+        'cleanupPendingFiles',
       );
     });
   });
@@ -354,9 +360,9 @@ describe('PendingFilesCleanupService (Unit)', () => {
       await expect(service.cleanupPendingFiles()).resolves.toBeUndefined();
 
       expect(filesRepositoryMock.recoverStaleProcessing).toHaveBeenCalledTimes(2);
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Failed to cleanup stale pending files',
-        expect.stringContaining('recover failed'),
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'recover failed' }),
+        'cleanupPendingFiles',
       );
     });
 
@@ -369,9 +375,9 @@ describe('PendingFilesCleanupService (Unit)', () => {
       await expect(service.cleanupPendingFiles()).resolves.toBeUndefined();
 
       expect(filesRepositoryMock.lockStalePendingForCleanup).toHaveBeenCalledTimes(2);
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Failed to cleanup stale pending files',
-        expect.stringContaining('lock failed'),
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'lock failed' }),
+        'cleanupPendingFiles',
       );
     });
 
@@ -388,9 +394,9 @@ describe('PendingFilesCleanupService (Unit)', () => {
       await expect(service.cleanupPendingFiles()).resolves.toBeUndefined();
 
       expect(filesRepositoryMock.confirmManyUploads).toHaveBeenCalledTimes(2);
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Failed to cleanup stale pending files',
-        expect.stringContaining('confirm failed'),
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'confirm failed' }),
+        'cleanupPendingFiles',
       );
     });
 
@@ -407,9 +413,9 @@ describe('PendingFilesCleanupService (Unit)', () => {
       await expect(service.cleanupPendingFiles()).resolves.toBeUndefined();
 
       expect(filesRepositoryMock.releaseManyToPending).toHaveBeenCalledTimes(2);
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Failed to cleanup stale pending files',
-        expect.stringContaining('release failed'),
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'release failed' }),
+        'cleanupPendingFiles',
       );
     });
 
@@ -426,20 +432,22 @@ describe('PendingFilesCleanupService (Unit)', () => {
       await expect(service.cleanupPendingFiles()).resolves.toBeUndefined();
 
       expect(filesRepositoryMock.deleteByIds).toHaveBeenCalledTimes(2);
-      expect(Logger.prototype.error).toHaveBeenCalledWith(
-        'Failed to cleanup stale pending files',
-        expect.stringContaining('delete failed'),
+      expect(loggerMock.error).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'delete failed' }),
+        'cleanupPendingFiles',
       );
     });
 
     it('не-Error в верхнем catch: Logger.error получает пустой stack', async () => {
-      filesRepositoryMock.recoverStaleProcessing.mockRejectedValueOnce('oops').mockResolvedValueOnce(0);
+      filesRepositoryMock.recoverStaleProcessing
+        .mockRejectedValueOnce('oops')
+        .mockResolvedValueOnce(0);
 
       await expect(service.cleanupPendingFiles()).resolves.toBeUndefined();
       await expect(service.cleanupPendingFiles()).resolves.toBeUndefined();
 
       expect(filesRepositoryMock.recoverStaleProcessing).toHaveBeenCalledTimes(2);
-      expect(Logger.prototype.error).toHaveBeenCalledWith('Failed to cleanup stale pending files', '');
+      expect(loggerMock.error).toHaveBeenCalledWith(expect.anything(), 'cleanupPendingFiles');
     });
   });
 });

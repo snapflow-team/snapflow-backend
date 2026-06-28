@@ -1,4 +1,4 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { UsersRepository } from '../../../users/infrastructure/users.repository';
 import { AuthTokenService } from '../services/auth-token.service';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
@@ -12,6 +12,8 @@ import { PrismaService } from '../../../../../database/prisma.service';
 import { OAuthApplicationDto } from '../dto/oauth.application-dto';
 import { BadRequestException } from '../../../../../common/exceptions/domain-exceptions';
 import { AuthAccount, ConfirmationStatus, Prisma, User } from '@generated/prisma-snapflow';
+import { NewSignupEvent } from '../../domain/events/new-signup.event';
+import { assertAuthUserActive } from '../../domain/utils/assert-auth-user-active';
 
 export class OAuthCommand {
   constructor(public readonly dto: OAuthApplicationDto) {}
@@ -26,12 +28,15 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
     private readonly cryptoService: CryptoService,
     private readonly userUtilsService: UserUtilsService,
     private readonly sessionsRepository: SessionsRepository,
+    private readonly eventBus: EventBus,
   ) {}
 
   async execute({
     dto: { provider, providerAccountId, email, username, ip, userAgent },
   }: OAuthCommand): Promise<AuthTokens> {
-    return this.prismaService.$transaction(async (tx) => {
+    let isNewSignup = false;
+
+    const tokens = await this.prismaService.$transaction(async (tx) => {
       let userId: number;
 
       const existingAuthAccount: AuthAccount | null =
@@ -43,6 +48,11 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
 
       if (existingAuthAccount) {
         userId = existingAuthAccount.userId;
+        const existingUserByAuthAccount: User | null = await this.usersRepository.findUserById(
+          userId,
+          tx,
+        );
+        assertAuthUserActive(existingUserByAuthAccount);
       } else {
         if (!email) {
           throw new BadRequestException(`${provider} user has no email`);
@@ -52,6 +62,7 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
           await this.usersRepository.findUserByEmailWithEmailConfirmation(email, tx);
 
         if (existingUser) {
+          assertAuthUserActive(existingUser);
           userId = existingUser.id;
 
           if (!existingUser.emailConfirmationCode) {
@@ -102,6 +113,7 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
           );
 
           userId = createdUser.id;
+          isNewSignup = true;
         }
       }
 
@@ -135,5 +147,11 @@ export class OAuthUseCase implements ICommandHandler<OAuthCommand> {
 
       return { accessToken, refreshToken };
     });
+
+    if (isNewSignup) {
+      await this.eventBus.publish(new NewSignupEvent());
+    }
+
+    return tokens;
   }
 }

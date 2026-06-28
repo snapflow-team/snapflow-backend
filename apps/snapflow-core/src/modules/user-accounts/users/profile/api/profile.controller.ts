@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -32,9 +33,17 @@ import { ApiUploadAvatar } from './swagger/upload-avatar.swagger';
 import { DeleteAvatarCommand } from '../application/usecases/delete-avatar.usecase';
 import { ApiDeleteAvatar } from './swagger/delete-avatar.swagger';
 import { Public } from '../../../decorators/public.decorator';
+import { OptionalAuth } from '../../../decorators/optional-auth.decorator';
+import { ExtractOptionalUserFromRequest } from '../../../auth/domain/guards/decorators/extract-optional-user-from-request.decorator';
 import { PublicProfileViewDto } from './dto/view-dto/public-profile.view-dto';
 import { GetPublicProfileQuery } from '../application/queries/get-public-profile.query-handler';
 import { ApiGetPublicProfile } from './swagger/get-public-profile.swagger';
+import { ProfileFollowListQueryParamsDto } from './dto/input-dto/profile-follow-list.query-params.dto';
+import { ProfileFollowListPageViewDto } from './dto/view-dto/profile-follow-list-page.view-dto';
+import { ApiGetProfileFollowing } from './swagger/get-profile-following.swagger';
+import { ApiGetProfileFollowers } from './swagger/get-profile-followers.swagger';
+import { GetProfileFollowingQuery } from '../application/queries/get-profile-following.query-handler';
+import { GetProfileFollowersQuery } from '../application/queries/get-profile-followers.query-handler';
 
 @ApiTags('Profile')
 @UseGuards(JwtAuthGuard)
@@ -69,13 +78,35 @@ export class ProfileController {
     return await this.queryBus.execute(new GetProfileQuery(userId));
   }
 
+  @Get(':profileId/following')
+  @ApiGetProfileFollowing()
+  async getProfileFollowing(
+    @Param('profileId', ParseIntPipe) profileId: number,
+    @Query() query: ProfileFollowListQueryParamsDto,
+    @ExtractUserFromRequest() { id: viewerUserId }: UserContextDto,
+  ): Promise<ProfileFollowListPageViewDto> {
+    return this.queryBus.execute(new GetProfileFollowingQuery(profileId, query, viewerUserId));
+  }
+
+  @Get(':profileId/followers')
+  @ApiGetProfileFollowers()
+  async getProfileFollowers(
+    @Param('profileId', ParseIntPipe) profileId: number,
+    @Query() query: ProfileFollowListQueryParamsDto,
+    @ExtractUserFromRequest() { id: viewerUserId }: UserContextDto,
+  ): Promise<ProfileFollowListPageViewDto> {
+    return this.queryBus.execute(new GetProfileFollowersQuery(profileId, query, viewerUserId));
+  }
+
   @Get(':profileId')
   @Public()
+  @OptionalAuth()
   @ApiGetPublicProfile()
   async getPublicProfile(
     @Param('profileId', ParseIntPipe) profileId: number,
+    @ExtractOptionalUserFromRequest() viewer: UserContextDto | null,
   ): Promise<PublicProfileViewDto> {
-    return await this.queryBus.execute(new GetPublicProfileQuery(profileId));
+    return await this.queryBus.execute(new GetPublicProfileQuery(profileId, viewer?.id));
   }
 
   // Avatar -------------------------------------

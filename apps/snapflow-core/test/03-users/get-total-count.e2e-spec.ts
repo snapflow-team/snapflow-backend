@@ -5,8 +5,8 @@ import { HttpStatus } from '@nestjs/common';
 import { AppTestManager } from '../managers/app.test-manager';
 
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
-import { EmailService } from '../../src/modules/emails/services/email.service';
-import { EmailTemplate } from '../../src/modules/emails/templates/types';
+import { EmailService } from '../../src/modules/notifications/emails/services/email.service';
+import { EmailTemplate } from '../../src/modules/notifications/emails/templates/types';
 
 describe('UsersController - getTotalCount() (GET: /users/total-count)', () => {
   let appTestManager: AppTestManager;

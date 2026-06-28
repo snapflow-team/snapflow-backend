@@ -12,6 +12,9 @@ export class ApiSettings {
   @IsNumber()
   port: number;
 
+  @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
+  publicApiBaseUrl: string;
+
   @IsNotEmpty()
   accessTokenSecret: string;
 
@@ -96,8 +99,13 @@ export class ApiSettings {
   @IsString()
   paymentsEventsQueueName: string;
 
+  @IsString()
+  notificationsEventsQueueName: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
+
+    this.publicApiBaseUrl = environmentVariables.PUBLIC_API_BASE_URL;
 
     this.accessTokenSecret = environmentVariables.JWT_SECRET_AT;
     this.refreshTokenSecret = environmentVariables.JWT_SECRET_RT;
@@ -140,6 +148,7 @@ export class ApiSettings {
     this.rabbitMqUrl = environmentVariables.RABBITMQ_URL;
 
     this.paymentsEventsQueueName = environmentVariables.PAYMENTS_EVENTS_QUEUE_NAME;
+    this.notificationsEventsQueueName = environmentVariables.NOTIFICATIONS_EVENTS_QUEUE_NAME;
   }
 
   getJwtOptions() {
