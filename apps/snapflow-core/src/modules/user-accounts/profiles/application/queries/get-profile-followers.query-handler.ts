@@ -1,9 +1,9 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FollowsQueryRepository } from '../../../../follows/infrastructure/follows.query-repository';
+import { FollowsQueryRepository } from '../../../follows/infrastructure/follows.query-repository';
 import { ProfileFollowListQueryParamsDto } from '../../api/dto/input-dto/profile-follow-list.query-params.dto';
 import { ProfileFollowListPageViewDto } from '../../api/dto/view-dto/profile-follow-list-page.view-dto';
 import { mapProfileFollowListPage } from './map-profile-follow-list-page';
-import { ProfileFollowListRow } from '../../../../follows/infrastructure/types/profile-follow-list-row.type';
+import { ProfileFollowListRow } from '../../../follows/infrastructure/types/profile-follow-list-row.type';
 import { CursorPaginatedResult } from '../../../../../../../../libs/common/utils/cursor-pagination.util';
 
 export class GetProfileFollowersQuery {

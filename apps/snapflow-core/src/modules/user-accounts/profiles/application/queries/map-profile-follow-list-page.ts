@@ -1,5 +1,5 @@
-import { FollowsQueryRepository } from '../../../../follows/infrastructure/follows.query-repository';
-import { ProfileFollowListRow } from '../../../../follows/infrastructure/types/profile-follow-list-row.type';
+import { FollowsQueryRepository } from '../../../follows/infrastructure/follows.query-repository';
+import { ProfileFollowListRow } from '../../../follows/infrastructure/types/profile-follow-list-row.type';
 import { ProfileFollowListPageViewDto } from '../../api/dto/view-dto/profile-follow-list-page.view-dto';
 import { ProfileFollowListItemViewDto } from '../../api/dto/view-dto/profile-follow-list-item.view-dto';
 import { CursorPaginatedResult } from '../../../../../../../../libs/common/utils/cursor-pagination.util';

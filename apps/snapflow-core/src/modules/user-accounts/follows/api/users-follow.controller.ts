@@ -10,9 +10,9 @@ import {
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
-import { ExtractUserFromRequest } from '../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
-import { UserContextDto } from '../../user-accounts/auth/domain/guards/dto/user-context.dto';
-import { JwtAuthGuard } from '../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
+import { ExtractUserFromRequest } from '../../auth/domain/guards/decorators/extract-user-from-request.decorator';
+import { UserContextDto } from '../../auth/domain/guards/dto/user-context.dto';
+import { JwtAuthGuard } from '../../auth/domain/guards/bearer/jwt-auth.guard';
 import { FollowUserCommand } from '../application/usecases/follow-user.usecase';
 import { UnfollowUserCommand } from '../application/usecases/unfollow-user.usecase';
 import { FollowUserSwagger } from './swagger/follow-user.swagger';

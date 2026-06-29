@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { UsersRepository } from './users/infrastructure/users.repository';
 import { AuthController } from './auth/api/auth.controller';
 import { RegisterUserUseCase } from './auth/application/usecases/register-user.useсase';
@@ -55,7 +55,11 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
 import { JwtAuthModule } from './auth/jwt-auth.module';
-import { FollowsModule } from '../follows/follows.module';
+import { UsersFollowController } from './follows/api/users-follow.controller';
+import { FollowUserUseCase } from './follows/application/usecases/follow-user.usecase';
+import { UnfollowUserUseCase } from './follows/application/usecases/unfollow-user.usecase';
+import { FollowsRepository } from './follows/infrastructure/follows-repository';
+import { FollowsQueryRepository } from './follows/infrastructure/follows.query-repository';
 
 const controllers = [
   AuthController,
@@ -65,6 +69,7 @@ const controllers = [
   PostsController,
   ProfileController,
   FilesMediaController,
+  UsersFollowController,
 ];
 const useCases = [
   RegisterUserUseCase,
@@ -89,6 +94,9 @@ const useCases = [
   UpdateProfileUseCase,
   UploadAvatarUseCase,
   DeleteAvatarUseCase,
+
+  FollowUserUseCase,
+  UnfollowUserUseCase,
 ];
 const queries = [
   GetMeQueryHandler,
@@ -116,13 +124,15 @@ const repositories = [
   SessionQueryRepository,
   ProfilesRepository,
   ProfilesQueryRepository,
+
+  FollowsRepository,
+  FollowsQueryRepository,
 ];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
 
 @Module({
   imports: [
     JwtAuthModule,
-    forwardRef(() => FollowsModule),
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({
@@ -137,7 +147,7 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
   ],
   controllers: [...controllers],
   providers: [...useCases, ...queries, ...services, ...repositories, ...strategies],
-  exports: [ProfilesRepository, UsersRepository, FilesClientModule],
+  exports: [ProfilesRepository, UsersRepository, FilesClientModule, FollowsQueryRepository],
 })
 export class UserAccountsModule {
   constructor() {}

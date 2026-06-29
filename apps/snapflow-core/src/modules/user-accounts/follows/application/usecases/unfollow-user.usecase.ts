@@ -1,30 +1,29 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { FollowsRepository } from '../../infrastructure/follows-repository';
-import { UsersRepository } from '../../../user-accounts/users/infrastructure/users.repository';
+import { UsersRepository } from '../../../users/infrastructure/users.repository';
 import {
   BadRequestException,
-  ForbiddenException,
   NotFoundException,
-} from '../../../../common/exceptions/domain-exceptions';
+} from '../../../../../common/exceptions/domain-exceptions';
 import { User } from '@generated/prisma-snapflow';
 
-export class FollowUserCommand {
+export class UnfollowUserCommand {
   constructor(
     public readonly followerId: number,
     public readonly targetUserId: number,
   ) {}
 }
 
-@CommandHandler(FollowUserCommand)
-export class FollowUserUseCase implements ICommandHandler<FollowUserCommand> {
+@CommandHandler(UnfollowUserCommand)
+export class UnfollowUserUseCase implements ICommandHandler<UnfollowUserCommand> {
   constructor(
     private readonly followsRepository: FollowsRepository,
     private readonly usersRepository: UsersRepository,
   ) {}
 
-  async execute({ followerId, targetUserId }: FollowUserCommand): Promise<void> {
+  async execute({ followerId, targetUserId }: UnfollowUserCommand): Promise<void> {
     if (followerId === targetUserId) {
-      throw new BadRequestException('You cannot follow yourself');
+      throw new BadRequestException('You cannot unfollow yourself');
     }
 
     const targetUser: User | null = await this.usersRepository.findUserById(targetUserId);
@@ -33,10 +32,6 @@ export class FollowUserUseCase implements ICommandHandler<FollowUserCommand> {
       throw new NotFoundException('User not found');
     }
 
-    if (targetUser.isBanned) {
-      throw new ForbiddenException('Cannot follow a blocked user');
-    }
-
-    await this.followsRepository.follow(followerId, targetUserId);
+    await this.followsRepository.unfollow(followerId, targetUserId);
   }
 }
