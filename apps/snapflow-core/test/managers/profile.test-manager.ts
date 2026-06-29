@@ -3,8 +3,8 @@ import { Server } from 'http';
 import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
-import { UpdateProfileInputDto } from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
-import { PublicProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/public-profile.view-dto';
+import { UpdateProfileInputDto } from '../../src/modules/user-accounts/profiles/api/dto/input-dto/update-profile.input-dto';
+import { PublicProfileViewDto } from '../../src/modules/user-accounts/profiles/api/dto/view-dto/public-profile.view-dto';
 
 export class ProfileTestManager {
   constructor(

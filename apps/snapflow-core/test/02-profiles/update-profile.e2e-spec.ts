@@ -5,7 +5,7 @@ import { AuthTestManager } from '../managers/auth.test-manager';
 import { AppTestManager } from '../managers/app.test-manager';
 import request, { Response } from 'supertest';
 import { HttpStatus } from '@nestjs/common';
-import { UpdateProfileInputDto } from '../../src/modules/user-accounts/users/profile/api/dto/input-dto/update-profile.input-dto';
+import { UpdateProfileInputDto } from '../../src/modules/user-accounts/profiles/api/dto/input-dto/update-profile.input-dto';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
 import { JwtService } from '@nestjs/jwt';

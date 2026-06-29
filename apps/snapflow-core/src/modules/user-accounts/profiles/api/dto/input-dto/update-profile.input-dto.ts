@@ -1,7 +1,7 @@
 import { IsDateString, IsOptional, Matches } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsStringWithTrim } from '../../../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
-import { usernameConstraints } from '../../../../../auth/api/input-dto/registration-user.input-dto';
+import { IsStringWithTrim } from '../../../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
+import { usernameConstraints } from '../../../../auth/api/input-dto/registration-user.input-dto';
 
 export const firstNameConstraints = {
   minLength: 1,

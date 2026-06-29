@@ -1,11 +1,11 @@
 import { UploadAvatarApplicationDto } from '../dto/apload-avatar.application-dto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ProfilesRepository } from '../../infrastructure/profiles.repository';
-import { FilesClient } from '../../../../../integrations/files/files.client';
+import { FilesClient } from '../../../../integrations/files/files.client';
 import {
   UploadFileRequest,
   UploadFileResponse,
-} from '../../../../../../../../../libs/contracts/files';
+} from '../../../../../../../../libs/contracts/files';
 
 export class UploadAvatarCommand {
   constructor(public readonly dto: UploadAvatarApplicationDto) {}

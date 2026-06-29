@@ -1,7 +1,7 @@
 import { FileTypeValidator, Injectable, MaxFileSizeValidator, ParseFilePipe, UploadedFile, } from '@nestjs/common';
-import { ValidationException } from '../../../../../../../../libs/exceptions/core';
-import { AVATAR_IMAGE_SIZE } from '../../../../../../../../libs/common/constants/image-size.constants';
-import { MimetypeAvatar } from '../../../../../../../../libs/contracts/files/mimetype-avatar.enum';
+import { ValidationException } from '../../../../../../../libs/exceptions/core';
+import { AVATAR_IMAGE_SIZE } from '../../../../../../../libs/common/constants/image-size.constants';
+import { MimetypeAvatar } from '../../../../../../../libs/contracts/files/mimetype-avatar.enum';
 
 @Injectable()
 export class AvatarFilePipe extends ParseFilePipe {

@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ProfilesRepository } from '../../infrastructure/profiles.repository';
-import { FilesClient } from '../../../../../integrations/files/files.client';
+import { FilesClient } from '../../../../integrations/files/files.client';
 import { UserProfile } from '@generated/prisma-snapflow';
 
 export class DeleteAvatarCommand {

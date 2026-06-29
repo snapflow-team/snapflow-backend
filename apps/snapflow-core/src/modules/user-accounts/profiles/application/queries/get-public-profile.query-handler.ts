@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { ProfilesQueryRepository } from '../../infrastructure/query/profiles.query-repository';
 import { PublicProfileViewDto } from '../../api/dto/view-dto/public-profile.view-dto';
-import { FollowsQueryRepository } from '../../../../../follows/infrastructure/follows.query-repository';
+import { FollowsQueryRepository } from '../../../../follows/infrastructure/follows.query-repository';
 
 export class GetPublicProfileQuery {
   constructor(

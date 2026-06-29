@@ -1,7 +1,7 @@
-import { PrismaService } from '../../../../../../database/prisma.service';
+import { PrismaService } from '../../../../../database/prisma.service';
 import { ProfileViewDto } from '../../api/dto/view-dto/profile.view-dto';
 import { Injectable } from '@nestjs/common';
-import { NotFoundException } from '../../../../../../common/exceptions/domain-exceptions';
+import { NotFoundException } from '../../../../../common/exceptions/domain-exceptions';
 import { PostStatus } from '@generated/prisma-snapflow';
 import { ProfileWithUserMetadata } from '../types/profile-with-user-metadata.type';
 import { PublicProfileViewDto } from '../../api/dto/view-dto/public-profile.view-dto';

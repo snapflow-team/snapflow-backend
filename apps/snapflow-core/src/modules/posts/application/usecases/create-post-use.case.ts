@@ -3,7 +3,7 @@ import { PostsRepository } from '../../infrastructure/posts-repository';
 import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
 import { FilesClient } from '../../../integrations/files/files.client';
 import { ValidateFilesResponse } from '../../../../../../../libs/contracts/files';
-import { ProfilesRepository } from '../../../user-accounts/users/profile/infrastructure/profiles.repository';
+import { ProfilesRepository } from '../../../user-accounts/profiles/infrastructure/profiles.repository';
 import { CreatePostApplicationDto } from '../dto/create-post-application.dto';
 import { PostCreatedEvent } from '../../domain/events/post-created.event';
 

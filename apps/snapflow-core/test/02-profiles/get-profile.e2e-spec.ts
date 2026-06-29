@@ -7,7 +7,7 @@ import { AppTestManager } from '../managers/app.test-manager';
 import request, { Response } from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import { HttpStatus } from '@nestjs/common';
-import { ProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/profile.view-dto';
+import { ProfileViewDto } from '../../src/modules/user-accounts/profiles/api/dto/view-dto/profile.view-dto';
 import { ACCESS_TOKEN_STRATEGY_INJECT_TOKEN } from '../../src/modules/user-accounts/auth/constants/auth.constants';
 import { JwtService } from '@nestjs/jwt';
 import { TestUtils } from '../helpers/test.utils';

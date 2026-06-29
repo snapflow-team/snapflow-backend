@@ -9,7 +9,7 @@ import {
   ApiQuery,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { ErrorResponseDto } from '../../../../../../common/exceptions/error-response-body.dto';
+import { ErrorResponseDto } from '../../../../../common/exceptions/error-response-body.dto';
 import { ProfileFollowListPageViewDto } from '../dto/view-dto/profile-follow-list-page.view-dto';
 
 export function ApiGetProfileFollowers() {

@@ -14,9 +14,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { JwtAuthGuard } from '../../../auth/domain/guards/bearer/jwt-auth.guard';
-import { ExtractUserFromRequest } from '../../../auth/domain/guards/decorators/extract-user-from-request.decorator';
-import { UserContextDto } from '../../../auth/domain/guards/dto/user-context.dto';
+import { JwtAuthGuard } from '../../auth/domain/guards/bearer/jwt-auth.guard';
+import { ExtractUserFromRequest } from '../../auth/domain/guards/decorators/extract-user-from-request.decorator';
+import { UserContextDto } from '../../auth/domain/guards/dto/user-context.dto';
 import { UpdateProfileInputDto } from './dto/input-dto/update-profile.input-dto';
 import { UpdateProfileCommand } from '../application/usecases/update-profile.usecase';
 import { ProfileViewDto } from './dto/view-dto/profile.view-dto';
@@ -32,9 +32,9 @@ import { UploadAvatarCommand } from '../application/usecases/upload-avatar.useca
 import { ApiUploadAvatar } from './swagger/upload-avatar.swagger';
 import { DeleteAvatarCommand } from '../application/usecases/delete-avatar.usecase';
 import { ApiDeleteAvatar } from './swagger/delete-avatar.swagger';
-import { Public } from '../../../decorators/public.decorator';
-import { OptionalAuth } from '../../../decorators/optional-auth.decorator';
-import { ExtractOptionalUserFromRequest } from '../../../auth/domain/guards/decorators/extract-optional-user-from-request.decorator';
+import { Public } from '../../decorators/public.decorator';
+import { OptionalAuth } from '../../decorators/optional-auth.decorator';
+import { ExtractOptionalUserFromRequest } from '../../auth/domain/guards/decorators/extract-optional-user-from-request.decorator';
 import { PublicProfileViewDto } from './dto/view-dto/public-profile.view-dto';
 import { GetPublicProfileQuery } from '../application/queries/get-public-profile.query-handler';
 import { ApiGetPublicProfile } from './swagger/get-public-profile.swagger';
