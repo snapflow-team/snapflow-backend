@@ -7,14 +7,19 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { EmailService } from '../../src/modules/notifications/emails/services/email.service';
 import { EmailTemplate } from '../../src/modules/notifications/emails/templates/types';
 import { ProfileTestManager } from '../managers/profile.test-manager';
+import { FollowTestManager } from '../managers/follow.test-manager';
 import { UserProfile } from '@generated/prisma-snapflow';
 import { PublicProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/public-profile.view-dto';
 import { PostTestManager } from '../managers/post.test-manager';
+import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
+
+const DEFAULT_PASSWORD = 'Qwerty_1';
 
 describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId)', () => {
   let appTestManager: AppTestManager;
   let authTestManager: AuthTestManager;
   let profileTestManager: ProfileTestManager;
+  let followTestManager: FollowTestManager;
   let postTestManager: PostTestManager;
   let server: Server;
   let sendEmailMock: jest.Mock;
@@ -26,6 +31,7 @@ describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId
     server = appTestManager.getServer();
     authTestManager = new AuthTestManager(appTestManager.prisma, server);
     profileTestManager = new ProfileTestManager(appTestManager.prisma, server);
+    followTestManager = new FollowTestManager(appTestManager.prisma, server);
     postTestManager = new PostTestManager(appTestManager.prisma);
 
     sendEmailMock = jest
@@ -287,5 +293,89 @@ describe('ProfileController - getPublicProfile() (GET: /users/profile/:profileId
     await request(server)
       .get(`/${GLOBAL_PREFIX}/users/profile/${invalidProfileId}`)
       .expect(HttpStatus.BAD_REQUEST);
+  });
+
+  async function loginUser(email: string): Promise<string> {
+    const res: Response = await request(server)
+      .post(`/${GLOBAL_PREFIX}/auth/login`)
+      .send({ email, password: DEFAULT_PASSWORD })
+      .expect(HttpStatus.OK);
+
+    const accessToken = (res.body as { accessToken: string }).accessToken;
+
+    if (!accessToken) {
+      throw new Error(`loginUser(): accessToken not found for email "${email}"`);
+    }
+
+    return accessToken;
+  }
+
+  async function createTwoUsers(): Promise<{
+    follower: UserWithEmailConfirmation;
+    target: UserWithEmailConfirmation;
+    followerAccessToken: string;
+    targetProfile: UserProfile;
+  }> {
+    const [follower, target] = await authTestManager.registrationWithConfirmation([], 2);
+
+    const followerAccessToken = await loginUser(follower.email);
+
+    const targetProfile = await appTestManager.prisma.userProfile.findFirstOrThrow({
+      where: { userId: target.id },
+    });
+
+    return { follower, target, followerAccessToken, targetProfile };
+  }
+
+  it('не должен включать isFollowing в ответ для гостевого запроса', async () => {
+    const { targetProfile } = await createTwoUsers();
+
+    const profile = await profileTestManager.findProfileByProfileId(targetProfile.id);
+
+    expect(profile).not.toHaveProperty('isFollowing');
+  });
+
+  it('должен вернуть isFollowing: false для авторизованного зрителя без подписки', async () => {
+    const { followerAccessToken, targetProfile } = await createTwoUsers();
+
+    const profile = await profileTestManager.findProfileByProfileId(
+      targetProfile.id,
+      followerAccessToken,
+    );
+
+    expect(profile.isFollowing).toBe(false);
+    expect(profile.userMetadata.followersCount).toBe(0);
+    expect(profile.userMetadata.followingCount).toBe(0);
+  });
+
+  it('должен вернуть isFollowing: true и обновлённые счётчики после follow', async () => {
+    const { followerAccessToken, targetProfile } = await createTwoUsers();
+
+    await followTestManager.follow(followerAccessToken, targetProfile.userId);
+
+    const profile = await profileTestManager.findProfileByProfileId(
+      targetProfile.id,
+      followerAccessToken,
+    );
+
+    expect(profile.isFollowing).toBe(true);
+    expect(profile.userMetadata.followersCount).toBe(1);
+    expect(profile.userMetadata.followingCount).toBe(0);
+  });
+
+  it('должен вернуть isFollowing: false и сброшенные счётчики после unfollow', async () => {
+    const { followerAccessToken, targetProfile } = await createTwoUsers();
+
+    await followTestManager.follow(followerAccessToken, targetProfile.userId);
+    await followTestManager.unfollow(followerAccessToken, targetProfile.userId);
+
+    const profile = await profileTestManager.findProfileByProfileId(
+      targetProfile.id,
+      followerAccessToken,
+    );
+
+    expect(profile.isFollowing).toBe(false);
+    expect(profile.userMetadata.followersCount).toBe(0);
+    expect(profile.userMetadata.followingCount).toBe(0);
   });
 });

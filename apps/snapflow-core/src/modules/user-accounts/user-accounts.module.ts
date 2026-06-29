@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { UsersRepository } from './users/infrastructure/users.repository';
 import { AuthController } from './auth/api/auth.controller';
 import { RegisterUserUseCase } from './auth/application/usecases/register-user.useсase';
@@ -46,12 +46,16 @@ import { MulterModule } from '@nestjs/platform-express';
 import { UploadAvatarUseCase } from './users/profile/application/usecases/upload-avatar.usecase';
 import { DeleteAvatarUseCase } from './users/profile/application/usecases/delete-avatar.usecase';
 import { GetTotalCountRegisteredUsersQueryHandler } from './users/application/queries/get-total-count-registered-users.query-handler';
+import { SearchUsersQueryHandler } from './users/application/queries/search-users.query-handler';
 import { UsersController } from './users/api/users.controller';
 import { GetPublicProfileQueryHandler } from './users/profile/application/queries/get-public-profile.query-handler';
+import { GetProfileFollowingQueryHandler } from './users/profile/application/queries/get-profile-following.query-handler';
+import { GetProfileFollowersQueryHandler } from './users/profile/application/queries/get-profile-followers.query-handler';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
 import { JwtAuthModule } from './auth/jwt-auth.module';
+import { FollowsModule } from '../follows/follows.module';
 
 const controllers = [
   AuthController,
@@ -89,9 +93,12 @@ const useCases = [
 const queries = [
   GetMeQueryHandler,
   GetTotalCountRegisteredUsersQueryHandler,
+  SearchUsersQueryHandler,
 
   GetProfileQueryHandler,
   GetPublicProfileQueryHandler,
+  GetProfileFollowingQueryHandler,
+  GetProfileFollowersQueryHandler,
 
   GetAllSessionsQueryHandler,
 ];
@@ -115,6 +122,7 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
 @Module({
   imports: [
     JwtAuthModule,
+    forwardRef(() => FollowsModule),
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({

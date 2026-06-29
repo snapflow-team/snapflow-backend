@@ -98,22 +98,26 @@ export class WebsocketNotificationService {
   ): Promise<void> {
     try {
       const message = `Ваша подписка активирована и действует до ${payload.expireAt}`;
+
       const createdNotification = await this.notificationsRepository.create({
         userId: payload.userId,
         message,
         payload: JSON.stringify(payload),
         type: NotificationType.SUBSCRIPTION_ACTIVATED,
       });
+
       this.webSocketService.sendToUser(payload.userId, {
         type: createdNotification.type,
         message: createdNotification.message,
         createdAt: createdNotification.createdAt.toISOString(),
       });
+
       this.logger.log(
-        'notification successfully sent to websocket service in websocket notification service',
+        'Notification successfully sent to websocket service in websocket notification service',
       );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '';
+
       this.logger.error(
         `Не удалось сохранить уведомление, либо отправить его пользователю ${payload.userId}, Error: ${errorMessage}`,
         this.sendActivatedSubscriptionToUserByWS.name,
@@ -132,6 +136,7 @@ export class WebsocketNotificationService {
         payload: JSON.stringify(payload),
         type: NotificationType.SUBSCRIPTION_EXPIRING_7D,
       });
+
       this.webSocketService.sendToUser(payload.userId, {
         type: createdNotification.type,
         message: createdNotification.message,
@@ -139,6 +144,7 @@ export class WebsocketNotificationService {
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '';
+
       this.logger.error(
         `Не удалось сохранить уведомление, либо отправить его пользователю ${payload.userId}, Error: ${errorMessage}`,
         this.sendExpiringSubscription7DToUserByWS.name,
@@ -185,6 +191,7 @@ export class WebsocketNotificationService {
         payload: JSON.stringify(payload),
         type: NotificationType.NEXT_PAYMENT_1D,
       });
+
       this.webSocketService.sendToUser(payload.userId, {
         type: createdNotification.type,
         message: createdNotification.message,

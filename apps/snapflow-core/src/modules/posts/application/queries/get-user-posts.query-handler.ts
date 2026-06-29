@@ -1,13 +1,13 @@
 ﻿import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PostsQueryRepository } from '../../infrastructure/posts.query-repository';
-import { PaginatedViewDto } from '../../../../../../../libs/dto/paginated.view-dto';
-import { PostViewDto } from '../../api/view-dto/post.view-dto';
-import { GetPostsQueryParamsDto } from '../../api/input-dto/get-posts.query-params.dto';
+import { GetUserPostsQueryParamsDto } from '../../api/input-dto/get-user-posts.query-params.dto';
+import { UserPostsPageViewDto } from '../../api/view-dto/user-posts-page.view-dto';
 
 export class GetUserPostsQuery {
   constructor(
-    public readonly query: GetPostsQueryParamsDto,
+    public readonly query: GetUserPostsQueryParamsDto,
     public readonly userId: number,
+    public readonly viewerId?: number,
   ) {}
 }
 
@@ -15,7 +15,7 @@ export class GetUserPostsQuery {
 export class GetUserPostsQueryHandler implements IQueryHandler<GetUserPostsQuery> {
   constructor(private readonly postsQueryRepository: PostsQueryRepository) {}
 
-  async execute({ query, userId }: GetUserPostsQuery): Promise<PaginatedViewDto<PostViewDto>> {
-    return this.postsQueryRepository.findUserPosts(query, userId);
+  async execute({ query, userId, viewerId }: GetUserPostsQuery): Promise<UserPostsPageViewDto> {
+    return this.postsQueryRepository.findUserPosts(query, userId, viewerId);
   }
 }

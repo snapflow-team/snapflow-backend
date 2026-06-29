@@ -6,6 +6,7 @@ import { initSnapFlowCoreAppModule } from '../../src/init-snap-flow-core-app-mod
 import { ThrottlerStorage } from '@nestjs/throttler';
 import { applyAppInitialization } from '../../src/setup/app-initialization';
 import { CustomLogger } from '../../src/modules/logger/logger.service';
+import { NestApplication } from '@nestjs/core';
 
 /**
  * 🧪 AppTestManager
@@ -148,6 +149,9 @@ export class AppTestManager {
 
   getServer() {
     return this.app.getHttpServer() as Server;
+  }
+  getApp() {
+    return this.app as NestApplication;
   }
 }
 

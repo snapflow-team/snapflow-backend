@@ -22,7 +22,6 @@ export function parseNotificationsRoutingKey(routingKey: string): NotificationsR
 export function isSubscriptionActivatedEvent(
   payload: unknown,
 ): payload is SubscriptionActivatedNotificationEvent {
-  console.log('payload: ', payload);
   return (
     isRecord(payload) && typeof payload.userId === 'number' && typeof payload.expireAt === 'string'
   );
