@@ -1,13 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SessionsRepository } from '../../infrastructure/sessions.repository';
 import { SessionsCleanupService } from './sessions-cleanup.service';
-import { PrismaService } from '../../../../../../database/prisma.service';
-import { UsersRepository } from '../../../../users/infrastructure/users.repository';
-import { SnapflowCoreModule } from '../../../../../../snapflow-core.module';
+import { PrismaService } from '../../../../../database/prisma.service';
+import { UsersRepository } from '../../../users/infrastructure/users.repository';
+import { SnapflowCoreModule } from '../../../../../snapflow-core.module';
 import { ConfirmationStatus, User } from '@generated/prisma-snapflow';
 import { ConfigService } from '@nestjs/config';
-import { Configuration } from '../../../../../../setup/configuration/configuration';
-import { BusinessRulesSettings } from '../../../../../../setup/configuration/business-rules-settings';
+import { Configuration } from '../../../../../setup/configuration/configuration';
+import { BusinessRulesSettings } from '../../../../../setup/configuration/business-rules-settings';
 
 describe('SessionsCleanupService (Integration, Prisma)', () => {
   let module: TestingModule;

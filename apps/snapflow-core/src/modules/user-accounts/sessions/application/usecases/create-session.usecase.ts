@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CreateSessionDto } from '../../dto/create-session.dto';
 import { SessionsRepository } from '../../infrastructure/sessions.repository';
-import { parseUserAgentDetails } from '../../../../../../../../../libs/common/utils/user-agent.parser';
+import { parseUserAgentDetails } from '../../../../../../../../libs/common/utils/user-agent.parser';
 import { Prisma } from '@generated/prisma-snapflow';
 
 export class CreateSessionCommand {

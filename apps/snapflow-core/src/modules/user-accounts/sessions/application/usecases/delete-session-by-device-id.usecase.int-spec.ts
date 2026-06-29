@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaService } from '../../../../../../database/prisma.service';
+import { PrismaService } from '../../../../../database/prisma.service';
 import {
   DeleteSessionByDeviceIdCommand,
   DeleteSessionByDeviceUseCase,
 } from './delete-session-by-device-id.usecase';
 import { Session } from '@generated/prisma-snapflow';
-import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
-import { SnapflowCoreModule } from '../../../../../../snapflow-core.module';
+import { TestEntityFactory } from '../../../../../../test/helpers/test-entity.factory';
+import { SnapflowCoreModule } from '../../../../../snapflow-core.module';
 
 describe('DeleteSessionByDeviceUseCase (Интеграция)', () => {
   let module: TestingModule;

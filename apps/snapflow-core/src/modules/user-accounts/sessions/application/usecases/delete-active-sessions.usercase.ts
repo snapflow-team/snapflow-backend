@@ -1,4 +1,4 @@
-import { SessionContextDto } from '../../../domain/guards/dto/session-context.dto';
+import { SessionContextDto } from '../../../auth/domain/guards/dto/session-context.dto';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { SessionsRepository } from '../../infrastructure/sessions.repository';
 

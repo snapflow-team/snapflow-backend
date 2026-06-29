@@ -1,11 +1,11 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { SessionsRepository } from '../../infrastructure/sessions.repository';
-import { SessionContextDto } from '../../../domain/guards/dto/session-context.dto';
+import { SessionContextDto } from '../../../auth/domain/guards/dto/session-context.dto';
 import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
-} from '../../../../../../common/exceptions/domain-exceptions';
+} from '../../../../../common/exceptions/domain-exceptions';
 import { Session } from '@generated/prisma-snapflow';
 
 export class DeleteSessionByDeviceIdCommand {

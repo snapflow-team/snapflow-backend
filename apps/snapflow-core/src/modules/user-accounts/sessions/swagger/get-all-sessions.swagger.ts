@@ -5,7 +5,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { applyDecorators } from '@nestjs/common';
-import { SessionsViewDto } from '../../api/view-dto/sessions.view-dto';
+import { SessionsViewDto } from '../api/dto/view-dto/sessions.view-dto';
 
 export function GetAllSessionsSwagger(): MethodDecorator {
   return applyDecorators(

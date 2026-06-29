@@ -3,10 +3,10 @@ import {
   DeleteActiveSessionsCommand,
   DeleteActiveSessionsUseCase,
 } from './delete-active-sessions.usercase';
-import { PrismaService } from '../../../../../../database/prisma.service';
+import { PrismaService } from '../../../../../database/prisma.service';
 import { Session } from '@generated/prisma-snapflow';
-import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
-import { SnapflowCoreModule } from '../../../../../../snapflow-core.module';
+import { TestEntityFactory } from '../../../../../../test/helpers/test-entity.factory';
+import { SnapflowCoreModule } from '../../../../../snapflow-core.module';
 
 describe('DeleteActiveSessionsUseCase (Интеграция)', () => {
   let module: TestingModule;

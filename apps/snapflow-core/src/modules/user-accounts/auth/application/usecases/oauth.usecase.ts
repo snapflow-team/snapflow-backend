@@ -6,7 +6,7 @@ import { UserUtilsService } from '../../../users/application/services/user-utils
 import { AuthTokens } from '../../domain/types/auth-tokens.type';
 import { parseUserAgentDetails } from '../../../../../../../../libs/common/utils/user-agent.parser';
 import { PayloadRefreshToken } from '../types/payload-refresh-token.type';
-import { SessionsRepository } from '../../sessions/infrastructure/sessions.repository';
+import { SessionsRepository } from '../../../sessions/infrastructure/sessions.repository';
 import { UserWithEmailConfirmation } from '../../../users/types/user-with-confirmation.type';
 import { PrismaService } from '../../../../../database/prisma.service';
 import { OAuthApplicationDto } from '../dto/oauth.application-dto';

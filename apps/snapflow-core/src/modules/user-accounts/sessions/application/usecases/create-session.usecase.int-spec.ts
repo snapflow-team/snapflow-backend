@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Session, User } from '@generated/prisma-snapflow';
-import { PrismaService } from '../../../../../../database/prisma.service';
-import { parseUserAgentDetails } from '../../../../../../../../../libs/common/utils/user-agent.parser';
+import { PrismaService } from '../../../../../database/prisma.service';
+import { parseUserAgentDetails } from '../../../../../../../../libs/common/utils/user-agent.parser';
 import { CreateSessionCommand, CreateSessionUseCase } from './create-session.usecase';
 import { CreateSessionDto } from '../../dto/create-session.dto';
-import { TestEntityFactory } from '../../../../../../../test/helpers/test-entity.factory';
-import { SnapflowCoreModule } from '../../../../../../snapflow-core.module';
+import { TestEntityFactory } from '../../../../../../test/helpers/test-entity.factory';
+import { SnapflowCoreModule } from '../../../../../snapflow-core.module';
 
 describe('CreateSessionUseCase (Integration)', () => {
   let module: TestingModule;
