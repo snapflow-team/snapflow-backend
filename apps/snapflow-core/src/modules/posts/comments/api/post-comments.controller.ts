@@ -15,8 +15,8 @@ import { ExtractOptionalUserFromRequest } from '../../../user-accounts/auth/doma
 import { ExtractUserFromRequest } from '../../../user-accounts/auth/domain/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../../user-accounts/auth/domain/guards/dto/user-context.dto';
 import { JwtAuthGuard } from '../../../user-accounts/auth/domain/guards/bearer/jwt-auth.guard';
-import { OptionalAuth } from '../../../user-accounts/decorators/optional-auth.decorator';
-import { Public } from '../../../user-accounts/decorators/public.decorator';
+import { OptionalAuth } from '../../../user-accounts/sharing/decorators/optional-auth.decorator';
+import { Public } from '../../../user-accounts/sharing/decorators/public.decorator';
 import { CreateCommentInputDto } from './input-dto/create-comment.input-dto';
 import { GetPostCommentsQueryParamsDto } from './input-dto/get-post-comments.query-params.dto';
 import { CommentItemViewDto } from './view-dto/comment-item.view-dto';

@@ -22,7 +22,7 @@ import { UsersQueryRepository } from './users/infrastructure/users.query-reposit
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
-import { RecaptchaBody } from './types/recaptcha.types';
+import { RecaptchaBody } from './sharing/types/recaptcha.types';
 import { SessionsCleanupService } from './sessions/application/services/sessions-cleanup.service';
 import { GithubStrategy } from './auth/domain/guards/github/github.strategy';
 import { UserUtilsService } from './users/application/services/user-utils.service';

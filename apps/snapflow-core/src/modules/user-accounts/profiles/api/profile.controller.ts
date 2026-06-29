@@ -32,8 +32,8 @@ import { UploadAvatarCommand } from '../application/usecases/upload-avatar.useca
 import { ApiUploadAvatar } from './swagger/upload-avatar.swagger';
 import { DeleteAvatarCommand } from '../application/usecases/delete-avatar.usecase';
 import { ApiDeleteAvatar } from './swagger/delete-avatar.swagger';
-import { Public } from '../../decorators/public.decorator';
-import { OptionalAuth } from '../../decorators/optional-auth.decorator';
+import { Public } from '../../sharing/decorators/public.decorator';
+import { OptionalAuth } from '../../sharing/decorators/optional-auth.decorator';
 import { ExtractOptionalUserFromRequest } from '../../auth/domain/guards/decorators/extract-optional-user-from-request.decorator';
 import { PublicProfileViewDto } from './dto/view-dto/public-profile.view-dto';
 import { GetPublicProfileQuery } from '../application/queries/get-public-profile.query-handler';
