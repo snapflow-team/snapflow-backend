@@ -14,6 +14,18 @@ import { Configuration } from '../../setup/configuration/configuration';
 import { NotificationsRepository } from './infrastructure/notifications.repository';
 import { JwtAuthModule } from '../user-accounts/auth/jwt-auth.module';
 
+const services = [
+  EmailService,
+  EmailTemplates,
+  WebsocketService,
+  WebsocketNotificationService,
+  NotificationEventsConsumer,
+];
+const eventHandlers = [
+  SendConfirmationEmailWhenUserRegisteredEventHandler,
+  SendPasswordRecoveryEmailEventHandler,
+];
+const repositories = [NotificationsRepository];
 @Module({
   imports: [
     JwtAuthModule,
@@ -31,17 +43,7 @@ import { JwtAuthModule } from '../user-accounts/auth/jwt-auth.module';
       },
     }),
   ],
-  providers: [
-    EmailService,
-    EmailTemplates,
-    SendConfirmationEmailWhenUserRegisteredEventHandler,
-    SendPasswordRecoveryEmailEventHandler,
-    NotificationGateway,
-    WebsocketService,
-    WebsocketNotificationService,
-    NotificationEventsConsumer,
-    NotificationsRepository,
-  ],
+  providers: [...services, ...eventHandlers, ...repositories, NotificationGateway],
   exports: [],
 })
 export class NotificationModule {
