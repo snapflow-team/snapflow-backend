@@ -13,7 +13,14 @@ import { WebsocketNotificationService } from './websocket/services/websocket-not
 import { Configuration } from '../../setup/configuration/configuration';
 import { NotificationsRepository } from './infrastructure/notifications.repository';
 import { JwtAuthModule } from '../user-accounts/auth/jwt-auth.module';
+import { NotificationsQueryRepository } from './infrastructure/notifications.query-repository';
+import { MarkAllNotificationsReadUseCase } from './application/use-cases/mark-all-notificaitons-read.use-case';
+import { GetNotificationsQueryHandler } from './application/queries/get-notificaitons.query';
+import { GetUnreadNotificationsCountQueryHandler } from './application/queries/get-notifications-count.query';
+import { NotificationsController } from './api/notificaitons.controller';
 
+const useCases = [MarkAllNotificationsReadUseCase];
+const queryHandlers = [GetNotificationsQueryHandler, GetUnreadNotificationsCountQueryHandler];
 const services = [
   EmailService,
   EmailTemplates,
@@ -25,7 +32,7 @@ const eventHandlers = [
   SendConfirmationEmailWhenUserRegisteredEventHandler,
   SendPasswordRecoveryEmailEventHandler,
 ];
-const repositories = [NotificationsRepository];
+const repositories = [NotificationsRepository, NotificationsQueryRepository];
 @Module({
   imports: [
     JwtAuthModule,
@@ -43,7 +50,15 @@ const repositories = [NotificationsRepository];
       },
     }),
   ],
-  providers: [...services, ...eventHandlers, ...repositories, NotificationGateway],
+  providers: [
+    ...services,
+    ...eventHandlers,
+    ...useCases,
+    ...queryHandlers,
+    ...repositories,
+    NotificationGateway,
+  ],
+  controllers: [NotificationsController],
   exports: [],
 })
 export class NotificationModule {
