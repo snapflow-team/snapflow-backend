@@ -159,13 +159,14 @@ model Notification {
   message   String           @db.Text
   type      NotificationType
   payload   Json             @db.JsonB
+  isRead    Boolean          @default(false) @map("is_read")
   createdAt DateTime         @default(now()) @map("created_at")
   updatedAt DateTime         @updatedAt @map("updated_at")
   deletedAt DateTime?        @map("deleted_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, createdAt])
+  @@index([userId, createdAt, isRead])
   @@map("notifications")
 }
 
