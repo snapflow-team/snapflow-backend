@@ -1,11 +1,11 @@
 import {
   ALL_NOTIFICATIONS_ROUTING_KEYS,
   NotificationsRoutingKey,
-} from '../../../../../../../libs/contracts/payments';
-import { SubscriptionActivatedNotificationEvent } from '../../../../../../../libs/contracts/payments/notifications/payment-subscription-activated-notification.event';
-import { PaymentSubscriptionExpiring7dNotificationEvent } from '../../../../../../../libs/contracts/payments/notifications/payment-subscription-expiring-7d-notification.event';
-import { PaymentSubscriptionExpiring1dNotificationEvent } from '../../../../../../../libs/contracts/payments/notifications/payment-subscription-expiring-1d-notification.event';
-import { PaymentSubscriptionNextPayment1dNotificationEvent } from '../../../../../../../libs/contracts/payments/notifications/payment-subscription-next-payment-1d-notification.event';
+} from '../../../../../../../../libs/contracts/payments';
+import { SubscriptionActivatedNotificationEvent } from '../../../../../../../../libs/contracts/payments/notifications/payment-subscription-activated-notification.event';
+import { PaymentSubscriptionExpiring7dNotificationEvent } from '../../../../../../../../libs/contracts/payments/notifications/payment-subscription-expiring-7d-notification.event';
+import { PaymentSubscriptionExpiring1dNotificationEvent } from '../../../../../../../../libs/contracts/payments/notifications/payment-subscription-expiring-1d-notification.event';
+import { PaymentSubscriptionNextPayment1dNotificationEvent } from '../../../../../../../../libs/contracts/payments/notifications/payment-subscription-next-payment-1d-notification.event';
 
 function isRecord(payload: unknown): payload is Record<string, unknown> {
   return typeof payload === 'object' && payload !== null;

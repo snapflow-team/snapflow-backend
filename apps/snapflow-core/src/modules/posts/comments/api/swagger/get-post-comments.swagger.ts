@@ -25,7 +25,10 @@ export function GetPostCommentsSwagger() {
       description: 'Первый запрос без cursor, далее передавать nextCursor из предыдущего ответа',
     }),
     ApiQuery({ name: 'limit', required: false, type: Number, example: 8 }),
-    ApiOkResponse({ description: 'Страница комментариев публикации', type: PostCommentsPageViewDto }),
+    ApiOkResponse({
+      description: 'Страница комментариев публикации',
+      type: PostCommentsPageViewDto,
+    }),
     ApiBadRequestResponse({
       description: 'Ошибка валидации query-параметров (limit < 1) или некорректный cursor.',
       type: ErrorResponseDto,
