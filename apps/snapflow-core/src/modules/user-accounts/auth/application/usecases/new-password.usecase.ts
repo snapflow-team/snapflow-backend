@@ -3,7 +3,7 @@ import { UsersRepository } from '../../../users/infrastructure/users.repository'
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { UserWithPasswordRecoveryCode } from '../../../users/types/user-with-password-recovery.type';
 import { UserValidationService } from '../../../users/application/services/user-validation.service';
-import { SessionsRepository } from '../../sessions/infrastructure/sessions.repository';
+import { SessionsRepository } from '../../../sessions/infrastructure/sessions.repository';
 
 export class NewPasswordCommand {
   constructor(

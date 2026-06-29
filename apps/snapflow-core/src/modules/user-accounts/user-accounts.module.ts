@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { UsersRepository } from './users/infrastructure/users.repository';
 import { AuthController } from './auth/api/auth.controller';
 import { RegisterUserUseCase } from './auth/application/usecases/register-user.useсase';
@@ -9,8 +9,8 @@ import { UserValidationService } from './users/application/services/user-validat
 import { ConfirmationEmailUseCase } from './auth/application/usecases/confirmation-email.usecase';
 import { LocalStrategy } from './auth/domain/guards/local/local.strategy';
 import { LoginUserUseCase } from './auth/application/usecases/login-user.usecase';
-import { CreateSessionUseCase } from './auth/sessions/application/usecases/create-session.usecase';
-import { SessionsRepository } from './auth/sessions/infrastructure/sessions.repository';
+import { CreateSessionUseCase } from './sessions/application/usecases/create-session.usecase';
+import { SessionsRepository } from './sessions/infrastructure/sessions.repository';
 import { JwtRefreshStrategy } from './auth/domain/guards/bearer/jwt-refresh.strategy';
 import { LogoutUseCase } from './auth/application/usecases/logout.usecase';
 import { PasswordRecoveryUseCase } from './auth/application/usecases/password-recovery.usecase';
@@ -22,40 +22,44 @@ import { UsersQueryRepository } from './users/infrastructure/users.query-reposit
 import { RefreshTokenUseCase } from './auth/application/usecases/refresh-token.usecase';
 import { CheckPasswordRecoveryCodeUseCase } from './auth/application/usecases/check-password-recovery-code.usecase';
 import { GoogleRecaptchaModule } from '@nestlab/google-recaptcha';
-import { RecaptchaBody } from './types/recaptcha.types';
-import { SessionsCleanupService } from './auth/sessions/application/services/sessions-cleanup.service';
+import { RecaptchaBody } from './sharing/types/recaptcha.types';
+import { SessionsCleanupService } from './sessions/application/services/sessions-cleanup.service';
 import { GithubStrategy } from './auth/domain/guards/github/github.strategy';
 import { UserUtilsService } from './users/application/services/user-utils.service';
 import { OAuthController } from './auth/api/oauth.controller';
 import { OAuthUseCase } from './auth/application/usecases/oauth.usecase';
 import { GoogleStrategy } from './auth/domain/guards/google/google.strategy';
-import { DeleteSessionByDeviceUseCase } from './auth/sessions/application/usecases/delete-session-by-device-id.usecase';
-import { GetAllSessionsQueryHandler } from './auth/sessions/application/queries/get-all-sessions.query';
-import { SessionQueryRepository } from './auth/sessions/infrastructure/session.query-repository';
-import { DeleteActiveSessionsUseCase } from './auth/sessions/application/usecases/delete-active-sessions.usercase';
-import { SessionsController } from './auth/sessions/api/sessions.controller';
+import { DeleteSessionByDeviceUseCase } from './sessions/application/usecases/delete-session-by-device-id.usecase';
+import { GetAllSessionsQueryHandler } from './sessions/application/queries/get-all-sessions.query';
+import { SessionQueryRepository } from './sessions/infrastructure/session.query-repository';
+import { DeleteActiveSessionsUseCase } from './sessions/application/usecases/delete-active-sessions.usercase';
+import { SessionsController } from './sessions/api/sessions.controller';
 import { PostsController } from '../posts/api/posts.controller';
-import { UpdateProfileUseCase } from './users/profile/application/usecases/update-profile.usecase';
-import { ProfileController } from './users/profile/api/profile.controller';
-import { ProfilesRepository } from './users/profile/infrastructure/profiles.repository';
-import { GetProfileQueryHandler } from './users/profile/application/queries/get-profile.query-handler';
-import { ProfilesQueryRepository } from './users/profile/infrastructure/query/profiles.query-repository';
+import { UpdateProfileUseCase } from './profiles/application/usecases/update-profile.usecase';
+import { ProfileController } from './profiles/api/profile.controller';
+import { ProfilesRepository } from './profiles/infrastructure/profiles.repository';
+import { GetProfileQueryHandler } from './profiles/application/queries/get-profile.query-handler';
+import { ProfilesQueryRepository } from './profiles/infrastructure/query/profiles.query-repository';
 import { FilesClientModule } from '../integrations/files/files-client.module';
 import { FilesMediaController } from '../integrations/files/api/files-media.controller';
 import { MulterModule } from '@nestjs/platform-express';
-import { UploadAvatarUseCase } from './users/profile/application/usecases/upload-avatar.usecase';
-import { DeleteAvatarUseCase } from './users/profile/application/usecases/delete-avatar.usecase';
+import { UploadAvatarUseCase } from './profiles/application/usecases/upload-avatar.usecase';
+import { DeleteAvatarUseCase } from './profiles/application/usecases/delete-avatar.usecase';
 import { GetTotalCountRegisteredUsersQueryHandler } from './users/application/queries/get-total-count-registered-users.query-handler';
 import { SearchUsersQueryHandler } from './users/application/queries/search-users.query-handler';
 import { UsersController } from './users/api/users.controller';
-import { GetPublicProfileQueryHandler } from './users/profile/application/queries/get-public-profile.query-handler';
-import { GetProfileFollowingQueryHandler } from './users/profile/application/queries/get-profile-following.query-handler';
-import { GetProfileFollowersQueryHandler } from './users/profile/application/queries/get-profile-followers.query-handler';
+import { GetPublicProfileQueryHandler } from './profiles/application/queries/get-public-profile.query-handler';
+import { GetProfileFollowingQueryHandler } from './profiles/application/queries/get-profile-following.query-handler';
+import { GetProfileFollowersQueryHandler } from './profiles/application/queries/get-profile-followers.query-handler';
 import { ConfigService } from '@nestjs/config';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
 import { JwtAuthModule } from './auth/jwt-auth.module';
-import { FollowsModule } from '../follows/follows.module';
+import { UsersFollowController } from './follows/api/users-follow.controller';
+import { FollowUserUseCase } from './follows/application/usecases/follow-user.usecase';
+import { UnfollowUserUseCase } from './follows/application/usecases/unfollow-user.usecase';
+import { FollowsRepository } from './follows/infrastructure/follows-repository';
+import { FollowsQueryRepository } from './follows/infrastructure/follows.query-repository';
 
 const controllers = [
   AuthController,
@@ -65,6 +69,7 @@ const controllers = [
   PostsController,
   ProfileController,
   FilesMediaController,
+  UsersFollowController,
 ];
 const useCases = [
   RegisterUserUseCase,
@@ -89,6 +94,9 @@ const useCases = [
   UpdateProfileUseCase,
   UploadAvatarUseCase,
   DeleteAvatarUseCase,
+
+  FollowUserUseCase,
+  UnfollowUserUseCase,
 ];
 const queries = [
   GetMeQueryHandler,
@@ -116,13 +124,15 @@ const repositories = [
   SessionQueryRepository,
   ProfilesRepository,
   ProfilesQueryRepository,
+
+  FollowsRepository,
+  FollowsQueryRepository,
 ];
 const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrategy, GithubStrategy];
 
 @Module({
   imports: [
     JwtAuthModule,
-    forwardRef(() => FollowsModule),
     FilesClientModule,
     MulterModule.register(),
     GoogleRecaptchaModule.forRootAsync({
@@ -137,7 +147,7 @@ const strategies = [LocalStrategy, JwtStrategy, JwtRefreshStrategy, GoogleStrate
   ],
   controllers: [...controllers],
   providers: [...useCases, ...queries, ...services, ...repositories, ...strategies],
-  exports: [ProfilesRepository, UsersRepository, FilesClientModule],
+  exports: [ProfilesRepository, UsersRepository, FilesClientModule, FollowsQueryRepository],
 })
 export class UserAccountsModule {
   constructor() {}

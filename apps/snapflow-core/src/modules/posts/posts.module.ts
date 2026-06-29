@@ -12,7 +12,6 @@ import { PostCommentsController } from './comments/api/post-comments.controller'
 import { UserAccountsModule } from '../user-accounts/user-accounts.module';
 import { GetFeedQueryHandler } from './application/queries/get-feed.query-handler';
 import { GetUserPostsQueryHandler } from './application/queries/get-user-posts.query-handler';
-import { FollowsModule } from '../follows/follows.module';
 import { SaveDraftUseCase } from './application/usecases/save-draft.usecase';
 import { TogglePostLikeUseCase } from './application/usecases/toggle-post-like.usecase';
 import { CreateCommentUseCase } from './comments/application/usecases/create-comment.usecase';
@@ -58,7 +57,7 @@ const repositories = [
 ];
 
 @Module({
-  imports: [UserAccountsModule, FollowsModule],
+  imports: [UserAccountsModule],
   controllers: [PostsController, PostCommentsController],
   providers: [...useCases, ...queries, ...services, ...repositories],
   exports: [],

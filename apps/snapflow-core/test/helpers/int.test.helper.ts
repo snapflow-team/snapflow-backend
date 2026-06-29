@@ -3,7 +3,7 @@ import {
   CreatePostUseCase,
 } from '../../src/modules/posts/application/usecases/create-post-use.case';
 import { PostStatus } from '@generated/prisma-snapflow';
-import { ProfilesRepository } from '../../src/modules/user-accounts/users/profile/infrastructure/profiles.repository';
+import { ProfilesRepository } from '../../src/modules/user-accounts/profiles/infrastructure/profiles.repository';
 import { PrismaService } from '../../src/database/prisma.service';
 import { TestEntityFactory } from './test-entity.factory';
 import { Test, TestingModule } from '@nestjs/testing';

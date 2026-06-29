@@ -19,7 +19,6 @@ import { ConfigService } from '@nestjs/config';
 import { Configuration } from './setup/configuration/configuration';
 import { NextjsIntegrationModule } from './modules/integrations/nextjs/nextjs-integration.module';
 import { PostsModule } from './modules/posts/posts.module';
-import { FollowsModule } from './modules/follows/follows.module';
 import { PaymentsEventsModule } from './modules/integrations/payments/payments-events.module';
 import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 import { CryptoService } from '../../../libs/common/services/crypto.service';
@@ -37,7 +36,6 @@ import { getAdminGraphqlModuleOptions } from './setup/admin-graphql.module-optio
     PrismaModule,
     UserAccountsModule,
     PostsModule,
-    FollowsModule,
     NextjsIntegrationModule,
     PaymentsEventsModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({

@@ -9,7 +9,7 @@ import { EmailTemplate } from '../../src/modules/notifications/emails/templates/
 import { ProfileTestManager } from '../managers/profile.test-manager';
 import { FollowTestManager } from '../managers/follow.test-manager';
 import { UserProfile } from '@generated/prisma-snapflow';
-import { PublicProfileViewDto } from '../../src/modules/user-accounts/users/profile/api/dto/view-dto/public-profile.view-dto';
+import { PublicProfileViewDto } from '../../src/modules/user-accounts/profiles/api/dto/view-dto/public-profile.view-dto';
 import { PostTestManager } from '../managers/post.test-manager';
 import { UserWithEmailConfirmation } from '../../src/modules/user-accounts/users/types/user-with-confirmation.type';
 

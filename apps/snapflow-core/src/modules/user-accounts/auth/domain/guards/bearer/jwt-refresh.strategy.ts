@@ -2,7 +2,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { SessionContextDto } from '../dto/session-context.dto';
-import { SessionsRepository } from '../../../sessions/infrastructure/sessions.repository';
+import { SessionsRepository } from '../../../../sessions/infrastructure/sessions.repository';
 import { ICookieRequest } from '../interfaces/cookie-request.interface';
 import { PayloadRefreshToken } from '../../../application/types/payload-refresh-token.type';
 import { UnauthorizedException } from '../../../../../../common/exceptions/domain-exceptions';

@@ -10,7 +10,7 @@ import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.c
 import { AuthTestManager } from '../managers/auth.test-manager';
 import { TestUtils } from '../helpers/test.utils';
 import { ErrorResponseDto } from '../../src/common/exceptions/error-response-body.dto';
-import { ProfilesRepository } from '../../src/modules/user-accounts/users/profile/infrastructure/profiles.repository';
+import { ProfilesRepository } from '../../src/modules/user-accounts/profiles/infrastructure/profiles.repository';
 import { SnapFlowDomainExceptionCode } from '../../src/common/exceptions/domain-exception-codes';
 import { User, UserProfile } from '@generated/prisma-snapflow';
 

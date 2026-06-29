@@ -6,7 +6,7 @@ import { UserRegisteredEvent } from '../../domain/events/user-registered.event';
 import { CryptoService } from '../../../../../../../../libs/common/services/crypto.service';
 import { DateService } from '../../../../../../../../libs/common/services/date.service';
 import { ExpirationTime } from '../../enums/expiration-time.enum';
-import { ProfilesRepository } from '../../../users/profile/infrastructure/profiles.repository';
+import { ProfilesRepository } from '../../../profiles/infrastructure/profiles.repository';
 import { PrismaService } from '../../../../../database/prisma.service';
 import { ValidationException } from '../../../../../../../../libs/exceptions/core';
 import { ConfirmationStatus, User } from '@generated/prisma-snapflow';
