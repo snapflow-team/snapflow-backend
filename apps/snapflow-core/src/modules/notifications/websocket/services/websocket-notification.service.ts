@@ -8,7 +8,7 @@ import {
   isSubscriptionActivatedEvent,
   isSubscriptionExpiring1DEvent,
   isSubscriptionExpiring7DEvent,
-} from '../type-guards/notification-events.type-guards';
+} from '../types/type-guards/notification-events.type-guards';
 import { SubscriptionActivatedNotificationEvent } from '../../../../../../../libs/contracts/payments/notifications/payment-subscription-activated-notification.event';
 import { NotificationType } from '@generated/prisma-snapflow';
 import { PaymentSubscriptionNextPayment1dNotificationEvent } from '../../../../../../../libs/contracts/payments/notifications/payment-subscription-next-payment-1d-notification.event';

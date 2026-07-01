@@ -15,7 +15,7 @@ import { ContextLogger } from '../../../logger/context-logger';
 import { AsyncLocalStorageService } from '../../../../common/async-local-storage/async-local-storage.service';
 import { REQUEST_ID_KEY } from '../../../../../../../libs/common/constants/request-id.constants';
 import { extractRequestIdFromAmqpMsg } from '../../../../../../../libs/common/messaging/amqp-headers';
-import { parseNotificationsRoutingKey } from '../type-guards/notification-events.type-guards';
+import { parseNotificationsRoutingKey } from '../types/type-guards/notification-events.type-guards';
 import { WebsocketNotificationService } from './websocket-notification.service';
 
 @Injectable()

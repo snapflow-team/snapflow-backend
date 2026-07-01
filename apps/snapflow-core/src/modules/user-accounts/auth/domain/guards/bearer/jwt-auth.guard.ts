@@ -2,8 +2,8 @@ import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UserContextDto } from '../dto/user-context.dto';
 import { Reflector } from '@nestjs/core';
-import { IS_PUBLIC_KEY } from '../../../../decorators/public.decorator';
-import { IS_OPTIONAL_AUTH_KEY } from '../../../../decorators/optional-auth.decorator';
+import { IS_PUBLIC_KEY } from '../../../../sharing/decorators/public.decorator';
+import { IS_OPTIONAL_AUTH_KEY } from '../../../../sharing/decorators/optional-auth.decorator';
 import {
   ForbiddenException,
   UnauthorizedException,

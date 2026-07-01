@@ -24,4 +24,13 @@ export class NotificationsRepository {
       },
     });
   }
+
+  async markAllAsRead(userId: number, tx: Prisma.TransactionClient = this.prisma): Promise<void> {
+    await tx.notification.updateMany({
+      where: { userId, deletedAt: null },
+      data: {
+        isRead: true,
+      },
+    });
+  }
 }

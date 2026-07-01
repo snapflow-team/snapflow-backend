@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { FollowsQueryRepository } from '../../../follows/infrastructure/follows.query-repository';
+import { FollowsQueryRepository } from '../../../user-accounts/follows/infrastructure/follows.query-repository';
 import { GetFeedQueryParamsDto } from '../../api/input-dto/get-feed.query-params.dto';
 import { FeedPageViewDto } from '../../api/view-dto/feed-page.view-dto';
 import { PostsQueryRepository } from '../../infrastructure/posts.query-repository';
