@@ -22,12 +22,12 @@ async function bootstrap() {
   );
   const environmentSettings: EnvironmentSettings =
     configService.get<EnvironmentSettings>('environmentSettings');
-  const { port, publicApiBaseUrl }: ApiSettings = configService.get<ApiSettings>('apiSettings');
+  const { port }: ApiSettings = configService.get<ApiSettings>('apiSettings');
 
   applyAppInitialization(app);
 
   const env: string = environmentSettings.currentEnv;
-  const baseUrl: string = `${publicApiBaseUrl}/${GLOBAL_PREFIX}`;
+  const baseUrl: string = `${GLOBAL_PREFIX}`;
 
   await app.listen(port, () => {
     const startedAt: string = new Date().toLocaleString();

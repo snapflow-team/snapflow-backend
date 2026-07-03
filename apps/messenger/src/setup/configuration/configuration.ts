@@ -5,7 +5,6 @@ import { ApiSettings } from './api-settings';
 import { ValidationError } from '@nestjs/common';
 import { EnvironmentSettings } from './environment-settings';
 import { DatabaseSettings } from './database-settings';
-import { BusinessRulesSettings } from './business-rules-settings';
 import { SwaggerSettings } from './swagger-settings';
 import { LoggerSettings } from './logger-settings';
 
@@ -16,11 +15,11 @@ export const loadEnv = (): string[] => {
 
   switch (env) {
     case Environments.Development: {
-      return ['apps/messenger/env/.env.development.local', 'apps/payments/env/.env.development'];
+      return ['apps/messenger/env/.env.development.local', 'apps/messenger/env/.env.development'];
     }
 
     case Environments.Testing: {
-      return ['apps/messenger/env/.env.testing.local', 'apps/payments/env/.env.testing'];
+      return ['apps/messenger/env/.env.testing.local', 'apps/messenger/env/.env.testing'];
     }
 
     default: {
