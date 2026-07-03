@@ -1,6 +1,6 @@
 import { IsBoolean, IsString } from 'class-validator';
 import { EnvironmentVariable } from './configuration';
-import { Prisma } from '@generated/prisma-payments';
+import { Prisma } from '@generated/prisma-messenger';
 
 export class DatabaseSettings {
   @IsString()
