@@ -10,7 +10,8 @@ jobs:
       github.event.issue.pull_request && (
         contains(github.event.comment.body, '/deploy-stage-core') ||
         contains(github.event.comment.body, '/deploy-stage-files') ||
-        contains(github.event.comment.body, '/deploy-stage-payments')
+        contains(github.event.comment.body, '/deploy-stage-payments') ||
+        contains(github.event.comment.body, '/deploy-stage-messenger')
       )
 
     runs-on: ubuntu-latest
@@ -81,6 +82,17 @@ jobs:
           tags: snapflow365/snapflow-payments:stage
           build-args: |
             service=payments
+
+      - name: Build and push snapflow-messenger
+        if: contains(github.event.comment.body, '/deploy-stage-messenger')
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./apps/messenger/Dockerfile
+          push: true
+          tags: snapflow365/snapflow-messenger:stage
+          build-args: |
+            service=messenger      
 
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.0

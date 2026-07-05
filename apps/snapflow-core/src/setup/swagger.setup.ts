@@ -26,7 +26,7 @@ export function swaggerSetup(
   const config: DocumentBuilder = new DocumentBuilder()
     .setTitle('SnapFlow API')
     .setVersion('1.0.0')
-    .setDescription('REST API для SnapFlow')
+    .setDescription('REST API для messenger microservice')
     .addCookieAuth(
       'refreshToken',
       {
