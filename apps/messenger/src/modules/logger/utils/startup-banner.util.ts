@@ -1,6 +1,5 @@
 export type MessengerStartupBannerParams = {
   env: string;
-  baseUrl: string;
   port: number;
   startedAt: string;
 };
@@ -19,7 +18,7 @@ function centerVisual(text: string, width: number): string {
 }
 
 export function printMessengerStartupBannerToConsole(params: MessengerStartupBannerParams): void {
-  const { env, baseUrl, port, startedAt } = params;
+  const { env, port, startedAt } = params;
   const pid = process.pid;
   const r = '\x1b[0m';
   const bold = '\x1b[1m';
@@ -49,7 +48,6 @@ export function printMessengerStartupBannerToConsole(params: MessengerStartupBan
   ];
 
   const title = `${bold}${blu}SNAPFLOW${r} ${dim}·${r} ${bold}${blu}MESSENGER${r}`;
-  const listenAddr = `${baseUrl}:${String(port)}`;
 
   const lines: string[] = [
     '',
@@ -61,7 +59,7 @@ export function printMessengerStartupBannerToConsole(params: MessengerStartupBan
     motdLine(boxRow('')),
     motdLine(`${cyan}├${hrPlain}┤${r}`),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`)),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${listenAddr}${r}`)),
+    motdLine(boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${port}${r}`)),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}started at${r}${dim}:${r}    ${ylw}${startedAt}${r}`)),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`)),
     motdLine(`${cyan}╰${hrPlain}╯${r}`),

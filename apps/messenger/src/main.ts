@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { MessengerModule } from './messenger.module';
 import { printMessengerStartupBannerToConsole } from './modules/logger/utils/startup-banner.util';
 import { applyAppInitialization } from './setup/app-initialization';
-import { GLOBAL_PREFIX } from '../../../libs/common/constants/global-prefix.constant';
 import { ApiSettings } from './setup/configuration/api-settings';
 import { EnvironmentSettings } from './setup/configuration/environment-settings';
 import { Configuration } from './setup/configuration/configuration';
@@ -27,14 +26,12 @@ async function bootstrap() {
   applyAppInitialization(app);
 
   const env: string = environmentSettings.currentEnv;
-  const baseUrl: string = `${GLOBAL_PREFIX}`;
 
   await app.listen(port, () => {
     const startedAt: string = new Date().toLocaleString();
     printMessengerStartupBannerToConsole({
       env,
       port,
-      baseUrl,
       startedAt,
     });
   });
