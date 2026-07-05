@@ -3,24 +3,28 @@ import { Message } from '@generated/prisma-messenger';
 
 export class MessageViewDto {
   @ApiProperty({
+    type: String,
     description: 'Идентификатор сообщения',
     example: '1',
   })
   id: string;
 
   @ApiProperty({
+    type: String,
     description: 'Идентификатор чата',
     example: '10',
   })
   chatId: string;
 
   @ApiProperty({
+    type: String,
     description: 'Идентификатор отправителя',
     example: '5',
   })
   senderId: string;
 
   @ApiProperty({
+    type: String,
     description: 'Идентификатор получателя',
     example: '42',
   })

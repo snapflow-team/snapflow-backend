@@ -22,7 +22,7 @@ export class MessagingController {
     @ExtractUserFromRequest() { id: senderId }: UserContextDto,
   ): Promise<MessageViewDto> {
     return this.commandBus.execute<SendMessageCommand, MessageViewDto>(
-      new SendMessageCommand({ senderId, receiverId, text }),
+      new SendMessageCommand({ senderId, receiverId: Number(receiverId), text }),
     );
   }
 }
