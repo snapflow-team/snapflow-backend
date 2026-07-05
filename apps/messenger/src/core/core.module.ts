@@ -2,10 +2,12 @@ import { Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfigModule } from '@nestjs/config';
 import configuration, { loadEnv, validate } from '../setup/configuration/configuration';
+import { HttpModule } from '@nestjs/axios';
 
 @Global()
 @Module({
   imports: [
+    HttpModule,
     CqrsModule,
     ConfigModule.forRoot({
       isGlobal: true,
@@ -15,6 +17,6 @@ import configuration, { loadEnv, validate } from '../setup/configuration/configu
     }),
   ],
   providers: [],
-  exports: [CqrsModule],
+  exports: [HttpModule, CqrsModule],
 })
 export class CoreModule {}
