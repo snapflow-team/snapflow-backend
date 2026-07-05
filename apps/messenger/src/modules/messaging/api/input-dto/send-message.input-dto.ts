@@ -1,0 +1,32 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, Matches } from 'class-validator';
+import { IsStringWithTrim } from '../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
+
+export const messageTextConstraints = {
+  minLength: 1,
+  maxLength: 1000,
+};
+
+const positiveIntegerStringPattern = /^[1-9]\d*$/;
+
+export class SendMessageInputDto {
+  @IsString()
+  @Matches(positiveIntegerStringPattern, {
+    message: 'receiverId must be a positive integer string',
+  })
+  @ApiProperty({
+    type: String,
+    description: 'Идентификатор получателя сообщения',
+    example: '42',
+  })
+  receiverId: string;
+
+  @IsStringWithTrim(messageTextConstraints.minLength, messageTextConstraints.maxLength)
+  @ApiProperty({
+    description: 'Текст сообщения от 1 до 1000 символов',
+    minLength: messageTextConstraints.minLength,
+    maxLength: messageTextConstraints.maxLength,
+    example: 'Hello!',
+  })
+  text: string;
+}
