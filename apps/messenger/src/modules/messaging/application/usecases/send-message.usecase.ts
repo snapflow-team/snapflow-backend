@@ -4,6 +4,7 @@ import { MessageViewDto } from '../../api/view-dto/message.view-dto';
 import { SendMessageApplicationDto } from '../dto/send-message.application-dto';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
+import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
 import { Chat, Message } from '@generated/prisma-messenger';
 
 export class SendMessageCommand {
@@ -15,6 +16,7 @@ export class SendMessageUseCase implements ICommandHandler<SendMessageCommand> {
   constructor(
     private readonly chatsRepository: ChatsRepository,
     private readonly messagesRepository: MessagesRepository,
+    private readonly messengerWebSocketService: MessengerWebSocketService,
   ) {}
 
   async execute({ dto }: SendMessageCommand): Promise<MessageViewDto> {
@@ -30,6 +32,10 @@ export class SendMessageUseCase implements ICommandHandler<SendMessageCommand> {
       text: dto.text,
     });
 
-    return MessageViewDto.mapToView(message, dto.receiverId);
+    const messageView: MessageViewDto = MessageViewDto.mapToView(message, dto.receiverId);
+
+    this.messengerWebSocketService.sendToUser(dto.receiverId, messageView);
+
+    return messageView;
   }
 }
