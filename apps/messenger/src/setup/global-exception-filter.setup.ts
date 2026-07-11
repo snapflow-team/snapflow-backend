@@ -1,12 +1,16 @@
 import { INestApplication } from '@nestjs/common';
 import { LoggerFactory } from '../modules/logger/logger.factory';
 import {
+  DomainHttpExceptionsFilter,
   GlobalExceptionsFilter,
   GlobalExceptionsFilterLogger,
+  ValidationExceptionFilter,
 } from '../../../../libs/exceptions/http/filters';
+import { MessengerResultCodeMapper } from '../common/notification/messenger-result-code.mapper';
+import { MessengerResultCodeType } from '../common/notification/messenger-result-code';
 
 export function globalExceptionFilterSetup(app: INestApplication, isExposeDetails: boolean): void {
-  //TODO НАстроить exception filters, так как я не знаю какие ошибки будут летать на этом микросервисе
+  const mapper: MessengerResultCodeMapper = app.get(MessengerResultCodeMapper);
   const loggerFactory: LoggerFactory = app.get(LoggerFactory);
   const filterLogger = loggerFactory.create(GlobalExceptionsFilter.name);
 
@@ -24,6 +28,6 @@ export function globalExceptionFilterSetup(app: INestApplication, isExposeDetail
   };
 
   app.useGlobalFilters(new GlobalExceptionsFilter(isExposeDetails, undefined, globalFilterLogger));
-  //app.useGlobalFilters(new DomainHttpExceptionsFilter<SnapFlowDomainExceptionCodeType>(mapper));
-  //app.useGlobalFilters(new ValidationExceptionFilter());
+  app.useGlobalFilters(new DomainHttpExceptionsFilter<MessengerResultCodeType>(mapper));
+  app.useGlobalFilters(new ValidationExceptionFilter());
 }

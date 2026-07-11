@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { MessengerModule } from './messenger.module';
 import { printMessengerStartupBannerToConsole } from './modules/logger/utils/startup-banner.util';
 import { applyAppInitialization } from './setup/app-initialization';
-import { GLOBAL_PREFIX } from '../../../libs/common/constants/global-prefix.constant';
+import { SocketIoCorsAdapter } from './setup/socket-io-cors.adapter';
 import { ApiSettings } from './setup/configuration/api-settings';
 import { EnvironmentSettings } from './setup/configuration/environment-settings';
 import { Configuration } from './setup/configuration/configuration';
@@ -22,19 +22,20 @@ async function bootstrap() {
   );
   const environmentSettings: EnvironmentSettings =
     configService.get<EnvironmentSettings>('environmentSettings');
-  const { port }: ApiSettings = configService.get<ApiSettings>('apiSettings');
+  const apiSettings: ApiSettings = configService.get<ApiSettings>('apiSettings');
+  const { port, allowedOrigins } = apiSettings;
 
   applyAppInitialization(app);
 
+  app.useWebSocketAdapter(new SocketIoCorsAdapter(app, allowedOrigins));
+
   const env: string = environmentSettings.currentEnv;
-  const baseUrl: string = `${GLOBAL_PREFIX}`;
 
   await app.listen(port, () => {
     const startedAt: string = new Date().toLocaleString();
     printMessengerStartupBannerToConsole({
       env,
       port,
-      baseUrl,
       startedAt,
     });
   });

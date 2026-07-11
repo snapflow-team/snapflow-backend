@@ -6,3 +6,27 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Chat {
+  id             Int       @id @default(autoincrement())
+  participantAId Int       @map("participant_a_id")
+  participantBId Int       @map("participant_b_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  messages       Message[]
+
+  @@unique([participantAId, participantBId])
+  @@map("chats")
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  chatId    Int      @map("chat_id")
+  senderId  Int      @map("sender_id")
+  text      String   @db.VarChar(1000)
+  createdAt DateTime @default(now()) @map("created_at")
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, createdAt])
+  @@map("messages")
+}
