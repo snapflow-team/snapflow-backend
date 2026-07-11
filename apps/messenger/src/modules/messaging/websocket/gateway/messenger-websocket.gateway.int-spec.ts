@@ -1,8 +1,9 @@
+import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { INestApplication } from '@nestjs/common';
 import { AddressInfo } from 'node:net';
 import { io, Socket } from 'socket.io-client';
+import { AccessTokenTestHelper } from '../../../../../test/helpers/access-token-test.helper';
 import { AppTestManager } from '../../../../../test/managers/app.test-manager';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
@@ -13,7 +14,7 @@ describe('MessengerWebSocketGateway (Integration)', () => {
   let appTestManager: AppTestManager;
   let app: INestApplication;
   let port: number;
-  let signAccessToken: (userId: number, expiresIn?: '1s' | '1h') => string;
+  let accessTokenTestHelper: AccessTokenTestHelper;
   let messengerWebSocketService: MessengerWebSocketService;
 
   beforeAll(async () => {
@@ -28,8 +29,7 @@ describe('MessengerWebSocketGateway (Integration)', () => {
       .get<ApiSettings>('apiSettings');
     const jwtService = new JwtService({ secret: apiSettings.accessTokenSecret });
 
-    signAccessToken = (userId: number, expiresIn = '1h') =>
-      jwtService.sign({ userId }, { expiresIn });
+    accessTokenTestHelper = new AccessTokenTestHelper(jwtService);
 
     await app.listen(0);
     port = (app.getHttpServer().address() as AddressInfo).port;
@@ -51,7 +51,20 @@ describe('MessengerWebSocketGateway (Integration)', () => {
   }
 
   it('должен подключить пользователя с валидным access token', async () => {
-    const token = signAccessToken(2);
+    const token = accessTokenTestHelper.signAccessToken(2);
+    const socket = createSocket(token);
+
+    await new Promise<void>((resolve, reject) => {
+      socket.on('connect', () => resolve());
+      socket.on('connect_error', reject);
+    });
+
+    expect(socket.connected).toBe(true);
+    socket.disconnect();
+  });
+
+  it('должен подключить пользователя с валидным access token в формате Bearer', async () => {
+    const token = `Bearer ${accessTokenTestHelper.signAccessToken(2)}`;
     const socket = createSocket(token);
 
     await new Promise<void>((resolve, reject) => {
@@ -86,7 +99,7 @@ describe('MessengerWebSocketGateway (Integration)', () => {
   });
 
   it('должен отключить клиента и отправить token.expired при истечении токена', async () => {
-    const token = signAccessToken(2, '1s');
+    const token = accessTokenTestHelper.signAccessTokenExpiringInSeconds(2, 2);
     const socket = createSocket(token);
 
     await new Promise<void>((resolve, reject) => {
@@ -105,7 +118,7 @@ describe('MessengerWebSocketGateway (Integration)', () => {
   });
 
   it('должен доставить message.new в комнату получателя', async () => {
-    const token = signAccessToken(2);
+    const token = accessTokenTestHelper.signAccessToken(2);
     const socket = createSocket(token);
 
     await new Promise<void>((resolve, reject) => {
