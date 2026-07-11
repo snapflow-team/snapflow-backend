@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsString, IsUrl } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsString, IsUrl } from 'class-validator';
 import { EnvironmentVariable } from './configuration';
 
 export class ApiSettings {
@@ -14,6 +14,9 @@ export class ApiSettings {
   @IsBoolean()
   sendInternalServerErrorDetails: boolean;
 
+  @IsNotEmpty()
+  accessTokenSecret: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
@@ -23,6 +26,8 @@ export class ApiSettings {
 
     this.sendInternalServerErrorDetails =
       environmentVariables.SEND_INTERNAL_SERVER_ERROR_DETAILS === 'true';
+
+    this.accessTokenSecret = environmentVariables.JWT_SECRET_AT;
   }
 
   get allowedOrigins(): string[] | boolean {
