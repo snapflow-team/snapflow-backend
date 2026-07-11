@@ -1,60 +1,43 @@
-import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { INestApplication } from '@nestjs/common';
 import { AddressInfo } from 'node:net';
-import { of, throwError } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { AppTestManager } from '../../../../../test/managers/app.test-manager';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { MessageViewDto } from '../../api/view-dto/message.view-dto';
 import { MessengerWebSocketService } from '../services/messenger-websocket.service';
-
-function buildToken(payload: Record<string, unknown>): string {
-  const encode = (value: Record<string, unknown>): string =>
-    Buffer.from(JSON.stringify(value)).toString('base64url');
-
-  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.signature`;
-}
 
 describe('MessengerWebSocketGateway (Integration)', () => {
   let appTestManager: AppTestManager;
   let app: INestApplication;
   let port: number;
-  let httpServiceGetMock: jest.Mock;
+  let signAccessToken: (userId: number, expiresIn?: '1s' | '1h') => string;
   let messengerWebSocketService: MessengerWebSocketService;
 
   beforeAll(async () => {
-    httpServiceGetMock = jest.fn();
-
     appTestManager = new AppTestManager();
-    await appTestManager.init((builder) => {
-      builder.overrideProvider(HttpService).useValue({
-        get: httpServiceGetMock,
-      });
-    });
+    await appTestManager.init();
 
     app = appTestManager.getApp();
     messengerWebSocketService = app.get(MessengerWebSocketService);
+
+    const apiSettings = app
+      .get(ConfigService<Configuration, true>)
+      .get<ApiSettings>('apiSettings');
+    const jwtService = new JwtService({ secret: apiSettings.accessTokenSecret });
+
+    signAccessToken = (userId: number, expiresIn = '1h') =>
+      jwtService.sign({ userId }, { expiresIn });
 
     await app.listen(0);
     port = (app.getHttpServer().address() as AddressInfo).port;
   });
 
-  beforeEach(() => {
-    httpServiceGetMock.mockReset();
-  });
-
   afterAll(async () => {
     await appTestManager.close();
   });
-
-  function mockAuthUser(userId: number) {
-    httpServiceGetMock.mockImplementation((url: string) => {
-      if (url.includes('/auth/me')) {
-        return of({ data: { userId: String(userId) } });
-      }
-
-      return throwError(() => new Error(`Unexpected URL: ${url}`));
-    });
-  }
 
   function createSocket(token?: string): Socket {
     return io(`http://127.0.0.1:${port}/messenger`, {
@@ -68,9 +51,7 @@ describe('MessengerWebSocketGateway (Integration)', () => {
   }
 
   it('должен подключить пользователя с валидным access token', async () => {
-    mockAuthUser(2);
-
-    const token = buildToken({ exp: Math.floor(Date.now() / 1000) + 3600 });
+    const token = signAccessToken(2);
     const socket = createSocket(token);
 
     await new Promise<void>((resolve, reject) => {
@@ -94,10 +75,7 @@ describe('MessengerWebSocketGateway (Integration)', () => {
   });
 
   it('должен отклонить подключение с невалидным access token', async () => {
-    httpServiceGetMock.mockReturnValue(throwError(() => new Error('Unauthorized')));
-
-    const token = buildToken({ exp: Math.floor(Date.now() / 1000) + 3600 });
-    const socket = createSocket(token);
+    const socket = createSocket('invalid-token');
 
     const error = await new Promise<Error>((resolve) => {
       socket.on('connect_error', resolve);
@@ -107,10 +85,27 @@ describe('MessengerWebSocketGateway (Integration)', () => {
     socket.disconnect();
   });
 
-  it('должен доставить message.new в комнату получателя', async () => {
-    mockAuthUser(2);
+  it('должен отключить клиента и отправить token.expired при истечении токена', async () => {
+    const token = signAccessToken(2, '1s');
+    const socket = createSocket(token);
 
-    const token = buildToken({ exp: Math.floor(Date.now() / 1000) + 3600 });
+    await new Promise<void>((resolve, reject) => {
+      socket.on('connect', () => resolve());
+      socket.on('connect_error', reject);
+    });
+
+    const tokenExpired = new Promise<void>((resolve) => {
+      socket.on('token.expired', () => resolve());
+    });
+
+    await tokenExpired;
+
+    expect(socket.connected).toBe(false);
+    socket.disconnect();
+  });
+
+  it('должен доставить message.new в комнату получателя', async () => {
+    const token = signAccessToken(2);
     const socket = createSocket(token);
 
     await new Promise<void>((resolve, reject) => {
