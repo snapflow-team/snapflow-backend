@@ -17,9 +17,6 @@ import { SocketDataType } from '../types/socket-data.type';
 
 @WebSocketGateway({
   namespace: 'messenger',
-  cors: {
-    origin: '*',
-  },
 })
 export class MessengerWebSocketGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
