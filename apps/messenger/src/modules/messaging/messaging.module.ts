@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
+import { ChatMembershipGuard } from './api/guards/chat-membership.guard';
 import { MessagingController } from './api/messaging.controller';
 import { SendMessageUseCase } from './application/usecases/send-message.usecase';
 import { ChatsRepository } from './infrastructure/chats.repository';
@@ -9,7 +10,7 @@ import { MessengerWebSocketService } from './websocket/services/messenger-websoc
 
 const useCases = [SendMessageUseCase];
 const repositories = [ChatsRepository, MessagesRepository];
-const guards = [AccessTokenGuard];
+const guards = [AccessTokenGuard, ChatMembershipGuard];
 const websocketProviders = [MessengerWebSocketGateway, MessengerWebSocketService];
 
 @Module({
