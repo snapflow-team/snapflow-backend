@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RemoteAuthGuard } from '../auth/guards/remote-auth.guard';
+import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { MessagingController } from './api/messaging.controller';
 import { SendMessageUseCase } from './application/usecases/send-message.usecase';
 import { ChatsRepository } from './infrastructure/chats.repository';
@@ -9,7 +9,7 @@ import { MessengerWebSocketService } from './websocket/services/messenger-websoc
 
 const useCases = [SendMessageUseCase];
 const repositories = [ChatsRepository, MessagesRepository];
-const guards = [RemoteAuthGuard];
+const guards = [AccessTokenGuard];
 const websocketProviders = [MessengerWebSocketGateway, MessengerWebSocketService];
 
 @Module({
