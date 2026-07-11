@@ -82,7 +82,7 @@ export class UpdateAutoRenewalUseCase
         localSubscription.id,
       );
 
-      if (autoRenewal) {
+      if (!autoRenewal) {
         await this.queueService.resetJob(
           SubscriptionsJobsTypes.PAYMENT_REMINDER_1D,
           updatedSubscription.id,
