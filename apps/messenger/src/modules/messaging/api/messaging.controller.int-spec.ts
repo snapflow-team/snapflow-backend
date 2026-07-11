@@ -2,13 +2,14 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../../../libs/common/constants/global-prefix.constant';
+import { AccessTokenTestHelper } from '../../../../test/helpers/access-token-test.helper';
+import { AppTestManager } from '../../../../test/managers/app.test-manager';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
-import { AppTestManager } from '../../../../test/managers/app.test-manager';
 
 describe('MessagingController (Integration)', () => {
   let appTestManager: AppTestManager;
-  let signAccessToken: (userId: number) => string;
+  let accessTokenTestHelper: AccessTokenTestHelper;
 
   beforeAll(async () => {
     appTestManager = new AppTestManager();
@@ -20,7 +21,7 @@ describe('MessagingController (Integration)', () => {
       .get<ApiSettings>('apiSettings');
     const jwtService = new JwtService({ secret: apiSettings.accessTokenSecret });
 
-    signAccessToken = (userId: number) => jwtService.sign({ userId }, { expiresIn: '1h' });
+    accessTokenTestHelper = new AccessTokenTestHelper(jwtService);
   });
 
   beforeEach(async () => {
@@ -34,7 +35,7 @@ describe('MessagingController (Integration)', () => {
   it('должен вернуть 201 и созданное сообщение при валидном запросе', async () => {
     const response = await request(appTestManager.getServer())
       .post(`/${GLOBAL_PREFIX}/messenger/messages`)
-      .set('Authorization', `Bearer ${signAccessToken(1)}`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
       .send({
         receiverId: '2',
         text: 'Hello!',
@@ -62,7 +63,7 @@ describe('MessagingController (Integration)', () => {
   it('должен вернуть 400 при пустом или пробельном тексте сообщения', async () => {
     await request(appTestManager.getServer())
       .post(`/${GLOBAL_PREFIX}/messenger/messages`)
-      .set('Authorization', `Bearer ${signAccessToken(1)}`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
       .send({
         receiverId: '2',
         text: '   ',
@@ -87,6 +88,17 @@ describe('MessagingController (Integration)', () => {
     await request(appTestManager.getServer())
       .post(`/${GLOBAL_PREFIX}/messenger/messages`)
       .set('Authorization', 'Bearer invalid-token')
+      .send({
+        receiverId: '2',
+        text: 'Hello!',
+      })
+      .expect(401);
+  });
+
+  it('должен вернуть 401 при истёкшем access token', async () => {
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signExpiredAccessToken(1)}`)
       .send({
         receiverId: '2',
         text: 'Hello!',
