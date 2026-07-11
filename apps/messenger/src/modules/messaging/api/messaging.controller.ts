@@ -3,7 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags } from '@nestjs/swagger';
 import { ExtractUserFromRequest } from '../../auth/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../auth/guards/dto/user-context.dto';
-import { RemoteAuthGuard } from '../../auth/guards/remote-auth.guard';
+import { AccessTokenGuard } from '../../auth/guards/access-token.guard';
 import { SendMessageCommand } from '../application/usecases/send-message.usecase';
 import { SendMessageInputDto } from './input-dto/send-message.input-dto';
 import { SendMessageSwagger } from './swagger/send-message.swagger';
@@ -11,7 +11,7 @@ import { MessageViewDto } from './view-dto/message.view-dto';
 
 @ApiTags('Messenger')
 @Controller('messenger')
-@UseGuards(RemoteAuthGuard)
+@UseGuards(AccessTokenGuard)
 export class MessagingController {
   constructor(private readonly commandBus: CommandBus) {}
 
