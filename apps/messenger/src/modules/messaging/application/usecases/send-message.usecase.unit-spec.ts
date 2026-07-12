@@ -18,6 +18,8 @@ describe('SendMessageUseCase (unit)', () => {
     id: 10,
     participantAId: 1,
     participantBId: 2,
+    lastMessageId: null,
+    lastMessageAt: null,
     createdAt,
     updatedAt: createdAt,
   };
