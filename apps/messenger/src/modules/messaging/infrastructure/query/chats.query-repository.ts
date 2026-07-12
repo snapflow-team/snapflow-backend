@@ -9,12 +9,27 @@ import { CursorPayload, decodeCursor } from '../../../../../../../libs/common/ut
 import { PrismaService } from '../../../database/prisma.service';
 import { GetUserChatsQueryParamsDto } from '../../api/input-dto/get-user-chats.query-params.dto';
 import { ChatListItemViewDto } from '../../api/view-dto/chat-list-item.view-dto';
+import { ChatViewDto } from '../../api/view-dto/chat.view-dto';
 import { UserChatsPageViewDto } from '../../api/view-dto/user-chats-page.view-dto';
 import { ChatListRow } from '../types/chat-list-row.type';
+import { ChatWithLastMessage } from '../types/chat-with-last-message.type';
 
 @Injectable()
 export class ChatsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async findChatById(chatId: number, userId: number): Promise<ChatViewDto | null> {
+    const chat: ChatWithLastMessage | null = await this.prisma.chat.findUnique({
+      where: { id: chatId },
+      include: { lastMessage: true },
+    });
+
+    if (!chat) {
+      return null;
+    }
+
+    return ChatViewDto.mapToView(chat, userId);
+  }
 
   async findUserChats(
     userId: number,
