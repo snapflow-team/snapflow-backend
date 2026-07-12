@@ -1,14 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { Chat, Message } from '@generated/prisma-messenger';
-import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
+import { Chat } from '@generated/prisma-messenger';
+import {
+  BadRequestException,
+  InternalServerException,
+} from '../../../../common/exceptions/domain-exceptions';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
-import { MessagesRepository } from '../../infrastructure/messages.repository';
+import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
 import { GetOrCreateChatCommand, GetOrCreateChatUseCase } from './get-or-create-chat.usecase';
 
 describe('GetOrCreateChatUseCase (unit)', () => {
   let useCase: GetOrCreateChatUseCase;
-  let chatsRepositoryMock: jest.Mocked<Pick<ChatsRepository, 'getOrCreate' | 'getInterlocutorId'>>;
-  let messagesRepositoryMock: jest.Mocked<Pick<MessagesRepository, 'findById'>>;
+  let chatsRepositoryMock: jest.Mocked<Pick<ChatsRepository, 'getOrCreate'>>;
+  let chatsQueryRepositoryMock: jest.Mocked<Pick<ChatsQueryRepository, 'findChatById'>>;
 
   const createdAt = new Date('2026-07-05T18:00:00.000Z');
   const lastMessageAt = new Date('2026-07-06T12:00:00.000Z');
@@ -30,29 +33,43 @@ describe('GetOrCreateChatUseCase (unit)', () => {
     updatedAt: lastMessageAt,
   };
 
-  const lastMessage: Message = {
-    id: 100,
-    chatId: 10,
-    senderId: 2,
-    text: 'Hi',
-    createdAt: lastMessageAt,
+  const emptyChatView = {
+    id: '10',
+    interlocutorId: '2',
+    lastMessage: null,
+    createdAt: createdAt.toISOString(),
+    updatedAt: createdAt.toISOString(),
+  };
+
+  const chatViewWithLastMessage = {
+    id: '10',
+    interlocutorId: '2',
+    lastMessage: {
+      id: '100',
+      chatId: '10',
+      senderId: '2',
+      receiverId: '1',
+      text: 'Hi',
+      createdAt: lastMessageAt.toISOString(),
+    },
+    createdAt: createdAt.toISOString(),
+    updatedAt: lastMessageAt.toISOString(),
   };
 
   beforeEach(async () => {
     chatsRepositoryMock = {
       getOrCreate: jest.fn().mockResolvedValue(emptyChat),
-      getInterlocutorId: jest.fn().mockReturnValue(2),
     };
 
-    messagesRepositoryMock = {
-      findById: jest.fn(),
+    chatsQueryRepositoryMock = {
+      findChatById: jest.fn().mockResolvedValue(emptyChatView),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GetOrCreateChatUseCase,
         { provide: ChatsRepository, useValue: chatsRepositoryMock },
-        { provide: MessagesRepository, useValue: messagesRepositoryMock },
+        { provide: ChatsQueryRepository, useValue: chatsQueryRepositoryMock },
       ],
     }).compile();
 
@@ -69,39 +86,28 @@ describe('GetOrCreateChatUseCase (unit)', () => {
     );
 
     expect(chatsRepositoryMock.getOrCreate).toHaveBeenCalledWith(1, 2);
-    expect(messagesRepositoryMock.findById).not.toHaveBeenCalled();
-    expect(result).toEqual({
-      id: '10',
-      interlocutorId: '2',
-      lastMessage: null,
-      createdAt: createdAt.toISOString(),
-      updatedAt: createdAt.toISOString(),
-    });
+    expect(chatsQueryRepositoryMock.findChatById).toHaveBeenCalledWith(10, 1);
+    expect(result).toEqual(emptyChatView);
   });
 
   it('должен вернуть lastMessage для существующего чата с сообщениями', async () => {
     chatsRepositoryMock.getOrCreate.mockResolvedValue(chatWithMessage);
-    messagesRepositoryMock.findById.mockResolvedValue(lastMessage);
+    chatsQueryRepositoryMock.findChatById.mockResolvedValue(chatViewWithLastMessage);
 
     const result = await useCase.execute(
       new GetOrCreateChatCommand({ userId: 1, interlocutorId: 2 }),
     );
 
-    expect(messagesRepositoryMock.findById).toHaveBeenCalledWith(100);
-    expect(result).toEqual({
-      id: '10',
-      interlocutorId: '2',
-      lastMessage: {
-        id: '100',
-        chatId: '10',
-        senderId: '2',
-        receiverId: '1',
-        text: 'Hi',
-        createdAt: lastMessageAt.toISOString(),
-      },
-      createdAt: createdAt.toISOString(),
-      updatedAt: lastMessageAt.toISOString(),
-    });
+    expect(chatsQueryRepositoryMock.findChatById).toHaveBeenCalledWith(10, 1);
+    expect(result).toEqual(chatViewWithLastMessage);
+  });
+
+  it('должен бросить ошибку, если query-repository не вернул view', async () => {
+    chatsQueryRepositoryMock.findChatById.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute(new GetOrCreateChatCommand({ userId: 1, interlocutorId: 2 })),
+    ).rejects.toBeInstanceOf(InternalServerException);
   });
 
   it('должен запретить создание чата с самим собой', async () => {
@@ -110,6 +116,6 @@ describe('GetOrCreateChatUseCase (unit)', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(chatsRepositoryMock.getOrCreate).not.toHaveBeenCalled();
-    expect(messagesRepositoryMock.findById).not.toHaveBeenCalled();
+    expect(chatsQueryRepositoryMock.findChatById).not.toHaveBeenCalled();
   });
 });

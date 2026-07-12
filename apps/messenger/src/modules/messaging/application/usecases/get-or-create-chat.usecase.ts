@@ -1,9 +1,13 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
+import {
+  BadRequestException,
+  InternalServerException,
+} from '../../../../common/exceptions/domain-exceptions';
 import { ChatViewDto } from '../../api/view-dto/chat.view-dto';
 import { GetOrCreateChatApplicationDto } from '../dto/get-or-create-chat.application-dto';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
-import { MessagesRepository } from '../../infrastructure/messages.repository';
+import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
+import { Chat } from '@generated/prisma-messenger';
 
 export class GetOrCreateChatCommand {
   constructor(public readonly dto: GetOrCreateChatApplicationDto) {}
@@ -15,7 +19,7 @@ export class GetOrCreateChatUseCase
 {
   constructor(
     private readonly chatsRepository: ChatsRepository,
-    private readonly messagesRepository: MessagesRepository,
+    private readonly chatsQueryRepository: ChatsQueryRepository,
   ) {}
 
   async execute({ dto }: GetOrCreateChatCommand): Promise<ChatViewDto> {
@@ -23,13 +27,17 @@ export class GetOrCreateChatUseCase
       throw new BadRequestException('Cannot create chat with yourself');
     }
 
-    const chat = await this.chatsRepository.getOrCreate(dto.userId, dto.interlocutorId);
-    const interlocutorId = this.chatsRepository.getInterlocutorId(chat, dto.userId);
+    const chat: Chat = await this.chatsRepository.getOrCreate(dto.userId, dto.interlocutorId);
 
-    const lastMessage = chat.lastMessageId
-      ? await this.messagesRepository.findById(chat.lastMessageId)
-      : null;
+    const chatView: ChatViewDto | null = await this.chatsQueryRepository.findChatById(
+      chat.id,
+      dto.userId,
+    );
 
-    return ChatViewDto.mapToView(chat, interlocutorId, dto.userId, lastMessage);
+    if (!chatView) {
+      throw new InternalServerException(`Chat view was not found for chatId=${chat.id}`);
+    }
+
+    return chatView;
   }
 }
