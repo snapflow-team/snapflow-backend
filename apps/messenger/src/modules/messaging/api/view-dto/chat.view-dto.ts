@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Chat, Message } from '@generated/prisma-messenger';
 import { MessageViewDto } from './message.view-dto';
+import { ChatWithLastMessage } from '../../infrastructure/types/chat-with-last-message.type';
 
 export class ChatViewDto {
   @ApiProperty({
@@ -36,21 +36,19 @@ export class ChatViewDto {
   })
   updatedAt: string;
 
-  static mapToView(
-    chat: Chat,
-    interlocutorId: number,
-    userId: number,
-    lastMessage: Message | null,
-  ): ChatViewDto {
+  static mapToView(chat: ChatWithLastMessage, userId: number): ChatViewDto {
+    const interlocutorId: number =
+      chat.participantAId === userId ? chat.participantBId : chat.participantAId;
+
     const dto = new ChatViewDto();
     dto.id = chat.id.toString();
     dto.interlocutorId = interlocutorId.toString();
     dto.createdAt = chat.createdAt.toISOString();
     dto.updatedAt = chat.updatedAt.toISOString();
-    dto.lastMessage = lastMessage
+    dto.lastMessage = chat.lastMessage
       ? MessageViewDto.mapToView(
-          lastMessage,
-          lastMessage.senderId === userId ? interlocutorId : userId,
+          chat.lastMessage,
+          chat.lastMessage.senderId === userId ? interlocutorId : userId,
         )
       : null;
 
