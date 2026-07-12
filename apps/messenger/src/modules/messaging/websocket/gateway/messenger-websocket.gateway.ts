@@ -5,14 +5,11 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
-import { lastValueFrom } from 'rxjs';
 import { Server, Socket } from 'socket.io';
+import { AuthTokenService } from '../../../auth/application/services/auth-token.service';
+import { PayloadAccessToken } from '../../../auth/application/types/payload-access-token.type';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
-import { Configuration } from '../../../../setup/configuration/configuration';
-import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { SocketDataType } from '../types/socket-data.type';
 
 @WebSocketGateway({
@@ -24,14 +21,11 @@ export class MessengerWebSocketGateway
   @WebSocketServer()
   server: Server;
   private readonly logger: ContextLogger;
-  private readonly coreUrl: string;
 
   constructor(
-    private readonly configService: ConfigService<Configuration, true>,
-    private readonly httpService: HttpService,
+    private readonly authTokenService: AuthTokenService,
     loggerFactory: LoggerFactory,
   ) {
-    this.coreUrl = this.configService.get<ApiSettings>('apiSettings').coreServiceUrl;
     this.logger = loggerFactory.create(MessengerWebSocketGateway.name);
   }
 
@@ -39,7 +33,6 @@ export class MessengerWebSocketGateway
     this.logger.log('Messenger websocket gateway successfully started');
 
     server.use((socket, next) => {
-      // vilyamz[messenger]: выяснить как правильно выстраить авторизацию в этом сервисе
       void this.authorizeSocket(socket, next);
     });
   }
@@ -72,30 +65,24 @@ export class MessengerWebSocketGateway
     next: (err?: Error) => void,
   ): Promise<void> {
     try {
-      const token: string | undefined = this.extractToken(socket);
-      if (!token) {
+      const rawToken: string | undefined = this.extractToken(socket);
+      if (!rawToken) {
         return next(new Error('Unauthorized: No token provided'));
       }
 
-      const bearerToken: string = token.toLowerCase().startsWith('bearer ')
-        ? token
-        : `Bearer ${token}`;
-
-      const response = await lastValueFrom(
-        this.httpService.get<{ userId: string }>(`${this.coreUrl}/api/v1/auth/me`, {
-          headers: {
-            Authorization: bearerToken,
-          },
-        }),
-      );
-
-      const userId: number = Number(response.data.userId);
-      if (!Number.isInteger(userId) || userId <= 0) {
-        throw new Error('Invalid user id from auth service');
+      const token: string | null = this.normalizeAccessToken(rawToken);
+      if (!token) {
+        return next(new Error('Unauthorized: Invalid token'));
       }
 
-      socket.data.userId = userId;
-      socket.data.exp = this.extractTokenExp(token);
+      const payload: PayloadAccessToken = this.authTokenService.verifyAndDecodeAccessToken(token);
+
+      if (!Number.isInteger(payload.userId) || payload.userId <= 0) {
+        throw new Error('Invalid user id from token');
+      }
+
+      socket.data.userId = payload.userId;
+      socket.data.exp = payload.exp;
       next();
     } catch (error) {
       const message: string = error instanceof Error ? error.message : 'Unknown error';
@@ -124,28 +111,15 @@ export class MessengerWebSocketGateway
     return trimmedToken === '' ? undefined : trimmedToken;
   }
 
-  private extractTokenExp(token: string): number | undefined {
-    try {
-      const tokenWithoutBearer = token.toLowerCase().startsWith('bearer ')
-        ? token.slice('Bearer '.length)
-        : token;
-      const payloadPart = tokenWithoutBearer.split('.')[1];
-      if (!payloadPart) {
-        return undefined;
-      }
-
-      const normalizedPayloadPart = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
-      const paddedPayloadPart = normalizedPayloadPart.padEnd(
-        normalizedPayloadPart.length + ((4 - (normalizedPayloadPart.length % 4)) % 4),
-        '=',
-      );
-      const payloadJson = Buffer.from(paddedPayloadPart, 'base64').toString('utf8');
-      const payload: { exp?: unknown } = JSON.parse(payloadJson) as { exp?: unknown };
-
-      return typeof payload.exp === 'number' ? payload.exp : undefined;
-    } catch {
-      return undefined;
+  private normalizeAccessToken(token: string): string | null {
+    const trimmedToken: string = token.trim();
+    if (trimmedToken === '') {
+      return null;
     }
+
+    const match = trimmedToken.match(/^Bearer\s+(\S+)$/i);
+
+    return match?.[1] ?? trimmedToken;
   }
 
   private setupTokenExpiry(client: Socket<any, any, any, SocketDataType>, exp: number | undefined) {
