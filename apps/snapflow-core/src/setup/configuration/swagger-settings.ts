@@ -15,10 +15,15 @@ export class SwaggerSettings {
   @IsString()
   paymentsSwaggerUrl?: string;
 
+  @IsOptional()
+  @IsString()
+  messengerSwaggerUrl?: string;
+
   constructor(private environmentVariables: EnvironmentVariable) {
     this.swaggerUser = this.environmentVariables.SWAGGER_USER;
     this.swaggerPassword = this.environmentVariables.SWAGGER_PASSWORD;
     this.swaggerPath = this.environmentVariables.SWAGGER_PATH;
     this.paymentsSwaggerUrl = this.environmentVariables.PAYMENTS_SWAGGER_URL;
+    this.messengerSwaggerUrl = this.environmentVariables.MESSENGER_SWAGGER_URL;
   }
 }

@@ -61,16 +61,24 @@ export function swaggerSetup(
     displayOperationId: false,
     displayRequestDuration: true,
   };
+  const externalSwaggerUrls: Array<{ url: string; name: string }> = [];
   if (swaggerSettings.paymentsSwaggerUrl) {
+    externalSwaggerUrls.push({ url: swaggerSettings.paymentsSwaggerUrl, name: 'Payments' });
+  }
+  if (swaggerSettings.messengerSwaggerUrl) {
+    externalSwaggerUrls.push({ url: swaggerSettings.messengerSwaggerUrl, name: 'Messenger' });
+  }
+
+  if (externalSwaggerUrls.length > 0) {
     swaggerOptions.urls = [
       { url: `/${GLOBAL_PREFIX}/${swaggerPath}-json`, name: 'SnapFlow Core' },
-      { url: swaggerSettings.paymentsSwaggerUrl, name: 'Payments' },
+      ...externalSwaggerUrls,
     ];
     swaggerOptions['urls.primaryName'] = 'SnapFlow Core';
   }
 
   SwaggerModule.setup(fullSwaggerPath, app, coreDocument, {
-    explorer: Boolean(swaggerSettings.paymentsSwaggerUrl),
+    explorer: externalSwaggerUrls.length > 0,
     swaggerOptions,
     customSiteTitle: 'Snapflow Documentation',
     customCss: '.swagger-ui .info .url { display: none !important; }',

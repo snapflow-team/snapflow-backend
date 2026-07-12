@@ -25,11 +25,10 @@ export function swaggerSetup(
   }
 
   const config = new DocumentBuilder()
-    .setTitle('SnapFlow Payments API')
+    .setTitle('SnapFlow Messenger API')
     .setVersion('1.0.0')
     .setDescription(
-      'Публичное HTTP API сервиса оплат: тарифы и создание Stripe Checkout Session. ' +
-        'Вебхуки Stripe и служебные маршруты в документацию не входят.',
+      'Публичное HTTP API сервиса мессенджера: чаты, история сообщений и отправка сообщений.',
     )
     .addBearerAuth(
       {
@@ -41,7 +40,7 @@ export function swaggerSetup(
       },
       'access-token',
     )
-    .addTag('Subscriptions', 'Тарифы и оформление подписки')
+    .addTag('Messenger', 'Чаты, история и обмен сообщениями')
     .build();
 
   const document: OpenAPIObject = SwaggerModule.createDocument(app, config, {
@@ -59,6 +58,6 @@ export function swaggerSetup(
       displayOperationId: false,
       displayRequestDuration: true,
     },
-    customSiteTitle: 'SnapFlow Payments API',
+    customSiteTitle: 'SnapFlow Messenger API',
   });
 }
