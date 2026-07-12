@@ -5,7 +5,7 @@ import { SwaggerSettings } from './configuration/swagger-settings';
 import { EnvironmentSettings } from './configuration/environment-settings';
 import { GLOBAL_PREFIX } from '../../../../libs/common/constants/global-prefix.constant';
 import type { RequestHandler } from 'express';
-import { MessengerModule } from '../messenger.module';
+import { MessagingModule } from '../modules/messaging/messaging.module';
 
 export function swaggerSetup(
   app: INestApplication,
@@ -44,7 +44,7 @@ export function swaggerSetup(
     .build();
 
   const document: OpenAPIObject = SwaggerModule.createDocument(app, config, {
-    include: [MessengerModule],
+    include: [MessagingModule],
   });
 
   SwaggerModule.setup(fullSwaggerPath, app, document, {
