@@ -30,3 +30,13 @@ export class ForbiddenException extends DomainException<MessengerResultCodeType>
     });
   }
 }
+
+export class InternalServerException extends DomainException<MessengerResultCodeType> {
+  constructor(message: string = 'Internal server error', extensions?: IExtension[]) {
+    super({
+      code: MessengerResultCode.InternalServerError,
+      message,
+      extensions,
+    });
+  }
+}
