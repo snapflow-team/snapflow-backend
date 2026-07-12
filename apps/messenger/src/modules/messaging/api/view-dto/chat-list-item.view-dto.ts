@@ -1,6 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserChatListItem } from '../../infrastructure/types/user-chat-list-item.type';
+import { ChatListRow } from '../../infrastructure/types/chat-list-row.type';
 import { MessageViewDto } from './message.view-dto';
+
+type ChatListRowWithMessage = ChatListRow & {
+  messageId: number;
+  messageChatId: number;
+  messageSenderId: number;
+  messageText: string;
+  messageCreatedAt: Date;
+};
 
 export class ChatListItemViewDto {
   @ApiProperty({
@@ -42,20 +50,39 @@ export class ChatListItemViewDto {
   })
   updatedAt: string;
 
-  static mapToView(item: UserChatListItem, userId: number): ChatListItemViewDto {
+  static mapToView(row: ChatListRow, userId: number): ChatListItemViewDto {
+    const interlocutorId: number =
+      row.participantAId === userId ? row.participantBId : row.participantAId;
+
     const dto = new ChatListItemViewDto();
-    dto.id = item.chat.id.toString();
-    dto.interlocutorId = item.interlocutorId.toString();
-    dto.unreadCount = item.unreadCount;
-    dto.createdAt = item.chat.createdAt.toISOString();
-    dto.updatedAt = item.chat.updatedAt.toISOString();
-    dto.lastMessage = item.lastMessage
+    dto.id = row.id.toString();
+    dto.interlocutorId = interlocutorId.toString();
+    dto.unreadCount = row.unreadCount;
+    dto.createdAt = row.chatCreatedAt.toISOString();
+    dto.updatedAt = row.chatUpdatedAt.toISOString();
+    dto.lastMessage = isChatListRowWithMessage(row)
       ? MessageViewDto.mapToView(
-          item.lastMessage,
-          item.lastMessage.senderId === userId ? item.interlocutorId : userId,
+          {
+            id: row.messageId,
+            chatId: row.messageChatId,
+            senderId: row.messageSenderId,
+            text: row.messageText,
+            createdAt: row.messageCreatedAt,
+          },
+          row.messageSenderId === userId ? interlocutorId : userId,
         )
       : null;
 
     return dto;
   }
+}
+
+function isChatListRowWithMessage(row: ChatListRow): row is ChatListRowWithMessage {
+  return (
+    row.messageId !== null &&
+    row.messageChatId !== null &&
+    row.messageSenderId !== null &&
+    row.messageText !== null &&
+    row.messageCreatedAt !== null
+  );
 }
