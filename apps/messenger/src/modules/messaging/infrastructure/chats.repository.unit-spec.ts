@@ -116,6 +116,47 @@ describe('ChatsRepository (unit)', () => {
     expect(result.nextCursor).toBe(encodeCursor({ createdAt, id: String(rowWithoutMessage.id) }));
   });
 
+  it('findUserChatsPaginated: при cursor запрашивает следующую страницу', async () => {
+    const cursor = encodeCursor({ createdAt: lastMessageAt, id: String(rowWithMessage.id) });
+    prismaMock.$queryRaw.mockResolvedValue([rowWithoutMessage]);
+
+    const result = await repository.findUserChatsPaginated(1, { cursor, limit: 2 });
+
+    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(result.hasMore).toBe(false);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].chat.id).toBe(rowWithoutMessage.id);
+  });
+
+  it('getOrCreate: нормализует участников и вызывает upsert', async () => {
+    const chat: Chat = {
+      id: 5,
+      participantAId: 2,
+      participantBId: 7,
+      lastMessageId: null,
+      lastMessageAt: null,
+      createdAt,
+      updatedAt: createdAt,
+    };
+
+    prismaMock.chat.upsert.mockResolvedValue(chat);
+
+    await expect(repository.getOrCreate(7, 2)).resolves.toEqual(chat);
+    expect(prismaMock.chat.upsert).toHaveBeenCalledWith({
+      where: {
+        participantAId_participantBId: {
+          participantAId: 2,
+          participantBId: 7,
+        },
+      },
+      create: {
+        participantAId: 2,
+        participantBId: 7,
+      },
+      update: {},
+    });
+  });
+
   it('getInterlocutorId: возвращает второго участника чата', () => {
     const chat: Pick<Chat, 'participantAId' | 'participantBId'> = {
       participantAId: 1,
