@@ -7,6 +7,7 @@ import { GetUserChatsQueryHandler } from './application/queries/get-user-chats.q
 import { GetOrCreateChatUseCase } from './application/usecases/get-or-create-chat.usecase';
 import { SendMessageUseCase } from './application/usecases/send-message.usecase';
 import { ChatsQueryRepository } from './infrastructure/query/chats.query-repository';
+import { MessagesQueryRepository } from './infrastructure/query/messages.query-repository';
 import { ChatsRepository } from './infrastructure/chats.repository';
 import { MessagesRepository } from './infrastructure/messages.repository';
 import { MessengerWebSocketGateway } from './websocket/gateway/messenger-websocket.gateway';
@@ -14,7 +15,7 @@ import { MessengerWebSocketService } from './websocket/services/messenger-websoc
 
 const useCases = [SendMessageUseCase, GetOrCreateChatUseCase];
 const queries = [GetUserChatsQueryHandler, GetChatMessagesQueryHandler];
-const repositories = [ChatsRepository, ChatsQueryRepository, MessagesRepository];
+const repositories = [ChatsRepository, ChatsQueryRepository, MessagesRepository, MessagesQueryRepository];
 const guards = [AccessTokenGuard, ChatMembershipGuard];
 const websocketProviders = [MessengerWebSocketGateway, MessengerWebSocketService];
 
