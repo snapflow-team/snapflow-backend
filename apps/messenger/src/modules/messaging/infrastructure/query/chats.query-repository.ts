@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Chat, Message, Prisma } from '@generated/prisma-messenger';
+import { Prisma } from '@generated/prisma-messenger';
 import {
   buildCursorPaginatedResult,
   CursorPaginatedResult,
@@ -11,7 +11,6 @@ import { GetUserChatsQueryParamsDto } from '../../api/input-dto/get-user-chats.q
 import { ChatListItemViewDto } from '../../api/view-dto/chat-list-item.view-dto';
 import { UserChatsPageViewDto } from '../../api/view-dto/user-chats-page.view-dto';
 import { ChatListRow } from '../types/chat-list-row.type';
-import { UserChatListItem } from '../types/user-chat-list-item.type';
 
 @Injectable()
 export class ChatsQueryRepository {
@@ -32,18 +31,18 @@ export class ChatsQueryRepository {
 
     const rows: ChatListRow[] = await this.prisma.$queryRaw<ChatListRow[]>`
       SELECT
-        c.id,
-        c.participant_a_id,
-        c.participant_b_id,
-        c.last_message_id,
-        c.last_message_at,
-        c.created_at,
-        c.updated_at,
-        m.id AS lm_id,
-        m.chat_id AS lm_chat_id,
-        m.sender_id AS lm_sender_id,
-        m.text AS lm_text,
-        m.created_at AS lm_created_at,
+        c.id AS id,
+        c.participant_a_id AS "participantAId",
+        c.participant_b_id AS "participantBId",
+        c.last_message_id AS "chatLastMessageId",
+        c.last_message_at AS "chatLastMessageAt",
+        c.created_at AS "chatCreatedAt",
+        c.updated_at AS "chatUpdatedAt",
+        m.id AS "messageId",
+        m.chat_id AS "messageChatId",
+        m.sender_id AS "messageSenderId",
+        m.text AS "messageText",
+        m.created_at AS "messageCreatedAt",
         (
           SELECT COUNT(*)::int
           FROM messages um
@@ -53,7 +52,7 @@ export class ChatsQueryRepository {
               crs.last_read_message_id IS NULL
               OR um.id > crs.last_read_message_id
             )
-        ) AS unread_count
+        ) AS "unreadCount"
       FROM chats c
       LEFT JOIN messages m ON m.id = c.last_message_id
       LEFT JOIN chat_read_states crs ON crs.chat_id = c.id AND crs.user_id = ${userId}
@@ -63,54 +62,17 @@ export class ChatsQueryRepository {
       LIMIT ${take}
     `;
 
-    const items: UserChatListItem[] = rows.map((row) => this.mapRowToUserChatListItem(row, userId));
-
-    const paginated: CursorPaginatedResult<UserChatListItem> = buildCursorPaginatedResult(
-      items,
+    const paginated: CursorPaginatedResult<ChatListRow> = buildCursorPaginatedResult(
+      rows,
       params.limit,
-      (item) => ({
-        createdAt: item.chat.lastMessageAt ?? item.chat.createdAt,
-        id: String(item.chat.id),
+      (row) => ({
+        createdAt: row.chatLastMessageAt ?? row.chatCreatedAt,
+        id: String(row.id),
       }),
     );
-
-    const page = new UserChatsPageViewDto();
-    page.items = paginated.items.map((item) => ChatListItemViewDto.mapToView(item, userId));
-    page.hasMore = paginated.hasMore;
-    page.nextCursor = paginated.nextCursor;
-
-    return page;
-  }
-
-  private mapRowToUserChatListItem(row: ChatListRow, userId: number): UserChatListItem {
-    const chat: Chat = {
-      id: row.id,
-      participantAId: row.participant_a_id,
-      participantBId: row.participant_b_id,
-      lastMessageId: row.last_message_id,
-      lastMessageAt: row.last_message_at,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
-
-    const lastMessage: Message | null = row.lm_id
-      ? {
-          id: row.lm_id,
-          chatId: row.lm_chat_id!,
-          senderId: row.lm_sender_id!,
-          text: row.lm_text!,
-          createdAt: row.lm_created_at!,
-        }
-      : null;
-
-    const interlocutorId: number =
-      chat.participantAId === userId ? chat.participantBId : chat.participantAId;
-
     return {
-      chat,
-      interlocutorId,
-      lastMessage,
-      unreadCount: row.unread_count,
+      ...paginated,
+      items: paginated.items.map((row) => ChatListItemViewDto.mapToView(row, userId)),
     };
   }
 }
