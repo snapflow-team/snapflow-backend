@@ -22,12 +22,24 @@ export class MessagesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateMessageRepositoryDto): Promise<Message> {
-    return this.prisma.message.create({
-      data: {
-        chatId: dto.chatId,
-        senderId: dto.senderId,
-        text: dto.text,
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const message = await tx.message.create({
+        data: {
+          chatId: dto.chatId,
+          senderId: dto.senderId,
+          text: dto.text,
+        },
+      });
+
+      await tx.chat.update({
+        where: { id: dto.chatId },
+        data: {
+          lastMessageId: message.id,
+          lastMessageAt: message.createdAt,
+        },
+      });
+
+      return message;
     });
   }
 

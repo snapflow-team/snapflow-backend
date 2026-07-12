@@ -6,7 +6,12 @@ import { MessagesRepository } from './messages.repository';
 
 describe('MessagesRepository (unit)', () => {
   let repository: MessagesRepository;
-  let prismaMock: { message: { findMany: jest.Mock } };
+  let prismaMock: {
+    $transaction: jest.Mock;
+    message: { create: jest.Mock; findMany: jest.Mock };
+    chat: { update: jest.Mock };
+  };
+  let txMock: { message: { create: jest.Mock }; chat: { update: jest.Mock } };
 
   const sameCreatedAt = new Date('2026-07-05T18:00:00.000Z');
 
@@ -35,9 +40,25 @@ describe('MessagesRepository (unit)', () => {
   };
 
   beforeEach(async () => {
-    prismaMock = {
+    txMock = {
       message: {
+        create: jest.fn(),
+      },
+      chat: {
+        update: jest.fn(),
+      },
+    };
+
+    prismaMock = {
+      $transaction: jest.fn(async (callback: (tx: typeof txMock) => Promise<Message>) =>
+        callback(txMock),
+      ),
+      message: {
+        create: jest.fn(),
         findMany: jest.fn(),
+      },
+      chat: {
+        update: jest.fn(),
       },
     };
 
@@ -50,6 +71,34 @@ describe('MessagesRepository (unit)', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('create: сохраняет сообщение и обновляет lastMessage* чата в одной транзакции', async () => {
+    txMock.message.create.mockResolvedValue(messageA);
+    txMock.chat.update.mockResolvedValue({});
+
+    const result = await repository.create({
+      chatId: 10,
+      senderId: 1,
+      text: 'Third',
+    });
+
+    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
+    expect(txMock.message.create).toHaveBeenCalledWith({
+      data: {
+        chatId: 10,
+        senderId: 1,
+        text: 'Third',
+      },
+    });
+    expect(txMock.chat.update).toHaveBeenCalledWith({
+      where: { id: 10 },
+      data: {
+        lastMessageId: messageA.id,
+        lastMessageAt: messageA.createdAt,
+      },
+    });
+    expect(result).toEqual(messageA);
   });
 
   it('первая страница: возвращает limit элементов и nextCursor при hasMore', async () => {

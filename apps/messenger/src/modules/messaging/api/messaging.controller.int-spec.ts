@@ -55,9 +55,17 @@ describe('MessagingController (Integration)', () => {
 
     const messageCount = await appTestManager.prisma.message.count();
     const chatCount = await appTestManager.prisma.chat.count();
+    const chat = await appTestManager.prisma.chat.findFirst();
 
     expect(messageCount).toBe(1);
     expect(chatCount).toBe(1);
+    expect(chat).toEqual(
+      expect.objectContaining({
+        lastMessageId: 1,
+        lastMessageAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      }),
+    );
   });
 
   it('должен вернуть 400 при пустом или пробельном тексте сообщения', async () => {
