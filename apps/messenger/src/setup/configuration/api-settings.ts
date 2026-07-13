@@ -17,6 +17,12 @@ export class ApiSettings {
   @IsNotEmpty()
   accessTokenSecret: string;
 
+  @IsUrl({
+    protocols: ['redis', 'rediss'],
+    require_tld: false,
+  })
+  redisUrl: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
@@ -28,6 +34,8 @@ export class ApiSettings {
       environmentVariables.SEND_INTERNAL_SERVER_ERROR_DETAILS === 'true';
 
     this.accessTokenSecret = environmentVariables.JWT_SECRET_AT;
+
+    this.redisUrl = environmentVariables.REDIS_URL;
   }
 
   get allowedOrigins(): string[] | boolean {
