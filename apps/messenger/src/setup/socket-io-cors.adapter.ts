@@ -23,6 +23,11 @@ export class SocketIoCorsAdapter extends IoAdapter {
 
     try {
       await Promise.all([redisClient.connect(), subClient.connect()]);
+
+      this.logger.trace(
+        `Socket.IO Redis adapter connected (pub=${redisClient.status}, sub=${subClient.status})`,
+        this.connectToRedis.name,
+      );
     } catch (error) {
       this.logger.error(error, this.connectToRedis.name);
       throw error;
