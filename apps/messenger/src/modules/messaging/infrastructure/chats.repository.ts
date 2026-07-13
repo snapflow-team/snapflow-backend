@@ -27,6 +27,12 @@ export class ChatsRepository {
     });
   }
 
+  async findById(chatId: number): Promise<Chat | null> {
+    return this.prisma.chat.findUnique({
+      where: { id: chatId },
+    });
+  }
+
   async isParticipant(chatId: number, userId: number): Promise<boolean> {
     const chat = await this.prisma.chat.findUnique({
       where: { id: chatId },
@@ -38,6 +44,10 @@ export class ChatsRepository {
     }
 
     return chat.participantAId === userId || chat.participantBId === userId;
+  }
+
+  getInterlocutorId(chat: Pick<Chat, 'participantAId' | 'participantBId'>, userId: number): number {
+    return chat.participantAId === userId ? chat.participantBId : chat.participantAId;
   }
 
   private normalizeParticipants(
