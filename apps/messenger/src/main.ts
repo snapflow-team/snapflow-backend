@@ -8,6 +8,8 @@ import { EnvironmentSettings } from './setup/configuration/environment-settings'
 import { Configuration } from './setup/configuration/configuration';
 import { ConfigService } from '@nestjs/config';
 import { CustomLogger } from './modules/logger/logger.service';
+import { REDIS_CLIENT_INJECT_TOKEN } from './core/providers/provide-tokens/redis-client.inject-token';
+import { Redis } from 'ioredis';
 
 async function bootstrap() {
   const app = await NestFactory.create(MessengerModule, {
@@ -27,7 +29,11 @@ async function bootstrap() {
 
   applyAppInitialization(app);
 
-  app.useWebSocketAdapter(new SocketIoCorsAdapter(app, allowedOrigins));
+  const redisClient: Redis = app.get(REDIS_CLIENT_INJECT_TOKEN);
+
+  const ioAdapter = new SocketIoCorsAdapter(app, allowedOrigins);
+  await ioAdapter.connectToRedis(redisClient);
+  app.useWebSocketAdapter(ioAdapter);
 
   const env: string = environmentSettings.currentEnv;
 
