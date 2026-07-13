@@ -12,6 +12,6 @@ export const RedisProvider: Provider = {
   useFactory: (configService: ConfigService<Configuration, true>): Redis => {
     const { redisUrl }: ApiSettings = configService.get<ApiSettings>('apiSettings');
 
-    return new Redis(redisUrl);
+    return new Redis(redisUrl, { lazyConnect: true });
   },
 };
