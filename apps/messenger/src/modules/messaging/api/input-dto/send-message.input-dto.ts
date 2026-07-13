@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Matches } from 'class-validator';
+import { IsString, IsUUID, Matches } from 'class-validator';
 import { IsStringWithTrim } from '../../../../../../../libs/common/decorators/validation/is-string-with-trim.decorator';
 
 export const messageTextConstraints = {
@@ -29,4 +29,12 @@ export class SendMessageInputDto {
     example: 'Hello!',
   })
   text: string;
+
+  @IsUUID()
+  @ApiProperty({
+    type: String,
+    description: 'Идентификатор сообщения на клиенте (UUID) для идемпотентности',
+    example: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+  })
+  clientMessageId: string;
 }
