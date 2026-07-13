@@ -11,22 +11,43 @@ model Chat {
   id             Int       @id @default(autoincrement())
   participantAId Int       @map("participant_a_id")
   participantBId Int       @map("participant_b_id")
+  lastMessageId  Int?      @unique @map("last_message_id")
+  lastMessageAt  DateTime? @map("last_message_at")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
   messages       Message[]
+  lastMessage    Message?  @relation("ChatLastMessage", fields: [lastMessageId], references: [id], onDelete: SetNull)
+  readStates     ChatReadState[]
 
   @@unique([participantAId, participantBId])
+  @@index([participantAId, lastMessageAt])
+  @@index([participantBId, lastMessageAt])
   @@map("chats")
 }
 
 model Message {
-  id        Int      @id @default(autoincrement())
-  chatId    Int      @map("chat_id")
-  senderId  Int      @map("sender_id")
-  text      String   @db.VarChar(1000)
-  createdAt DateTime @default(now()) @map("created_at")
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  id                Int             @id @default(autoincrement())
+  chatId            Int             @map("chat_id")
+  senderId          Int             @map("sender_id")
+  text              String          @db.VarChar(1000)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  chat              Chat            @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  lastMessageOfChat Chat?           @relation("ChatLastMessage")
+  readStates        ChatReadState[]
 
   @@index([chatId, createdAt])
   @@map("messages")
+}
+
+model ChatReadState {
+  id                Int       @id @default(autoincrement())
+  chatId            Int       @map("chat_id")
+  userId            Int       @map("user_id")
+  lastReadMessageId Int?      @map("last_read_message_id")
+  lastReadAt        DateTime? @map("last_read_at")
+  chat              Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  lastReadMessage   Message?  @relation(fields: [lastReadMessageId], references: [id], onDelete: SetNull)
+
+  @@unique([chatId, userId])
+  @@map("chat_read_states")
 }
