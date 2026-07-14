@@ -6,6 +6,7 @@ import { AccessTokenTestHelper } from '../../../../test/helpers/access-token-tes
 import { AppTestManager } from '../../../../test/managers/app.test-manager';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
+import { MessengerWebSocketService } from '../websocket/services/messenger-websocket.service';
 
 describe('MessagingController (Integration)', () => {
   let appTestManager: AppTestManager;
@@ -79,6 +80,11 @@ describe('MessagingController (Integration)', () => {
       clientMessageId,
     };
 
+    const sendToUserSpy = jest.spyOn(
+      appTestManager.getApp().get(MessengerWebSocketService),
+      'sendToUser',
+    );
+
     const firstResponse = await request(appTestManager.getServer())
       .post(`/${GLOBAL_PREFIX}/messenger/messages`)
       .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
@@ -93,6 +99,9 @@ describe('MessagingController (Integration)', () => {
 
     expect(secondResponse.body).toEqual(firstResponse.body);
     expect(await appTestManager.prisma.message.count()).toBe(1);
+    expect(sendToUserSpy).toHaveBeenCalledTimes(1);
+
+    sendToUserSpy.mockRestore();
   });
 
   it('должен вернуть 400 при отсутствии clientMessageId', async () => {
