@@ -7,6 +7,7 @@ import { AccessTokenTestHelper } from '../../../../../test/helpers/access-token-
 import { AppTestManager } from '../../../../../test/managers/app.test-manager';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
+import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
 import { MessageViewDto } from '../../api/view-dto/message.view-dto';
 import { MessengerWebSocketService } from '../services/messenger-websocket.service';
 
@@ -127,7 +128,9 @@ describe('MessengerWebSocketGateway (Integration)', () => {
     });
 
     const receivedMessage = new Promise<MessageViewDto>((resolve) => {
-      socket.on('message.new', (payload: MessageViewDto) => resolve(payload));
+      socket.on(MessengerWsEvent.MessageNew, (payload: MessageViewDto) =>
+        resolve(payload),
+      );
     });
 
     const payload: MessageViewDto = {
