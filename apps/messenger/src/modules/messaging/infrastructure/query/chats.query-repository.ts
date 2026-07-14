@@ -58,6 +58,7 @@ export class ChatsQueryRepository {
         m.sender_id AS "messageSenderId",
         m.text AS "messageText",
         m.created_at AS "messageCreatedAt",
+        m.client_message_id AS "messageClientMessageId",
         (
           SELECT COUNT(*)::int
           FROM messages um

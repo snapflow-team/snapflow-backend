@@ -136,6 +136,7 @@ describe('MessengerWebSocketGateway (Integration)', () => {
       senderId: '1',
       receiverId: '2',
       text: 'Hello via WS',
+      clientMessageId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
       createdAt: '2026-07-05T18:00:00.000Z',
     };
 

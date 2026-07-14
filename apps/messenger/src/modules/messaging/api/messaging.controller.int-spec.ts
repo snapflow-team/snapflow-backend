@@ -11,6 +11,8 @@ describe('MessagingController (Integration)', () => {
   let appTestManager: AppTestManager;
   let accessTokenTestHelper: AccessTokenTestHelper;
 
+  const clientMessageId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+
   beforeAll(async () => {
     appTestManager = new AppTestManager();
     await appTestManager.init();
@@ -39,6 +41,7 @@ describe('MessagingController (Integration)', () => {
       .send({
         receiverId: '2',
         text: 'Hello!',
+        clientMessageId,
       })
       .expect(201);
 
@@ -49,6 +52,7 @@ describe('MessagingController (Integration)', () => {
         senderId: '1',
         receiverId: '2',
         text: 'Hello!',
+        clientMessageId,
         createdAt: expect.any(String),
       }),
     );
@@ -68,6 +72,56 @@ describe('MessagingController (Integration)', () => {
     );
   });
 
+  it('должен идемпотентно возвращать то же сообщение при повторном POST с тем же clientMessageId', async () => {
+    const payload = {
+      receiverId: '2',
+      text: 'Hello!',
+      clientMessageId,
+    };
+
+    const firstResponse = await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send(payload)
+      .expect(201);
+
+    const secondResponse = await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send(payload)
+      .expect(201);
+
+    expect(secondResponse.body).toEqual(firstResponse.body);
+    expect(await appTestManager.prisma.message.count()).toBe(1);
+  });
+
+  it('должен вернуть 400 при отсутствии clientMessageId', async () => {
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({
+        receiverId: '2',
+        text: 'Hello!',
+      })
+      .expect(400);
+
+    expect(await appTestManager.prisma.message.count()).toBe(0);
+  });
+
+  it('должен вернуть 400 при невалидном clientMessageId', async () => {
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({
+        receiverId: '2',
+        text: 'Hello!',
+        clientMessageId: 'not-a-uuid',
+      })
+      .expect(400);
+
+    expect(await appTestManager.prisma.message.count()).toBe(0);
+  });
+
   it('должен вернуть 400 при пустом или пробельном тексте сообщения', async () => {
     await request(appTestManager.getServer())
       .post(`/${GLOBAL_PREFIX}/messenger/messages`)
@@ -75,6 +129,7 @@ describe('MessagingController (Integration)', () => {
       .send({
         receiverId: '2',
         text: '   ',
+        clientMessageId,
       })
       .expect(400);
 
@@ -88,6 +143,7 @@ describe('MessagingController (Integration)', () => {
       .send({
         receiverId: '2',
         text: 'Hello!',
+        clientMessageId,
       })
       .expect(401);
   });
@@ -99,6 +155,7 @@ describe('MessagingController (Integration)', () => {
       .send({
         receiverId: '2',
         text: 'Hello!',
+        clientMessageId,
       })
       .expect(401);
   });
@@ -110,6 +167,7 @@ describe('MessagingController (Integration)', () => {
       .send({
         receiverId: '2',
         text: 'Hello!',
+        clientMessageId,
       })
       .expect(401);
   });
@@ -138,6 +196,7 @@ describe('MessagingController (Integration)', () => {
           chatId: chat.id,
           senderId: participantBId,
           text,
+          clientMessageId: crypto.randomUUID(),
           createdAt: lastMessageAt,
         },
       });
@@ -229,6 +288,7 @@ describe('MessagingController (Integration)', () => {
             chatId: Number(chatId),
             senderId: i % 2 === 0 ? 2 : 1,
             text: `message-${i}`,
+            clientMessageId: crypto.randomUUID(),
             createdAt: sameCreatedAt,
           },
         });
