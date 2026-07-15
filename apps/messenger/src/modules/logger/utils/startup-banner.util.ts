@@ -1,7 +1,9 @@
 export type MessengerStartupBannerParams = {
   env: string;
   port: number;
+  swaggerDocUrl: string;
   startedAt: string;
+  showSwagger: boolean;
 };
 
 function stripAnsi(s: string): string {
@@ -17,14 +19,20 @@ function centerVisual(text: string, width: number): string {
   return `${' '.repeat(left)}${text}${' '.repeat(right)}`;
 }
 
+/**
+ * Баннер в сыром stdout: без Winston (без timestamp/JSON) и без Nest-обёртки.
+ * Стиль совпадает с snapflow-core (`startup-banner.util.ts`).
+ *
+ * Логотип: монограмма **MS** (Messenger).
+ */
 export function printMessengerStartupBannerToConsole(params: MessengerStartupBannerParams): void {
-  const { env, port, startedAt } = params;
+  const { env, port, swaggerDocUrl, startedAt, showSwagger } = params;
   const pid = process.pid;
   const r = '\x1b[0m';
   const bold = '\x1b[1m';
   const dim = '\x1b[2m';
   const cyan = '\x1b[36m';
-  const blu = '\x1b[34m';
+  const mag = '\x1b[35m';
   const grn = '\x1b[32m';
   const ylw = '\x1b[33m';
 
@@ -47,19 +55,27 @@ export function printMessengerStartupBannerToConsole(params: MessengerStartupBan
     ' ╚═╝     ╚═╝ ╚══════╝ ',
   ];
 
-  const title = `${bold}${blu}SNAPFLOW${r} ${dim}·${r} ${bold}${blu}MESSENGER${r}`;
-
+  const title = `${bold}${mag}SNAPFLOW${r} ${dim}·${r} ${bold}${mag}MESSENGER${r}`;
   const lines: string[] = [
     '',
     motdLine(`${cyan}╭${hrPlain}╮${r}`),
     motdLine(boxRow('')),
-    ...msMark.map((row) => motdLine(boxRow(centerVisual(`${bold}${blu}${row}${r}`, W)))),
+    ...msMark.map((row) => motdLine(boxRow(centerVisual(`${bold}${mag}${row}${r}`, W)))),
     motdLine(boxRow('')),
     motdLine(boxRow(centerVisual(title, W))),
     motdLine(boxRow('')),
     motdLine(`${cyan}├${hrPlain}┤${r}`),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`)),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${port}${r}`)),
+    motdLine(
+      boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${String(port)}${r}`),
+    ),
+    ...(showSwagger
+      ? [
+          motdLine(
+            boxRow(`  ${grn}▸${r}  ${bold}swagger${r}${dim}:${r}       ${ylw}${swaggerDocUrl}${r}`),
+          ),
+        ]
+      : []),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}started at${r}${dim}:${r}    ${ylw}${startedAt}${r}`)),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`)),
     motdLine(`${cyan}╰${hrPlain}╯${r}`),

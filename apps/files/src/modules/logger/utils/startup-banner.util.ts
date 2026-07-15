@@ -1,6 +1,5 @@
 export type FilesStartupBannerParams = {
   env: string;
-  host: string;
   port: number;
   startedAt: string;
 };
@@ -19,19 +18,20 @@ function centerVisual(text: string, width: number): string {
 }
 
 /**
- * Баннер в сыром stdout: без Nest Logger-обёртки, чтобы не засорять формат.
+ * Баннер в сыром stdout: без Winston (без timestamp/JSON) и без Nest-обёртки.
  * Стиль совпадает с snapflow-core (`startup-banner.util.ts`); данные — TCP-микросервис files.
+ * Swagger отсутствует — строка swagger в баннер не выводится.
  *
  * Логотип: монограмма **FL** (Files).
  */
 export function printFilesStartupBannerToConsole(params: FilesStartupBannerParams): void {
-  const { env, host, port, startedAt } = params;
+  const { env, port, startedAt } = params;
   const pid = process.pid;
   const r = '\x1b[0m';
   const bold = '\x1b[1m';
   const dim = '\x1b[2m';
   const cyan = '\x1b[36m';
-  const blu = '\x1b[34m';
+  const mag = '\x1b[35m';
   const grn = '\x1b[32m';
   const ylw = '\x1b[33m';
 
@@ -54,20 +54,19 @@ export function printFilesStartupBannerToConsole(params: FilesStartupBannerParam
     ' ╚═╝      ╚══════╝ ',
   ];
 
-  const title = `${bold}${blu}SNAPFLOW${r} ${dim}·${r} ${bold}${blu}FILES${r}`;
-  const listenAddr = `${host}:${String(port)}`;
+  const title = `${bold}${mag}SNAPFLOW${r} ${dim}·${r} ${bold}${mag}FILES${r}`;
 
   const lines: string[] = [
     '',
     motdLine(`${cyan}╭${hrPlain}╮${r}`),
     motdLine(boxRow('')),
-    ...flMark.map((row) => motdLine(boxRow(centerVisual(`${bold}${blu}${row}${r}`, W)))),
+    ...flMark.map((row) => motdLine(boxRow(centerVisual(`${bold}${mag}${row}${r}`, W)))),
     motdLine(boxRow('')),
     motdLine(boxRow(centerVisual(title, W))),
     motdLine(boxRow('')),
     motdLine(`${cyan}├${hrPlain}┤${r}`),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`)),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${listenAddr}${r}`)),
+    motdLine(boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${String(port)}${r}`)),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}started at${r}${dim}:${r}    ${ylw}${startedAt}${r}`)),
     motdLine(boxRow(`  ${grn}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`)),
     motdLine(`${cyan}╰${hrPlain}╯${r}`),

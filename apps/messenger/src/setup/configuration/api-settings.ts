@@ -6,6 +6,9 @@ export class ApiSettings {
   port: number;
 
   @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
+  publicApiBaseUrl: string;
+
+  @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
   coreServiceUrl: string;
 
   @IsString()
@@ -25,6 +28,9 @@ export class ApiSettings {
 
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
+
+    this.publicApiBaseUrl =
+      environmentVariables.PUBLIC_API_BASE_URL ?? `http://localhost:${this.port}`;
 
     this.coreServiceUrl = environmentVariables.CORE_SERVICE_URL;
 

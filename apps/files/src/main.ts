@@ -37,7 +37,6 @@ async function bootstrap() {
   const startedAt: string = new Date().toLocaleString();
   printFilesStartupBannerToConsole({
     env,
-    host: microserviceSettings.host,
     port: microserviceSettings.port,
     startedAt,
   });
