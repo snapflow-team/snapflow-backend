@@ -35,6 +35,10 @@ describe('SendMessageUseCase (unit)', () => {
     text: 'Hello!',
     clientMessageId,
     createdAt,
+    editedAt: null,
+    deletedAt: null,
+    deletedForEveryone: false,
+    replyToMessageId: null,
   };
 
   beforeEach(async () => {

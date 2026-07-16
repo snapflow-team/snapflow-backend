@@ -33,6 +33,10 @@ export class MessagesRepository {
           text,
           client_message_id AS "clientMessageId",
           created_at AS "createdAt",
+          edited_at AS "editedAt",
+          deleted_at AS "deletedAt",
+          deleted_for_everyone AS "deletedForEveryone",
+          reply_to_message_id AS "replyToMessageId",
           true AS "isNew"
       )
       SELECT * FROM inserted
@@ -44,6 +48,10 @@ export class MessagesRepository {
         m.text,
         m.client_message_id AS "clientMessageId",
         m.created_at AS "createdAt",
+        m.edited_at AS "editedAt",
+        m.deleted_at AS "deletedAt",
+        m.deleted_for_everyone AS "deletedForEveryone",
+        m.reply_to_message_id AS "replyToMessageId",
         false AS "isNew"
       FROM messages m
       WHERE m.chat_id = ${dto.chatId}

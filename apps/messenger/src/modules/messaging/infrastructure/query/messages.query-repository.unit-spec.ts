@@ -21,6 +21,10 @@ describe('MessagesQueryRepository (unit)', () => {
     text: 'Third',
     clientMessageId,
     createdAt: sameCreatedAt,
+    editedAt: null,
+    deletedAt: null,
+    deletedForEveryone: false,
+    replyToMessageId: null,
   };
 
   const messageB: Message = {
@@ -30,6 +34,10 @@ describe('MessagesQueryRepository (unit)', () => {
     text: 'Second',
     clientMessageId: '4fa85f64-5717-4562-b3fc-2c963f66afa6',
     createdAt: sameCreatedAt,
+    editedAt: null,
+    deletedAt: null,
+    deletedForEveryone: false,
+    replyToMessageId: null,
   };
 
   const messageC: Message = {
@@ -39,6 +47,10 @@ describe('MessagesQueryRepository (unit)', () => {
     text: 'First',
     clientMessageId: '5fa85f64-5717-4562-b3fc-2c963f66afa6',
     createdAt: sameCreatedAt,
+    editedAt: null,
+    deletedAt: null,
+    deletedForEveryone: false,
+    replyToMessageId: null,
   };
 
   beforeEach(async () => {
