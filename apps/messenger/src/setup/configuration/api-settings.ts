@@ -29,8 +29,7 @@ export class ApiSettings {
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
-    this.publicApiBaseUrl =
-      environmentVariables.PUBLIC_API_BASE_URL ?? `http://localhost:${this.port}`;
+    this.publicApiBaseUrl = environmentVariables.PUBLIC_API_BASE_URL;
 
     this.coreServiceUrl = environmentVariables.CORE_SERVICE_URL;
 
