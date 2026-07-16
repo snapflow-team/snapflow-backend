@@ -9,6 +9,12 @@ type ChatListRowWithMessage = ChatListRow & {
   messageText: string;
   messageCreatedAt: Date;
   messageClientMessageId: string;
+  messageEditedAt: Date | null;
+  messageDeletedAt: Date | null;
+  messageDeletedForEveryone: boolean;
+  messageReplyToMessageId: number | null;
+  peerLastReadMessageId: number | null;
+  messageDeliveredToPeer: boolean;
 };
 
 export class ChatListItemViewDto {
@@ -70,8 +76,17 @@ export class ChatListItemViewDto {
             text: row.messageText,
             clientMessageId: row.messageClientMessageId,
             createdAt: row.messageCreatedAt,
+            editedAt: row.messageEditedAt,
+            deletedAt: row.messageDeletedAt,
+            deletedForEveryone: row.messageDeletedForEveryone ?? false,
+            replyToMessageId: row.messageReplyToMessageId,
           },
           row.messageSenderId === userId ? interlocutorId : userId,
+          {
+            viewerId: userId,
+            peerLastReadMessageId: row.peerLastReadMessageId,
+            deliveredToPeer: row.messageDeliveredToPeer ?? false,
+          },
         )
       : null;
 
