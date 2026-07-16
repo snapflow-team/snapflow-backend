@@ -141,6 +141,11 @@ describe('MessengerWebSocketGateway (Integration)', () => {
       text: 'Hello via WS',
       clientMessageId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
       createdAt: '2026-07-05T18:00:00.000Z',
+      status: null,
+      editedAt: null,
+      deletedAt: null,
+      deletedForEveryone: false,
+      replyTo: null,
     };
 
     messengerWebSocketService.sendToUser(2, payload);

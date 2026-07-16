@@ -82,6 +82,15 @@ export class MessagesRepository {
     const rows = await this.prisma.message.findMany({
       where: {
         chatId,
+        ...(params.viewerUserId !== undefined
+          ? {
+              NOT: {
+                userDeletions: {
+                  some: { userId: params.viewerUserId },
+                },
+              },
+            }
+          : {}),
         ...(cursorPayload ? buildKeysetCursorFilter(cursorPayload, { parseId: Number }) : {}),
       },
       orderBy: [...KEYSET_ORDER_BY_CREATED_AT_DESC],

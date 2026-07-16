@@ -59,11 +59,32 @@ export class ChatsQueryRepository {
         m.text AS "messageText",
         m.created_at AS "messageCreatedAt",
         m.client_message_id AS "messageClientMessageId",
+        m.edited_at AS "messageEditedAt",
+        m.deleted_at AS "messageDeletedAt",
+        m.deleted_for_everyone AS "messageDeletedForEveryone",
+        m.reply_to_message_id AS "messageReplyToMessageId",
+        peer_crs.last_read_message_id AS "peerLastReadMessageId",
+        EXISTS (
+          SELECT 1
+          FROM message_deliveries md
+          WHERE md.message_id = m.id
+            AND md.user_id = CASE
+              WHEN c.participant_a_id = ${userId} THEN c.participant_b_id
+              ELSE c.participant_a_id
+            END
+        ) AS "messageDeliveredToPeer",
         (
           SELECT COUNT(*)::int
           FROM messages um
           WHERE um.chat_id = c.id
             AND um.sender_id != ${userId}
+            AND um.deleted_for_everyone = false
+            AND NOT EXISTS (
+              SELECT 1
+              FROM message_user_deletions mud
+              WHERE mud.message_id = um.id
+                AND mud.user_id = ${userId}
+            )
             AND (
               crs.last_read_message_id IS NULL
               OR um.id > crs.last_read_message_id
@@ -72,6 +93,12 @@ export class ChatsQueryRepository {
       FROM chats c
       LEFT JOIN messages m ON m.id = c.last_message_id
       LEFT JOIN chat_read_states crs ON crs.chat_id = c.id AND crs.user_id = ${userId}
+      LEFT JOIN chat_read_states peer_crs
+        ON peer_crs.chat_id = c.id
+        AND peer_crs.user_id = CASE
+          WHEN c.participant_a_id = ${userId} THEN c.participant_b_id
+          ELSE c.participant_a_id
+        END
       WHERE (c.participant_a_id = ${userId} OR c.participant_b_id = ${userId})
         ${cursorCondition}
       ORDER BY COALESCE(c.last_message_at, c.created_at) DESC, c.id DESC

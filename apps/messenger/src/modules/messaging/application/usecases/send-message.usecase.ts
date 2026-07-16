@@ -52,10 +52,17 @@ export class SendMessageUseCase implements ICommandHandler<SendMessageCommand> {
       return result;
     });
 
-    const messageView: MessageViewDto = MessageViewDto.mapToView(message, dto.receiverId);
+    const messageView: MessageViewDto = MessageViewDto.mapToView(message, dto.receiverId, {
+      viewerId: dto.senderId,
+    });
 
     if (isNew) {
-      this.messengerWebSocketService.sendToUser(dto.receiverId, messageView);
+      this.messengerWebSocketService.sendToUser(
+        dto.receiverId,
+        MessageViewDto.mapToView(message, dto.receiverId, {
+          viewerId: dto.receiverId,
+        }),
+      );
     }
 
     return messageView;

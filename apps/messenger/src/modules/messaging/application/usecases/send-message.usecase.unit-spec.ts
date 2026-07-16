@@ -116,6 +116,11 @@ describe('SendMessageUseCase (unit)', () => {
         text: 'Hello!',
         clientMessageId,
         createdAt: createdAt.toISOString(),
+        status: null,
+        editedAt: null,
+        deletedAt: null,
+        deletedForEveryone: false,
+        replyTo: null,
       }),
     );
     expect(result).toEqual({
@@ -126,6 +131,11 @@ describe('SendMessageUseCase (unit)', () => {
       text: 'Hello!',
       clientMessageId,
       createdAt: createdAt.toISOString(),
+      status: 'sent',
+      editedAt: null,
+      deletedAt: null,
+      deletedForEveryone: false,
+      replyTo: null,
     });
   });
 
@@ -187,6 +197,11 @@ describe('SendMessageUseCase (unit)', () => {
       text: 'Hello!',
       clientMessageId,
       createdAt: createdAt.toISOString(),
+      status: 'sent',
+      editedAt: null,
+      deletedAt: null,
+      deletedForEveryone: false,
+      replyTo: null,
     });
   });
 });
