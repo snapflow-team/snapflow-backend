@@ -5,6 +5,8 @@ import configuration, { loadEnv, validate } from '../setup/configuration/configu
 import { HttpModule } from '@nestjs/axios';
 import { MessengerResultCodeMapper } from '../common/notification/messenger-result-code.mapper';
 import { JwtAuthModule } from '../modules/auth/jwt-auth.module';
+import { RedisProvider } from './providers/redis.provider';
+import { REDIS_CLIENT_INJECT_TOKEN } from './providers/provide-tokens/redis-client.inject-token';
 
 @Global()
 @Module({
@@ -19,7 +21,13 @@ import { JwtAuthModule } from '../modules/auth/jwt-auth.module';
     }),
     JwtAuthModule,
   ],
-  providers: [MessengerResultCodeMapper],
-  exports: [HttpModule, CqrsModule, MessengerResultCodeMapper, JwtAuthModule],
+  providers: [MessengerResultCodeMapper, RedisProvider],
+  exports: [
+    HttpModule,
+    CqrsModule,
+    MessengerResultCodeMapper,
+    JwtAuthModule,
+    REDIS_CLIENT_INJECT_TOKEN,
+  ],
 })
 export class CoreModule {}

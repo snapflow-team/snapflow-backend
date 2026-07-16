@@ -12,11 +12,14 @@ describe('MessagesQueryRepository (unit)', () => {
 
   const sameCreatedAt = new Date('2026-07-05T18:00:00.000Z');
 
+  const clientMessageId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+
   const messageA: Message = {
     id: 3,
     chatId: 10,
     senderId: 1,
     text: 'Third',
+    clientMessageId,
     createdAt: sameCreatedAt,
   };
 
@@ -25,6 +28,7 @@ describe('MessagesQueryRepository (unit)', () => {
     chatId: 10,
     senderId: 2,
     text: 'Second',
+    clientMessageId: '4fa85f64-5717-4562-b3fc-2c963f66afa6',
     createdAt: sameCreatedAt,
   };
 
@@ -33,6 +37,7 @@ describe('MessagesQueryRepository (unit)', () => {
     chatId: 10,
     senderId: 2,
     text: 'First',
+    clientMessageId: '5fa85f64-5717-4562-b3fc-2c963f66afa6',
     createdAt: sameCreatedAt,
   };
 
@@ -65,6 +70,7 @@ describe('MessagesQueryRepository (unit)', () => {
           senderId: '1',
           receiverId: '2',
           text: 'Third',
+          clientMessageId,
           createdAt: sameCreatedAt.toISOString(),
         },
         {
@@ -73,6 +79,7 @@ describe('MessagesQueryRepository (unit)', () => {
           senderId: '2',
           receiverId: '1',
           text: 'Second',
+          clientMessageId: '4fa85f64-5717-4562-b3fc-2c963f66afa6',
           createdAt: sameCreatedAt.toISOString(),
         },
       ],

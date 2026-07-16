@@ -8,6 +8,7 @@ type ChatListRowWithMessage = ChatListRow & {
   messageSenderId: number;
   messageText: string;
   messageCreatedAt: Date;
+  messageClientMessageId: string;
 };
 
 export class ChatListItemViewDto {
@@ -67,6 +68,7 @@ export class ChatListItemViewDto {
             chatId: row.messageChatId,
             senderId: row.messageSenderId,
             text: row.messageText,
+            clientMessageId: row.messageClientMessageId,
             createdAt: row.messageCreatedAt,
           },
           row.messageSenderId === userId ? interlocutorId : userId,
@@ -83,6 +85,7 @@ function isChatListRowWithMessage(row: ChatListRow): row is ChatListRowWithMessa
     row.messageChatId !== null &&
     row.messageSenderId !== null &&
     row.messageText !== null &&
-    row.messageCreatedAt !== null
+    row.messageCreatedAt !== null &&
+    row.messageClientMessageId !== null
   );
 }

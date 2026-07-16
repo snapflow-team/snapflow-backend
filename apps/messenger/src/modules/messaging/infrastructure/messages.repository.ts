@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Message } from '@generated/prisma-messenger';
+import { Message, Prisma } from '@generated/prisma-messenger';
 import {
   buildCursorPaginatedResult,
   buildKeysetCursorFilter,
@@ -9,38 +9,54 @@ import {
 } from '../../../../../../libs/common/utils/cursor-pagination.util';
 import { CursorPayload, decodeCursor } from '../../../../../../libs/common/utils/cursor.util';
 import { PrismaService } from '../../database/prisma.service';
+import { CreateMessageRepositoryDto } from './dto/create-message.repository-dto';
+import { CreateMessageResult, CreateMessageRow } from './types/create-message-result.type';
 import { FindChatMessagesPaginatedParams } from './types/user-chat-list-item.type';
-
-export class CreateMessageRepositoryDto {
-  chatId: number;
-  senderId: number;
-  text: string;
-}
 
 @Injectable()
 export class MessagesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateMessageRepositoryDto): Promise<Message> {
-    return this.prisma.$transaction(async (tx) => {
-      const message = await tx.message.create({
-        data: {
-          chatId: dto.chatId,
-          senderId: dto.senderId,
-          text: dto.text,
-        },
-      });
+  async createOrGetExisting(
+    dto: CreateMessageRepositoryDto,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<CreateMessageResult> {
+    const rows: CreateMessageRow[] = await tx.$queryRaw<CreateMessageRow[]>`
+      WITH inserted AS (
+        INSERT INTO messages (chat_id, sender_id, text, client_message_id)
+        VALUES (${dto.chatId}, ${dto.senderId}, ${dto.text}, ${dto.clientMessageId}::uuid)
+        ON CONFLICT (chat_id, sender_id, client_message_id) DO NOTHING
+        RETURNING
+          id,
+          chat_id AS "chatId",
+          sender_id AS "senderId",
+          text,
+          client_message_id AS "clientMessageId",
+          created_at AS "createdAt",
+          true AS "isNew"
+      )
+      SELECT * FROM inserted
+      UNION ALL
+      SELECT
+        m.id,
+        m.chat_id AS "chatId",
+        m.sender_id AS "senderId",
+        m.text,
+        m.client_message_id AS "clientMessageId",
+        m.created_at AS "createdAt",
+        false AS "isNew"
+      FROM messages m
+      WHERE m.chat_id = ${dto.chatId}
+        AND m.sender_id = ${dto.senderId}
+        AND m.client_message_id = ${dto.clientMessageId}::uuid
+        AND NOT EXISTS (SELECT 1 FROM inserted)
+      LIMIT 1
+    `;
 
-      await tx.chat.update({
-        where: { id: dto.chatId },
-        data: {
-          lastMessageId: message.id,
-          lastMessageAt: message.createdAt,
-        },
-      });
+    const row: CreateMessageRow = rows[0];
+    const { isNew, ...message } = row;
 
-      return message;
-    });
+    return { message, isNew };
   }
 
   async findById(id: number): Promise<Message | null> {

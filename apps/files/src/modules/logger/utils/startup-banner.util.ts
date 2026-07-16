@@ -1,6 +1,5 @@
 export type FilesStartupBannerParams = {
   env: string;
-  host: string;
   port: number;
   startedAt: string;
 };
@@ -19,21 +18,21 @@ function centerVisual(text: string, width: number): string {
 }
 
 /**
- * Баннер в сыром stdout: без Nest Logger-обёртки, чтобы не засорять формат.
+ * Баннер в сыром stdout: без Winston (без timestamp/JSON) и без Nest-обёртки.
  * Стиль совпадает с snapflow-core (`startup-banner.util.ts`); данные — TCP-микросервис files.
+ * Swagger отсутствует — строка swagger в баннер не выводится.
  *
  * Логотип: монограмма **FL** (Files).
  */
 export function printFilesStartupBannerToConsole(params: FilesStartupBannerParams): void {
-  const { env, host, port, startedAt } = params;
+  const { env, port, startedAt } = params;
   const pid = process.pid;
   const r = '\x1b[0m';
   const bold = '\x1b[1m';
   const dim = '\x1b[2m';
-  const cyan = '\x1b[36m';
-  const blu = '\x1b[34m';
-  const grn = '\x1b[32m';
-  const ylw = '\x1b[33m';
+  const frame = '\x1b[38;5;108m'; // мягкий шалфей
+  const acc = '\x1b[38;5;179m'; // мягкий песочный
+  const val = '\x1b[38;5;180m'; // мягкий бежевый
 
   const W = 62;
   const MOTD_COLS = 80;
@@ -41,7 +40,7 @@ export function printFilesStartupBannerToConsole(params: FilesStartupBannerParam
 
   const boxRow = (content: string): string => {
     const pad = Math.max(0, W - stripAnsi(content).length);
-    return `${cyan}│${r}${content}${' '.repeat(pad)}${cyan}│${r}`;
+    return `${frame}│${r}${content}${' '.repeat(pad)}${frame}│${r}`;
   };
 
   const hrPlain = '─'.repeat(W);
@@ -54,23 +53,22 @@ export function printFilesStartupBannerToConsole(params: FilesStartupBannerParam
     ' ╚═╝      ╚══════╝ ',
   ];
 
-  const title = `${bold}${blu}SNAPFLOW${r} ${dim}·${r} ${bold}${blu}FILES${r}`;
-  const listenAddr = `${host}:${String(port)}`;
+  const title = `${bold}${acc}SNAPFLOW${r} ${dim}·${r} ${bold}${acc}FILES${r}`;
 
   const lines: string[] = [
     '',
-    motdLine(`${cyan}╭${hrPlain}╮${r}`),
+    motdLine(`${frame}╭${hrPlain}╮${r}`),
     motdLine(boxRow('')),
-    ...flMark.map((row) => motdLine(boxRow(centerVisual(`${bold}${blu}${row}${r}`, W)))),
+    ...flMark.map((row) => motdLine(boxRow(centerVisual(`${bold}${acc}${row}${r}`, W)))),
     motdLine(boxRow('')),
     motdLine(boxRow(centerVisual(title, W))),
     motdLine(boxRow('')),
-    motdLine(`${cyan}├${hrPlain}┤${r}`),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`)),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${listenAddr}${r}`)),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}started at${r}${dim}:${r}    ${ylw}${startedAt}${r}`)),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`)),
-    motdLine(`${cyan}╰${hrPlain}╯${r}`),
+    motdLine(`${frame}├${hrPlain}┤${r}`),
+    motdLine(boxRow(`  ${acc}▸${r}  ${bold}environment${r}${dim}:${r}   ${val}${env}${r}`)),
+    motdLine(boxRow(`  ${acc}▸${r}  ${bold}listen${r}${dim}:${r}        ${val}${String(port)}${r}`)),
+    motdLine(boxRow(`  ${acc}▸${r}  ${bold}started at${r}${dim}:${r}    ${val}${startedAt}${r}`)),
+    motdLine(boxRow(`  ${acc}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`)),
+    motdLine(`${frame}╰${hrPlain}╯${r}`),
     '',
   ];
 

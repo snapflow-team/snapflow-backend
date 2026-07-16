@@ -37,6 +37,13 @@ export class MessageViewDto {
   text: string;
 
   @ApiProperty({
+    type: String,
+    description: 'Идентификатор сообщения на клиенте (UUID) для идемпотентности',
+    example: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+  })
+  clientMessageId: string;
+
+  @ApiProperty({
     description: 'Дата создания сообщения в формате ISO',
     example: '2026-07-05T18:00:00.000Z',
   })
@@ -49,6 +56,7 @@ export class MessageViewDto {
     dto.senderId = message.senderId.toString();
     dto.receiverId = receiverId.toString();
     dto.text = message.text;
+    dto.clientMessageId = message.clientMessageId;
     dto.createdAt = message.createdAt.toISOString();
 
     return dto;

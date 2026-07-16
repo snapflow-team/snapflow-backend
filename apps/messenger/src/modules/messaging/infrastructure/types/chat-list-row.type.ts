@@ -11,5 +11,6 @@ export type ChatListRow = {
   messageSenderId: number | null;
   messageText: string | null;
   messageCreatedAt: Date | null;
+  messageClientMessageId: string | null;
   unreadCount: number;
 };

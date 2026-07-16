@@ -6,6 +6,9 @@ export class ApiSettings {
   port: number;
 
   @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
+  publicApiBaseUrl: string;
+
+  @IsUrl({ require_tld: false, protocols: ['http', 'https'] })
   coreServiceUrl: string;
 
   @IsString()
@@ -17,8 +20,17 @@ export class ApiSettings {
   @IsNotEmpty()
   accessTokenSecret: string;
 
+  @IsUrl({
+    protocols: ['redis', 'rediss'],
+    require_tld: false,
+  })
+  redisUrl: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
+
+    this.publicApiBaseUrl =
+      environmentVariables.PUBLIC_API_BASE_URL ?? `http://localhost:${this.port}`;
 
     this.coreServiceUrl = environmentVariables.CORE_SERVICE_URL;
 
@@ -28,6 +40,8 @@ export class ApiSettings {
       environmentVariables.SEND_INTERNAL_SERVER_ERROR_DETAILS === 'true';
 
     this.accessTokenSecret = environmentVariables.JWT_SECRET_AT;
+
+    this.redisUrl = environmentVariables.REDIS_URL;
   }
 
   get allowedOrigins(): string[] | boolean {

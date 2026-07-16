@@ -81,11 +81,16 @@ export class MessagingController {
   @Post('messages')
   @SendMessageSwagger()
   async sendMessage(
-    @Body() { receiverId, text }: SendMessageInputDto,
+    @Body() { receiverId, text, clientMessageId }: SendMessageInputDto,
     @ExtractUserFromRequest() { id: senderId }: UserContextDto,
   ): Promise<MessageViewDto> {
     return this.commandBus.execute<SendMessageCommand, MessageViewDto>(
-      new SendMessageCommand({ senderId, receiverId: Number(receiverId), text }),
+      new SendMessageCommand({
+        senderId,
+        receiverId: Number(receiverId),
+        text,
+        clientMessageId,
+      }),
     );
   }
 }

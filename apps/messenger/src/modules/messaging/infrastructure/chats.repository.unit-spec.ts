@@ -5,7 +5,7 @@ import { ChatsRepository } from './chats.repository';
 
 describe('ChatsRepository (unit)', () => {
   let repository: ChatsRepository;
-  let prismaMock: { chat: { findUnique: jest.Mock; upsert: jest.Mock } };
+  let prismaMock: { chat: { findUnique: jest.Mock; upsert: jest.Mock; update: jest.Mock } };
 
   const createdAt = new Date('2026-07-05T18:00:00.000Z');
 
@@ -14,6 +14,7 @@ describe('ChatsRepository (unit)', () => {
       chat: {
         findUnique: jest.fn(),
         upsert: jest.fn(),
+        update: jest.fn(),
       },
     };
 
@@ -65,6 +66,26 @@ describe('ChatsRepository (unit)', () => {
 
     expect(repository.getInterlocutorId(chat, 1)).toBe(5);
     expect(repository.getInterlocutorId(chat, 5)).toBe(1);
+  });
+
+  it('updateLastMessage: обновляет lastMessage* чата через переданный tx', async () => {
+    const lastMessageAt = new Date('2026-07-06T12:00:00.000Z');
+    const txMock = {
+      chat: {
+        update: jest.fn().mockResolvedValue({}),
+      },
+    };
+
+    await repository.updateLastMessage(10, 100, lastMessageAt, txMock as never);
+
+    expect(txMock.chat.update).toHaveBeenCalledWith({
+      where: { id: 10 },
+      data: {
+        lastMessageId: 100,
+        lastMessageAt,
+      },
+    });
+    expect(prismaMock.chat.update).not.toHaveBeenCalled();
   });
 
   it('findById: возвращает чат по id', async () => {

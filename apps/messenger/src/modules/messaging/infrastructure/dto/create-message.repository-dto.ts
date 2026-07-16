@@ -1,6 +1,6 @@
-export class SendMessageApplicationDto {
+export class CreateMessageRepositoryDto {
+  chatId: number;
   senderId: number;
-  receiverId: number;
   text: string;
   clientMessageId: string;
 }

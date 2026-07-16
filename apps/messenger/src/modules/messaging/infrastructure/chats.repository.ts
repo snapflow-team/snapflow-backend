@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Chat } from '@generated/prisma-messenger';
+import { Chat, Prisma } from '@generated/prisma-messenger';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
@@ -24,6 +24,21 @@ export class ChatsRepository {
         participantBId,
       },
       update: {},
+    });
+  }
+
+  async updateLastMessage(
+    chatId: number,
+    lastMessageId: number,
+    lastMessageAt: Date,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<void> {
+    await tx.chat.update({
+      where: { id: chatId },
+      data: {
+        lastMessageId,
+        lastMessageAt,
+      },
     });
   }
 

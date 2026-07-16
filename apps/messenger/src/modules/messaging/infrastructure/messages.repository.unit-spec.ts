@@ -7,19 +7,20 @@ import { MessagesRepository } from './messages.repository';
 describe('MessagesRepository (unit)', () => {
   let repository: MessagesRepository;
   let prismaMock: {
-    $transaction: jest.Mock;
-    message: { create: jest.Mock; findMany: jest.Mock };
-    chat: { update: jest.Mock };
+    $queryRaw: jest.Mock;
+    message: { findMany: jest.Mock; findUnique: jest.Mock };
   };
-  let txMock: { message: { create: jest.Mock }; chat: { update: jest.Mock } };
 
   const sameCreatedAt = new Date('2026-07-05T18:00:00.000Z');
+
+  const clientMessageId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
 
   const messageA: Message = {
     id: 3,
     chatId: 10,
     senderId: 1,
     text: 'Third',
+    clientMessageId,
     createdAt: sameCreatedAt,
   };
 
@@ -28,6 +29,7 @@ describe('MessagesRepository (unit)', () => {
     chatId: 10,
     senderId: 1,
     text: 'Second',
+    clientMessageId: '4fa85f64-5717-4562-b3fc-2c963f66afa6',
     createdAt: sameCreatedAt,
   };
 
@@ -36,29 +38,16 @@ describe('MessagesRepository (unit)', () => {
     chatId: 10,
     senderId: 2,
     text: 'First',
+    clientMessageId: '5fa85f64-5717-4562-b3fc-2c963f66afa6',
     createdAt: sameCreatedAt,
   };
 
   beforeEach(async () => {
-    txMock = {
-      message: {
-        create: jest.fn(),
-      },
-      chat: {
-        update: jest.fn(),
-      },
-    };
-
     prismaMock = {
-      $transaction: jest.fn(async (callback: (tx: typeof txMock) => Promise<Message>) =>
-        callback(txMock),
-      ),
+      $queryRaw: jest.fn(),
       message: {
-        create: jest.fn(),
         findMany: jest.fn(),
-      },
-      chat: {
-        update: jest.fn(),
+        findUnique: jest.fn(),
       },
     };
 
@@ -73,32 +62,51 @@ describe('MessagesRepository (unit)', () => {
     jest.clearAllMocks();
   });
 
-  it('create: сохраняет сообщение и обновляет lastMessage* чата в одной транзакции', async () => {
-    txMock.message.create.mockResolvedValue(messageA);
-    txMock.chat.update.mockResolvedValue({});
+  it('createOrGetExisting: возвращает новое сообщение с isNew=true', async () => {
+    prismaMock.$queryRaw.mockResolvedValue([{ ...messageA, isNew: true }]);
 
-    const result = await repository.create({
+    const result = await repository.createOrGetExisting({
       chatId: 10,
       senderId: 1,
       text: 'Third',
+      clientMessageId,
     });
 
-    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
-    expect(txMock.message.create).toHaveBeenCalledWith({
-      data: {
+    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ message: messageA, isNew: true });
+  });
+
+  it('createOrGetExisting: возвращает существующее сообщение с isNew=false', async () => {
+    prismaMock.$queryRaw.mockResolvedValue([{ ...messageA, isNew: false }]);
+
+    const result = await repository.createOrGetExisting({
+      chatId: 10,
+      senderId: 1,
+      text: 'Third',
+      clientMessageId,
+    });
+
+    expect(result).toEqual({ message: messageA, isNew: false });
+  });
+
+  it('createOrGetExisting: использует переданный tx', async () => {
+    const txMock = {
+      $queryRaw: jest.fn().mockResolvedValue([{ ...messageA, isNew: true }]),
+    };
+
+    const result = await repository.createOrGetExisting(
+      {
         chatId: 10,
         senderId: 1,
         text: 'Third',
+        clientMessageId,
       },
-    });
-    expect(txMock.chat.update).toHaveBeenCalledWith({
-      where: { id: 10 },
-      data: {
-        lastMessageId: messageA.id,
-        lastMessageAt: messageA.createdAt,
-      },
-    });
-    expect(result).toEqual(messageA);
+      txMock as never,
+    );
+
+    expect(txMock.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(prismaMock.$queryRaw).not.toHaveBeenCalled();
+    expect(result).toEqual({ message: messageA, isNew: true });
   });
 
   it('первая страница: возвращает limit элементов и nextCursor при hasMore', async () => {

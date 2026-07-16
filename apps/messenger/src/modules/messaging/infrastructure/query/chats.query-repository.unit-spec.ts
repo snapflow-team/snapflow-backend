@@ -12,6 +12,8 @@ describe('ChatsQueryRepository (unit)', () => {
   const createdAt = new Date('2026-07-05T18:00:00.000Z');
   const lastMessageAt = new Date('2026-07-06T12:00:00.000Z');
 
+  const messageClientMessageId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+
   const rowWithMessage: ChatListRow = {
     id: 2,
     participantAId: 1,
@@ -25,6 +27,7 @@ describe('ChatsQueryRepository (unit)', () => {
     messageSenderId: 3,
     messageText: 'Hi',
     messageCreatedAt: lastMessageAt,
+    messageClientMessageId,
     unreadCount: 1,
   };
 
@@ -41,6 +44,7 @@ describe('ChatsQueryRepository (unit)', () => {
     messageSenderId: null,
     messageText: null,
     messageCreatedAt: null,
+    messageClientMessageId: null,
     unreadCount: 0,
   };
 
@@ -79,6 +83,7 @@ describe('ChatsQueryRepository (unit)', () => {
         senderId: '3',
         receiverId: '1',
         text: 'Hi',
+        clientMessageId: messageClientMessageId,
         createdAt: lastMessageAt.toISOString(),
       },
       unreadCount: 1,
@@ -130,6 +135,7 @@ describe('ChatsQueryRepository (unit)', () => {
         chatId: 10,
         senderId: 2,
         text: 'Hi',
+        clientMessageId: messageClientMessageId,
         createdAt: lastMessageAt,
       },
     };
@@ -150,6 +156,7 @@ describe('ChatsQueryRepository (unit)', () => {
         senderId: '2',
         receiverId: '1',
         text: 'Hi',
+        clientMessageId: messageClientMessageId,
         createdAt: lastMessageAt.toISOString(),
       },
       createdAt: createdAt.toISOString(),
