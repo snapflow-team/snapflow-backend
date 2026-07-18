@@ -31,6 +31,20 @@ export class ForbiddenException extends DomainException<MessengerResultCodeType>
   }
 }
 
+export class NotFoundException extends DomainException<MessengerResultCodeType> {
+  constructor(
+    message: string = 'Not Found',
+    code: MessengerResultCodeType = MessengerResultCode.NotFound,
+    extensions?: IExtension[],
+  ) {
+    super({
+      code,
+      message,
+      extensions,
+    });
+  }
+}
+
 export class InternalServerException extends DomainException<MessengerResultCodeType> {
   constructor(message: string = 'Internal server error', extensions?: IExtension[]) {
     super({
