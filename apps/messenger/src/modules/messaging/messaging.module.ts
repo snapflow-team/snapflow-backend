@@ -8,6 +8,8 @@ import { GetOrCreateChatUseCase } from './application/usecases/get-or-create-cha
 import { MarkChatReadUseCase } from './application/usecases/mark-chat-read.usecase';
 import { MarkMessageDeliveredUseCase } from './application/usecases/mark-message-delivered.usecase';
 import { SendMessageUseCase } from './application/usecases/send-message.usecase';
+import { TypingStartUseCase } from './application/usecases/typing-start.usecase';
+import { TypingStopUseCase } from './application/usecases/typing-stop.usecase';
 import { ChatsQueryRepository } from './infrastructure/query/chats.query-repository';
 import { MessagesQueryRepository } from './infrastructure/query/messages.query-repository';
 import { ChatsRepository } from './infrastructure/chats.repository';
@@ -20,6 +22,8 @@ const useCases = [
   GetOrCreateChatUseCase,
   MarkChatReadUseCase,
   MarkMessageDeliveredUseCase,
+  TypingStartUseCase,
+  TypingStopUseCase,
 ];
 const queries = [GetUserChatsQueryHandler, GetChatMessagesQueryHandler];
 const repositories = [
