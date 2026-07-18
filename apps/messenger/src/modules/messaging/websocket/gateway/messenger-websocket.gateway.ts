@@ -16,7 +16,7 @@ import { AuthTokenService } from '../../../auth/application/services/auth-token.
 import { PayloadAccessToken } from '../../../auth/application/types/payload-access-token.type';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
-import { MarkMessageDeliveredCommand } from '../../application/dto/mark-message-delivered.application-dto';
+import { MarkMessageDeliveredCommand } from '../../application/commands/mark-message-delivered.command';
 import { SocketDataType } from '../types/socket-data.type';
 
 @WebSocketGateway({
