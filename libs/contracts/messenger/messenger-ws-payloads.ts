@@ -14,6 +14,11 @@ export type MessageReadPayload = {
   readAt: string;
 };
 
+export type ChatUpdatedPayload = {
+  chatId: string;
+  unreadCount: number;
+};
+
 export type MessageDeletedPayload = {
   messageId: string;
   chatId: string;
