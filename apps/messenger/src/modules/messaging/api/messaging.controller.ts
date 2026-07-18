@@ -18,15 +18,18 @@ import { AccessTokenGuard } from '../../auth/guards/access-token.guard';
 import { GetChatMessagesQuery } from '../application/queries/get-chat-messages.query-handler';
 import { GetUserChatsQuery } from '../application/queries/get-user-chats.query-handler';
 import { GetOrCreateChatCommand } from '../application/usecases/get-or-create-chat.usecase';
+import { MarkChatReadCommand } from '../application/usecases/mark-chat-read.usecase';
 import { SendMessageCommand } from '../application/usecases/send-message.usecase';
 import { ChatMembershipGuard } from './guards/chat-membership.guard';
 import { GetChatMessagesQueryParamsDto } from './input-dto/get-chat-messages.query-params.dto';
 import { GetOrCreateChatInputDto } from './input-dto/get-or-create-chat.input-dto';
 import { GetUserChatsQueryParamsDto } from './input-dto/get-user-chats.query-params.dto';
+import { MarkChatReadInputDto } from './input-dto/mark-chat-read.input-dto';
 import { SendMessageInputDto } from './input-dto/send-message.input-dto';
 import { GetChatMessagesSwagger } from './swagger/get-chat-messages.swagger';
 import { GetOrCreateChatSwagger } from './swagger/get-or-create-chat.swagger';
 import { GetUserChatsSwagger } from './swagger/get-user-chats.swagger';
+import { MarkChatReadSwagger } from './swagger/mark-chat-read.swagger';
 import { SendMessageSwagger } from './swagger/send-message.swagger';
 import { ChatMessagesPageViewDto } from './view-dto/chat-messages-page.view-dto';
 import { ChatViewDto } from './view-dto/chat.view-dto';
@@ -75,6 +78,24 @@ export class MessagingController {
   ): Promise<ChatMessagesPageViewDto> {
     return this.queryBus.execute<GetChatMessagesQuery, ChatMessagesPageViewDto>(
       new GetChatMessagesQuery(chatId, userId, query),
+    );
+  }
+
+  @Post('chats/:chatId/read')
+  @MarkChatReadSwagger()
+  @UseGuards(ChatMembershipGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async markChatRead(
+    @Param('chatId', ParseIntPipe) chatId: number,
+    @Body() { lastReadMessageId }: MarkChatReadInputDto,
+    @ExtractUserFromRequest() { id: readerId }: UserContextDto,
+  ): Promise<void> {
+    await this.commandBus.execute(
+      new MarkChatReadCommand({
+        chatId,
+        readerId,
+        lastReadMessageId: Number(lastReadMessageId),
+      }),
     );
   }
 
