@@ -154,4 +154,36 @@ describe('MessengerWebSocketGateway (Integration)', () => {
 
     socket.disconnect();
   });
+
+  it('должен доставить message.read в комнату получателя через emitToUser', async () => {
+    const token = accessTokenTestHelper.signAccessToken(2);
+    const socket = createSocket(token);
+
+    await new Promise<void>((resolve, reject) => {
+      socket.on('connect', () => resolve());
+      socket.on('connect_error', reject);
+    });
+
+    const receivedPayload = new Promise<{
+      chatId: string;
+      lastReadMessageId: string;
+      readByUserId: string;
+      readAt: string;
+    }>((resolve) => {
+      socket.on(MessengerWsEvent.MessageRead, (payload) => resolve(payload));
+    });
+
+    const payload = {
+      chatId: '10',
+      lastReadMessageId: '100',
+      readByUserId: '1',
+      readAt: '2026-07-05T18:05:00.000Z',
+    };
+
+    messengerWebSocketService.emitToUser(2, MessengerWsEvent.MessageRead, payload);
+
+    await expect(receivedPayload).resolves.toEqual(payload);
+
+    socket.disconnect();
+  });
 });
