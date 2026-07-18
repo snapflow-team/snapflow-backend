@@ -3,11 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AddressInfo } from 'node:net';
 import { io, Socket } from 'socket.io-client';
+import request from 'supertest';
+import { GLOBAL_PREFIX } from '../../../../../../../libs/common/constants/global-prefix.constant';
+import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
 import { AccessTokenTestHelper } from '../../../../../test/helpers/access-token-test.helper';
 import { AppTestManager } from '../../../../../test/managers/app.test-manager';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
 import { MessageViewDto } from '../../api/view-dto/message.view-dto';
 import { MessengerWebSocketService } from '../services/messenger-websocket.service';
 
@@ -34,6 +36,10 @@ describe('MessengerWebSocketGateway (Integration)', () => {
 
     await app.listen(0);
     port = (app.getHttpServer().address() as AddressInfo).port;
+  });
+
+  beforeEach(async () => {
+    await appTestManager.cleanupDb(['_prisma_migrations']);
   });
 
   afterAll(async () => {
@@ -185,5 +191,75 @@ describe('MessengerWebSocketGateway (Integration)', () => {
     await expect(receivedPayload).resolves.toEqual(payload);
 
     socket.disconnect();
+  });
+
+  it('должен обработать message.delivered и отправить отправителю message.updated со status=delivered', async () => {
+    const senderToken = accessTokenTestHelper.signAccessToken(1);
+    const receiverToken = accessTokenTestHelper.signAccessToken(2);
+
+    const createResponse = await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${senderToken}`)
+      .send({
+        receiverId: '2',
+        text: 'Hello via delivery ACK',
+        clientMessageId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+      })
+      .expect(201);
+
+    const messageId = createResponse.body.id as string;
+
+    const senderSocket = createSocket(senderToken);
+    const receiverSocket = createSocket(receiverToken);
+
+    await Promise.all([
+      new Promise<void>((resolve, reject) => {
+        senderSocket.on('connect', () => resolve());
+        senderSocket.on('connect_error', reject);
+      }),
+      new Promise<void>((resolve, reject) => {
+        receiverSocket.on('connect', () => resolve());
+        receiverSocket.on('connect_error', reject);
+      }),
+    ]);
+
+    const receivedUpdated = new Promise<MessageViewDto>((resolve) => {
+      senderSocket.on(MessengerWsEvent.MessageUpdated, (payload: MessageViewDto) =>
+        resolve(payload),
+      );
+    });
+
+    receiverSocket.emit(MessengerWsEvent.MessageDelivered, { messageId });
+
+    await expect(receivedUpdated).resolves.toEqual(
+      expect.objectContaining({
+        id: messageId,
+        chatId: createResponse.body.chatId,
+        senderId: '1',
+        receiverId: '2',
+        text: 'Hello via delivery ACK',
+        status: 'delivered',
+      }),
+    );
+
+    const delivery = await appTestManager.prisma.messageDelivery.findUnique({
+      where: {
+        messageId_userId: {
+          messageId: Number(messageId),
+          userId: 2,
+        },
+      },
+    });
+
+    expect(delivery).toEqual(
+      expect.objectContaining({
+        messageId: Number(messageId),
+        userId: 2,
+        deliveredAt: expect.any(Date),
+      }),
+    );
+
+    senderSocket.disconnect();
+    receiverSocket.disconnect();
   });
 });

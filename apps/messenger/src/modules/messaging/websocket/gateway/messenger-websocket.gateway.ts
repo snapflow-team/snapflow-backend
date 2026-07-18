@@ -1,15 +1,22 @@
+import { CommandBus } from '@nestjs/cqrs';
 import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import type { MessageDeliveredPayload } from '../../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
 import { AuthTokenService } from '../../../auth/application/services/auth-token.service';
 import { PayloadAccessToken } from '../../../auth/application/types/payload-access-token.type';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
+import { MarkMessageDeliveredCommand } from '../../application/dto/mark-message-delivered.application-dto';
 import { SocketDataType } from '../types/socket-data.type';
 
 @WebSocketGateway({
@@ -24,9 +31,45 @@ export class MessengerWebSocketGateway
 
   constructor(
     private readonly authTokenService: AuthTokenService,
+    private readonly commandBus: CommandBus,
     loggerFactory: LoggerFactory,
   ) {
     this.logger = loggerFactory.create(MessengerWebSocketGateway.name);
+  }
+
+  @SubscribeMessage(MessengerWsEvent.MessageDelivered)
+  async handleMessageDelivered(
+    @ConnectedSocket() client: Socket<any, any, any, SocketDataType>,
+    @MessageBody() payload: MessageDeliveredPayload,
+  ): Promise<void> {
+    const userId: number | undefined = client.data.userId;
+    if (!userId) {
+      return;
+    }
+
+    const messageId: number = Number(payload?.messageId);
+    if (!Number.isInteger(messageId) || messageId <= 0) {
+      this.logger.warn(
+        `Ignored invalid message.delivered payload from user:${userId}`,
+        this.handleMessageDelivered.name,
+      );
+      return;
+    }
+
+    try {
+      await this.commandBus.execute(
+        new MarkMessageDeliveredCommand({
+          messageId,
+          deliveredByUserId: userId,
+        }),
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(
+        `message.delivered failed for user:${userId}, messageId=${messageId}: ${errorMessage}`,
+        this.handleMessageDelivered.name,
+      );
+    }
   }
 
   afterInit(server: Server<any, any, any, SocketDataType>) {
