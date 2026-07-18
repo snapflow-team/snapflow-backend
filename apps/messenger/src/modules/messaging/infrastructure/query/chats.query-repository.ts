@@ -31,6 +31,33 @@ export class ChatsQueryRepository {
     return ChatViewDto.mapToView(chat, userId);
   }
 
+  async getUnreadCount(chatId: number, userId: number): Promise<number> {
+    const rows: Array<{ unreadCount: number }> = await this.prisma.$queryRaw<
+      Array<{ unreadCount: number }>
+    >`
+      SELECT COUNT(*)::int AS "unreadCount"
+      FROM messages um
+      LEFT JOIN chat_read_states crs
+        ON crs.chat_id = um.chat_id
+        AND crs.user_id = ${userId}
+      WHERE um.chat_id = ${chatId}
+        AND um.sender_id != ${userId}
+        AND um.deleted_for_everyone = false
+        AND NOT EXISTS (
+          SELECT 1
+          FROM message_user_deletions mud
+          WHERE mud.message_id = um.id
+            AND mud.user_id = ${userId}
+        )
+        AND (
+          crs.last_read_message_id IS NULL
+          OR um.id > crs.last_read_message_id
+        )
+    `;
+
+    return rows[0]?.unreadCount ?? 0;
+  }
+
   async findUserChats(
     userId: number,
     params: GetUserChatsQueryParamsDto,
