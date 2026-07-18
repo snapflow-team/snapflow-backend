@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Message, Prisma } from '@generated/prisma-messenger';
+import { Message, MessageDelivery, Prisma } from '@generated/prisma-messenger';
 import {
   buildCursorPaginatedResult,
   buildKeysetCursorFilter,
@@ -70,6 +70,22 @@ export class MessagesRepository {
   async findById(id: number): Promise<Message | null> {
     return this.prisma.message.findUnique({
       where: { id },
+    });
+  }
+
+  async upsertDelivery(messageId: number, userId: number): Promise<MessageDelivery> {
+    return this.prisma.messageDelivery.upsert({
+      where: {
+        messageId_userId: {
+          messageId,
+          userId,
+        },
+      },
+      create: {
+        messageId,
+        userId,
+      },
+      update: {},
     });
   }
 
