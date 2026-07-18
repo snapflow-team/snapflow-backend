@@ -4,10 +4,13 @@ import { JwtService } from '@nestjs/jwt';
 import { AddressInfo } from 'node:net';
 import { io, Socket } from 'socket.io-client';
 import request from 'supertest';
+import { Redis } from 'ioredis';
 import { GLOBAL_PREFIX } from '../../../../../../../libs/common/constants/global-prefix.constant';
+import type { TypingOutboundPayload } from '../../../../../../../libs/contracts/messenger';
 import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
 import { AccessTokenTestHelper } from '../../../../../test/helpers/access-token-test.helper';
 import { AppTestManager } from '../../../../../test/managers/app.test-manager';
+import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { MessageViewDto } from '../../api/view-dto/message.view-dto';
@@ -19,6 +22,7 @@ describe('MessengerWebSocketGateway (Integration)', () => {
   let port: number;
   let accessTokenTestHelper: AccessTokenTestHelper;
   let messengerWebSocketService: MessengerWebSocketService;
+  let redis: Redis;
 
   beforeAll(async () => {
     appTestManager = new AppTestManager();
@@ -26,6 +30,11 @@ describe('MessengerWebSocketGateway (Integration)', () => {
 
     app = appTestManager.getApp();
     messengerWebSocketService = app.get(MessengerWebSocketService);
+    redis = app.get(REDIS_CLIENT_INJECT_TOKEN);
+
+    if (redis.status === 'wait') {
+      await redis.connect();
+    }
 
     const apiSettings = app
       .get(ConfigService<Configuration, true>)
@@ -43,6 +52,9 @@ describe('MessengerWebSocketGateway (Integration)', () => {
   });
 
   afterAll(async () => {
+    if (redis.status !== 'end') {
+      await redis.quit();
+    }
     await appTestManager.close();
   });
 
@@ -54,6 +66,13 @@ describe('MessengerWebSocketGateway (Integration)', () => {
             token,
           }
         : {},
+    });
+  }
+
+  async function connectSocket(socket: Socket): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      socket.on('connect', () => resolve());
+      socket.on('connect_error', reject);
     });
   }
 
@@ -261,5 +280,56 @@ describe('MessengerWebSocketGateway (Integration)', () => {
 
     senderSocket.disconnect();
     receiverSocket.disconnect();
+  });
+
+  it('должен ретранслировать typing.start/stop peer’у и держать ключ в Redis с TTL', async () => {
+    const userAToken = accessTokenTestHelper.signAccessToken(1);
+    const userBToken = accessTokenTestHelper.signAccessToken(2);
+
+    const chatResponse = await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${userAToken}`)
+      .send({ interlocutorId: '2' })
+      .expect(200);
+
+    const chatId = chatResponse.body.id as string;
+
+    const socketA = createSocket(userAToken);
+    const socketB = createSocket(userBToken);
+
+    await Promise.all([connectSocket(socketA), connectSocket(socketB)]);
+
+    const receivedStart = new Promise<TypingOutboundPayload>((resolve) => {
+      socketB.on(MessengerWsEvent.TypingStart, (payload: TypingOutboundPayload) => resolve(payload));
+    });
+
+    socketA.emit(MessengerWsEvent.TypingStart, { chatId });
+
+    await expect(receivedStart).resolves.toEqual({
+      chatId,
+      userId: '1',
+    });
+
+    const typingKey = `typing:${chatId}:1`;
+    await expect(redis.get(typingKey)).resolves.toBe('1');
+    const ttl = await redis.ttl(typingKey);
+    expect(ttl).toBeGreaterThan(0);
+    expect(ttl).toBeLessThanOrEqual(3);
+
+    const receivedStop = new Promise<TypingOutboundPayload>((resolve) => {
+      socketB.on(MessengerWsEvent.TypingStop, (payload: TypingOutboundPayload) => resolve(payload));
+    });
+
+    socketA.emit(MessengerWsEvent.TypingStop, { chatId });
+
+    await expect(receivedStop).resolves.toEqual({
+      chatId,
+      userId: '1',
+    });
+
+    await expect(redis.exists(typingKey)).resolves.toBe(0);
+
+    socketA.disconnect();
+    socketB.disconnect();
   });
 });

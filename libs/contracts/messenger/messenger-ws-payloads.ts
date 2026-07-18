@@ -1,4 +1,10 @@
-export type TypingPayload = {
+/** Inbound: client → server (`typing.start` / `typing.stop`). */
+export type TypingInboundPayload = {
+  chatId: string;
+};
+
+/** Outbound: server → peer (`typing.start` / `typing.stop`). */
+export type TypingOutboundPayload = {
   chatId: string;
   userId: string;
 };
