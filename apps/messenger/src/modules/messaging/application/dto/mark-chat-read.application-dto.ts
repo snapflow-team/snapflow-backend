@@ -1,5 +1,5 @@
 export class MarkChatReadApplicationDto {
   chatId: number;
-  userId: number;
+  readerId: number;
   lastReadMessageId: number;
 }
