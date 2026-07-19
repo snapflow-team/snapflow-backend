@@ -22,9 +22,13 @@ export class UnauthorizedException extends DomainException<MessengerResultCodeTy
 }
 
 export class ForbiddenException extends DomainException<MessengerResultCodeType> {
-  constructor(message: string = 'Forbidden', extensions?: IExtension[]) {
+  constructor(
+    message: string = 'Forbidden',
+    code: MessengerResultCodeType = MessengerResultCode.Forbidden,
+    extensions?: IExtension[],
+  ) {
     super({
-      code: MessengerResultCode.Forbidden,
+      code,
       message,
       extensions,
     });
