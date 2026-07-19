@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -15,17 +16,20 @@ import { ApiTags } from '@nestjs/swagger';
 import { ExtractUserFromRequest } from '../../auth/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../auth/guards/dto/user-context.dto';
 import { AccessTokenGuard } from '../../auth/guards/access-token.guard';
+import { EditMessageCommand } from '../application/commands/edit-message.command';
 import { GetChatMessagesQuery } from '../application/queries/get-chat-messages.query-handler';
 import { GetUserChatsQuery } from '../application/queries/get-user-chats.query-handler';
 import { GetOrCreateChatCommand } from '../application/usecases/get-or-create-chat.usecase';
 import { MarkChatReadCommand } from '../application/usecases/mark-chat-read.usecase';
 import { SendMessageCommand } from '../application/usecases/send-message.usecase';
 import { ChatMembershipGuard } from './guards/chat-membership.guard';
+import { EditMessageInputDto } from './input-dto/edit-message.input-dto';
 import { GetChatMessagesQueryParamsDto } from './input-dto/get-chat-messages.query-params.dto';
 import { GetOrCreateChatInputDto } from './input-dto/get-or-create-chat.input-dto';
 import { GetUserChatsQueryParamsDto } from './input-dto/get-user-chats.query-params.dto';
 import { MarkChatReadInputDto } from './input-dto/mark-chat-read.input-dto';
 import { SendMessageInputDto } from './input-dto/send-message.input-dto';
+import { EditMessageSwagger } from './swagger/edit-message.swagger';
 import { GetChatMessagesSwagger } from './swagger/get-chat-messages.swagger';
 import { GetOrCreateChatSwagger } from './swagger/get-or-create-chat.swagger';
 import { GetUserChatsSwagger } from './swagger/get-user-chats.swagger';
@@ -111,6 +115,23 @@ export class MessagingController {
         receiverId: Number(receiverId),
         text,
         clientMessageId,
+      }),
+    );
+  }
+
+  @Patch('messages/:messageId')
+  @EditMessageSwagger()
+  @UseGuards(ChatMembershipGuard)
+  async editMessage(
+    @Param('messageId', ParseIntPipe) messageId: number,
+    @Body() { text }: EditMessageInputDto,
+    @ExtractUserFromRequest() { id: editorId }: UserContextDto,
+  ): Promise<MessageViewDto> {
+    return this.commandBus.execute<EditMessageCommand, MessageViewDto>(
+      new EditMessageCommand({
+        messageId,
+        editorId,
+        text,
       }),
     );
   }
