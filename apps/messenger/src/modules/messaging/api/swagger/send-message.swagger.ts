@@ -20,7 +20,8 @@ export function SendMessageSwagger() {
       type: MessageViewDto,
     }),
     ApiBadRequestResponse({
-      description: 'Невалидные данные сообщения или попытка отправить сообщение самому себе',
+      description:
+        'Невалидные данные сообщения, невалидный replyToMessageId или попытка отправить сообщение самому себе',
     }),
     ApiUnauthorizedResponse({ description: 'Пользователь не авторизован' }),
   );

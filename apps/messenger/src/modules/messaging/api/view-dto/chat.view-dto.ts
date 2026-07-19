@@ -49,6 +49,7 @@ export class ChatViewDto {
       ? MessageViewDto.mapToView(
           chat.lastMessage,
           chat.lastMessage.senderId === userId ? interlocutorId : userId,
+          { viewerId: userId },
         )
       : null;
 

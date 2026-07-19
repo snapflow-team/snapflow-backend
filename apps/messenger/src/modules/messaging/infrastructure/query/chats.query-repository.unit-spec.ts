@@ -7,10 +7,16 @@ import { ChatListRow } from '../types/chat-list-row.type';
 
 describe('ChatsQueryRepository (unit)', () => {
   let repository: ChatsQueryRepository;
-  let prismaMock: { $queryRaw: jest.Mock; chat: { findUnique: jest.Mock } };
+  let prismaMock: {
+    $queryRaw: jest.Mock;
+    chat: { findUnique: jest.Mock };
+    message: { findFirst: jest.Mock };
+  };
 
   const createdAt = new Date('2026-07-05T18:00:00.000Z');
   const lastMessageAt = new Date('2026-07-06T12:00:00.000Z');
+
+  const messageClientMessageId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
 
   const rowWithMessage: ChatListRow = {
     id: 2,
@@ -25,6 +31,13 @@ describe('ChatsQueryRepository (unit)', () => {
     messageSenderId: 3,
     messageText: 'Hi',
     messageCreatedAt: lastMessageAt,
+    messageClientMessageId,
+    messageEditedAt: null,
+    messageDeletedAt: null,
+    messageDeletedForEveryone: false,
+    messageReplyToMessageId: null,
+    peerLastReadMessageId: null,
+    messageDeliveredToPeer: false,
     unreadCount: 1,
   };
 
@@ -41,6 +54,13 @@ describe('ChatsQueryRepository (unit)', () => {
     messageSenderId: null,
     messageText: null,
     messageCreatedAt: null,
+    messageClientMessageId: null,
+    messageEditedAt: null,
+    messageDeletedAt: null,
+    messageDeletedForEveryone: null,
+    messageReplyToMessageId: null,
+    peerLastReadMessageId: null,
+    messageDeliveredToPeer: null,
     unreadCount: 0,
   };
 
@@ -49,6 +69,9 @@ describe('ChatsQueryRepository (unit)', () => {
       $queryRaw: jest.fn(),
       chat: {
         findUnique: jest.fn(),
+      },
+      message: {
+        findFirst: jest.fn(),
       },
     };
 
@@ -79,7 +102,13 @@ describe('ChatsQueryRepository (unit)', () => {
         senderId: '3',
         receiverId: '1',
         text: 'Hi',
+        clientMessageId: messageClientMessageId,
         createdAt: lastMessageAt.toISOString(),
+        status: null,
+        editedAt: null,
+        deletedAt: null,
+        deletedForEveryone: false,
+        replyTo: null,
       },
       unreadCount: 1,
       createdAt: createdAt.toISOString(),
@@ -117,7 +146,7 @@ describe('ChatsQueryRepository (unit)', () => {
   });
 
   it('findChatViewById: возвращает ChatViewDto c lastMessage', async () => {
-    const chat: Chat & { lastMessage: Message | null } = {
+    const chat: Chat = {
       id: 10,
       participantAId: 1,
       participantBId: 2,
@@ -125,21 +154,37 @@ describe('ChatsQueryRepository (unit)', () => {
       lastMessageAt,
       createdAt,
       updatedAt: lastMessageAt,
-      lastMessage: {
-        id: 100,
-        chatId: 10,
-        senderId: 2,
-        text: 'Hi',
-        createdAt: lastMessageAt,
-      },
+    };
+    const lastMessage: Message = {
+      id: 100,
+      chatId: 10,
+      senderId: 2,
+      text: 'Hi',
+      clientMessageId: messageClientMessageId,
+      createdAt: lastMessageAt,
+      editedAt: null,
+      deletedAt: null,
+      deletedForEveryone: false,
+      replyToMessageId: null,
     };
     prismaMock.chat.findUnique.mockResolvedValue(chat);
+    prismaMock.message.findFirst.mockResolvedValue(lastMessage);
 
     const result = await repository.findChatById(10, 1);
 
     expect(prismaMock.chat.findUnique).toHaveBeenCalledWith({
       where: { id: 10 },
-      include: { lastMessage: true },
+    });
+    expect(prismaMock.message.findFirst).toHaveBeenCalledWith({
+      where: {
+        chatId: 10,
+        NOT: {
+          userDeletions: {
+            some: { userId: 1 },
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
     expect(result).toEqual({
       id: '10',
@@ -150,8 +195,38 @@ describe('ChatsQueryRepository (unit)', () => {
         senderId: '2',
         receiverId: '1',
         text: 'Hi',
+        clientMessageId: messageClientMessageId,
         createdAt: lastMessageAt.toISOString(),
+        status: null,
+        editedAt: null,
+        deletedAt: null,
+        deletedForEveryone: false,
+        replyTo: null,
       },
+      createdAt: createdAt.toISOString(),
+      updatedAt: lastMessageAt.toISOString(),
+    });
+  });
+
+  it('findChatViewById: возвращает null lastMessage, если все сообщения скрыты viewer’ом', async () => {
+    const chat: Chat = {
+      id: 10,
+      participantAId: 1,
+      participantBId: 2,
+      lastMessageId: 100,
+      lastMessageAt,
+      createdAt,
+      updatedAt: lastMessageAt,
+    };
+    prismaMock.chat.findUnique.mockResolvedValue(chat);
+    prismaMock.message.findFirst.mockResolvedValue(null);
+
+    const result = await repository.findChatById(10, 1);
+
+    expect(result).toEqual({
+      id: '10',
+      interlocutorId: '2',
+      lastMessage: null,
       createdAt: createdAt.toISOString(),
       updatedAt: lastMessageAt.toISOString(),
     });
@@ -161,5 +236,18 @@ describe('ChatsQueryRepository (unit)', () => {
     prismaMock.chat.findUnique.mockResolvedValue(null);
 
     await expect(repository.findChatById(999, 1)).resolves.toBeNull();
+  });
+
+  it('getUnreadCount: возвращает число непрочитанных сообщений', async () => {
+    prismaMock.$queryRaw.mockResolvedValue([{ unreadCount: 4 }]);
+
+    await expect(repository.getUnreadCount(10, 1)).resolves.toBe(4);
+    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(1);
+  });
+
+  it('getUnreadCount: возвращает 0, если строк нет', async () => {
+    prismaMock.$queryRaw.mockResolvedValue([]);
+
+    await expect(repository.getUnreadCount(10, 1)).resolves.toBe(0);
   });
 });

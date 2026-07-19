@@ -8,6 +8,13 @@ export class MessengerResultCodeMapper extends BaseDomainExceptionsCodeMapper {
     switch (code) {
       case MessengerResultCode.Success:
         return HttpStatus.OK;
+      case MessengerResultCode.MessageNotFound:
+        return HttpStatus.NOT_FOUND;
+      case MessengerResultCode.EditWindowExpired:
+      case MessengerResultCode.DeleteWindowExpired:
+        return HttpStatus.FORBIDDEN;
+      case MessengerResultCode.ReplyTargetInvalid:
+        return HttpStatus.BAD_REQUEST;
       default:
         return super.mapToHttpStatus(code);
     }

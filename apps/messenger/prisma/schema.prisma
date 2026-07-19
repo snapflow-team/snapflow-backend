@@ -26,15 +26,25 @@ model Chat {
 }
 
 model Message {
-  id                Int             @id @default(autoincrement())
-  chatId            Int             @map("chat_id")
-  senderId          Int             @map("sender_id")
-  text              String          @db.VarChar(1000)
-  createdAt         DateTime        @default(now()) @map("created_at")
-  chat              Chat            @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  lastMessageOfChat Chat?           @relation("ChatLastMessage")
-  readStates        ChatReadState[]
+  id                 Int                   @id @default(autoincrement())
+  chatId             Int                   @map("chat_id")
+  senderId           Int                   @map("sender_id")
+  text               String                @db.VarChar(1000)
+  clientMessageId    String                @map("client_message_id") @db.Uuid
+  createdAt          DateTime              @default(now()) @map("created_at")
+  editedAt           DateTime?             @map("edited_at")
+  deletedAt          DateTime?             @map("deleted_at")
+  deletedForEveryone Boolean               @default(false) @map("deleted_for_everyone")
+  replyToMessageId   Int?                  @map("reply_to_message_id")
+  chat               Chat                  @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  lastMessageOfChat  Chat?                 @relation("ChatLastMessage")
+  readStates         ChatReadState[]
+  replyTo            Message?              @relation("MessageReply", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies            Message[]             @relation("MessageReply")
+  deliveries         MessageDelivery[]
+  userDeletions      MessageUserDeletion[]
 
+  @@unique([chatId, senderId, clientMessageId])
   @@index([chatId, createdAt])
   @@map("messages")
 }
@@ -50,4 +60,26 @@ model ChatReadState {
 
   @@unique([chatId, userId])
   @@map("chat_read_states")
+}
+
+model MessageDelivery {
+  id          Int      @id @default(autoincrement())
+  messageId   Int      @map("message_id")
+  userId      Int      @map("user_id")
+  deliveredAt DateTime @default(now()) @map("delivered_at")
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_deliveries")
+}
+
+model MessageUserDeletion {
+  id        Int      @id @default(autoincrement())
+  messageId Int      @map("message_id")
+  userId    Int      @map("user_id")
+  deletedAt DateTime @default(now()) @map("deleted_at")
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@map("message_user_deletions")
 }

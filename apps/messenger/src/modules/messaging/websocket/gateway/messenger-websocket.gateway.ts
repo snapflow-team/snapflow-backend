@@ -1,15 +1,27 @@
+import { CommandBus } from '@nestjs/cqrs';
 import {
+  ConnectedSocket,
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import type {
+  MessageDeliveredPayload,
+  TypingInboundPayload,
+} from '../../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
 import { AuthTokenService } from '../../../auth/application/services/auth-token.service';
 import { PayloadAccessToken } from '../../../auth/application/types/payload-access-token.type';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
+import { MarkMessageDeliveredCommand } from '../../application/commands/mark-message-delivered.command';
+import { TypingStartCommand } from '../../application/commands/typing-start.command';
+import { TypingStopCommand } from '../../application/commands/typing-stop.command';
 import { SocketDataType } from '../types/socket-data.type';
 
 @WebSocketGateway({
@@ -24,9 +36,61 @@ export class MessengerWebSocketGateway
 
   constructor(
     private readonly authTokenService: AuthTokenService,
+    private readonly commandBus: CommandBus,
     loggerFactory: LoggerFactory,
   ) {
     this.logger = loggerFactory.create(MessengerWebSocketGateway.name);
+  }
+
+  @SubscribeMessage(MessengerWsEvent.MessageDelivered)
+  async handleMessageDelivered(
+    @ConnectedSocket() client: Socket<any, any, any, SocketDataType>,
+    @MessageBody() payload: MessageDeliveredPayload,
+  ): Promise<void> {
+    const userId: number | undefined = client.data.userId;
+    if (!userId) {
+      return;
+    }
+
+    const messageId: number = Number(payload?.messageId);
+    if (!Number.isInteger(messageId) || messageId <= 0) {
+      this.logger.warn(
+        `Ignored invalid message.delivered payload from user:${userId}`,
+        this.handleMessageDelivered.name,
+      );
+      return;
+    }
+
+    try {
+      await this.commandBus.execute(
+        new MarkMessageDeliveredCommand({
+          messageId,
+          deliveredByUserId: userId,
+        }),
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(
+        `message.delivered failed for user:${userId}, messageId=${messageId}: ${errorMessage}`,
+        this.handleMessageDelivered.name,
+      );
+    }
+  }
+
+  @SubscribeMessage(MessengerWsEvent.TypingStart)
+  async handleTypingStart(
+    @ConnectedSocket() client: Socket<any, any, any, SocketDataType>,
+    @MessageBody() payload: TypingInboundPayload,
+  ): Promise<void> {
+    await this.handleTypingEvent(client, payload, MessengerWsEvent.TypingStart);
+  }
+
+  @SubscribeMessage(MessengerWsEvent.TypingStop)
+  async handleTypingStop(
+    @ConnectedSocket() client: Socket<any, any, any, SocketDataType>,
+    @MessageBody() payload: TypingInboundPayload,
+  ): Promise<void> {
+    await this.handleTypingEvent(client, payload, MessengerWsEvent.TypingStop);
   }
 
   afterInit(server: Server<any, any, any, SocketDataType>) {
@@ -145,6 +209,40 @@ export class MessengerWebSocketGateway
     if (client.data.timer) {
       clearTimeout(client.data.timer);
       client.data.timer = undefined;
+    }
+  }
+
+  private async handleTypingEvent(
+    client: Socket<any, any, any, SocketDataType>,
+    payload: TypingInboundPayload,
+    event: MessengerWsEvent.TypingStart | MessengerWsEvent.TypingStop,
+  ): Promise<void> {
+    const userId: number | undefined = client.data.userId;
+    if (!userId) {
+      return;
+    }
+
+    const chatId: number = Number(payload?.chatId);
+    if (!Number.isInteger(chatId) || chatId <= 0) {
+      this.logger.warn(
+        `Ignored invalid ${event} payload from user:${userId}`,
+        this.handleTypingEvent.name,
+      );
+      return;
+    }
+
+    try {
+      if (event === MessengerWsEvent.TypingStart) {
+        await this.commandBus.execute(new TypingStartCommand({ chatId, userId }));
+      } else {
+        await this.commandBus.execute(new TypingStopCommand({ chatId, userId }));
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(
+        `${event} failed for user:${userId}, chatId=${chatId}: ${errorMessage}`,
+        this.handleTypingEvent.name,
+      );
     }
   }
 }

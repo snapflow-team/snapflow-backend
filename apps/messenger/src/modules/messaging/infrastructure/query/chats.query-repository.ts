@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@generated/prisma-messenger';
+import { Chat, Message, Prisma } from '@generated/prisma-messenger';
 import {
   buildCursorPaginatedResult,
   CursorPaginatedResult,
@@ -19,16 +19,59 @@ export class ChatsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findChatById(chatId: number, userId: number): Promise<ChatViewDto | null> {
-    const chat: ChatWithLastMessage | null = await this.prisma.chat.findUnique({
+    const chat: Chat | null = await this.prisma.chat.findUnique({
       where: { id: chatId },
-      include: { lastMessage: true },
     });
 
     if (!chat) {
       return null;
     }
 
-    return ChatViewDto.mapToView(chat, userId);
+    const lastMessage: Message | null = await this.prisma.message.findFirst({
+      where: {
+        chatId,
+        NOT: {
+          userDeletions: {
+            some: { userId },
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+
+    const chatWithLastMessage: ChatWithLastMessage = {
+      ...chat,
+      lastMessage,
+    };
+
+    return ChatViewDto.mapToView(chatWithLastMessage, userId);
+  }
+
+  async getUnreadCount(chatId: number, userId: number): Promise<number> {
+    const rows: Array<{ unreadCount: number }> = await this.prisma.$queryRaw<
+      Array<{ unreadCount: number }>
+    >`
+      SELECT COUNT(*)::int AS "unreadCount"
+      FROM messages um
+      LEFT JOIN chat_read_states crs
+        ON crs.chat_id = um.chat_id
+        AND crs.user_id = ${userId}
+      WHERE um.chat_id = ${chatId}
+        AND um.sender_id != ${userId}
+        AND um.deleted_for_everyone = false
+        AND NOT EXISTS (
+          SELECT 1
+          FROM message_user_deletions mud
+          WHERE mud.message_id = um.id
+            AND mud.user_id = ${userId}
+        )
+        AND (
+          crs.last_read_message_id IS NULL
+          OR um.id > crs.last_read_message_id
+        )
+    `;
+
+    return rows[0]?.unreadCount ?? 0;
   }
 
   async findUserChats(
@@ -58,19 +101,69 @@ export class ChatsQueryRepository {
         m.sender_id AS "messageSenderId",
         m.text AS "messageText",
         m.created_at AS "messageCreatedAt",
+        m.client_message_id AS "messageClientMessageId",
+        m.edited_at AS "messageEditedAt",
+        m.deleted_at AS "messageDeletedAt",
+        m.deleted_for_everyone AS "messageDeletedForEveryone",
+        m.reply_to_message_id AS "messageReplyToMessageId",
+        peer_crs.last_read_message_id AS "peerLastReadMessageId",
+        EXISTS (
+          SELECT 1
+          FROM message_deliveries md
+          WHERE md.message_id = m.id
+            AND md.user_id = CASE
+              WHEN c.participant_a_id = ${userId} THEN c.participant_b_id
+              ELSE c.participant_a_id
+            END
+        ) AS "messageDeliveredToPeer",
         (
           SELECT COUNT(*)::int
           FROM messages um
           WHERE um.chat_id = c.id
             AND um.sender_id != ${userId}
+            AND um.deleted_for_everyone = false
+            AND NOT EXISTS (
+              SELECT 1
+              FROM message_user_deletions mud
+              WHERE mud.message_id = um.id
+                AND mud.user_id = ${userId}
+            )
             AND (
               crs.last_read_message_id IS NULL
               OR um.id > crs.last_read_message_id
             )
         ) AS "unreadCount"
       FROM chats c
-      LEFT JOIN messages m ON m.id = c.last_message_id
+      LEFT JOIN LATERAL (
+        SELECT
+          lm.id,
+          lm.chat_id,
+          lm.sender_id,
+          lm.text,
+          lm.created_at,
+          lm.client_message_id,
+          lm.edited_at,
+          lm.deleted_at,
+          lm.deleted_for_everyone,
+          lm.reply_to_message_id
+        FROM messages lm
+        WHERE lm.chat_id = c.id
+          AND NOT EXISTS (
+            SELECT 1
+            FROM message_user_deletions mud
+            WHERE mud.message_id = lm.id
+              AND mud.user_id = ${userId}
+          )
+        ORDER BY lm.created_at DESC, lm.id DESC
+        LIMIT 1
+      ) m ON true
       LEFT JOIN chat_read_states crs ON crs.chat_id = c.id AND crs.user_id = ${userId}
+      LEFT JOIN chat_read_states peer_crs
+        ON peer_crs.chat_id = c.id
+        AND peer_crs.user_id = CASE
+          WHEN c.participant_a_id = ${userId} THEN c.participant_b_id
+          ELSE c.participant_a_id
+        END
       WHERE (c.participant_a_id = ${userId} OR c.participant_b_id = ${userId})
         ${cursorCondition}
       ORDER BY COALESCE(c.last_message_at, c.created_at) DESC, c.id DESC

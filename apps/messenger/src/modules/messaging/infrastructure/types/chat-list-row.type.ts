@@ -11,5 +11,13 @@ export type ChatListRow = {
   messageSenderId: number | null;
   messageText: string | null;
   messageCreatedAt: Date | null;
+  messageClientMessageId: string | null;
+  messageEditedAt: Date | null;
+  messageDeletedAt: Date | null;
+  messageDeletedForEveryone: boolean | null;
+  messageReplyToMessageId: number | null;
+  peerLastReadMessageId: number | null;
+  messageDeliveredToPeer: boolean | null;
   unreadCount: number;
 };
+

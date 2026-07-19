@@ -31,10 +31,10 @@ export function printSnapflowStartupBannerToConsole(params: StartupBannerParams)
   const r = '\x1b[0m';
   const bold = '\x1b[1m';
   const dim = '\x1b[2m';
-  const cyan = '\x1b[36m';
-  const mag = '\x1b[35m';
-  const grn = '\x1b[32m';
-  const ylw = '\x1b[33m';
+  const frame = '\x1b[38;5;73m'; // мягкий бирюзовый
+  const acc = '\x1b[38;5;141m'; // мягкая лаванда
+  const mark = '\x1b[38;5;108m'; // мягкий шалфей
+  const val = '\x1b[38;5;187m'; // мягкий пшеничный
 
   const W = 62;
   const MOTD_COLS = 80;
@@ -42,7 +42,7 @@ export function printSnapflowStartupBannerToConsole(params: StartupBannerParams)
 
   const boxRow = (content: string): string => {
     const pad = Math.max(0, W - stripAnsi(content).length);
-    return `${cyan}│${r}${content}${' '.repeat(pad)}${cyan}│${r}`;
+    return `${frame}│${r}${content}${' '.repeat(pad)}${frame}│${r}`;
   };
 
   const hrPlain = '─'.repeat(W);
@@ -55,30 +55,30 @@ export function printSnapflowStartupBannerToConsole(params: StartupBannerParams)
     ' ╚══════╝ ╚═╝      ',
   ];
 
-  const title = `${bold}${mag}SNAPFLOW${r} ${dim}·${r} ${bold}${mag}CORE${r}`;
+  const title = `${bold}${acc}SNAPFLOW${r} ${dim}·${r} ${bold}${acc}CORE${r}`;
   const lines: string[] = [
     '',
-    motdLine(`${cyan}╭${hrPlain}╮${r}`),
+    motdLine(`${frame}╭${hrPlain}╮${r}`),
     motdLine(boxRow('')),
-    ...sfMark.map((row) => motdLine(boxRow(centerVisual(`${bold}${mag}${row}${r}`, W)))),
+    ...sfMark.map((row) => motdLine(boxRow(centerVisual(`${bold}${acc}${row}${r}`, W)))),
     motdLine(boxRow('')),
     motdLine(boxRow(centerVisual(title, W))),
     motdLine(boxRow('')),
-    motdLine(`${cyan}├${hrPlain}┤${r}`),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`)),
+    motdLine(`${frame}├${hrPlain}┤${r}`),
+    motdLine(boxRow(`  ${mark}▸${r}  ${bold}environment${r}${dim}:${r}   ${val}${env}${r}`)),
     motdLine(
-      boxRow(`  ${grn}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${String(port)}${r}`),
+      boxRow(`  ${mark}▸${r}  ${bold}listen${r}${dim}:${r}        ${val}${String(port)}${r}`),
     ),
     ...(showSwagger
       ? [
           motdLine(
-            boxRow(`  ${grn}▸${r}  ${bold}swagger${r}${dim}:${r}       ${ylw}${swaggerDocUrl}${r}`),
+            boxRow(`  ${mark}▸${r}  ${bold}swagger${r}${dim}:${r}       ${val}${swaggerDocUrl}${r}`),
           ),
         ]
       : []),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}started at${r}${dim}:${r}    ${ylw}${startedAt}${r}`)),
-    motdLine(boxRow(`  ${grn}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`)),
-    motdLine(`${cyan}╰${hrPlain}╯${r}`),
+    motdLine(boxRow(`  ${mark}▸${r}  ${bold}started at${r}${dim}:${r}    ${val}${startedAt}${r}`)),
+    motdLine(boxRow(`  ${mark}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`)),
+    motdLine(`${frame}╰${hrPlain}╯${r}`),
     '',
   ];
 

@@ -28,7 +28,10 @@ function normalizeMonogramRows(rows: readonly string[]): string[] {
 }
 
 /**
- * Стартовый баннер в stdout (без Winston), в духе snapflow-core: монограмма **PAY** (Payments).
+ * Баннер в сыром stdout: без Winston (без timestamp/JSON) и без Nest-обёртки.
+ * Стиль совпадает с snapflow-core (`startup-banner.util.ts`).
+ *
+ * Логотип: монограмма **PAY** (Payments).
  */
 export function printPaymentsStartupBannerToConsole(params: PaymentsStartupBannerParams): void {
   const { env, port, swaggerDocUrl, startedAt, showSwagger } = params;
@@ -36,10 +39,9 @@ export function printPaymentsStartupBannerToConsole(params: PaymentsStartupBanne
   const r = '\x1b[0m';
   const bold = '\x1b[1m';
   const dim = '\x1b[2m';
-  const cyan = '\x1b[36m';
-  /** Акцент (монограмма, заголовок, ▸): спокойный серо-синий / slate (256). */
-  const acc = '\x1b[38;5;109m';
-  const ylw = '\x1b[33m';
+  const frame = '\x1b[38;5;174m'; // мягкий персиковый
+  const acc = '\x1b[38;5;174m';
+  const val = '\x1b[38;5;223m'; // мягкий кремовый
 
   const W = 62;
   const MOTD_COLS = 80;
@@ -47,11 +49,11 @@ export function printPaymentsStartupBannerToConsole(params: PaymentsStartupBanne
 
   const boxRow = (content: string): string => {
     const pad = Math.max(0, W - stripAnsi(content).length);
-    return `${cyan}│${r}${content}${' '.repeat(pad)}${cyan}│${r}`;
+    return `${frame}│${r}${content}${' '.repeat(pad)}${frame}│${r}`;
   };
 
   const hrPlain = '─'.repeat(W);
-  /** ANSI Shadow PAY: `█` + box-drawing, тенью; все строки одинаковой длины через normalizeMonogramRows. */
+  /** ANSI Shadow PAY: `█` + box-drawing; все строки одинаковой длины через normalizeMonogramRows. */
   const payMark = normalizeMonogramRows([
     '██████╗  █████╗ ██╗   ██╗',
     '██╔══██╗██╔══██╗╚██╗ ██╔╝',
@@ -64,27 +66,27 @@ export function printPaymentsStartupBannerToConsole(params: PaymentsStartupBanne
   const title = `${bold}${acc}SNAPFLOW${r} ${dim}·${r} ${bold}${acc}PAYMENTS${r}`;
   const lines: string[] = [
     '',
-    motdLine(`${cyan}╭${hrPlain}╮${r}`),
+    motdLine(`${frame}╭${hrPlain}╮${r}`),
     motdLine(boxRow('')),
     ...payMark.map((row) => motdLine(boxRow(centerVisual(`${bold}${acc}${row}${r}`, W)))),
     motdLine(boxRow('')),
     motdLine(boxRow(centerVisual(title, W))),
     motdLine(boxRow('')),
-    motdLine(`${cyan}├${hrPlain}┤${r}`),
-    motdLine(boxRow(`  ${acc}▸${r}  ${bold}environment${r}${dim}:${r}   ${ylw}${env}${r}`)),
+    motdLine(`${frame}├${hrPlain}┤${r}`),
+    motdLine(boxRow(`  ${acc}▸${r}  ${bold}environment${r}${dim}:${r}   ${val}${env}${r}`)),
     motdLine(
-      boxRow(`  ${acc}▸${r}  ${bold}listen${r}${dim}:${r}        ${ylw}${String(port)}${r}`),
+      boxRow(`  ${acc}▸${r}  ${bold}listen${r}${dim}:${r}        ${val}${String(port)}${r}`),
     ),
     ...(showSwagger
       ? [
           motdLine(
-            boxRow(`  ${acc}▸${r}  ${bold}swagger${r}${dim}:${r}       ${ylw}${swaggerDocUrl}${r}`),
+            boxRow(`  ${acc}▸${r}  ${bold}swagger${r}${dim}:${r}       ${val}${swaggerDocUrl}${r}`),
           ),
         ]
       : []),
-    motdLine(boxRow(`  ${acc}▸${r}  ${bold}started at${r}${dim}:${r}    ${ylw}${startedAt}${r}`)),
+    motdLine(boxRow(`  ${acc}▸${r}  ${bold}started at${r}${dim}:${r}    ${val}${startedAt}${r}`)),
     motdLine(boxRow(`  ${acc}▸${r}  ${bold}pid${r}${dim}:${r}           ${dim}${pid}${r}`)),
-    motdLine(`${cyan}╰${hrPlain}╯${r}`),
+    motdLine(`${frame}╰${hrPlain}╯${r}`),
     '',
   ];
 
