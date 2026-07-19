@@ -4,6 +4,10 @@ import { AddressInfo } from 'node:net';
 import request from 'supertest';
 import { io, Socket } from 'socket.io-client';
 import { GLOBAL_PREFIX } from '../../../../../libs/common/constants/global-prefix.constant';
+import type {
+  MessageReadPayload,
+  TypingOutboundPayload,
+} from '../../../../../libs/contracts/messenger';
 import { MessengerWsEvent } from '../../../../../libs/contracts/messenger';
 import { AccessTokenTestHelper } from '../../../test/helpers/access-token-test.helper';
 import { AppTestManager } from '../../../test/managers/app.test-manager';
@@ -181,5 +185,134 @@ describe('Messenger realtime scaling (Integration)', () => {
     expect(collectedIds).toHaveLength(4);
     expect(collectedIds).toEqual([...new Set(collectedIds)]);
     expect(collectedIds).toEqual(expectedIds);
+  });
+
+  it('должен доставить message.updated (delivered) отправителю на другом инстансе', async () => {
+    const sendResponse = await request(instanceA.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({
+        receiverId: '2',
+        text: 'Cross-instance delivered ACK',
+        clientMessageId: crypto.randomUUID(),
+      })
+      .expect(201);
+
+    const messageId = sendResponse.body.id as string;
+
+    const senderSocket = createSocket(portA, 1);
+    const receiverSocket = createSocket(portB, 2);
+
+    await Promise.all([connectSocket(senderSocket), connectSocket(receiverSocket)]);
+
+    const receivedUpdated = new Promise<MessageViewDto>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('message.updated timeout')), 10_000);
+
+      senderSocket.on(MessengerWsEvent.MessageUpdated, (payload: MessageViewDto) => {
+        clearTimeout(timeout);
+        resolve(payload);
+      });
+    });
+
+    receiverSocket.emit(MessengerWsEvent.MessageDelivered, { messageId });
+
+    await expect(receivedUpdated).resolves.toEqual(
+      expect.objectContaining({
+        id: messageId,
+        status: 'delivered',
+        text: 'Cross-instance delivered ACK',
+      }),
+    );
+
+    senderSocket.disconnect();
+    receiverSocket.disconnect();
+  });
+
+  it('должен доставить message.read отправителю на другом инстансе', async () => {
+    const sendResponse = await request(instanceA.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({
+        receiverId: '2',
+        text: 'Cross-instance read',
+        clientMessageId: crypto.randomUUID(),
+      })
+      .expect(201);
+
+    const chatId = sendResponse.body.chatId as string;
+    const messageId = sendResponse.body.id as string;
+
+    const senderSocket = createSocket(portA, 1);
+    await connectSocket(senderSocket);
+
+    const receivedRead = new Promise<MessageReadPayload>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('message.read timeout')), 10_000);
+
+      senderSocket.on(MessengerWsEvent.MessageRead, (payload: MessageReadPayload) => {
+        clearTimeout(timeout);
+        resolve(payload);
+      });
+    });
+
+    await request(instanceB.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/read`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+      .send({ lastReadMessageId: messageId })
+      .expect(204);
+
+    await expect(receivedRead).resolves.toEqual(
+      expect.objectContaining({
+        chatId,
+        lastReadMessageId: messageId,
+        readByUserId: '2',
+        readAt: expect.any(String),
+      }),
+    );
+
+    senderSocket.disconnect();
+  });
+
+  it('должен ретранслировать typing.start/stop peer’у на другом инстансе', async () => {
+    const chatId = await createChatViaHttp(1, 2);
+
+    const socketA = createSocket(portA, 1);
+    const socketB = createSocket(portB, 2);
+
+    await Promise.all([connectSocket(socketA), connectSocket(socketB)]);
+
+    const receivedStart = new Promise<TypingOutboundPayload>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('typing.start timeout')), 10_000);
+
+      socketB.on(MessengerWsEvent.TypingStart, (payload: TypingOutboundPayload) => {
+        clearTimeout(timeout);
+        resolve(payload);
+      });
+    });
+
+    socketA.emit(MessengerWsEvent.TypingStart, { chatId });
+
+    await expect(receivedStart).resolves.toEqual({
+      chatId,
+      userId: '1',
+    });
+
+    const receivedStop = new Promise<TypingOutboundPayload>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('typing.stop timeout')), 10_000);
+
+      socketB.on(MessengerWsEvent.TypingStop, (payload: TypingOutboundPayload) => {
+        clearTimeout(timeout);
+        resolve(payload);
+      });
+    });
+
+    socketA.emit(MessengerWsEvent.TypingStop, { chatId });
+
+    await expect(receivedStop).resolves.toEqual({
+      chatId,
+      userId: '1',
+    });
+
+    socketA.disconnect();
+    socketB.disconnect();
   });
 });
