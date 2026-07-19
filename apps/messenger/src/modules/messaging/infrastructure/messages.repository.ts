@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Message, MessageDelivery, Prisma } from '@generated/prisma-messenger';
+import {
+  Message,
+  MessageDelivery,
+  MessageUserDeletion,
+  Prisma,
+} from '@generated/prisma-messenger';
 import {
   buildCursorPaginatedResult,
   buildKeysetCursorFilter,
@@ -80,6 +85,33 @@ export class MessagesRepository {
         text,
         editedAt,
       },
+    });
+  }
+
+  async markDeletedForEveryone(id: number, deletedAt: Date): Promise<Message> {
+    return this.prisma.message.update({
+      where: { id },
+      data: {
+        text: '',
+        deletedAt,
+        deletedForEveryone: true,
+      },
+    });
+  }
+
+  async upsertUserDeletion(messageId: number, userId: number): Promise<MessageUserDeletion> {
+    return this.prisma.messageUserDeletion.upsert({
+      where: {
+        messageId_userId: {
+          messageId,
+          userId,
+        },
+      },
+      create: {
+        messageId,
+        userId,
+      },
+      update: {},
     });
   }
 
