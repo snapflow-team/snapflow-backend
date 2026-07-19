@@ -6,13 +6,18 @@ import { io, Socket } from 'socket.io-client';
 import request from 'supertest';
 import { Redis } from 'ioredis';
 import { GLOBAL_PREFIX } from '../../../../../../../libs/common/constants/global-prefix.constant';
-import type { TypingOutboundPayload } from '../../../../../../../libs/contracts/messenger';
+import type {
+  MessageDeletedPayload,
+  MessageReadPayload,
+  TypingOutboundPayload,
+} from '../../../../../../../libs/contracts/messenger';
 import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
 import { AccessTokenTestHelper } from '../../../../../test/helpers/access-token-test.helper';
 import { AppTestManager } from '../../../../../test/managers/app.test-manager';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
+import { DeleteMessageScope } from '../../api/input-dto/delete-message.query-dto';
 import { MessageViewDto } from '../../api/view-dto/message.view-dto';
 import { MessengerWebSocketService } from '../services/messenger-websocket.service';
 
@@ -331,5 +336,155 @@ describe('MessengerWebSocketGateway (Integration)', () => {
 
     socketA.disconnect();
     socketB.disconnect();
+  });
+
+  it('mark-read: отправитель получает message.read, в history status=read', async () => {
+    const senderToken = accessTokenTestHelper.signAccessToken(1);
+    const receiverToken = accessTokenTestHelper.signAccessToken(2);
+
+    const sendResponse = await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${senderToken}`)
+      .send({
+        receiverId: '2',
+        text: 'Please read me',
+        clientMessageId: crypto.randomUUID(),
+      })
+      .expect(201);
+
+    const chatId = sendResponse.body.chatId as string;
+    const messageId = sendResponse.body.id as string;
+
+    const senderSocket = createSocket(senderToken);
+    await connectSocket(senderSocket);
+
+    const receivedRead = new Promise<MessageReadPayload>((resolve) => {
+      senderSocket.on(MessengerWsEvent.MessageRead, (payload: MessageReadPayload) =>
+        resolve(payload),
+      );
+    });
+
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/read`)
+      .set('Authorization', `Bearer ${receiverToken}`)
+      .send({ lastReadMessageId: messageId })
+      .expect(204);
+
+    await expect(receivedRead).resolves.toEqual(
+      expect.objectContaining({
+        chatId,
+        lastReadMessageId: messageId,
+        readByUserId: '2',
+        readAt: expect.any(String),
+      }),
+    );
+
+    const historyResponse = await request(appTestManager.getServer())
+      .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+      .set('Authorization', `Bearer ${senderToken}`)
+      .expect(200);
+
+    expect(historyResponse.body.items[0]).toEqual(
+      expect.objectContaining({
+        id: messageId,
+        status: 'read',
+      }),
+    );
+
+    senderSocket.disconnect();
+  });
+
+  it('edit: peer получает message.updated в realtime', async () => {
+    const authorToken = accessTokenTestHelper.signAccessToken(1);
+    const peerToken = accessTokenTestHelper.signAccessToken(2);
+
+    const createChatResponse = await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${authorToken}`)
+      .send({ interlocutorId: '2' })
+      .expect(200);
+
+    const chatId = Number(createChatResponse.body.id);
+
+    const message = await appTestManager.prisma.message.create({
+      data: {
+        chatId,
+        senderId: 1,
+        text: 'Original',
+        clientMessageId: crypto.randomUUID(),
+      },
+    });
+
+    const peerSocket = createSocket(peerToken);
+    await connectSocket(peerSocket);
+
+    const receivedUpdated = new Promise<MessageViewDto>((resolve) => {
+      peerSocket.on(MessengerWsEvent.MessageUpdated, (payload: MessageViewDto) =>
+        resolve(payload),
+      );
+    });
+
+    await request(appTestManager.getServer())
+      .patch(`/${GLOBAL_PREFIX}/messenger/messages/${message.id}`)
+      .set('Authorization', `Bearer ${authorToken}`)
+      .send({ text: 'Edited live' })
+      .expect(200);
+
+    await expect(receivedUpdated).resolves.toEqual(
+      expect.objectContaining({
+        id: String(message.id),
+        chatId: String(chatId),
+        text: 'Edited live',
+        editedAt: expect.any(String),
+        status: null,
+      }),
+    );
+
+    peerSocket.disconnect();
+  });
+
+  it('delete everyone: peer получает message.deleted в realtime', async () => {
+    const authorToken = accessTokenTestHelper.signAccessToken(1);
+    const peerToken = accessTokenTestHelper.signAccessToken(2);
+
+    const createChatResponse = await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${authorToken}`)
+      .send({ interlocutorId: '2' })
+      .expect(200);
+
+    const chatId = Number(createChatResponse.body.id);
+
+    const message = await appTestManager.prisma.message.create({
+      data: {
+        chatId,
+        senderId: 1,
+        text: 'Will be deleted',
+        clientMessageId: crypto.randomUUID(),
+      },
+    });
+
+    const peerSocket = createSocket(peerToken);
+    await connectSocket(peerSocket);
+
+    const receivedDeleted = new Promise<MessageDeletedPayload>((resolve) => {
+      peerSocket.on(MessengerWsEvent.MessageDeleted, (payload: MessageDeletedPayload) =>
+        resolve(payload),
+      );
+    });
+
+    await request(appTestManager.getServer())
+      .delete(`/${GLOBAL_PREFIX}/messenger/messages/${message.id}`)
+      .query({ scope: DeleteMessageScope.Everyone })
+      .set('Authorization', `Bearer ${authorToken}`)
+      .expect(204);
+
+    await expect(receivedDeleted).resolves.toEqual({
+      messageId: String(message.id),
+      chatId: String(chatId),
+      scope: DeleteMessageScope.Everyone,
+    });
+
+    peerSocket.disconnect();
   });
 });
