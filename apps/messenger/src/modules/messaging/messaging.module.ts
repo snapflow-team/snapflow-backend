@@ -16,6 +16,8 @@ import { ChatsQueryRepository } from './infrastructure/query/chats.query-reposit
 import { MessagesQueryRepository } from './infrastructure/query/messages.query-repository';
 import { ChatsRepository } from './infrastructure/chats.repository';
 import { MessagesRepository } from './infrastructure/messages.repository';
+import { PresenceRedisRepository } from './infrastructure/presence-redis.repository';
+import { PresenceRepository } from './infrastructure/presence.repository';
 import { MessengerWebSocketGateway } from './websocket/gateway/messenger-websocket.gateway';
 import { MessengerWebSocketService } from './websocket/services/messenger-websocket.service';
 
@@ -35,6 +37,8 @@ const repositories = [
   ChatsQueryRepository,
   MessagesRepository,
   MessagesQueryRepository,
+  PresenceRedisRepository,
+  PresenceRepository,
 ];
 const guards = [AccessTokenGuard, ChatMembershipGuard];
 const websocketProviders = [MessengerWebSocketGateway, MessengerWebSocketService];
