@@ -720,6 +720,34 @@ describe('MessagingController (Integration)', () => {
         }),
       );
 
+      const historyForUser1 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(historyForUser1.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(message.id),
+          text: 'Updated text',
+          editedAt: expect.any(String),
+          status: 'sent',
+        }),
+      );
+
+      const historyForUser2 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(200);
+
+      expect(historyForUser2.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(message.id),
+          text: 'Updated text',
+          editedAt: expect.any(String),
+          status: null,
+        }),
+      );
+
       emitToUserSpy.mockRestore();
     });
 
@@ -951,6 +979,20 @@ describe('MessagingController (Integration)', () => {
           text: '',
           deletedForEveryone: true,
           deletedAt: expect.any(Date),
+        }),
+      );
+
+      const historyForUser1 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(historyForUser1.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(message.id),
+          text: '',
+          deletedForEveryone: true,
+          deletedAt: expect.any(String),
         }),
       );
 
