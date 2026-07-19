@@ -110,7 +110,7 @@ export class MessagingController {
   @Post('messages')
   @SendMessageSwagger()
   async sendMessage(
-    @Body() { receiverId, text, clientMessageId }: SendMessageInputDto,
+    @Body() { receiverId, text, clientMessageId, replyToMessageId }: SendMessageInputDto,
     @ExtractUserFromRequest() { id: senderId }: UserContextDto,
   ): Promise<MessageViewDto> {
     return this.commandBus.execute<SendMessageCommand, MessageViewDto>(
@@ -119,6 +119,7 @@ export class MessagingController {
         receiverId: Number(receiverId),
         text,
         clientMessageId,
+        ...(replyToMessageId !== undefined ? { replyToMessageId: Number(replyToMessageId) } : {}),
       }),
     );
   }
