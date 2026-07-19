@@ -47,6 +47,25 @@ export class ChatsQueryRepository {
     return ChatViewDto.mapToView(chatWithLastMessage, userId);
   }
 
+  async findPeerUserIds(userId: number): Promise<number[]> {
+    const chats = await this.prisma.chat.findMany({
+      where: {
+        OR: [{ participantAId: userId }, { participantBId: userId }],
+      },
+      select: {
+        participantAId: true,
+        participantBId: true,
+      },
+    });
+
+    const peerIds = new Set<number>();
+    for (const chat of chats) {
+      peerIds.add(chat.participantAId === userId ? chat.participantBId : chat.participantAId);
+    }
+
+    return [...peerIds];
+  }
+
   async getUnreadCount(chatId: number, userId: number): Promise<number> {
     const rows: Array<{ unreadCount: number }> = await this.prisma.$queryRaw<
       Array<{ unreadCount: number }>

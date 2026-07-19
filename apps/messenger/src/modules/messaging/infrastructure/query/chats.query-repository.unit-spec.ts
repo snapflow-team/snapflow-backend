@@ -9,7 +9,7 @@ describe('ChatsQueryRepository (unit)', () => {
   let repository: ChatsQueryRepository;
   let prismaMock: {
     $queryRaw: jest.Mock;
-    chat: { findUnique: jest.Mock };
+    chat: { findUnique: jest.Mock; findMany: jest.Mock };
     message: { findFirst: jest.Mock };
   };
 
@@ -69,6 +69,7 @@ describe('ChatsQueryRepository (unit)', () => {
       $queryRaw: jest.fn(),
       chat: {
         findUnique: jest.fn(),
+        findMany: jest.fn(),
       },
       message: {
         findFirst: jest.fn(),
@@ -249,5 +250,24 @@ describe('ChatsQueryRepository (unit)', () => {
     prismaMock.$queryRaw.mockResolvedValue([]);
 
     await expect(repository.getUnreadCount(10, 1)).resolves.toBe(0);
+  });
+
+  it('findPeerUserIds: возвращает distinct собеседников по всем чатам', async () => {
+    prismaMock.chat.findMany.mockResolvedValue([
+      { participantAId: 1, participantBId: 2 },
+      { participantAId: 3, participantBId: 1 },
+      { participantAId: 1, participantBId: 2 },
+    ]);
+
+    await expect(repository.findPeerUserIds(1)).resolves.toEqual([2, 3]);
+    expect(prismaMock.chat.findMany).toHaveBeenCalledWith({
+      where: {
+        OR: [{ participantAId: 1 }, { participantBId: 1 }],
+      },
+      select: {
+        participantAId: true,
+        participantBId: true,
+      },
+    });
   });
 });
