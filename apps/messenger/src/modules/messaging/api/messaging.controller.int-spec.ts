@@ -133,6 +133,42 @@ describe('MessagingController (Integration)', () => {
     expect(await appTestManager.prisma.message.count()).toBe(0);
   });
 
+  it('должен вернуть 400 при replyToMessageId из другого чата', async () => {
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({ interlocutorId: '2' })
+      .expect(200);
+
+    const otherChat = await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({ interlocutorId: '3' })
+      .expect(200);
+
+    const foreignMessage = await appTestManager.prisma.message.create({
+      data: {
+        chatId: Number(otherChat.body.id),
+        senderId: 3,
+        text: 'foreign',
+        clientMessageId: crypto.randomUUID(),
+      },
+    });
+
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({
+        receiverId: '2',
+        text: 'Reply',
+        clientMessageId: crypto.randomUUID(),
+        replyToMessageId: String(foreignMessage.id),
+      })
+      .expect(400);
+
+    expect(await appTestManager.prisma.message.count()).toBe(1);
+  });
+
   it('должен вернуть 400 при пустом или пробельном тексте сообщения', async () => {
     await request(appTestManager.getServer())
       .post(`/${GLOBAL_PREFIX}/messenger/messages`)
@@ -336,6 +372,65 @@ describe('MessagingController (Integration)', () => {
       expect(collectedIds).toEqual([...new Set(collectedIds)]);
       expect(collectedIds.map(Number)).toEqual(
         [...expectedIds].sort((a, b) => b - a),
+      );
+    });
+
+    it('должен возвращать replyTo preview для сообщений с replyToMessageId', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const chatId = Number(createChatResponse.body.id);
+
+      const original = await appTestManager.prisma.message.create({
+        data: {
+          chatId,
+          senderId: 2,
+          text: 'Original text',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+
+      const replyResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({
+          receiverId: '2',
+          text: 'Reply text',
+          clientMessageId: crypto.randomUUID(),
+          replyToMessageId: String(original.id),
+        })
+        .expect(201);
+
+      expect(replyResponse.body.replyTo).toEqual({
+        id: String(original.id),
+        senderId: '2',
+        text: 'Original text',
+        deletedForEveryone: false,
+      });
+
+      const historyResponse = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .query({ limit: 10 })
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      const replyInHistory = historyResponse.body.items.find(
+        (item: { id: string }) => item.id === replyResponse.body.id,
+      );
+
+      expect(replyInHistory).toEqual(
+        expect.objectContaining({
+          text: 'Reply text',
+          replyTo: {
+            id: String(original.id),
+            senderId: '2',
+            text: 'Original text',
+            deletedForEveryone: false,
+          },
+        }),
       );
     });
   });
