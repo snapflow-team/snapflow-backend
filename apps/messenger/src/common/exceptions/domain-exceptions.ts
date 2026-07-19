@@ -2,9 +2,13 @@ import { DomainException, IExtension } from '../../../../../libs/exceptions/core
 import { MessengerResultCode, MessengerResultCodeType } from '../notification/messenger-result-code';
 
 export class BadRequestException extends DomainException<MessengerResultCodeType> {
-  constructor(message: string = 'Bad Request', extensions?: IExtension[]) {
+  constructor(
+    message: string = 'Bad Request',
+    code: MessengerResultCodeType = MessengerResultCode.BadRequest,
+    extensions?: IExtension[],
+  ) {
     super({
-      code: MessengerResultCode.BadRequest,
+      code,
       message,
       extensions,
     });
