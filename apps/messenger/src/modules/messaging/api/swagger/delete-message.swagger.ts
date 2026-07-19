@@ -10,6 +10,7 @@ import {
   ApiQuery,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { DeleteMessageScope } from '../input-dto/delete-message.query-dto';
 
 export function DeleteMessageSwagger() {
   return applyDecorators(
@@ -17,8 +18,8 @@ export function DeleteMessageSwagger() {
     ApiOperation({
       summary: 'Удалить сообщение',
       description:
-        'scope=me — скрыть сообщение только для текущего пользователя (без лимита по времени). ' +
-        'scope=everyone — удалить для всех участников (только автор, в пределах окна удаления).',
+        `scope=${DeleteMessageScope.Me} — скрыть сообщение только для текущего пользователя (без лимита по времени). ` +
+        `scope=${DeleteMessageScope.Everyone} — удалить для всех участников (только автор, в пределах окна удаления).`,
     }),
     ApiParam({
       name: 'messageId',
@@ -28,9 +29,9 @@ export function DeleteMessageSwagger() {
     }),
     ApiQuery({
       name: 'scope',
-      enum: ['me', 'everyone'],
+      enum: DeleteMessageScope,
       description: 'Область удаления: только для себя или для всех участников',
-      example: 'me',
+      example: DeleteMessageScope.Me,
     }),
     ApiNoContentResponse({
       description: 'Сообщение успешно удалено (или already deleted for everyone)',
@@ -41,7 +42,7 @@ export function DeleteMessageSwagger() {
     ApiUnauthorizedResponse({ description: 'Пользователь не авторизован' }),
     ApiForbiddenResponse({
       description:
-        'Пользователь не участник чата, не автор (для scope=everyone) или окно удаления истекло',
+        `Пользователь не участник чата, не автор (для scope=${DeleteMessageScope.Everyone}) или окно удаления истекло`,
     }),
     ApiNotFoundResponse({
       description: 'Сообщение не найдено',

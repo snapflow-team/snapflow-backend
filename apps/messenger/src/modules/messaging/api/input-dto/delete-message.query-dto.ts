@@ -1,14 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn } from 'class-validator';
+import { IsEnum } from 'class-validator';
 
-export type DeleteMessageScope = 'me' | 'everyone';
+export enum DeleteMessageScope {
+  Me = 'me',
+  Everyone = 'everyone',
+}
 
 export class DeleteMessageQueryDto {
-  @IsIn(['me', 'everyone'])
+  @IsEnum(DeleteMessageScope)
   @ApiProperty({
-    enum: ['me', 'everyone'],
+    enum: DeleteMessageScope,
     description: 'Область удаления: только для себя или для всех участников',
-    example: 'me',
+    example: DeleteMessageScope.Me,
   })
   scope: DeleteMessageScope;
 }
