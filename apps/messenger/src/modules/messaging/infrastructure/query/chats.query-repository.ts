@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@generated/prisma-messenger';
+import { Chat, Message, Prisma } from '@generated/prisma-messenger';
 import {
   buildCursorPaginatedResult,
   CursorPaginatedResult,
@@ -19,16 +19,32 @@ export class ChatsQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findChatById(chatId: number, userId: number): Promise<ChatViewDto | null> {
-    const chat: ChatWithLastMessage | null = await this.prisma.chat.findUnique({
+    const chat: Chat | null = await this.prisma.chat.findUnique({
       where: { id: chatId },
-      include: { lastMessage: true },
     });
 
     if (!chat) {
       return null;
     }
 
-    return ChatViewDto.mapToView(chat, userId);
+    const lastMessage: Message | null = await this.prisma.message.findFirst({
+      where: {
+        chatId,
+        NOT: {
+          userDeletions: {
+            some: { userId },
+          },
+        },
+      },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+
+    const chatWithLastMessage: ChatWithLastMessage = {
+      ...chat,
+      lastMessage,
+    };
+
+    return ChatViewDto.mapToView(chatWithLastMessage, userId);
   }
 
   async getUnreadCount(chatId: number, userId: number): Promise<number> {
@@ -118,7 +134,29 @@ export class ChatsQueryRepository {
             )
         ) AS "unreadCount"
       FROM chats c
-      LEFT JOIN messages m ON m.id = c.last_message_id
+      LEFT JOIN LATERAL (
+        SELECT
+          lm.id,
+          lm.chat_id,
+          lm.sender_id,
+          lm.text,
+          lm.created_at,
+          lm.client_message_id,
+          lm.edited_at,
+          lm.deleted_at,
+          lm.deleted_for_everyone,
+          lm.reply_to_message_id
+        FROM messages lm
+        WHERE lm.chat_id = c.id
+          AND NOT EXISTS (
+            SELECT 1
+            FROM message_user_deletions mud
+            WHERE mud.message_id = lm.id
+              AND mud.user_id = ${userId}
+          )
+        ORDER BY lm.created_at DESC, lm.id DESC
+        LIMIT 1
+      ) m ON true
       LEFT JOIN chat_read_states crs ON crs.chat_id = c.id AND crs.user_id = ${userId}
       LEFT JOIN chat_read_states peer_crs
         ON peer_crs.chat_id = c.id
