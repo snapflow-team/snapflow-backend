@@ -3,4 +3,5 @@ export class SendMessageApplicationDto {
   receiverId: number;
   text: string;
   clientMessageId: string;
+  replyToMessageId?: number;
 }
