@@ -5,6 +5,7 @@ import { MessagingController } from './api/messaging.controller';
 import { GetChatMessagesQueryHandler } from './application/queries/get-chat-messages.query-handler';
 import { GetUserChatsQueryHandler } from './application/queries/get-user-chats.query-handler';
 import { GetOrCreateChatUseCase } from './application/usecases/get-or-create-chat.usecase';
+import { EditMessageUseCase } from './application/usecases/edit-message.usecase';
 import { MarkChatReadUseCase } from './application/usecases/mark-chat-read.usecase';
 import { MarkMessageDeliveredUseCase } from './application/usecases/mark-message-delivered.usecase';
 import { SendMessageUseCase } from './application/usecases/send-message.usecase';
@@ -24,6 +25,7 @@ const useCases = [
   MarkMessageDeliveredUseCase,
   TypingStartUseCase,
   TypingStopUseCase,
+  EditMessageUseCase,
 ];
 const queries = [GetUserChatsQueryHandler, GetChatMessagesQueryHandler];
 const repositories = [
