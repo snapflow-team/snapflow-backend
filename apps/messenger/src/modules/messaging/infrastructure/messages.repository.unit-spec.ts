@@ -22,6 +22,10 @@ describe('MessagesRepository (unit)', () => {
     text: 'Third',
     clientMessageId,
     createdAt: sameCreatedAt,
+    editedAt: null,
+    deletedAt: null,
+    deletedForEveryone: false,
+    replyToMessageId: null,
   };
 
   const messageB: Message = {
@@ -31,6 +35,10 @@ describe('MessagesRepository (unit)', () => {
     text: 'Second',
     clientMessageId: '4fa85f64-5717-4562-b3fc-2c963f66afa6',
     createdAt: sameCreatedAt,
+    editedAt: null,
+    deletedAt: null,
+    deletedForEveryone: false,
+    replyToMessageId: null,
   };
 
   const messageC: Message = {
@@ -40,6 +48,10 @@ describe('MessagesRepository (unit)', () => {
     text: 'First',
     clientMessageId: '5fa85f64-5717-4562-b3fc-2c963f66afa6',
     createdAt: sameCreatedAt,
+    editedAt: null,
+    deletedAt: null,
+    deletedForEveryone: false,
+    replyToMessageId: null,
   };
 
   beforeEach(async () => {
@@ -112,7 +124,7 @@ describe('MessagesRepository (unit)', () => {
   it('первая страница: возвращает limit элементов и nextCursor при hasMore', async () => {
     prismaMock.message.findMany.mockResolvedValue([messageA, messageB, messageC]);
 
-    const result = await repository.findByChatIdPaginated(10, { limit: 2 });
+    const result = await repository.findByChatIdPaginated(10, { limit: 2, viewerUserId: 1 });
 
     expect(result.hasMore).toBe(true);
     expect(result.items).toEqual([messageA, messageB]);
@@ -121,7 +133,14 @@ describe('MessagesRepository (unit)', () => {
     );
     expect(prismaMock.message.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { chatId: 10 },
+        where: {
+          chatId: 10,
+          NOT: {
+            userDeletions: {
+              some: { userId: 1 },
+            },
+          },
+        },
         take: 3,
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       }),
@@ -132,7 +151,11 @@ describe('MessagesRepository (unit)', () => {
     const cursor = encodeCursor({ createdAt: sameCreatedAt, id: String(messageB.id) });
     prismaMock.message.findMany.mockResolvedValue([messageC]);
 
-    const result = await repository.findByChatIdPaginated(10, { cursor, limit: 2 });
+    const result = await repository.findByChatIdPaginated(10, {
+      cursor,
+      limit: 2,
+      viewerUserId: 1,
+    });
 
     expect(result.hasMore).toBe(false);
     expect(result.items).toEqual([messageC]);
@@ -141,6 +164,11 @@ describe('MessagesRepository (unit)', () => {
       expect.objectContaining({
         where: {
           chatId: 10,
+          NOT: {
+            userDeletions: {
+              some: { userId: 1 },
+            },
+          },
           OR: [
             { createdAt: { lt: sameCreatedAt } },
             { createdAt: sameCreatedAt, id: { lt: messageB.id } },

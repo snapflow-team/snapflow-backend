@@ -3,4 +3,5 @@ export class CreateMessageRepositoryDto {
   senderId: number;
   text: string;
   clientMessageId: string;
+  replyToMessageId?: number;
 }

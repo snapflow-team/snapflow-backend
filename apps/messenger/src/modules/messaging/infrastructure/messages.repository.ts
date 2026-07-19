@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Message, Prisma } from '@generated/prisma-messenger';
+import {
+  Message,
+  MessageDelivery,
+  MessageUserDeletion,
+  Prisma,
+} from '@generated/prisma-messenger';
 import {
   buildCursorPaginatedResult,
   buildKeysetCursorFilter,
@@ -23,8 +28,14 @@ export class MessagesRepository {
   ): Promise<CreateMessageResult> {
     const rows: CreateMessageRow[] = await tx.$queryRaw<CreateMessageRow[]>`
       WITH inserted AS (
-        INSERT INTO messages (chat_id, sender_id, text, client_message_id)
-        VALUES (${dto.chatId}, ${dto.senderId}, ${dto.text}, ${dto.clientMessageId}::uuid)
+        INSERT INTO messages (chat_id, sender_id, text, client_message_id, reply_to_message_id)
+        VALUES (
+          ${dto.chatId},
+          ${dto.senderId},
+          ${dto.text},
+          ${dto.clientMessageId}::uuid,
+          ${dto.replyToMessageId ?? null}
+        )
         ON CONFLICT (chat_id, sender_id, client_message_id) DO NOTHING
         RETURNING
           id,
@@ -33,6 +44,10 @@ export class MessagesRepository {
           text,
           client_message_id AS "clientMessageId",
           created_at AS "createdAt",
+          edited_at AS "editedAt",
+          deleted_at AS "deletedAt",
+          deleted_for_everyone AS "deletedForEveryone",
+          reply_to_message_id AS "replyToMessageId",
           true AS "isNew"
       )
       SELECT * FROM inserted
@@ -44,6 +59,10 @@ export class MessagesRepository {
         m.text,
         m.client_message_id AS "clientMessageId",
         m.created_at AS "createdAt",
+        m.edited_at AS "editedAt",
+        m.deleted_at AS "deletedAt",
+        m.deleted_for_everyone AS "deletedForEveryone",
+        m.reply_to_message_id AS "replyToMessageId",
         false AS "isNew"
       FROM messages m
       WHERE m.chat_id = ${dto.chatId}
@@ -65,6 +84,81 @@ export class MessagesRepository {
     });
   }
 
+  async updateText(id: number, text: string, editedAt: Date): Promise<Message> {
+    return this.prisma.message.update({
+      where: { id },
+      data: {
+        text,
+        editedAt,
+      },
+    });
+  }
+
+  async markDeletedForEveryone(id: number, deletedAt: Date): Promise<Message> {
+    return this.prisma.message.update({
+      where: { id },
+      data: {
+        text: '',
+        deletedAt,
+        deletedForEveryone: true,
+      },
+    });
+  }
+
+  async upsertUserDeletion(messageId: number, userId: number): Promise<MessageUserDeletion> {
+    return this.prisma.messageUserDeletion.upsert({
+      where: {
+        messageId_userId: {
+          messageId,
+          userId,
+        },
+      },
+      create: {
+        messageId,
+        userId,
+      },
+      update: {},
+    });
+  }
+
+  async findUserDeletion(messageId: number, userId: number): Promise<MessageUserDeletion | null> {
+    return this.prisma.messageUserDeletion.findUnique({
+      where: {
+        messageId_userId: {
+          messageId,
+          userId,
+        },
+      },
+    });
+  }
+
+  async findDelivery(messageId: number, userId: number): Promise<MessageDelivery | null> {
+    return this.prisma.messageDelivery.findUnique({
+      where: {
+        messageId_userId: {
+          messageId,
+          userId,
+        },
+      },
+    });
+  }
+
+  async upsertDelivery(messageId: number, userId: number): Promise<MessageDelivery> {
+    return this.prisma.messageDelivery.upsert({
+      where: {
+        messageId_userId: {
+          messageId,
+          userId,
+        },
+      },
+      create: {
+        messageId,
+        userId,
+      },
+      update: {},
+    });
+  }
+
   async findByChatIdPaginated(
     chatId: number,
     params: FindChatMessagesPaginatedParams,
@@ -74,6 +168,15 @@ export class MessagesRepository {
     const rows = await this.prisma.message.findMany({
       where: {
         chatId,
+        ...(params.viewerUserId !== undefined
+          ? {
+              NOT: {
+                userDeletions: {
+                  some: { userId: params.viewerUserId },
+                },
+              },
+            }
+          : {}),
         ...(cursorPayload ? buildKeysetCursorFilter(cursorPayload, { parseId: Number }) : {}),
       },
       orderBy: [...KEYSET_ORDER_BY_CREATED_AT_DESC],

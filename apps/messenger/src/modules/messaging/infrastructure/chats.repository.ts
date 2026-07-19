@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Chat, Prisma } from '@generated/prisma-messenger';
+import { Chat, ChatReadState, Prisma } from '@generated/prisma-messenger';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
@@ -63,6 +63,44 @@ export class ChatsRepository {
 
   getInterlocutorId(chat: Pick<Chat, 'participantAId' | 'participantBId'>, userId: number): number {
     return chat.participantAId === userId ? chat.participantBId : chat.participantAId;
+  }
+
+  async findReadState(chatId: number, userId: number): Promise<ChatReadState | null> {
+    return this.prisma.chatReadState.findUnique({
+      where: {
+        chatId_userId: {
+          chatId,
+          userId,
+        },
+      },
+    });
+  }
+
+  async upsertReadState(
+    chatId: number,
+    userId: number,
+    lastReadMessageId: number,
+    lastReadAt: Date,
+    tx: Prisma.TransactionClient = this.prisma,
+  ): Promise<ChatReadState> {
+    return tx.chatReadState.upsert({
+      where: {
+        chatId_userId: {
+          chatId,
+          userId,
+        },
+      },
+      create: {
+        chatId,
+        userId,
+        lastReadMessageId,
+        lastReadAt,
+      },
+      update: {
+        lastReadMessageId,
+        lastReadAt,
+      },
+    });
   }
 
   private normalizeParticipants(

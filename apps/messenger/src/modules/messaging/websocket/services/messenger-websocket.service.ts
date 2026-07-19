@@ -16,10 +16,13 @@ export class MessengerWebSocketService {
     this.logger = loggerFactory.create(MessengerWebSocketService.name);
   }
 
-  sendToUser(userId: number, payload: MessageViewDto) {
-    this.gateway.server
-      .to(`user:${userId}`)
-      .emit(MessengerWsEvent.MessageNew, payload);
+  emitToUser(userId: number, event: MessengerWsEvent, payload: unknown): void {
+    this.gateway.server.to(`user:${userId}`).emit(event, payload);
+    this.logger.log(`Event ${event} emitted via WebSocket to user:${userId}`, this.emitToUser.name);
+  }
+
+  sendToUser(userId: number, payload: MessageViewDto): void {
+    this.emitToUser(userId, MessengerWsEvent.MessageNew, payload);
     this.logger.log(
       `Message sent via WebSocket to user:${userId}, messageId=${payload.id}`,
       this.sendToUser.name,

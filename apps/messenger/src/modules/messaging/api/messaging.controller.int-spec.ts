@@ -2,6 +2,8 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import request from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../../../libs/common/constants/global-prefix.constant';
+import { MessengerWsEvent } from '../../../../../../libs/contracts/messenger';
+import { DeleteMessageScope } from './input-dto/delete-message.query-dto';
 import { AccessTokenTestHelper } from '../../../../test/helpers/access-token-test.helper';
 import { AppTestManager } from '../../../../test/managers/app.test-manager';
 import { Configuration } from '../../../setup/configuration/configuration';
@@ -129,6 +131,42 @@ describe('MessagingController (Integration)', () => {
       .expect(400);
 
     expect(await appTestManager.prisma.message.count()).toBe(0);
+  });
+
+  it('должен вернуть 400 при replyToMessageId из другого чата', async () => {
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({ interlocutorId: '2' })
+      .expect(200);
+
+    const otherChat = await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({ interlocutorId: '3' })
+      .expect(200);
+
+    const foreignMessage = await appTestManager.prisma.message.create({
+      data: {
+        chatId: Number(otherChat.body.id),
+        senderId: 3,
+        text: 'foreign',
+        clientMessageId: crypto.randomUUID(),
+      },
+    });
+
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({
+        receiverId: '2',
+        text: 'Reply',
+        clientMessageId: crypto.randomUUID(),
+        replyToMessageId: String(foreignMessage.id),
+      })
+      .expect(400);
+
+    expect(await appTestManager.prisma.message.count()).toBe(1);
   });
 
   it('должен вернуть 400 при пустом или пробельном тексте сообщения', async () => {
@@ -335,6 +373,721 @@ describe('MessagingController (Integration)', () => {
       expect(collectedIds.map(Number)).toEqual(
         [...expectedIds].sort((a, b) => b - a),
       );
+    });
+
+    it('должен возвращать replyTo preview для сообщений с replyToMessageId', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const chatId = Number(createChatResponse.body.id);
+
+      const original = await appTestManager.prisma.message.create({
+        data: {
+          chatId,
+          senderId: 2,
+          text: 'Original text',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+
+      const replyResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({
+          receiverId: '2',
+          text: 'Reply text',
+          clientMessageId: crypto.randomUUID(),
+          replyToMessageId: String(original.id),
+        })
+        .expect(201);
+
+      expect(replyResponse.body.replyTo).toEqual({
+        id: String(original.id),
+        senderId: '2',
+        text: 'Original text',
+        deletedForEveryone: false,
+      });
+
+      const historyResponse = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .query({ limit: 10 })
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      const replyInHistory = historyResponse.body.items.find(
+        (item: { id: string }) => item.id === replyResponse.body.id,
+      );
+
+      expect(replyInHistory).toEqual(
+        expect.objectContaining({
+          text: 'Reply text',
+          replyTo: {
+            id: String(original.id),
+            senderId: '2',
+            text: 'Original text',
+            deletedForEveryone: false,
+          },
+        }),
+      );
+    });
+  });
+
+  describe('POST /messenger/chats/:chatId/read', () => {
+    it('должен отметить сообщения прочитанными, обнулить unreadCount и эмитить WS-события', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const chatId = Number(createChatResponse.body.id);
+
+      const message = await appTestManager.prisma.message.create({
+        data: {
+          chatId,
+          senderId: 2,
+          text: 'unread',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+
+      await appTestManager.prisma.chat.update({
+        where: { id: chatId },
+        data: {
+          lastMessageId: message.id,
+          lastMessageAt: message.createdAt,
+        },
+      });
+
+      const chatsBefore = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(chatsBefore.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(chatId),
+          unreadCount: 1,
+        }),
+      );
+
+      const emitToUserSpy = jest.spyOn(
+        appTestManager.getApp().get(MessengerWebSocketService),
+        'emitToUser',
+      );
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/read`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ lastReadMessageId: String(message.id) })
+        .expect(204);
+
+      const readState = await appTestManager.prisma.chatReadState.findUnique({
+        where: {
+          chatId_userId: {
+            chatId,
+            userId: 1,
+          },
+        },
+      });
+
+      expect(readState).toEqual(
+        expect.objectContaining({
+          lastReadMessageId: message.id,
+          lastReadAt: expect.any(Date),
+        }),
+      );
+
+      const chatsAfter = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(chatsAfter.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(chatId),
+          unreadCount: 0,
+        }),
+      );
+
+      expect(emitToUserSpy).toHaveBeenCalledWith(
+        2,
+        MessengerWsEvent.MessageRead,
+        expect.objectContaining({
+          chatId: String(chatId),
+          lastReadMessageId: String(message.id),
+          readByUserId: '1',
+          readAt: expect.any(String),
+        }),
+      );
+      expect(emitToUserSpy).toHaveBeenCalledWith(
+        1,
+        MessengerWsEvent.ChatUpdated,
+        expect.objectContaining({
+          chatId: String(chatId),
+          unreadCount: 0,
+        }),
+      );
+      expect(emitToUserSpy).toHaveBeenCalledWith(
+        2,
+        MessengerWsEvent.ChatUpdated,
+        expect.objectContaining({
+          chatId: String(chatId),
+          unreadCount: expect.any(Number),
+        }),
+      );
+
+      emitToUserSpy.mockRestore();
+    });
+
+    it('должен делать no-op без даунгрейда lastReadMessageId', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const chatId = Number(createChatResponse.body.id);
+
+      const firstMessage = await appTestManager.prisma.message.create({
+        data: {
+          chatId,
+          senderId: 2,
+          text: 'first',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+      const secondMessage = await appTestManager.prisma.message.create({
+        data: {
+          chatId,
+          senderId: 2,
+          text: 'second',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/read`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ lastReadMessageId: String(secondMessage.id) })
+        .expect(204);
+
+      const emitToUserSpy = jest.spyOn(
+        appTestManager.getApp().get(MessengerWebSocketService),
+        'emitToUser',
+      );
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/read`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ lastReadMessageId: String(firstMessage.id) })
+        .expect(204);
+
+      const readState = await appTestManager.prisma.chatReadState.findUnique({
+        where: {
+          chatId_userId: {
+            chatId,
+            userId: 1,
+          },
+        },
+      });
+
+      expect(readState?.lastReadMessageId).toBe(secondMessage.id);
+      expect(emitToUserSpy).not.toHaveBeenCalled();
+
+      emitToUserSpy.mockRestore();
+    });
+
+    it('должен вернуть 404, если сообщение не принадлежит чату', async () => {
+      const firstChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const secondChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '3' })
+        .expect(200);
+
+      const message = await appTestManager.prisma.message.create({
+        data: {
+          chatId: Number(secondChatResponse.body.id),
+          senderId: 3,
+          text: 'other chat',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats/${firstChatResponse.body.id}/read`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ lastReadMessageId: String(message.id) })
+        .expect(404);
+    });
+
+    it('должен вернуть 403, если пользователь не участник чата', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats/${createChatResponse.body.id}/read`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(3)}`)
+        .send({ lastReadMessageId: '1' })
+        .expect(403);
+    });
+  });
+
+  describe('PATCH /messenger/messages/:messageId', () => {
+    it('должен отредактировать сообщение, вернуть MessageViewDto и эмитить message.updated обоим', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const chatId = Number(createChatResponse.body.id);
+
+      const message = await appTestManager.prisma.message.create({
+        data: {
+          chatId,
+          senderId: 1,
+          text: 'Hello!',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+
+      const emitToUserSpy = jest.spyOn(
+        appTestManager.getApp().get(MessengerWebSocketService),
+        'emitToUser',
+      );
+
+      const response = await request(appTestManager.getServer())
+        .patch(`/${GLOBAL_PREFIX}/messenger/messages/${message.id}`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ text: 'Updated text' })
+        .expect(200);
+
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          id: String(message.id),
+          chatId: String(chatId),
+          senderId: '1',
+          receiverId: '2',
+          text: 'Updated text',
+          editedAt: expect.any(String),
+          deletedForEveryone: false,
+          status: 'sent',
+        }),
+      );
+
+      const updated = await appTestManager.prisma.message.findUnique({
+        where: { id: message.id },
+      });
+
+      expect(updated).toEqual(
+        expect.objectContaining({
+          text: 'Updated text',
+          editedAt: expect.any(Date),
+        }),
+      );
+
+      expect(emitToUserSpy).toHaveBeenCalledWith(
+        1,
+        MessengerWsEvent.MessageUpdated,
+        expect.objectContaining({
+          id: String(message.id),
+          text: 'Updated text',
+          editedAt: expect.any(String),
+          status: 'sent',
+        }),
+      );
+      expect(emitToUserSpy).toHaveBeenCalledWith(
+        2,
+        MessengerWsEvent.MessageUpdated,
+        expect.objectContaining({
+          id: String(message.id),
+          text: 'Updated text',
+          editedAt: expect.any(String),
+          status: null,
+        }),
+      );
+
+      const historyForUser1 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(historyForUser1.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(message.id),
+          text: 'Updated text',
+          editedAt: expect.any(String),
+          status: 'sent',
+        }),
+      );
+
+      const historyForUser2 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(200);
+
+      expect(historyForUser2.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(message.id),
+          text: 'Updated text',
+          editedAt: expect.any(String),
+          status: null,
+        }),
+      );
+
+      emitToUserSpy.mockRestore();
+    });
+
+    it('должен вернуть 403, если редактирует не автор', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const message = await appTestManager.prisma.message.create({
+        data: {
+          chatId: Number(createChatResponse.body.id),
+          senderId: 1,
+          text: 'Hello!',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+
+      await request(appTestManager.getServer())
+        .patch(`/${GLOBAL_PREFIX}/messenger/messages/${message.id}`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .send({ text: 'Hacked' })
+        .expect(403);
+    });
+
+    it('должен вернуть 403 EditWindowExpired, если окно редактирования истекло', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const message = await appTestManager.prisma.message.create({
+        data: {
+          chatId: Number(createChatResponse.body.id),
+          senderId: 1,
+          text: 'Hello!',
+          clientMessageId: crypto.randomUUID(),
+          createdAt: new Date(Date.now() - 16 * 60_000),
+        },
+      });
+
+      const response = await request(appTestManager.getServer())
+        .patch(`/${GLOBAL_PREFIX}/messenger/messages/${message.id}`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ text: 'Too late' })
+        .expect(403);
+
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          code: 'EditWindowExpired',
+        }),
+      );
+    });
+
+    it('должен вернуть 403, если пользователь не участник чата', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const message = await appTestManager.prisma.message.create({
+        data: {
+          chatId: Number(createChatResponse.body.id),
+          senderId: 1,
+          text: 'Hello!',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+
+      await request(appTestManager.getServer())
+        .patch(`/${GLOBAL_PREFIX}/messenger/messages/${message.id}`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(3)}`)
+        .send({ text: 'No access' })
+        .expect(403);
+    });
+  });
+
+  describe('DELETE /messenger/messages/:messageId', () => {
+    it('scope=me: должен скрыть сообщение только у одного пользователя в history и list', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const chatId = Number(createChatResponse.body.id);
+
+      const older = await appTestManager.prisma.message.create({
+        data: {
+          chatId,
+          senderId: 1,
+          text: 'Older',
+          clientMessageId: crypto.randomUUID(),
+          createdAt: new Date('2026-07-05T18:00:00.000Z'),
+        },
+      });
+      const newer = await appTestManager.prisma.message.create({
+        data: {
+          chatId,
+          senderId: 2,
+          text: 'Newer',
+          clientMessageId: crypto.randomUUID(),
+          createdAt: new Date('2026-07-05T18:01:00.000Z'),
+        },
+      });
+      await appTestManager.prisma.chat.update({
+        where: { id: chatId },
+        data: {
+          lastMessageId: newer.id,
+          lastMessageAt: newer.createdAt,
+        },
+      });
+
+      const emitToUserSpy = jest.spyOn(
+        appTestManager.getApp().get(MessengerWebSocketService),
+        'emitToUser',
+      );
+
+      await request(appTestManager.getServer())
+        .delete(`/${GLOBAL_PREFIX}/messenger/messages/${newer.id}`)
+        .query({ scope: DeleteMessageScope.Me })
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(204);
+
+      expect(emitToUserSpy).toHaveBeenCalledWith(1, MessengerWsEvent.MessageDeleted, {
+        messageId: String(newer.id),
+        chatId: String(chatId),
+        scope: DeleteMessageScope.Me,
+      });
+      expect(emitToUserSpy).not.toHaveBeenCalledWith(
+        2,
+        MessengerWsEvent.MessageDeleted,
+        expect.anything(),
+      );
+
+      const historyForUser1 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(historyForUser1.body.items.map((item: { id: string }) => item.id)).toEqual([
+        String(older.id),
+      ]);
+
+      const historyForUser2 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(200);
+
+      expect(historyForUser2.body.items.map((item: { id: string }) => item.id)).toEqual([
+        String(newer.id),
+        String(older.id),
+      ]);
+
+      const chatsForUser1 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(chatsForUser1.body.items[0].lastMessage).toEqual(
+        expect.objectContaining({
+          id: String(older.id),
+          text: 'Older',
+        }),
+      );
+
+      const chatsForUser2 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(200);
+
+      expect(chatsForUser2.body.items[0].lastMessage).toEqual(
+        expect.objectContaining({
+          id: String(newer.id),
+          text: 'Newer',
+        }),
+      );
+
+      const chatRow = await appTestManager.prisma.chat.findUnique({ where: { id: chatId } });
+      expect(chatRow?.lastMessageId).toBe(newer.id);
+
+      emitToUserSpy.mockRestore();
+    });
+
+    it('scope=everyone: должен оставить tombstone у обоих и эмитить message.deleted', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const chatId = Number(createChatResponse.body.id);
+
+      const message = await appTestManager.prisma.message.create({
+        data: {
+          chatId,
+          senderId: 1,
+          text: 'Secret',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+      await appTestManager.prisma.chat.update({
+        where: { id: chatId },
+        data: {
+          lastMessageId: message.id,
+          lastMessageAt: message.createdAt,
+        },
+      });
+
+      const emitToUserSpy = jest.spyOn(
+        appTestManager.getApp().get(MessengerWebSocketService),
+        'emitToUser',
+      );
+
+      await request(appTestManager.getServer())
+        .delete(`/${GLOBAL_PREFIX}/messenger/messages/${message.id}`)
+        .query({ scope: DeleteMessageScope.Everyone })
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(204);
+
+      const updated = await appTestManager.prisma.message.findUnique({
+        where: { id: message.id },
+      });
+      expect(updated).toEqual(
+        expect.objectContaining({
+          text: '',
+          deletedForEveryone: true,
+          deletedAt: expect.any(Date),
+        }),
+      );
+
+      const historyForUser1 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(historyForUser1.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(message.id),
+          text: '',
+          deletedForEveryone: true,
+          deletedAt: expect.any(String),
+        }),
+      );
+
+      const historyForUser2 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(200);
+
+      expect(historyForUser2.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(message.id),
+          text: '',
+          deletedForEveryone: true,
+          deletedAt: expect.any(String),
+        }),
+      );
+
+      const chatsForUser1 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(chatsForUser1.body.items[0].lastMessage).toEqual(
+        expect.objectContaining({
+          id: String(message.id),
+          text: '',
+          deletedForEveryone: true,
+        }),
+      );
+
+      expect(emitToUserSpy).toHaveBeenCalledWith(1, MessengerWsEvent.MessageDeleted, {
+        messageId: String(message.id),
+        chatId: String(chatId),
+        scope: DeleteMessageScope.Everyone,
+      });
+      expect(emitToUserSpy).toHaveBeenCalledWith(2, MessengerWsEvent.MessageDeleted, {
+        messageId: String(message.id),
+        chatId: String(chatId),
+        scope: DeleteMessageScope.Everyone,
+      });
+
+      emitToUserSpy.mockRestore();
+    });
+
+    it('scope=everyone: должен вернуть 403 DeleteWindowExpired после окна', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const message = await appTestManager.prisma.message.create({
+        data: {
+          chatId: Number(createChatResponse.body.id),
+          senderId: 1,
+          text: 'Too old',
+          clientMessageId: crypto.randomUUID(),
+          createdAt: new Date(Date.now() - 16 * 60_000),
+        },
+      });
+
+      const response = await request(appTestManager.getServer())
+        .delete(`/${GLOBAL_PREFIX}/messenger/messages/${message.id}`)
+        .query({ scope: DeleteMessageScope.Everyone })
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(403);
+
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          code: 'DeleteWindowExpired',
+        }),
+      );
+    });
+
+    it('scope=everyone: должен вернуть 403, если удаляет не автор', async () => {
+      const createChatResponse = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const message = await appTestManager.prisma.message.create({
+        data: {
+          chatId: Number(createChatResponse.body.id),
+          senderId: 1,
+          text: 'Hello!',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+
+      await request(appTestManager.getServer())
+        .delete(`/${GLOBAL_PREFIX}/messenger/messages/${message.id}`)
+        .query({ scope: DeleteMessageScope.Everyone })
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(403);
     });
   });
 
