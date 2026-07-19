@@ -73,6 +73,27 @@ export class MessagesRepository {
     });
   }
 
+  async updateText(id: number, text: string, editedAt: Date): Promise<Message> {
+    return this.prisma.message.update({
+      where: { id },
+      data: {
+        text,
+        editedAt,
+      },
+    });
+  }
+
+  async findDelivery(messageId: number, userId: number): Promise<MessageDelivery | null> {
+    return this.prisma.messageDelivery.findUnique({
+      where: {
+        messageId_userId: {
+          messageId,
+          userId,
+        },
+      },
+    });
+  }
+
   async upsertDelivery(messageId: number, userId: number): Promise<MessageDelivery> {
     return this.prisma.messageDelivery.upsert({
       where: {
