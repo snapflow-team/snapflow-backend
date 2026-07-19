@@ -28,8 +28,14 @@ export class MessagesRepository {
   ): Promise<CreateMessageResult> {
     const rows: CreateMessageRow[] = await tx.$queryRaw<CreateMessageRow[]>`
       WITH inserted AS (
-        INSERT INTO messages (chat_id, sender_id, text, client_message_id)
-        VALUES (${dto.chatId}, ${dto.senderId}, ${dto.text}, ${dto.clientMessageId}::uuid)
+        INSERT INTO messages (chat_id, sender_id, text, client_message_id, reply_to_message_id)
+        VALUES (
+          ${dto.chatId},
+          ${dto.senderId},
+          ${dto.text},
+          ${dto.clientMessageId}::uuid,
+          ${dto.replyToMessageId ?? null}
+        )
         ON CONFLICT (chat_id, sender_id, client_message_id) DO NOTHING
         RETURNING
           id,
@@ -112,6 +118,17 @@ export class MessagesRepository {
         userId,
       },
       update: {},
+    });
+  }
+
+  async findUserDeletion(messageId: number, userId: number): Promise<MessageUserDeletion | null> {
+    return this.prisma.messageUserDeletion.findUnique({
+      where: {
+        messageId_userId: {
+          messageId,
+          userId,
+        },
+      },
     });
   }
 
