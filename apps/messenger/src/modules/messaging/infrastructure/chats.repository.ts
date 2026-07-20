@@ -65,6 +65,25 @@ export class ChatsRepository {
     return chat.participantAId === userId ? chat.participantBId : chat.participantAId;
   }
 
+  async findPeerUserIds(userId: number): Promise<number[]> {
+    const chats = await this.prisma.chat.findMany({
+      where: {
+        OR: [{ participantAId: userId }, { participantBId: userId }],
+      },
+      select: {
+        participantAId: true,
+        participantBId: true,
+      },
+    });
+
+    const peerIds = new Set<number>();
+    for (const chat of chats) {
+      peerIds.add(chat.participantAId === userId ? chat.participantBId : chat.participantAId);
+    }
+
+    return [...peerIds];
+  }
+
   async findReadState(chatId: number, userId: number): Promise<ChatReadState | null> {
     return this.prisma.chatReadState.findUnique({
       where: {
