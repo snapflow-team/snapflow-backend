@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PresenceStatusDto } from '../dto/presence-status.application-dto';
+import { PresenceViewDto } from '../../api/view-dto/presence.view-dto';
 import { isActivityVisible, resolvesShowActivityStatus } from '../helpers/presence-privacy.helper';
 import { PresenceRedisRepository } from '../../infrastructure/presence-redis.repository';
 import { PresenceRepository } from '../../infrastructure/presence.repository';
@@ -12,15 +12,13 @@ export class GetPresenceQuery {
 }
 
 @QueryHandler(GetPresenceQuery)
-export class GetPresenceQueryHandler
-  implements IQueryHandler<GetPresenceQuery, PresenceStatusDto[]>
-{
+export class GetPresenceQueryHandler implements IQueryHandler<GetPresenceQuery, PresenceViewDto[]> {
   constructor(
     private readonly presenceRedisRepository: PresenceRedisRepository,
     private readonly presenceRepository: PresenceRepository,
   ) {}
 
-  async execute({ requesterUserId, userIds }: GetPresenceQuery): Promise<PresenceStatusDto[]> {
+  async execute({ requesterUserId, userIds }: GetPresenceQuery): Promise<PresenceViewDto[]> {
     const uniqueUserIds: number[] = [...new Set(userIds)];
     if (uniqueUserIds.length === 0) {
       return [];
