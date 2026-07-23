@@ -9,6 +9,7 @@ import { GLOBAL_PREFIX } from '../../../../../../../libs/common/constants/global
 import type {
   MessageDeletedPayload,
   MessageReadPayload,
+  PresenceUpdatedPayload,
   TypingOutboundPayload,
 } from '../../../../../../../libs/contracts/messenger';
 import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
@@ -28,6 +29,13 @@ describe('MessengerWebSocketGateway (Integration)', () => {
   let accessTokenTestHelper: AccessTokenTestHelper;
   let messengerWebSocketService: MessengerWebSocketService;
   let redis: Redis;
+
+  async function cleanupPresenceRedis(): Promise<void> {
+    const keys = await redis.keys('presence:*');
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  }
 
   beforeAll(async () => {
     appTestManager = new AppTestManager();
@@ -54,12 +62,10 @@ describe('MessengerWebSocketGateway (Integration)', () => {
 
   beforeEach(async () => {
     await appTestManager.cleanupDb(['_prisma_migrations']);
+    await cleanupPresenceRedis();
   });
 
   afterAll(async () => {
-    if (redis.status !== 'end') {
-      await redis.quit();
-    }
     await appTestManager.close();
   });
 
@@ -78,6 +84,37 @@ describe('MessengerWebSocketGateway (Integration)', () => {
     await new Promise<void>((resolve, reject) => {
       socket.on('connect', () => resolve());
       socket.on('connect_error', reject);
+    });
+  }
+
+  async function disconnectSocket(socket: Socket): Promise<void> {
+    if (!socket.connected) {
+      socket.removeAllListeners();
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      socket.once('disconnect', () => resolve());
+      socket.disconnect();
+    });
+    socket.removeAllListeners();
+    // server-side PresenceDisconnectUseCase (Redis) после client disconnect
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  async function waitForPresenceUpdated(
+    socket: Socket,
+    predicate?: (payload: PresenceUpdatedPayload) => boolean,
+  ): Promise<PresenceUpdatedPayload> {
+    return new Promise((resolve) => {
+      const handler = (payload: PresenceUpdatedPayload) => {
+        if (predicate && !predicate(payload)) {
+          return;
+        }
+        socket.off(MessengerWsEvent.PresenceUpdated, handler);
+        resolve(payload);
+      };
+      socket.on(MessengerWsEvent.PresenceUpdated, handler);
     });
   }
 
@@ -486,5 +523,218 @@ describe('MessengerWebSocketGateway (Integration)', () => {
     });
 
     peerSocket.disconnect();
+  });
+
+  it('connect: peer получает presence.updated online, GET /presence отражает online', async () => {
+    const userAToken = accessTokenTestHelper.signAccessToken(1);
+    const userBToken = accessTokenTestHelper.signAccessToken(2);
+
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${userAToken}`)
+      .send({ interlocutorId: '2' })
+      .expect(200);
+
+    const socketB = createSocket(userBToken);
+    await connectSocket(socketB);
+
+    const receivedOnline = waitForPresenceUpdated(
+      socketB,
+      (payload) => payload.userId === '1' && payload.online === true,
+    );
+
+    const socketA = createSocket(userAToken);
+    await connectSocket(socketA);
+
+    await expect(receivedOnline).resolves.toEqual({
+      userId: '1',
+      online: true,
+      lastSeenAt: null,
+    });
+
+    const presenceResponse = await request(appTestManager.getServer())
+      .get(`/${GLOBAL_PREFIX}/messenger/presence`)
+      .query({ userIds: '1' })
+      .set('Authorization', `Bearer ${userBToken}`)
+      .expect(200);
+
+    expect(presenceResponse.body).toEqual([{ userId: '1', online: true, lastSeenAt: null }]);
+
+    await expect(redis.zcard('presence:1')).resolves.toBeGreaterThan(0);
+
+    await redis.expire('presence:1', 5);
+    expect(await redis.ttl('presence:1')).toBeLessThanOrEqual(5);
+
+    socketA.emit(MessengerWsEvent.PresenceHeartbeat);
+
+    await expect(
+      new Promise<number>((resolve, reject) => {
+        const startedAt = Date.now();
+        const poll = async () => {
+          const ttl = await redis.ttl('presence:1');
+          if (ttl > 5) {
+            resolve(ttl);
+            return;
+          }
+          if (Date.now() - startedAt > 2000) {
+            reject(new Error(`TTL not refreshed, last ttl=${ttl}`));
+            return;
+          }
+          setTimeout(() => {
+            void poll();
+          }, 50);
+        };
+        void poll();
+      }),
+    ).resolves.toBeGreaterThan(5);
+
+    await disconnectSocket(socketA);
+    await disconnectSocket(socketB);
+  });
+
+  it('disconnect: peer получает presence.updated offline и обновляется lastSeenAt', async () => {
+    const userAToken = accessTokenTestHelper.signAccessToken(1);
+    const userBToken = accessTokenTestHelper.signAccessToken(2);
+
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${userAToken}`)
+      .send({ interlocutorId: '2' })
+      .expect(200);
+
+    const socketB = createSocket(userBToken);
+    await connectSocket(socketB);
+
+    const receivedOnline = waitForPresenceUpdated(
+      socketB,
+      (payload) => payload.userId === '1' && payload.online === true,
+    );
+
+    const socketA = createSocket(userAToken);
+    await connectSocket(socketA);
+    await receivedOnline;
+
+    const receivedOffline = waitForPresenceUpdated(
+      socketB,
+      (payload) => payload.userId === '1' && payload.online === false,
+    );
+
+    socketA.disconnect();
+
+    const offlinePayload = await receivedOffline;
+    expect(offlinePayload).toEqual({
+      userId: '1',
+      online: false,
+      lastSeenAt: expect.any(String),
+    });
+    expect(Date.parse(offlinePayload.lastSeenAt!)).not.toBeNaN();
+
+    const settings = await appTestManager.prisma.userPresenceSettings.findUnique({
+      where: { userId: 1 },
+    });
+    expect(settings?.lastSeenAt).toEqual(expect.any(Date));
+
+    const presenceResponse = await request(appTestManager.getServer())
+      .get(`/${GLOBAL_PREFIX}/messenger/presence`)
+      .query({ userIds: '1' })
+      .set('Authorization', `Bearer ${userBToken}`)
+      .expect(200);
+
+    expect(presenceResponse.body).toEqual([
+      {
+        userId: '1',
+        online: false,
+        lastSeenAt: settings!.lastSeenAt!.toISOString(),
+      },
+    ]);
+
+    await disconnectSocket(socketB);
+  });
+
+  it('приватность: скрытая активность не транслирует presence.updated', async () => {
+    const userAToken = accessTokenTestHelper.signAccessToken(1);
+    const userBToken = accessTokenTestHelper.signAccessToken(2);
+
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${userAToken}`)
+      .send({ interlocutorId: '2' })
+      .expect(200);
+
+    await request(appTestManager.getServer())
+      .patch(`/${GLOBAL_PREFIX}/messenger/settings/activity-status`)
+      .set('Authorization', `Bearer ${userAToken}`)
+      .send({ showActivityStatus: false })
+      .expect(204);
+
+    const socketB = createSocket(userBToken);
+    await connectSocket(socketB);
+
+    let receivedFromA = false;
+    socketB.on(MessengerWsEvent.PresenceUpdated, (payload: PresenceUpdatedPayload) => {
+      if (payload.userId === '1') {
+        receivedFromA = true;
+      }
+    });
+
+    const socketA = createSocket(userAToken);
+    await connectSocket(socketA);
+
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(receivedFromA).toBe(false);
+
+    const presenceResponse = await request(appTestManager.getServer())
+      .get(`/${GLOBAL_PREFIX}/messenger/presence`)
+      .query({ userIds: '1' })
+      .set('Authorization', `Bearer ${userBToken}`)
+      .expect(200);
+
+    expect(presenceResponse.body).toEqual([{ userId: '1', online: false, lastSeenAt: null }]);
+
+    await disconnectSocket(socketA);
+    await disconnectSocket(socketB);
+  });
+
+  it('PATCH activity-status=false: peer получает скрытие статуса', async () => {
+    const userAToken = accessTokenTestHelper.signAccessToken(1);
+    const userBToken = accessTokenTestHelper.signAccessToken(2);
+
+    await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+      .set('Authorization', `Bearer ${userAToken}`)
+      .send({ interlocutorId: '2' })
+      .expect(200);
+
+    const socketB = createSocket(userBToken);
+    await connectSocket(socketB);
+
+    const receivedOnline = waitForPresenceUpdated(
+      socketB,
+      (payload) => payload.userId === '1' && payload.online === true,
+    );
+
+    const socketA = createSocket(userAToken);
+    await connectSocket(socketA);
+    await receivedOnline;
+
+    const receivedHidden = waitForPresenceUpdated(
+      socketB,
+      (payload) => payload.userId === '1' && payload.online === false && payload.lastSeenAt === null,
+    );
+
+    await request(appTestManager.getServer())
+      .patch(`/${GLOBAL_PREFIX}/messenger/settings/activity-status`)
+      .set('Authorization', `Bearer ${userAToken}`)
+      .send({ showActivityStatus: false })
+      .expect(204);
+
+    await expect(receivedHidden).resolves.toEqual({
+      userId: '1',
+      online: false,
+      lastSeenAt: null,
+    });
+
+    await disconnectSocket(socketA);
+    await disconnectSocket(socketB);
   });
 });
