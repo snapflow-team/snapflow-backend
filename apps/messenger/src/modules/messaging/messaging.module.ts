@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
+import { OutboxModule } from '../outbox/outbox.module';
 import { ChatMembershipGuard } from './api/guards/chat-membership.guard';
 import { MessagingController } from './api/messaging.controller';
 import { PresenceBroadcastHelper } from './application/helpers/presence-broadcast.helper';
@@ -55,6 +56,7 @@ const websocketProviders = [MessengerWebSocketGateway, MessengerWebSocketService
 const presenceHelpers = [PresenceBroadcastHelper];
 
 @Module({
+  imports: [OutboxModule],
   controllers: [MessagingController],
   providers: [
     ...useCases,
