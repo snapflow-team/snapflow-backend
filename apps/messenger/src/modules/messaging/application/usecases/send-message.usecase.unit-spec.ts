@@ -1,9 +1,19 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Chat, Message } from '@generated/prisma-messenger';
+import { Chat, Message, OutboxEventType } from '@generated/prisma-messenger';
+import {
+  ChatUpdatedPayload,
+  MessengerWsEvent,
+  UnreadUpdatedPayload,
+} from '../../../../../../../libs/contracts/messenger';
 import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
 import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { BusinessRulesSettings } from '../../../../setup/configuration/business-rules-settings';
 import { PrismaService } from '../../../database/prisma.service';
+import { OutboxRepository } from '../../../outbox/repositories/outbox.repository';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
+import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
 import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
 import { SendMessageCommand, SendMessageUseCase } from './send-message.usecase';
@@ -11,13 +21,21 @@ import { SendMessageCommand, SendMessageUseCase } from './send-message.usecase';
 describe('SendMessageUseCase (unit)', () => {
   let useCase: SendMessageUseCase;
   let prismaMock: { $transaction: jest.Mock };
+  let configServiceMock: jest.Mocked<Pick<ConfigService<Configuration, true>, 'get'>>;
   let chatsRepositoryMock: jest.Mocked<Pick<ChatsRepository, 'getOrCreate' | 'updateLastMessage'>>;
+  let chatsQueryRepositoryMock: jest.Mocked<
+    Pick<ChatsQueryRepository, 'getUnreadCount' | 'getTotalUnreadCount'>
+  >;
   let messagesRepositoryMock: jest.Mocked<
     Pick<MessagesRepository, 'createOrGetExisting' | 'findById' | 'findUserDeletion'>
   >;
-  let messengerWebSocketServiceMock: jest.Mocked<Pick<MessengerWebSocketService, 'sendToUser'>>;
+  let outboxRepositoryMock: jest.Mocked<Pick<OutboxRepository, 'saveEvent'>>;
+  let messengerWebSocketServiceMock: jest.Mocked<
+    Pick<MessengerWebSocketService, 'sendToUser' | 'emitToUser'>
+  >;
 
   const createdAt = new Date('2026-07-05T18:00:00.000Z');
+  const pushNotificationDelaySeconds = 20;
 
   const chat: Chat = {
     id: 10,
@@ -58,9 +76,17 @@ describe('SendMessageUseCase (unit)', () => {
   };
 
   beforeEach(async () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(createdAt);
+
     chatsRepositoryMock = {
       getOrCreate: jest.fn().mockResolvedValue(chat),
       updateLastMessage: jest.fn().mockResolvedValue(undefined),
+    };
+
+    chatsQueryRepositoryMock = {
+      getUnreadCount: jest.fn().mockResolvedValue(1),
+      getTotalUnreadCount: jest.fn().mockResolvedValue(5),
     };
 
     messagesRepositoryMock = {
@@ -69,8 +95,19 @@ describe('SendMessageUseCase (unit)', () => {
       findUserDeletion: jest.fn().mockResolvedValue(null),
     };
 
+    outboxRepositoryMock = {
+      saveEvent: jest.fn().mockResolvedValue({ id: 'outbox-1' }),
+    };
+
     messengerWebSocketServiceMock = {
       sendToUser: jest.fn(),
+      emitToUser: jest.fn(),
+    };
+
+    configServiceMock = {
+      get: jest.fn().mockReturnValue({
+        pushNotificationDelaySeconds,
+      } as BusinessRulesSettings),
     };
 
     prismaMock = {
@@ -83,9 +120,12 @@ describe('SendMessageUseCase (unit)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SendMessageUseCase,
+        { provide: ConfigService, useValue: configServiceMock },
         { provide: PrismaService, useValue: prismaMock },
         { provide: ChatsRepository, useValue: chatsRepositoryMock },
+        { provide: ChatsQueryRepository, useValue: chatsQueryRepositoryMock },
         { provide: MessagesRepository, useValue: messagesRepositoryMock },
+        { provide: OutboxRepository, useValue: outboxRepositoryMock },
         { provide: MessengerWebSocketService, useValue: messengerWebSocketServiceMock },
       ],
     }).compile();
@@ -94,10 +134,11 @@ describe('SendMessageUseCase (unit)', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     jest.clearAllMocks();
   });
 
-  it('должен get-or-create чат, сохранить сообщение и отправить его получателю по WS', async () => {
+  it('должен get-or-create чат, сохранить сообщение, outbox и отправить WS-события получателю', async () => {
     const result = await useCase.execute(
       new SendMessageCommand({
         senderId: 1,
@@ -124,6 +165,19 @@ describe('SendMessageUseCase (unit)', () => {
       message.createdAt,
       expect.anything(),
     );
+    expect(outboxRepositoryMock.saveEvent).toHaveBeenCalledWith(
+      OutboxEventType.NEW_MESSAGE_NOTIFICATION,
+      {
+        chatId: 10,
+        messageId: message.id,
+        senderId: 1,
+        recipientId: 2,
+      },
+      new Date(createdAt.getTime() + pushNotificationDelaySeconds * 1000),
+      expect.anything(),
+    );
+    expect(chatsQueryRepositoryMock.getUnreadCount).toHaveBeenCalledWith(10, 2);
+    expect(chatsQueryRepositoryMock.getTotalUnreadCount).toHaveBeenCalledWith(2);
     expect(messengerWebSocketServiceMock.sendToUser).toHaveBeenCalledWith(
       2,
       expect.objectContaining({
@@ -140,6 +194,25 @@ describe('SendMessageUseCase (unit)', () => {
         deletedForEveryone: false,
         replyTo: null,
       }),
+    );
+
+    const expectedChatUpdated: ChatUpdatedPayload = {
+      chatId: '10',
+      unreadCount: 1,
+    };
+    const expectedUnreadUpdated: UnreadUpdatedPayload = {
+      total: 5,
+    };
+
+    expect(messengerWebSocketServiceMock.emitToUser).toHaveBeenCalledWith(
+      2,
+      MessengerWsEvent.ChatUpdated,
+      expectedChatUpdated,
+    );
+    expect(messengerWebSocketServiceMock.emitToUser).toHaveBeenCalledWith(
+      2,
+      MessengerWsEvent.UnreadUpdated,
+      expectedUnreadUpdated,
     );
     expect(result).toEqual({
       id: '100',
@@ -328,6 +401,7 @@ describe('SendMessageUseCase (unit)', () => {
     expect(chatsRepositoryMock.getOrCreate).not.toHaveBeenCalled();
     expect(prismaMock.$transaction).not.toHaveBeenCalled();
     expect(messagesRepositoryMock.createOrGetExisting).not.toHaveBeenCalled();
+    expect(outboxRepositoryMock.saveEvent).not.toHaveBeenCalled();
     expect(messengerWebSocketServiceMock.sendToUser).not.toHaveBeenCalled();
   });
 
@@ -349,7 +423,7 @@ describe('SendMessageUseCase (unit)', () => {
     expect(typeof payload.receiverId).toBe('string');
   });
 
-  it('должен вернуть существующее сообщение без повторного WS-push при дубле clientMessageId', async () => {
+  it('должен вернуть существующее сообщение без outbox и WS при дубле clientMessageId', async () => {
     messagesRepositoryMock.createOrGetExisting.mockResolvedValue({ message, isNew: false });
 
     const result = await useCase.execute(
@@ -362,7 +436,10 @@ describe('SendMessageUseCase (unit)', () => {
     );
 
     expect(chatsRepositoryMock.updateLastMessage).not.toHaveBeenCalled();
+    expect(outboxRepositoryMock.saveEvent).not.toHaveBeenCalled();
+    expect(chatsQueryRepositoryMock.getUnreadCount).not.toHaveBeenCalled();
     expect(messengerWebSocketServiceMock.sendToUser).not.toHaveBeenCalled();
+    expect(messengerWebSocketServiceMock.emitToUser).not.toHaveBeenCalled();
     expect(result).toEqual({
       id: '100',
       chatId: '10',

@@ -1,12 +1,22 @@
+import { ConfigService } from '@nestjs/config';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Chat, Message, MessageUserDeletion } from '@generated/prisma-messenger';
+import { Chat, Message, MessageUserDeletion, OutboxEventType } from '@generated/prisma-messenger';
+import {
+  ChatUpdatedPayload,
+  MessengerWsEvent,
+  UnreadUpdatedPayload,
+} from '../../../../../../../libs/contracts/messenger';
 import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
 import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
+import { Configuration } from '../../../../setup/configuration/configuration';
+import { BusinessRulesSettings } from '../../../../setup/configuration/business-rules-settings';
 import { PrismaService } from '../../../database/prisma.service';
+import { OutboxRepository } from '../../../outbox/repositories/outbox.repository';
 import { MessageViewDto } from '../../api/view-dto/message.view-dto';
 import { ReplyPreviewSource } from '../../api/view-dto/reply-preview.view-dto';
 import { SendMessageApplicationDto } from '../dto/send-message.application-dto';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
+import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
 import { CreateMessageResult } from '../../infrastructure/types/create-message-result.type';
 import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
@@ -18,9 +28,12 @@ export class SendMessageCommand {
 @CommandHandler(SendMessageCommand)
 export class SendMessageUseCase implements ICommandHandler<SendMessageCommand> {
   constructor(
+    private readonly configService: ConfigService<Configuration, true>,
     private readonly prisma: PrismaService,
     private readonly chatsRepository: ChatsRepository,
+    private readonly chatsQueryRepository: ChatsQueryRepository,
     private readonly messagesRepository: MessagesRepository,
+    private readonly outboxRepository: OutboxRepository,
     private readonly messengerWebSocketService: MessengerWebSocketService,
   ) {}
 
@@ -39,6 +52,10 @@ export class SendMessageUseCase implements ICommandHandler<SendMessageCommand> {
         dto.replyToMessageId,
       );
     }
+
+    const pushDelayMs: number =
+      this.configService.get<BusinessRulesSettings>('businessRulesSettings')
+        .pushNotificationDelaySeconds * 1000;
 
     const { message, isNew }: CreateMessageResult = await this.prisma.$transaction(async (tx) => {
       const result: CreateMessageResult = await this.messagesRepository.createOrGetExisting(
@@ -59,6 +76,18 @@ export class SendMessageUseCase implements ICommandHandler<SendMessageCommand> {
           result.message.createdAt,
           tx,
         );
+
+        await this.outboxRepository.saveEvent(
+          OutboxEventType.NEW_MESSAGE_NOTIFICATION,
+          {
+            chatId: chat.id,
+            messageId: result.message.id,
+            senderId: dto.senderId,
+            recipientId: dto.receiverId,
+          },
+          new Date(Date.now() + pushDelayMs),
+          tx,
+        );
       }
 
       return result;
@@ -75,12 +104,36 @@ export class SendMessageUseCase implements ICommandHandler<SendMessageCommand> {
     });
 
     if (isNew) {
+      const [unreadCount, unreadTotal] = await Promise.all([
+        this.chatsQueryRepository.getUnreadCount(chat.id, dto.receiverId),
+        this.chatsQueryRepository.getTotalUnreadCount(dto.receiverId),
+      ]);
+
       this.messengerWebSocketService.sendToUser(
         dto.receiverId,
         MessageViewDto.mapToView(message, dto.receiverId, {
           viewerId: dto.receiverId,
           replyTo,
         }),
+      );
+
+      const chatUpdatedPayload: ChatUpdatedPayload = {
+        chatId: String(chat.id),
+        unreadCount,
+      };
+      const unreadUpdatedPayload: UnreadUpdatedPayload = {
+        total: unreadTotal,
+      };
+
+      this.messengerWebSocketService.emitToUser(
+        dto.receiverId,
+        MessengerWsEvent.ChatUpdated,
+        chatUpdatedPayload,
+      );
+      this.messengerWebSocketService.emitToUser(
+        dto.receiverId,
+        MessengerWsEvent.UnreadUpdated,
+        unreadUpdatedPayload,
       );
     }
 
