@@ -5,6 +5,7 @@ const DEFAULT_MESSAGE_EDIT_WINDOW_MS = 15 * 60_000;
 const DEFAULT_MESSAGE_DELETE_FOR_EVERYONE_WINDOW_MS = 15 * 60_000;
 const DEFAULT_TYPING_TTL_SECONDS = 3;
 const DEFAULT_PRESENCE_HEARTBEAT_TTL_SECONDS = 30;
+const DEFAULT_PUSH_NOTIFICATION_DELAY_SECONDS = 20;
 const DEFAULT_OUTBOX_RETENTION_DAYS = 30;
 
 export class BusinessRulesSettings {
@@ -23,6 +24,10 @@ export class BusinessRulesSettings {
   @IsInt()
   @Min(5)
   presenceHeartbeatTtlSeconds: number;
+
+  @IsInt()
+  @Min(0)
+  pushNotificationDelaySeconds: number;
 
   @IsInt()
   @Min(1)
@@ -48,6 +53,11 @@ export class BusinessRulesSettings {
       environmentVariables.PRESENCE_HEARTBEAT_TTL_SECONDS,
       DEFAULT_PRESENCE_HEARTBEAT_TTL_SECONDS,
       5,
+    );
+    this.pushNotificationDelaySeconds = this.parseIntOrDefault(
+      environmentVariables.PUSH_NOTIFICATION_DELAY_SECONDS,
+      DEFAULT_PUSH_NOTIFICATION_DELAY_SECONDS,
+      0,
     );
     this.outboxRetentionDays = this.parseIntOrDefault(
       environmentVariables.OUTBOX_RETENTION_DAYS,
