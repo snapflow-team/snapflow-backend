@@ -30,3 +30,9 @@ export type MessageDeletedPayload = {
   chatId: string;
   scope: 'me' | 'everyone';
 };
+
+export type PresenceUpdatedPayload = {
+  userId: string;
+  online: boolean;
+  lastSeenAt: string | null;
+};

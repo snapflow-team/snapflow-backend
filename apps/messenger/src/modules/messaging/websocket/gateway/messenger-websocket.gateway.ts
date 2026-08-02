@@ -10,16 +10,16 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import type {
-  MessageDeliveredPayload,
-  TypingInboundPayload,
-} from '../../../../../../../libs/contracts/messenger';
+import type { MessageDeliveredPayload, TypingInboundPayload, } from '../../../../../../../libs/contracts/messenger';
 import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
 import { AuthTokenService } from '../../../auth/application/services/auth-token.service';
 import { PayloadAccessToken } from '../../../auth/application/types/payload-access-token.type';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
 import { MarkMessageDeliveredCommand } from '../../application/commands/mark-message-delivered.command';
+import { PresenceConnectCommand } from '../../application/commands/presence-connect.command';
+import { PresenceDisconnectCommand } from '../../application/commands/presence-disconnect.command';
+import { PresenceHeartbeatCommand } from '../../application/commands/presence-heartbeat.command';
 import { TypingStartCommand } from '../../application/commands/typing-start.command';
 import { TypingStopCommand } from '../../application/commands/typing-stop.command';
 import { SocketDataType } from '../types/socket-data.type';
@@ -93,6 +93,26 @@ export class MessengerWebSocketGateway
     await this.handleTypingEvent(client, payload, MessengerWsEvent.TypingStop);
   }
 
+  @SubscribeMessage(MessengerWsEvent.PresenceHeartbeat)
+  async handlePresenceHeartbeat(
+    @ConnectedSocket() client: Socket<any, any, any, SocketDataType>,
+  ): Promise<void> {
+    const userId: number | undefined = client.data.userId;
+    if (!userId) {
+      return;
+    }
+
+    try {
+      await this.commandBus.execute(new PresenceHeartbeatCommand({ userId, socketId: client.id }));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(
+        `presence.heartbeat failed for user:${userId}: ${errorMessage}`,
+        this.handlePresenceHeartbeat.name,
+      );
+    }
+  }
+
   afterInit(server: Server<any, any, any, SocketDataType>) {
     this.logger.log('Messenger websocket gateway successfully started');
 
@@ -105,9 +125,22 @@ export class MessengerWebSocketGateway
     this.logger.log(`Client connected ${client.id}`);
 
     try {
-      await client.join(`user:${client.data.userId}`);
+      const userId: number | undefined = client.data.userId;
+      await client.join(`user:${userId}`);
 
       this.setupTokenExpiry(client, client.data.exp);
+
+      if (userId) {
+        try {
+          await this.commandBus.execute(new PresenceConnectCommand({ userId, socketId: client.id }));
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          this.logger.warn(
+            `presence.connect failed for user:${userId}: ${errorMessage}`,
+            this.handleConnection.name,
+          );
+        }
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Some error occurred in authorization';
@@ -119,9 +152,24 @@ export class MessengerWebSocketGateway
     }
   }
 
-  handleDisconnect(client: Socket<any, any, any, SocketDataType>) {
+  async handleDisconnect(client: Socket<any, any, any, SocketDataType>) {
     this.logger.log(`Client disconnected ${client.id}`);
     this.clearClientTimer(client);
+
+    const userId: number | undefined = client.data.userId;
+    if (!userId) {
+      return;
+    }
+
+    try {
+      await this.commandBus.execute(new PresenceDisconnectCommand({ userId, socketId: client.id }));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(
+        `presence.disconnect failed for user:${userId}: ${errorMessage}`,
+        this.handleDisconnect.name,
+      );
+    }
   }
 
   private async authorizeSocket(
