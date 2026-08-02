@@ -25,6 +25,10 @@ export type ChatUpdatedPayload = {
   unreadCount: number;
 };
 
+export type UnreadUpdatedPayload = {
+  total: number;
+};
+
 export type MessageDeletedPayload = {
   messageId: string;
   chatId: string;
