@@ -6,10 +6,7 @@ import { ApiSettings } from '../../setup/configuration/api-settings';
 import { ConfirmChannel } from 'amqplib';
 import { MESSENGER_EXCHANGE } from '../../../../../libs/contracts/messenger';
 import { AsyncLocalStorageService } from '../../common/async-local-storage/async-local-storage.service';
-import {
-  REQUEST_ID_HEADER,
-  REQUEST_ID_KEY,
-} from '../../../../../libs/common/constants/request-id.constants';
+import { REQUEST_ID_HEADER, REQUEST_ID_KEY, } from '../../../../../libs/common/constants/request-id.constants';
 import { LoggerFactory } from '../logger/logger.factory';
 import { ContextLogger } from '../logger/context-logger';
 
@@ -42,7 +39,7 @@ export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {
     this.connection = amqp.connect([rabbitMqUrl]);
 
     this.connection.on('connect', () => {
-      this.logger.log('Successfully connected to RabbitMQ', this.connect.name);
+      this.logger.trace('Successfully connected to RabbitMQ', this.connect.name);
     });
 
     this.connection.on('disconnect', ({ err }) => {
@@ -89,7 +86,7 @@ export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {
       if (this.connection) {
         await this.connection.close();
       }
-      this.logger.log('RabbitMQ connection gracefully closed', this.close.name);
+      this.logger.trace('RabbitMQ connection gracefully closed', this.close.name);
     } catch (e) {
       this.logger.error(e, this.close.name);
     }
