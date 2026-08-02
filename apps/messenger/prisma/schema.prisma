@@ -83,3 +83,12 @@ model MessageUserDeletion {
   @@unique([messageId, userId])
   @@map("message_user_deletions")
 }
+
+model UserPresenceSettings {
+  userId             Int       @id @map("user_id")
+  showActivityStatus Boolean   @default(true) @map("show_activity_status")
+  lastSeenAt         DateTime? @map("last_seen_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@map("user_presence_settings")
+}

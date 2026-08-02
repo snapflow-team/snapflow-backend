@@ -7,4 +7,6 @@ export enum MessengerWsEvent {
   ChatUpdated = 'chat.updated',
   TypingStart = 'typing.start',
   TypingStop = 'typing.stop',
+  PresenceUpdated = 'presence.updated',
+  PresenceHeartbeat = 'presence.heartbeat',
 }

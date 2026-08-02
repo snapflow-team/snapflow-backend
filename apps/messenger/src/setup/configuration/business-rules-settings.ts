@@ -4,6 +4,7 @@ import { EnvironmentVariable } from './configuration';
 const DEFAULT_MESSAGE_EDIT_WINDOW_MS = 15 * 60_000;
 const DEFAULT_MESSAGE_DELETE_FOR_EVERYONE_WINDOW_MS = 15 * 60_000;
 const DEFAULT_TYPING_TTL_SECONDS = 3;
+const DEFAULT_PRESENCE_HEARTBEAT_TTL_SECONDS = 30;
 
 export class BusinessRulesSettings {
   @IsInt()
@@ -17,6 +18,10 @@ export class BusinessRulesSettings {
   @IsInt()
   @Min(1)
   typingTtlSeconds: number;
+
+  @IsInt()
+  @Min(5)
+  presenceHeartbeatTtlSeconds: number;
 
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.messageEditWindowMs = this.parseIntOrDefault(
@@ -33,6 +38,11 @@ export class BusinessRulesSettings {
       environmentVariables.TYPING_TTL_SECONDS,
       DEFAULT_TYPING_TTL_SECONDS,
       1,
+    );
+    this.presenceHeartbeatTtlSeconds = this.parseIntOrDefault(
+      environmentVariables.PRESENCE_HEARTBEAT_TTL_SECONDS,
+      DEFAULT_PRESENCE_HEARTBEAT_TTL_SECONDS,
+      5,
     );
   }
 

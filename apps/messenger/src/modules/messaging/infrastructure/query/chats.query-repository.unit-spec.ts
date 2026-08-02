@@ -9,7 +9,7 @@ describe('ChatsQueryRepository (unit)', () => {
   let repository: ChatsQueryRepository;
   let prismaMock: {
     $queryRaw: jest.Mock;
-    chat: { findUnique: jest.Mock };
+    chat: { findUnique: jest.Mock; findMany: jest.Mock };
     message: { findFirst: jest.Mock };
   };
 
@@ -69,6 +69,7 @@ describe('ChatsQueryRepository (unit)', () => {
       $queryRaw: jest.fn(),
       chat: {
         findUnique: jest.fn(),
+        findMany: jest.fn(),
       },
       message: {
         findFirst: jest.fn(),

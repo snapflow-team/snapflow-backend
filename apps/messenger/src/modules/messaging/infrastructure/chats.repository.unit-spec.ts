@@ -6,7 +6,7 @@ import { ChatsRepository } from './chats.repository';
 describe('ChatsRepository (unit)', () => {
   let repository: ChatsRepository;
   let prismaMock: {
-    chat: { findUnique: jest.Mock; upsert: jest.Mock; update: jest.Mock };
+    chat: { findUnique: jest.Mock; upsert: jest.Mock; update: jest.Mock; findMany: jest.Mock };
     chatReadState: { findUnique: jest.Mock; upsert: jest.Mock };
   };
 
@@ -18,6 +18,7 @@ describe('ChatsRepository (unit)', () => {
         findUnique: jest.fn(),
         upsert: jest.fn(),
         update: jest.fn(),
+        findMany: jest.fn(),
       },
       chatReadState: {
         findUnique: jest.fn(),
@@ -172,5 +173,24 @@ describe('ChatsRepository (unit)', () => {
       },
     });
     expect(prismaMock.chatReadState.upsert).not.toHaveBeenCalled();
+  });
+
+  it('findPeerUserIds: возвращает distinct собеседников по всем чатам', async () => {
+    prismaMock.chat.findMany.mockResolvedValue([
+      { participantAId: 1, participantBId: 2 },
+      { participantAId: 3, participantBId: 1 },
+      { participantAId: 1, participantBId: 2 },
+    ]);
+
+    await expect(repository.findPeerUserIds(1)).resolves.toEqual([2, 3]);
+    expect(prismaMock.chat.findMany).toHaveBeenCalledWith({
+      where: {
+        OR: [{ participantAId: 1 }, { participantBId: 1 }],
+      },
+      select: {
+        participantAId: true,
+        participantBId: true,
+      },
+    });
   });
 });
