@@ -29,6 +29,7 @@ export class OutboxRepository {
   }
 
   async lockEventsForProcessing(
+    type: OutboxEventType,
     limit: number = OutboxProcessing.LOCK_BATCH_SIZE,
   ): Promise<OutboxEvent[]> {
     return this.prisma.$queryRaw<OutboxEvent[]>`
@@ -39,6 +40,7 @@ export class OutboxRepository {
       WHERE "id" IN (
         SELECT "id" FROM "outbox_events"
         WHERE "status" = ${OutboxEventStatus.PENDING}
+          AND "type" = ${type}::"OutboxEventType"
           AND "available_at" <= NOW()
         ORDER BY "created_at" ASC
         LIMIT ${limit}
