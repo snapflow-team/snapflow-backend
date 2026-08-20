@@ -46,6 +46,12 @@ export class ChatListItemViewDto {
   unreadCount: number;
 
   @ApiProperty({
+    description: 'Заглушены ли push-уведомления по чату для текущего пользователя',
+    example: false,
+  })
+  muted: boolean;
+
+  @ApiProperty({
     description: 'Дата создания чата в формате ISO',
     example: '2026-07-05T18:00:00.000Z',
   })
@@ -65,6 +71,7 @@ export class ChatListItemViewDto {
     dto.id = row.id.toString();
     dto.interlocutorId = interlocutorId.toString();
     dto.unreadCount = row.unreadCount;
+    dto.muted = row.muted;
     dto.createdAt = row.chatCreatedAt.toISOString();
     dto.updatedAt = row.chatUpdatedAt.toISOString();
     dto.lastMessage = isChatListRowWithMessage(row)
