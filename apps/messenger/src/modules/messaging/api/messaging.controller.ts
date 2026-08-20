@@ -19,6 +19,8 @@ import { UserContextDto } from '../../auth/guards/dto/user-context.dto';
 import { AccessTokenGuard } from '../../auth/guards/access-token.guard';
 import { DeleteMessageCommand } from '../application/commands/delete-message.command';
 import { EditMessageCommand } from '../application/commands/edit-message.command';
+import { MuteChatCommand } from '../application/commands/mute-chat.command';
+import { UnmuteChatCommand } from '../application/commands/unmute-chat.command';
 import { UpdateActivityStatusCommand } from '../application/commands/update-activity-status.command';
 import { GetChatMessagesQuery } from '../application/queries/get-chat-messages.query-handler';
 import { GetPresenceQuery } from '../application/queries/get-presence.query-handler';
@@ -34,6 +36,7 @@ import { GetOrCreateChatInputDto } from './input-dto/get-or-create-chat.input-dt
 import { GetPresenceQueryParamsDto } from './input-dto/get-presence.query-params.dto';
 import { GetUserChatsQueryParamsDto } from './input-dto/get-user-chats.query-params.dto';
 import { MarkChatReadInputDto } from './input-dto/mark-chat-read.input-dto';
+import { MuteChatInputDto } from './input-dto/mute-chat.input-dto';
 import { SendMessageInputDto } from './input-dto/send-message.input-dto';
 import { UpdateActivityStatusInputDto } from './input-dto/update-activity-status.input-dto';
 import { DeleteMessageSwagger } from './swagger/delete-message.swagger';
@@ -43,7 +46,9 @@ import { GetOrCreateChatSwagger } from './swagger/get-or-create-chat.swagger';
 import { GetPresenceSwagger } from './swagger/get-presence.swagger';
 import { GetUserChatsSwagger } from './swagger/get-user-chats.swagger';
 import { MarkChatReadSwagger } from './swagger/mark-chat-read.swagger';
+import { MuteChatSwagger } from './swagger/mute-chat.swagger';
 import { SendMessageSwagger } from './swagger/send-message.swagger';
+import { UnmuteChatSwagger } from './swagger/unmute-chat.swagger';
 import { UpdateActivityStatusSwagger } from './swagger/update-activity-status.swagger';
 import { ChatMessagesPageViewDto } from './view-dto/chat-messages-page.view-dto';
 import { ChatViewDto } from './view-dto/chat.view-dto';
@@ -131,6 +136,40 @@ export class MessagingController {
         chatId,
         readerId,
         lastReadMessageId: Number(lastReadMessageId),
+      }),
+    );
+  }
+
+  @Post('chats/:chatId/mute')
+  @MuteChatSwagger()
+  @UseGuards(ChatMembershipGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async muteChat(
+    @Param('chatId', ParseIntPipe) chatId: number,
+    @Body() dto: MuteChatInputDto,
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+  ): Promise<void> {
+    await this.commandBus.execute(
+      new MuteChatCommand({
+        chatId,
+        userId,
+        mutedUntil: dto.mutedUntil ? new Date(dto.mutedUntil) : null,
+      }),
+    );
+  }
+
+  @Delete('chats/:chatId/mute')
+  @UnmuteChatSwagger()
+  @UseGuards(ChatMembershipGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async unmuteChat(
+    @Param('chatId', ParseIntPipe) chatId: number,
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+  ): Promise<void> {
+    await this.commandBus.execute(
+      new UnmuteChatCommand({
+        chatId,
+        userId,
       }),
     );
   }
