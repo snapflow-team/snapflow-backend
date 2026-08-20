@@ -39,6 +39,7 @@ describe('ChatsQueryRepository (unit)', () => {
     peerLastReadMessageId: null,
     messageDeliveredToPeer: false,
     unreadCount: 1,
+    muted: true,
   };
 
   const rowWithoutMessage: ChatListRow = {
@@ -62,6 +63,7 @@ describe('ChatsQueryRepository (unit)', () => {
     peerLastReadMessageId: null,
     messageDeliveredToPeer: null,
     unreadCount: 0,
+    muted: false,
   };
 
   beforeEach(async () => {
@@ -112,6 +114,7 @@ describe('ChatsQueryRepository (unit)', () => {
         replyTo: null,
       },
       unreadCount: 1,
+      muted: true,
       createdAt: createdAt.toISOString(),
       updatedAt: lastMessageAt.toISOString(),
     });
@@ -120,6 +123,7 @@ describe('ChatsQueryRepository (unit)', () => {
       interlocutorId: '2',
       lastMessage: null,
       unreadCount: 0,
+      muted: false,
       createdAt: createdAt.toISOString(),
       updatedAt: createdAt.toISOString(),
     });
