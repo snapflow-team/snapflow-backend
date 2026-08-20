@@ -19,5 +19,5 @@ export type ChatListRow = {
   peerLastReadMessageId: number | null;
   messageDeliveredToPeer: boolean | null;
   unreadCount: number;
+  muted: boolean;
 };
-
