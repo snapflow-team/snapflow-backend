@@ -15,12 +15,14 @@ import { DeleteMessageUseCase } from './application/usecases/delete-message.usec
 import { EditMessageUseCase } from './application/usecases/edit-message.usecase';
 import { MarkChatReadUseCase } from './application/usecases/mark-chat-read.usecase';
 import { MarkMessageDeliveredUseCase } from './application/usecases/mark-message-delivered.usecase';
+import { MuteChatUseCase } from './application/usecases/mute-chat.usecase';
 import { PresenceConnectUseCase } from './application/usecases/presence-connect.usecase';
 import { PresenceDisconnectUseCase } from './application/usecases/presence-disconnect.usecase';
 import { PresenceHeartbeatUseCase } from './application/usecases/presence-heartbeat.usecase';
 import { SendMessageUseCase } from './application/usecases/send-message.usecase';
 import { TypingStartUseCase } from './application/usecases/typing-start.usecase';
 import { TypingStopUseCase } from './application/usecases/typing-stop.usecase';
+import { UnmuteChatUseCase } from './application/usecases/unmute-chat.usecase';
 import { UpdateActivityStatusUseCase } from './application/usecases/update-activity-status.usecase';
 import { ChatMuteRepository } from './infrastructure/chat-mute.repository';
 import { ChatsQueryRepository } from './infrastructure/query/chats.query-repository';
@@ -37,6 +39,8 @@ const useCases = [
   GetOrCreateChatUseCase,
   MarkChatReadUseCase,
   MarkMessageDeliveredUseCase,
+  MuteChatUseCase,
+  UnmuteChatUseCase,
   TypingStartUseCase,
   TypingStopUseCase,
   EditMessageUseCase,
