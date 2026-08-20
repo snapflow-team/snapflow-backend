@@ -160,7 +160,14 @@ export class ChatsQueryRepository {
               crs.last_read_message_id IS NULL
               OR um.id > crs.last_read_message_id
             )
-        ) AS "unreadCount"
+        ) AS "unreadCount",
+        EXISTS (
+          SELECT 1
+          FROM chat_mute_settings cms
+          WHERE cms.chat_id = c.id
+            AND cms.user_id = ${userId}
+            AND (cms.muted_until IS NULL OR cms.muted_until > NOW())
+        ) AS muted
       FROM chats c
       LEFT JOIN LATERAL (
         SELECT
