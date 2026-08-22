@@ -12,8 +12,6 @@ import {
 import { Server, Socket } from 'socket.io';
 import type { MessageDeliveredPayload, TypingInboundPayload, } from '@contracts/messenger';
 import { MessengerWsEvent } from '@contracts/messenger';
-import { AuthTokenService } from '../../../auth/application/services/auth-token.service';
-import { PayloadAccessToken } from '../../../auth/application/types/payload-access-token.type';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
 import { MarkMessageDeliveredCommand } from '../../application/commands/mark-message-delivered.command';
@@ -22,6 +20,7 @@ import { PresenceDisconnectCommand } from '../../presence/application/commands/p
 import { PresenceHeartbeatCommand } from '../../presence/application/commands/presence-heartbeat.command';
 import { TypingStartCommand } from '../../presence/application/commands/typing-start.command';
 import { TypingStopCommand } from '../../presence/application/commands/typing-stop.command';
+import { SocketAuthService } from '../services/socket-auth.service';
 import { SocketDataType } from '../types/socket-data.type';
 
 @WebSocketGateway({
@@ -35,7 +34,7 @@ export class MessengerWebSocketGateway
   private readonly logger: ContextLogger;
 
   constructor(
-    private readonly authTokenService: AuthTokenService,
+    private readonly socketAuthService: SocketAuthService,
     private readonly commandBus: CommandBus,
     loggerFactory: LoggerFactory,
   ) {
@@ -117,7 +116,7 @@ export class MessengerWebSocketGateway
     this.logger.log('Messenger websocket gateway successfully started');
 
     server.use((socket, next) => {
-      void this.authorizeSocket(socket, next);
+      void this.socketAuthService.authorizeSocket(socket, next);
     });
   }
 
@@ -128,7 +127,7 @@ export class MessengerWebSocketGateway
       const userId: number | undefined = client.data.userId;
       await client.join(`user:${userId}`);
 
-      this.setupTokenExpiry(client, client.data.exp);
+      this.socketAuthService.setupTokenExpiry(client, client.data.exp);
 
       if (userId) {
         try {
@@ -154,7 +153,7 @@ export class MessengerWebSocketGateway
 
   async handleDisconnect(client: Socket<any, any, any, SocketDataType>) {
     this.logger.log(`Client disconnected ${client.id}`);
-    this.clearClientTimer(client);
+    this.socketAuthService.clearClientTimer(client);
 
     const userId: number | undefined = client.data.userId;
     if (!userId) {
@@ -169,94 +168,6 @@ export class MessengerWebSocketGateway
         `presence.disconnect failed for user:${userId}: ${errorMessage}`,
         this.handleDisconnect.name,
       );
-    }
-  }
-
-  private async authorizeSocket(
-    socket: Socket<any, any, any, SocketDataType>,
-    next: (err?: Error) => void,
-  ): Promise<void> {
-    try {
-      const rawToken: string | undefined = this.extractToken(socket);
-      if (!rawToken) {
-        return next(new Error('Unauthorized: No token provided'));
-      }
-
-      const token: string | null = this.normalizeAccessToken(rawToken);
-      if (!token) {
-        return next(new Error('Unauthorized: Invalid token'));
-      }
-
-      const payload: PayloadAccessToken = this.authTokenService.verifyAndDecodeAccessToken(token);
-
-      if (!Number.isInteger(payload.userId) || payload.userId <= 0) {
-        throw new Error('Invalid user id from token');
-      }
-
-      socket.data.userId = payload.userId;
-      socket.data.exp = payload.exp;
-      next();
-    } catch (error) {
-      const message: string = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.warn(`Socket auth failed: ${message}`);
-      next(new Error('Unauthorized: Invalid token'));
-    }
-  }
-
-  private extractToken(socket: Socket<any, any, any, SocketDataType>): string | undefined {
-    const authToken: unknown = socket.handshake.auth?.token;
-    const headerToken: string | string[] | undefined = socket.handshake.headers.token;
-    const token: string | undefined =
-      typeof authToken === 'string'
-        ? authToken
-        : typeof headerToken === 'string'
-          ? headerToken
-          : Array.isArray(headerToken)
-            ? headerToken[0]
-            : undefined;
-
-    if (!token) {
-      return undefined;
-    }
-
-    const trimmedToken: string = token.trim();
-    return trimmedToken === '' ? undefined : trimmedToken;
-  }
-
-  private normalizeAccessToken(token: string): string | null {
-    const trimmedToken: string = token.trim();
-    if (trimmedToken === '') {
-      return null;
-    }
-
-    const match = trimmedToken.match(/^Bearer\s+(\S+)$/i);
-
-    return match?.[1] ?? trimmedToken;
-  }
-
-  private setupTokenExpiry(client: Socket<any, any, any, SocketDataType>, exp: number | undefined) {
-    if (!exp) {
-      client.disconnect(true);
-      return;
-    }
-    const disconnectAt: number = Math.max(0, Math.floor(exp * 1000 - Date.now()));
-
-    if (disconnectAt <= 0) {
-      client.disconnect(true);
-      return;
-    }
-
-    client.data.timer = setTimeout(() => {
-      client.data.timer = undefined;
-      client.emit('token.expired');
-      client.disconnect(true);
-    }, disconnectAt);
-  }
-
-  private clearClientTimer(client: Socket<any, any, any, SocketDataType>) {
-    if (client.data.timer) {
-      clearTimeout(client.data.timer);
-      client.data.timer = undefined;
     }
   }
 

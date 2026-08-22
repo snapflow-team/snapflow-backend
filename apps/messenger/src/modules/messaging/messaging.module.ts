@@ -38,6 +38,7 @@ import { PresenceRedisRepository } from './presence/infrastructure/presence-redi
 import { PresenceRepository } from './presence/infrastructure/presence.repository';
 import { MessengerWebSocketGateway } from './realtime/gateway/messenger-websocket.gateway';
 import { MessengerWebSocketService } from './realtime/services/messenger-websocket.service';
+import { SocketAuthService } from './realtime/services/socket-auth.service';
 
 const useCases = [
   SendMessageUseCase,
@@ -75,7 +76,7 @@ const notificationServices = [
   NewMessageNotificationDispatcherService,
 ];
 const guards = [AccessTokenGuard, ChatMembershipGuard];
-const websocketProviders = [MessengerWebSocketGateway, MessengerWebSocketService];
+const websocketProviders = [MessengerWebSocketGateway, MessengerWebSocketService, SocketAuthService];
 const presenceHelpers = [PresenceBroadcastHelper];
 
 @Module({
