@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PushSubscriptionsRepository } from '../../push/push-subscriptions.repository';
+import { PushSubscriptionsRepository } from '../../push/repositories/push-subscriptions.repository';
 import { DeletePushSubscriptionApplicationDto } from '../dto/delete-push-subscription.application-dto';
 
 export class DeletePushSubscriptionCommand {
