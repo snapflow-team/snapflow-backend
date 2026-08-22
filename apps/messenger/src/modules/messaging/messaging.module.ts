@@ -7,6 +7,7 @@ import { MessagingController } from './api/messaging.controller';
 import { PresenceBroadcastHelper } from './application/helpers/presence-broadcast.helper';
 import { GetChatMessagesQueryHandler } from './application/queries/get-chat-messages.query-handler';
 import { GetPresenceQueryHandler } from './application/queries/get-presence.query-handler';
+import { GetUnreadTotalQueryHandler } from './application/queries/get-unread-total.query-handler';
 import { GetUserChatsQueryHandler } from './application/queries/get-user-chats.query-handler';
 import { NewMessageNotificationDispatcherService } from './application/services/new-message-notification-dispatcher.service';
 import { NewMessageNotificationPolicy } from './application/services/new-message-notification.policy';
@@ -50,7 +51,12 @@ const useCases = [
   PresenceHeartbeatUseCase,
   UpdateActivityStatusUseCase,
 ];
-const queries = [GetUserChatsQueryHandler, GetChatMessagesQueryHandler, GetPresenceQueryHandler];
+const queries = [
+  GetUserChatsQueryHandler,
+  GetChatMessagesQueryHandler,
+  GetPresenceQueryHandler,
+  GetUnreadTotalQueryHandler,
+];
 const repositories = [
   ChatsRepository,
   ChatsQueryRepository,
