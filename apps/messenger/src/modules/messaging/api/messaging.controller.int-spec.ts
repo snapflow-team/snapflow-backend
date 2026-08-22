@@ -235,6 +235,90 @@ describe('MessagingController (Integration)', () => {
       .expect(401);
   });
 
+  describe('GET /messenger/unread-count', () => {
+    it('должен вернуть суммарный бейдж, согласованный с суммой unreadCount из списка чатов', async () => {
+      const chatWithUser2 = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '2' })
+        .expect(200);
+
+      const chatWithUser3 = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({ interlocutorId: '3' })
+        .expect(200);
+
+      const chatId2 = Number(chatWithUser2.body.id);
+      const chatId3 = Number(chatWithUser3.body.id);
+
+      const messageFrom2 = await appTestManager.prisma.message.create({
+        data: {
+          chatId: chatId2,
+          senderId: 2,
+          text: 'from-2',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+      await appTestManager.prisma.message.create({
+        data: {
+          chatId: chatId3,
+          senderId: 3,
+          text: 'from-3-a',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+      const messageFrom3b = await appTestManager.prisma.message.create({
+        data: {
+          chatId: chatId3,
+          senderId: 3,
+          text: 'from-3-b',
+          clientMessageId: crypto.randomUUID(),
+        },
+      });
+
+      await appTestManager.prisma.chat.update({
+        where: { id: chatId2 },
+        data: {
+          lastMessageId: messageFrom2.id,
+          lastMessageAt: messageFrom2.createdAt,
+        },
+      });
+      await appTestManager.prisma.chat.update({
+        where: { id: chatId3 },
+        data: {
+          lastMessageId: messageFrom3b.id,
+          lastMessageAt: messageFrom3b.createdAt,
+        },
+      });
+
+      const chatsResponse = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      const unreadSumFromChats: number = (
+        chatsResponse.body.items as Array<{ unreadCount: number }>
+      ).reduce((sum, chat) => sum + chat.unreadCount, 0);
+
+      expect(unreadSumFromChats).toBe(3);
+
+      const unreadCountResponse = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/unread-count`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(unreadCountResponse.body).toEqual({ total: 3 });
+      expect(unreadCountResponse.body.total).toBe(unreadSumFromChats);
+    });
+
+    it('должен вернуть 401 без authorization header', async () => {
+      await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/unread-count`)
+        .expect(401);
+    });
+  });
+
   describe('GET /messenger/chats', () => {
     async function seedChatWithLastMessage(
       participantAId: number,
@@ -327,9 +411,7 @@ describe('MessagingController (Integration)', () => {
 
       expect(collectedIds).toHaveLength(5);
       expect(collectedIds).toEqual([...new Set(collectedIds)]);
-      expect(collectedIds).toEqual(
-        [...chatIds].sort((a, b) => b - a).map(String),
-      );
+      expect(collectedIds).toEqual([...chatIds].sort((a, b) => b - a).map(String));
     });
   });
 
@@ -386,9 +468,7 @@ describe('MessagingController (Integration)', () => {
 
       expect(collectedIds).toHaveLength(7);
       expect(collectedIds).toEqual([...new Set(collectedIds)]);
-      expect(collectedIds.map(Number)).toEqual(
-        [...expectedIds].sort((a, b) => b - a),
-      );
+      expect(collectedIds.map(Number)).toEqual([...expectedIds].sort((a, b) => b - a));
     });
 
     it('должен возвращать replyTo preview для сообщений с replyToMessageId', async () => {
@@ -553,6 +633,13 @@ describe('MessagingController (Integration)', () => {
         expect.objectContaining({
           chatId: String(chatId),
           unreadCount: expect.any(Number),
+        }),
+      );
+      expect(emitToUserSpy).toHaveBeenCalledWith(
+        1,
+        MessengerWsEvent.UnreadUpdated,
+        expect.objectContaining({
+          total: 0,
         }),
       );
 

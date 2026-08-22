@@ -24,6 +24,7 @@ import { UnmuteChatCommand } from '../application/commands/unmute-chat.command';
 import { UpdateActivityStatusCommand } from '../application/commands/update-activity-status.command';
 import { GetChatMessagesQuery } from '../application/queries/get-chat-messages.query-handler';
 import { GetPresenceQuery } from '../application/queries/get-presence.query-handler';
+import { GetUnreadTotalQuery } from '../application/queries/get-unread-total.query-handler';
 import { GetUserChatsQuery } from '../application/queries/get-user-chats.query-handler';
 import { GetOrCreateChatCommand } from '../application/usecases/get-or-create-chat.usecase';
 import { MarkChatReadCommand } from '../application/usecases/mark-chat-read.usecase';
@@ -44,6 +45,7 @@ import { EditMessageSwagger } from './swagger/edit-message.swagger';
 import { GetChatMessagesSwagger } from './swagger/get-chat-messages.swagger';
 import { GetOrCreateChatSwagger } from './swagger/get-or-create-chat.swagger';
 import { GetPresenceSwagger } from './swagger/get-presence.swagger';
+import { GetUnreadCountSwagger } from './swagger/get-unread-count.swagger';
 import { GetUserChatsSwagger } from './swagger/get-user-chats.swagger';
 import { MarkChatReadSwagger } from './swagger/mark-chat-read.swagger';
 import { MuteChatSwagger } from './swagger/mute-chat.swagger';
@@ -54,6 +56,7 @@ import { ChatMessagesPageViewDto } from './view-dto/chat-messages-page.view-dto'
 import { ChatViewDto } from './view-dto/chat.view-dto';
 import { MessageViewDto } from './view-dto/message.view-dto';
 import { PresenceViewDto } from './view-dto/presence.view-dto';
+import { UnreadCountViewDto } from './view-dto/unread-count.view-dto';
 import { UserChatsPageViewDto } from './view-dto/user-chats-page.view-dto';
 
 @ApiTags('Messenger')
@@ -84,6 +87,16 @@ export class MessagingController {
     @ExtractUserFromRequest() { id: userId }: UserContextDto,
   ): Promise<void> {
     await this.commandBus.execute(new UpdateActivityStatusCommand({ userId, showActivityStatus }));
+  }
+
+  @Get('unread-count')
+  @GetUnreadCountSwagger()
+  async getUnreadCount(
+    @ExtractUserFromRequest() { id: userId }: UserContextDto,
+  ): Promise<UnreadCountViewDto> {
+    return this.queryBus.execute<GetUnreadTotalQuery, UnreadCountViewDto>(
+      new GetUnreadTotalQuery(userId),
+    );
   }
 
   @Get('chats')
