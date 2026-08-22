@@ -11,8 +11,8 @@ import { CursorPayload, decodeCursor } from '../../../../../../../libs/common/ut
 import { PrismaService } from '../../../database/prisma.service';
 import { GetChatMessagesQueryParamsDto } from '../../api/input-dto/get-chat-messages.query-params.dto';
 import { ChatMessagesPageViewDto } from '../../api/view-dto/chat-messages-page.view-dto';
-import { MessageViewDto } from '../../api/view-dto/message.view-dto';
-import { ReplyPreviewSource } from '../../api/view-dto/reply-preview.view-dto';
+import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
+import { ReplyPreviewSource } from '../../sharing/api/view-dto/reply-preview.view-dto';
 
 @Injectable()
 export class MessagesQueryRepository {

@@ -21,7 +21,7 @@ import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-to
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { DeleteMessageScope } from '../../api/input-dto/delete-message.query-dto';
-import { MessageViewDto } from '../../api/view-dto/message.view-dto';
+import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { MessengerWebSocketService } from '../services/messenger-websocket.service';
 
 describe('MessengerWebSocketGateway (Integration)', () => {

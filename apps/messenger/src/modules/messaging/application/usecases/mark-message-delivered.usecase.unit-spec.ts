@@ -6,7 +6,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '../../../../common/exceptions/domain-exceptions';
-import { MessageViewDto } from '../../api/view-dto/message.view-dto';
+import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
 import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';

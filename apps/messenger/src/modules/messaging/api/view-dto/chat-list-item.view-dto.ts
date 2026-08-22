@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ChatListRow } from '../../infrastructure/types/chat-list-row.type';
-import { MessageViewDto } from './message.view-dto';
+import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 
 type ChatListRowWithMessage = ChatListRow & {
   messageId: number;

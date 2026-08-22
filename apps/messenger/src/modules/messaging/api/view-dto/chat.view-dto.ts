@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MessageViewDto } from './message.view-dto';
+import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { ChatWithLastMessage } from '../../infrastructure/types/chat-with-last-message.type';
 
 export class ChatViewDto {

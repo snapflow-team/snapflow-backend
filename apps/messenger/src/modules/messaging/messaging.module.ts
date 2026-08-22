@@ -2,8 +2,12 @@ import { Module } from '@nestjs/common';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { OutboxModule } from '../outbox/outbox.module';
 import { RabbitMQModule } from '../rabbitmq/rabbitmq.module';
-import { ChatMembershipGuard } from './api/guards/chat-membership.guard';
-import { MessagingController } from './api/messaging.controller';
+import { ChatSettingsController } from './chat-settings/api/chat-settings.controller';
+import { ChatsController } from './chats/api/chats.controller';
+import { MessagesController } from './messages/api/messages.controller';
+import { PresenceController } from './presence/api/presence.controller';
+import { ReadStateController } from './read-state/api/read-state.controller';
+import { ChatMembershipGuard } from './sharing/api/guards/chat-membership.guard';
 import { PresenceBroadcastHelper } from './application/helpers/presence-broadcast.helper';
 import { GetChatMessagesQueryHandler } from './application/queries/get-chat-messages.query-handler';
 import { GetPresenceQueryHandler } from './application/queries/get-presence.query-handler';
@@ -76,7 +80,13 @@ const presenceHelpers = [PresenceBroadcastHelper];
 
 @Module({
   imports: [OutboxModule, RabbitMQModule],
-  controllers: [MessagingController],
+  controllers: [
+    ChatsController,
+    MessagesController,
+    ReadStateController,
+    ChatSettingsController,
+    PresenceController,
+  ],
   providers: [
     ...useCases,
     ...queries,

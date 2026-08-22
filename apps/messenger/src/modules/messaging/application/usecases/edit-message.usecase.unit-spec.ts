@@ -9,7 +9,7 @@ import {
 } from '../../../../common/exceptions/domain-exceptions';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { BusinessRulesSettings } from '../../../../setup/configuration/business-rules-settings';
-import { MessageViewDto } from '../../api/view-dto/message.view-dto';
+import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { EditMessageCommand } from '../commands/edit-message.command';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';

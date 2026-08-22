@@ -13,7 +13,7 @@ import { AccessTokenTestHelper } from '../../../test/helpers/access-token-test.h
 import { AppTestManager } from '../../../test/managers/app.test-manager';
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
-import { MessageViewDto } from './api/view-dto/message.view-dto';
+import { MessageViewDto } from './sharing/api/view-dto/message.view-dto';
 
 describe('Messenger realtime scaling (Integration)', () => {
   let instanceA: AppTestManager;

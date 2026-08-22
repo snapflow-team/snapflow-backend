@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MessengerWsEvent } from '@contracts/messenger';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
-import { MessageViewDto } from '../../api/view-dto/message.view-dto';
+import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { MessengerWebSocketGateway } from '../gateway/messenger-websocket.gateway';
 
 @Injectable()
