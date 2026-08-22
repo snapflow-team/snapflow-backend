@@ -14,12 +14,12 @@ import { ApiTags } from '@nestjs/swagger';
 import { ExtractUserFromRequest } from '../../../auth/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../../auth/guards/dto/user-context.dto';
 import { AccessTokenGuard } from '../../../auth/guards/access-token.guard';
-import { MuteChatCommand } from '../../application/commands/mute-chat.command';
-import { UnmuteChatCommand } from '../../application/commands/unmute-chat.command';
+import { MuteChatCommand } from '../application/commands/mute-chat.command';
+import { UnmuteChatCommand } from '../application/commands/unmute-chat.command';
 import { ChatMembershipGuard } from '../../sharing/api/guards/chat-membership.guard';
-import { MuteChatInputDto } from '../../api/input-dto/mute-chat.input-dto';
-import { MuteChatSwagger } from '../../api/swagger/mute-chat.swagger';
-import { UnmuteChatSwagger } from '../../api/swagger/unmute-chat.swagger';
+import { MuteChatInputDto } from './input-dto/mute-chat.input-dto';
+import { MuteChatSwagger } from './swagger/mute-chat.swagger';
+import { UnmuteChatSwagger } from './swagger/unmute-chat.swagger';
 
 @ApiTags('Messenger')
 @Controller('messenger')

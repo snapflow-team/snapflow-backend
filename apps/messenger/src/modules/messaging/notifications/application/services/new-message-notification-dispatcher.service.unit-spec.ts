@@ -15,7 +15,7 @@ import { OutboxProcessing } from '../../../../outbox/constants/outbox.constants'
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
 import { RabbitMQPublisherService } from '../../../../rabbitmq/rabbitmq-publisher.service';
 import { BusinessRulesSettings } from '../../../../../setup/configuration/business-rules-settings';
-import { ChatsQueryRepository } from '../../../infrastructure/query/chats.query-repository';
+import { ChatsQueryRepository } from '../../../chats/infrastructure/query/chats.query-repository';
 import { NewMessageNotificationDispatcherService } from './new-message-notification-dispatcher.service';
 import { NewMessageNotificationPolicy } from './new-message-notification.policy';
 

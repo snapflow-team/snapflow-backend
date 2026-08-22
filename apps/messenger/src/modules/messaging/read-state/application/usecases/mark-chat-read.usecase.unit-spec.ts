@@ -8,9 +8,9 @@ import {
 } from '@contracts/messenger';
 import { MessengerResultCode } from '../../../../../common/notification/messenger-result-code';
 import { NotFoundException } from '../../../../../common/exceptions/domain-exceptions';
-import { ChatsRepository } from '../../../infrastructure/chats.repository';
-import { ChatsQueryRepository } from '../../../infrastructure/query/chats.query-repository';
-import { MessagesRepository } from '../../../infrastructure/messages.repository';
+import { ChatsRepository } from '../../../chats/infrastructure/chats.repository';
+import { ChatsQueryRepository } from '../../../chats/infrastructure/query/chats.query-repository';
+import { MessagesRepository } from '../../../messages/infrastructure/messages.repository';
 import { ChatReadStateRepository } from '../../infrastructure/chat-read-state.repository';
 import { MessengerWebSocketService } from '../../../realtime/services/messenger-websocket.service';
 import { MarkChatReadCommand, MarkChatReadUseCase } from './mark-chat-read.usecase';

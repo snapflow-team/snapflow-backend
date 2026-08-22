@@ -6,8 +6,8 @@ import {
   UnauthorizedException,
 } from '../../../../../common/exceptions/domain-exceptions';
 import { UserContextDto } from '../../../../auth/guards/dto/user-context.dto';
-import { ChatsRepository } from '../../../infrastructure/chats.repository';
-import { MessagesRepository } from '../../../infrastructure/messages.repository';
+import { ChatsRepository } from '../../../chats/infrastructure/chats.repository';
+import { MessagesRepository } from '../../../messages/infrastructure/messages.repository';
 import { Message } from '@generated/prisma-messenger';
 
 @Injectable()

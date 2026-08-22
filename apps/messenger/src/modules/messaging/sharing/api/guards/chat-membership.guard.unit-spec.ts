@@ -6,8 +6,8 @@ import {
   ForbiddenException,
   UnauthorizedException,
 } from '../../../../../common/exceptions/domain-exceptions';
-import { ChatsRepository } from '../../../infrastructure/chats.repository';
-import { MessagesRepository } from '../../../infrastructure/messages.repository';
+import { ChatsRepository } from '../../../chats/infrastructure/chats.repository';
+import { MessagesRepository } from '../../../messages/infrastructure/messages.repository';
 import { ChatMembershipGuard } from './chat-membership.guard';
 
 describe('ChatMembershipGuard (unit)', () => {

@@ -12,9 +12,9 @@ import {
   NotFoundException,
 } from '../../../../../common/exceptions/domain-exceptions';
 import { MarkChatReadApplicationDto } from '../dto/mark-chat-read.application-dto';
-import { ChatsRepository } from '../../../infrastructure/chats.repository';
-import { ChatsQueryRepository } from '../../../infrastructure/query/chats.query-repository';
-import { MessagesRepository } from '../../../infrastructure/messages.repository';
+import { ChatsRepository } from '../../../chats/infrastructure/chats.repository';
+import { ChatsQueryRepository } from '../../../chats/infrastructure/query/chats.query-repository';
+import { MessagesRepository } from '../../../messages/infrastructure/messages.repository';
 import { ChatReadStateRepository } from '../../infrastructure/chat-read-state.repository';
 import { MessengerWebSocketService } from '../../../realtime/services/messenger-websocket.service';
 

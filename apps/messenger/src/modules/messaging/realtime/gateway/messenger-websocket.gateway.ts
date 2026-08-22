@@ -14,7 +14,7 @@ import type { MessageDeliveredPayload, TypingInboundPayload, } from '@contracts/
 import { MessengerWsEvent } from '@contracts/messenger';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
-import { MarkMessageDeliveredCommand } from '../../application/commands/mark-message-delivered.command';
+import { MarkMessageDeliveredCommand } from '../../messages/application/commands/mark-message-delivered.command';
 import { PresenceConnectCommand } from '../../presence/application/commands/presence-connect.command';
 import { PresenceDisconnectCommand } from '../../presence/application/commands/presence-disconnect.command';
 import { PresenceHeartbeatCommand } from '../../presence/application/commands/presence-heartbeat.command';

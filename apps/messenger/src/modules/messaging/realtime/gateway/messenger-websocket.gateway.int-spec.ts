@@ -20,7 +20,7 @@ import { AppTestManager } from '../../../../../test/managers/app.test-manager';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
-import { DeleteMessageScope } from '../../api/input-dto/delete-message.query-dto';
+import { DeleteMessageScope } from '../../messages/api/input-dto/delete-message.query-dto';
 import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { MessengerWebSocketService } from '../services/messenger-websocket.service';
 
