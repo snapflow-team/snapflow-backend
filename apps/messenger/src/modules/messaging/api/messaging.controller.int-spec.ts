@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { OutboxEventStatus, OutboxEventType } from '@generated/prisma-messenger';
 import { Redis } from 'ioredis';
 import request from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../../../libs/common/constants/global-prefix.constant';
@@ -10,6 +11,8 @@ import { AppTestManager } from '../../../../test/managers/app.test-manager';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../core/providers/provide-tokens/redis-client.inject-token';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
+import { NewMessageNotificationDispatcherService } from '../application/services/new-message-notification-dispatcher.service';
+import { RabbitMQPublisherService } from '../../rabbitmq/rabbitmq-publisher.service';
 import { MessengerWebSocketService } from '../websocket/services/messenger-websocket.service';
 
 describe('MessagingController (Integration)', () => {
@@ -1368,6 +1371,253 @@ describe('MessagingController (Integration)', () => {
 
       expect(responseAsUser2.body.id).toBe(responseAsUser1.body.id);
       expect(await appTestManager.prisma.chat.count()).toBe(1);
+    });
+  });
+
+  describe('outbox after POST /messenger/messages', () => {
+    it('должен записать NEW_MESSAGE_NOTIFICATION в outbox_events с отложенным availableAt', async () => {
+      const before = Date.now();
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({
+          receiverId: '2',
+          text: 'Hello!',
+          clientMessageId,
+        })
+        .expect(201);
+
+      const events = await appTestManager.prisma.outboxEvent.findMany();
+
+      expect(events).toHaveLength(1);
+      expect(events[0]).toEqual(
+        expect.objectContaining({
+          type: OutboxEventType.NEW_MESSAGE_NOTIFICATION,
+          status: OutboxEventStatus.PENDING,
+          payload: {
+            chatId: 1,
+            messageId: 1,
+            senderId: 1,
+            recipientId: 2,
+          },
+        }),
+      );
+      expect(events[0].availableAt.getTime()).toBeGreaterThanOrEqual(before + 19_000);
+    });
+
+    it('не должен создавать повторное outbox-событие при идемпотентном POST', async () => {
+      const payload = {
+        receiverId: '2',
+        text: 'Hello!',
+        clientMessageId,
+      };
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send(payload)
+        .expect(201);
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send(payload)
+        .expect(201);
+
+      expect(await appTestManager.prisma.outboxEvent.count()).toBe(1);
+    });
+  });
+
+  describe('POST/DELETE /messenger/chats/:chatId/mute', () => {
+    async function createChatBetween(userId: number, interlocutorId: number): Promise<number> {
+      const response = await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(userId)}`)
+        .send({ interlocutorId: String(interlocutorId) })
+        .expect(200);
+
+      return Number(response.body.id);
+    }
+
+    it('должен замутить чат бессрочно, вернуть muted=true в списке и снять mute', async () => {
+      const chatId = await createChatBetween(1, 2);
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/mute`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .send({})
+        .expect(204);
+
+      const muteRow = await appTestManager.prisma.chatMuteSettings.findUnique({
+        where: { chatId_userId: { chatId, userId: 2 } },
+      });
+      expect(muteRow).toEqual(
+        expect.objectContaining({
+          chatId,
+          userId: 2,
+          mutedUntil: null,
+        }),
+      );
+
+      const chatsForUser2 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(200);
+
+      expect(chatsForUser2.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(chatId),
+          muted: true,
+        }),
+      );
+
+      const chatsForUser1 = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .expect(200);
+
+      expect(chatsForUser1.body.items[0]).toEqual(
+        expect.objectContaining({
+          id: String(chatId),
+          muted: false,
+        }),
+      );
+
+      await request(appTestManager.getServer())
+        .delete(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/mute`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(204);
+
+      expect(
+        await appTestManager.prisma.chatMuteSettings.findUnique({
+          where: { chatId_userId: { chatId, userId: 2 } },
+        }),
+      ).toBeNull();
+
+      const chatsAfterUnmute = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(200);
+
+      expect(chatsAfterUnmute.body.items[0].muted).toBe(false);
+    });
+
+    it('должен сохранить временный mute по mutedUntil', async () => {
+      const chatId = await createChatBetween(1, 2);
+      const mutedUntil = '2026-08-23T12:00:00.000Z';
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/mute`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .send({ mutedUntil })
+        .expect(204);
+
+      const muteRow = await appTestManager.prisma.chatMuteSettings.findUnique({
+        where: { chatId_userId: { chatId, userId: 2 } },
+      });
+
+      expect(muteRow?.mutedUntil?.toISOString()).toBe(mutedUntil);
+    });
+
+    it('не должен слать пуш при mute, но должен доставить сообщение и учесть unread', async () => {
+      const chatId = await createChatBetween(1, 2);
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/mute`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .send({})
+        .expect(204);
+
+      const publishSpy = jest.spyOn(
+        appTestManager.getApp().get(RabbitMQPublisherService),
+        'publish',
+      );
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+        .send({
+          receiverId: '2',
+          text: 'Muted hello',
+          clientMessageId,
+        })
+        .expect(201);
+
+      const history = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/messages`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(200);
+
+      expect(history.body.items[0]).toEqual(
+        expect.objectContaining({
+          text: 'Muted hello',
+          senderId: '1',
+        }),
+      );
+
+      const unread = await request(appTestManager.getServer())
+        .get(`/${GLOBAL_PREFIX}/messenger/unread-count`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
+        .expect(200);
+
+      expect(unread.body).toEqual({ total: 1 });
+
+      const pendingEvent = await appTestManager.prisma.outboxEvent.findFirst();
+      expect(pendingEvent).toEqual(
+        expect.objectContaining({
+          status: OutboxEventStatus.PENDING,
+          type: OutboxEventType.NEW_MESSAGE_NOTIFICATION,
+        }),
+      );
+
+      const dispatcher = appTestManager
+        .getApp()
+        .get(NewMessageNotificationDispatcherService);
+
+      await dispatcher.dispatchPendingNotifications();
+
+      expect(await appTestManager.prisma.outboxEvent.findFirst()).toEqual(
+        expect.objectContaining({
+          id: pendingEvent!.id,
+          status: OutboxEventStatus.PENDING,
+        }),
+      );
+
+      await appTestManager.prisma.outboxEvent.update({
+        where: { id: pendingEvent!.id },
+        data: { availableAt: new Date() },
+      });
+
+      await dispatcher.dispatchPendingNotifications();
+
+      expect(publishSpy).not.toHaveBeenCalled();
+      expect(await appTestManager.prisma.outboxEvent.findFirst()).toEqual(
+        expect.objectContaining({
+          id: pendingEvent!.id,
+          status: OutboxEventStatus.SKIPPED,
+          error: 'chat_muted',
+        }),
+      );
+
+      publishSpy.mockRestore();
+    });
+
+    it('должен вернуть 403, если пользователь не участник чата', async () => {
+      const chatId = await createChatBetween(1, 2);
+
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats/${chatId}/mute`)
+        .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(3)}`)
+        .send({})
+        .expect(403);
+    });
+
+    it('должен вернуть 401 без authorization header', async () => {
+      await request(appTestManager.getServer())
+        .post(`/${GLOBAL_PREFIX}/messenger/chats/1/mute`)
+        .send({})
+        .expect(401);
     });
   });
 });

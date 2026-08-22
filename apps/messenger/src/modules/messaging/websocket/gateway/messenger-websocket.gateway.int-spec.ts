@@ -7,10 +7,12 @@ import request from 'supertest';
 import { Redis } from 'ioredis';
 import { GLOBAL_PREFIX } from '../../../../../../../libs/common/constants/global-prefix.constant';
 import type {
+  ChatUpdatedPayload,
   MessageDeletedPayload,
   MessageReadPayload,
   PresenceUpdatedPayload,
   TypingOutboundPayload,
+  UnreadUpdatedPayload,
 } from '../../../../../../../libs/contracts/messenger';
 import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
 import { AccessTokenTestHelper } from '../../../../../test/helpers/access-token-test.helper';
@@ -220,6 +222,54 @@ describe('MessengerWebSocketGateway (Integration)', () => {
     await expect(receivedMessage).resolves.toEqual(payload);
 
     socket.disconnect();
+  });
+
+  it('должен доставить chat.updated и unread.updated получателю при новом сообщении', async () => {
+    const receiverToken = accessTokenTestHelper.signAccessToken(2);
+    const socket = createSocket(receiverToken);
+
+    await connectSocket(socket);
+
+    const receivedChatUpdated = new Promise<ChatUpdatedPayload>((resolve) => {
+      socket.on(MessengerWsEvent.ChatUpdated, (payload: ChatUpdatedPayload) => resolve(payload));
+    });
+    const receivedUnreadUpdated = new Promise<UnreadUpdatedPayload>((resolve) => {
+      socket.on(MessengerWsEvent.UnreadUpdated, (payload: UnreadUpdatedPayload) =>
+        resolve(payload),
+      );
+    });
+    const receivedMessageNew = new Promise<MessageViewDto>((resolve) => {
+      socket.on(MessengerWsEvent.MessageNew, (payload: MessageViewDto) => resolve(payload));
+    });
+
+    const response = await request(appTestManager.getServer())
+      .post(`/${GLOBAL_PREFIX}/messenger/messages`)
+      .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
+      .send({
+        receiverId: '2',
+        text: 'Hello with badges',
+        clientMessageId: crypto.randomUUID(),
+      })
+      .expect(201);
+
+    await expect(receivedMessageNew).resolves.toEqual(
+      expect.objectContaining({
+        id: response.body.id,
+        chatId: response.body.chatId,
+        senderId: '1',
+        receiverId: '2',
+        text: 'Hello with badges',
+      }),
+    );
+    await expect(receivedChatUpdated).resolves.toEqual({
+      chatId: response.body.chatId,
+      unreadCount: 1,
+    });
+    await expect(receivedUnreadUpdated).resolves.toEqual({
+      total: 1,
+    });
+
+    await disconnectSocket(socket);
   });
 
   it('должен доставить message.read в комнату получателя через emitToUser', async () => {

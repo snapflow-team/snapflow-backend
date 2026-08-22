@@ -74,4 +74,31 @@ describe('ChatMuteRepository (unit)', () => {
 
     await expect(repository.isMuted(10, 2)).resolves.toBe(false);
   });
+
+  it('upsert: создаёт или обновляет mute-настройку', async () => {
+    const mutedUntil = new Date('2026-08-23T12:00:00.000Z');
+    prismaMock.chatMuteSettings.upsert.mockResolvedValue({
+      chatId: 10,
+      userId: 2,
+      mutedUntil,
+    });
+
+    await repository.upsert(10, 2, mutedUntil);
+
+    expect(prismaMock.chatMuteSettings.upsert).toHaveBeenCalledWith({
+      where: { chatId_userId: { chatId: 10, userId: 2 } },
+      create: { chatId: 10, userId: 2, mutedUntil },
+      update: { mutedUntil },
+    });
+  });
+
+  it('remove: удаляет mute-настройку', async () => {
+    prismaMock.chatMuteSettings.deleteMany.mockResolvedValue({ count: 1 });
+
+    await repository.remove(10, 2);
+
+    expect(prismaMock.chatMuteSettings.deleteMany).toHaveBeenCalledWith({
+      where: { chatId: 10, userId: 2 },
+    });
+  });
 });

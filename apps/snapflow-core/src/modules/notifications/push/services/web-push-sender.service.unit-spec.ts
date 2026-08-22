@@ -136,6 +136,21 @@ describe('WebPushSenderService (Unit)', () => {
       expect(loggerMock.error).not.toHaveBeenCalled();
     });
 
+    it('должен удалить подписку при ответе 404', async () => {
+      pushSubscriptionsRepositoryMock.findByUserId.mockResolvedValue([subscription]);
+      (webpush.sendNotification as jest.Mock).mockRejectedValue({ statusCode: 404 });
+
+      await service.sendToUser(42, payload);
+
+      expect(pushSubscriptionsRepositoryMock.deleteByEndpointOnly).toHaveBeenCalledWith(
+        subscription.endpoint,
+      );
+      expect(loggerMock.warn).toHaveBeenCalledWith(
+        `Removed expired push subscription (status 404): ${subscription.endpoint}`,
+        'sendToUser',
+      );
+    });
+
     it('должен логировать ошибку без удаления подписки при других статусах', async () => {
       pushSubscriptionsRepositoryMock.findByUserId.mockResolvedValue([subscription]);
       const error = { statusCode: 500, message: 'Internal error' };
