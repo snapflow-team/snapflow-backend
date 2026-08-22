@@ -7,6 +7,7 @@ import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { MarkMessageDeliveredCommand } from '../commands/mark-message-delivered.command';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
+import { ChatReadStateRepository } from '../../read-state/infrastructure/chat-read-state.repository';
 import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 
 @CommandHandler(MarkMessageDeliveredCommand)
@@ -15,6 +16,7 @@ export class MarkMessageDeliveredUseCase
 {
   constructor(
     private readonly chatsRepository: ChatsRepository,
+    private readonly chatReadStateRepository: ChatReadStateRepository,
     private readonly messagesRepository: MessagesRepository,
     private readonly messengerWebSocketService: MessengerWebSocketService,
   ) {}
@@ -41,7 +43,7 @@ export class MarkMessageDeliveredUseCase
 
     await this.messagesRepository.upsertDelivery(dto.messageId, dto.deliveredByUserId);
 
-    const peerReadState: ChatReadState | null = await this.chatsRepository.findReadState(
+    const peerReadState: ChatReadState | null = await this.chatReadStateRepository.findReadState(
       message.chatId,
       dto.deliveredByUserId,
     );

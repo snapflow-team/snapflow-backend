@@ -6,18 +6,20 @@ import {
   MessengerWsEvent,
   UnreadUpdatedPayload,
 } from '@contracts/messenger';
-import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
-import { NotFoundException } from '../../../../common/exceptions/domain-exceptions';
-import { ChatsRepository } from '../../infrastructure/chats.repository';
-import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
-import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
+import { MessengerResultCode } from '../../../../../common/notification/messenger-result-code';
+import { NotFoundException } from '../../../../../common/exceptions/domain-exceptions';
+import { ChatsRepository } from '../../../infrastructure/chats.repository';
+import { ChatsQueryRepository } from '../../../infrastructure/query/chats.query-repository';
+import { MessagesRepository } from '../../../infrastructure/messages.repository';
+import { ChatReadStateRepository } from '../../infrastructure/chat-read-state.repository';
+import { MessengerWebSocketService } from '../../../realtime/services/messenger-websocket.service';
 import { MarkChatReadCommand, MarkChatReadUseCase } from './mark-chat-read.usecase';
 
 describe('MarkChatReadUseCase (unit)', () => {
   let useCase: MarkChatReadUseCase;
-  let chatsRepositoryMock: jest.Mocked<
-    Pick<ChatsRepository, 'findReadState' | 'upsertReadState' | 'findById' | 'getInterlocutorId'>
+  let chatsRepositoryMock: jest.Mocked<Pick<ChatsRepository, 'findById' | 'getInterlocutorId'>>;
+  let chatReadStateRepositoryMock: jest.Mocked<
+    Pick<ChatReadStateRepository, 'findReadState' | 'upsertReadState'>
   >;
   let chatsQueryRepositoryMock: jest.Mocked<
     Pick<ChatsQueryRepository, 'getUnreadCount' | 'getTotalUnreadCount'>
@@ -56,10 +58,13 @@ describe('MarkChatReadUseCase (unit)', () => {
     jest.setSystemTime(readAt);
 
     chatsRepositoryMock = {
-      findReadState: jest.fn().mockResolvedValue(null),
-      upsertReadState: jest.fn().mockResolvedValue({} as ChatReadState),
       findById: jest.fn().mockResolvedValue(chat),
       getInterlocutorId: jest.fn().mockReturnValue(2),
+    };
+
+    chatReadStateRepositoryMock = {
+      findReadState: jest.fn().mockResolvedValue(null),
+      upsertReadState: jest.fn().mockResolvedValue({} as ChatReadState),
     };
 
     chatsQueryRepositoryMock = {
@@ -81,6 +86,7 @@ describe('MarkChatReadUseCase (unit)', () => {
       providers: [
         MarkChatReadUseCase,
         { provide: ChatsRepository, useValue: chatsRepositoryMock },
+        { provide: ChatReadStateRepository, useValue: chatReadStateRepositoryMock },
         { provide: ChatsQueryRepository, useValue: chatsQueryRepositoryMock },
         { provide: MessagesRepository, useValue: messagesRepositoryMock },
         { provide: MessengerWebSocketService, useValue: messengerWebSocketServiceMock },
@@ -105,8 +111,8 @@ describe('MarkChatReadUseCase (unit)', () => {
     );
 
     expect(messagesRepositoryMock.findById).toHaveBeenCalledWith(100);
-    expect(chatsRepositoryMock.findReadState).toHaveBeenCalledWith(10, 1);
-    expect(chatsRepositoryMock.upsertReadState).toHaveBeenCalledWith(10, 1, 100, readAt);
+    expect(chatReadStateRepositoryMock.findReadState).toHaveBeenCalledWith(10, 1);
+    expect(chatReadStateRepositoryMock.upsertReadState).toHaveBeenCalledWith(10, 1, 100, readAt);
     expect(chatsRepositoryMock.getInterlocutorId).toHaveBeenCalledWith(chat, 1);
     expect(chatsQueryRepositoryMock.getTotalUnreadCount).toHaveBeenCalledWith(1);
 
@@ -151,7 +157,7 @@ describe('MarkChatReadUseCase (unit)', () => {
   });
 
   it('должен делать no-op без upsert и emit, если lastReadMessageId не растёт', async () => {
-    chatsRepositoryMock.findReadState.mockResolvedValue({
+    chatReadStateRepositoryMock.findReadState.mockResolvedValue({
       id: 1,
       chatId: 10,
       userId: 1,
@@ -167,12 +173,12 @@ describe('MarkChatReadUseCase (unit)', () => {
       }),
     );
 
-    expect(chatsRepositoryMock.upsertReadState).not.toHaveBeenCalled();
+    expect(chatReadStateRepositoryMock.upsertReadState).not.toHaveBeenCalled();
     expect(messengerWebSocketServiceMock.emitToUser).not.toHaveBeenCalled();
   });
 
   it('должен делать no-op при попытке даунгрейда lastReadMessageId', async () => {
-    chatsRepositoryMock.findReadState.mockResolvedValue({
+    chatReadStateRepositoryMock.findReadState.mockResolvedValue({
       id: 1,
       chatId: 10,
       userId: 1,
@@ -188,7 +194,7 @@ describe('MarkChatReadUseCase (unit)', () => {
       }),
     );
 
-    expect(chatsRepositoryMock.upsertReadState).not.toHaveBeenCalled();
+    expect(chatReadStateRepositoryMock.upsertReadState).not.toHaveBeenCalled();
     expect(messengerWebSocketServiceMock.emitToUser).not.toHaveBeenCalled();
   });
 
@@ -206,7 +212,7 @@ describe('MarkChatReadUseCase (unit)', () => {
     ).rejects.toMatchObject({
       code: MessengerResultCode.MessageNotFound,
     });
-    expect(chatsRepositoryMock.upsertReadState).not.toHaveBeenCalled();
+    expect(chatReadStateRepositoryMock.upsertReadState).not.toHaveBeenCalled();
   });
 
   it('должен бросать NotFound, если сообщение из другого чата', async () => {
@@ -224,6 +230,6 @@ describe('MarkChatReadUseCase (unit)', () => {
         }),
       ),
     ).rejects.toBeInstanceOf(NotFoundException);
-    expect(chatsRepositoryMock.upsertReadState).not.toHaveBeenCalled();
+    expect(chatReadStateRepositoryMock.upsertReadState).not.toHaveBeenCalled();
   });
 });

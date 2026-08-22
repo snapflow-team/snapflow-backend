@@ -13,14 +13,14 @@ import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { EditMessageCommand } from '../commands/edit-message.command';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
+import { ChatReadStateRepository } from '../../read-state/infrastructure/chat-read-state.repository';
 import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 import { EditMessageUseCase } from './edit-message.usecase';
 
 describe('EditMessageUseCase (unit)', () => {
   let useCase: EditMessageUseCase;
-  let chatsRepositoryMock: jest.Mocked<
-    Pick<ChatsRepository, 'findById' | 'getInterlocutorId' | 'findReadState'>
-  >;
+  let chatsRepositoryMock: jest.Mocked<Pick<ChatsRepository, 'findById' | 'getInterlocutorId'>>;
+  let chatReadStateRepositoryMock: jest.Mocked<Pick<ChatReadStateRepository, 'findReadState'>>;
   let messagesRepositoryMock: jest.Mocked<
     Pick<MessagesRepository, 'findById' | 'updateText' | 'findDelivery'>
   >;
@@ -66,6 +66,9 @@ describe('EditMessageUseCase (unit)', () => {
     chatsRepositoryMock = {
       findById: jest.fn().mockResolvedValue(chat),
       getInterlocutorId: jest.fn().mockReturnValue(2),
+    };
+
+    chatReadStateRepositoryMock = {
       findReadState: jest.fn().mockResolvedValue(null),
     };
 
@@ -88,6 +91,7 @@ describe('EditMessageUseCase (unit)', () => {
         EditMessageUseCase,
         { provide: ConfigService, useValue: configServiceMock },
         { provide: ChatsRepository, useValue: chatsRepositoryMock },
+        { provide: ChatReadStateRepository, useValue: chatReadStateRepositoryMock },
         { provide: MessagesRepository, useValue: messagesRepositoryMock },
         { provide: MessengerWebSocketService, useValue: messengerWebSocketServiceMock },
       ],
@@ -114,7 +118,7 @@ describe('EditMessageUseCase (unit)', () => {
     expect(messagesRepositoryMock.updateText).toHaveBeenCalledWith(100, 'Updated text', editedAt);
     expect(chatsRepositoryMock.getInterlocutorId).toHaveBeenCalledWith(chat, 1);
     expect(messagesRepositoryMock.findDelivery).toHaveBeenCalledWith(100, 2);
-    expect(chatsRepositoryMock.findReadState).toHaveBeenCalledWith(10, 2);
+    expect(chatReadStateRepositoryMock.findReadState).toHaveBeenCalledWith(10, 2);
 
     const expectedAuthorView = MessageViewDto.mapToView(updatedMessage, 2, {
       viewerId: 1,
@@ -156,7 +160,7 @@ describe('EditMessageUseCase (unit)', () => {
 
   it('должен сохранять status=read в ответе автору, если peer уже прочитал сообщение', async () => {
     messagesRepositoryMock.findDelivery.mockResolvedValue({} as MessageDelivery);
-    chatsRepositoryMock.findReadState.mockResolvedValue({
+    chatReadStateRepositoryMock.findReadState.mockResolvedValue({
       id: 1,
       chatId: 10,
       userId: 2,

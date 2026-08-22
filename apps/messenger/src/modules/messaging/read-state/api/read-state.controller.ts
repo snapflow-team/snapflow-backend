@@ -13,10 +13,10 @@ import { ApiTags } from '@nestjs/swagger';
 import { ExtractUserFromRequest } from '../../../auth/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../../auth/guards/dto/user-context.dto';
 import { AccessTokenGuard } from '../../../auth/guards/access-token.guard';
-import { MarkChatReadCommand } from '../../application/usecases/mark-chat-read.usecase';
 import { ChatMembershipGuard } from '../../sharing/api/guards/chat-membership.guard';
-import { MarkChatReadInputDto } from '../../api/input-dto/mark-chat-read.input-dto';
-import { MarkChatReadSwagger } from '../../api/swagger/mark-chat-read.swagger';
+import { MarkChatReadCommand } from '../application/usecases/mark-chat-read.usecase';
+import { MarkChatReadInputDto } from './input-dto/mark-chat-read.input-dto';
+import { MarkChatReadSwagger } from './swagger/mark-chat-read.swagger';
 
 @ApiTags('Messenger')
 @Controller('messenger')

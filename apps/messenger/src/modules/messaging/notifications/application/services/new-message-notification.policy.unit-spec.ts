@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChatReadState, Message, MessageDelivery } from '@generated/prisma-messenger';
 import { ChatMuteRepository } from '../../../infrastructure/chat-mute.repository';
-import { ChatsRepository } from '../../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../../infrastructure/messages.repository';
 import { PresenceRedisRepository } from '../../../presence/infrastructure/presence-redis.repository';
+import { ChatReadStateRepository } from '../../../read-state/infrastructure/chat-read-state.repository';
 import { NewMessageNotificationPolicy } from './new-message-notification.policy';
 
 describe('NewMessageNotificationPolicy (unit)', () => {
   let policy: NewMessageNotificationPolicy;
   let messagesRepositoryMock: Pick<MessagesRepository, 'findById' | 'findDelivery'>;
   let presenceRedisRepositoryMock: Pick<PresenceRedisRepository, 'getOnline'>;
-  let chatsRepositoryMock: Pick<ChatsRepository, 'findReadState'>;
+  let chatReadStateRepositoryMock: Pick<ChatReadStateRepository, 'findReadState'>;
   let chatMuteRepositoryMock: Pick<ChatMuteRepository, 'isMuted'>;
 
   const message: Message = {
@@ -34,7 +34,7 @@ describe('NewMessageNotificationPolicy (unit)', () => {
     presenceRedisRepositoryMock = {
       getOnline: jest.fn().mockResolvedValue(new Map([[2, false]])),
     };
-    chatsRepositoryMock = {
+    chatReadStateRepositoryMock = {
       findReadState: jest.fn().mockResolvedValue(null),
     };
     chatMuteRepositoryMock = {
@@ -46,7 +46,7 @@ describe('NewMessageNotificationPolicy (unit)', () => {
         NewMessageNotificationPolicy,
         { provide: MessagesRepository, useValue: messagesRepositoryMock },
         { provide: PresenceRedisRepository, useValue: presenceRedisRepositoryMock },
-        { provide: ChatsRepository, useValue: chatsRepositoryMock },
+        { provide: ChatReadStateRepository, useValue: chatReadStateRepositoryMock },
         { provide: ChatMuteRepository, useValue: chatMuteRepositoryMock },
       ],
     }).compile();
@@ -111,11 +111,11 @@ describe('NewMessageNotificationPolicy (unit)', () => {
       shouldNotify: false,
       reason: 'message_delivered',
     });
-    expect(chatsRepositoryMock.findReadState).not.toHaveBeenCalled();
+    expect(chatReadStateRepositoryMock.findReadState).not.toHaveBeenCalled();
   });
 
   it('пропускает, если сообщение уже прочитано', async () => {
-    (chatsRepositoryMock.findReadState as jest.Mock).mockResolvedValue({
+    (chatReadStateRepositoryMock.findReadState as jest.Mock).mockResolvedValue({
       id: 1,
       chatId: 10,
       userId: 2,
@@ -131,7 +131,7 @@ describe('NewMessageNotificationPolicy (unit)', () => {
   });
 
   it('не считает прочитанным, если lastReadMessageId меньше messageId', async () => {
-    (chatsRepositoryMock.findReadState as jest.Mock).mockResolvedValue({
+    (chatReadStateRepositoryMock.findReadState as jest.Mock).mockResolvedValue({
       id: 1,
       chatId: 10,
       userId: 2,

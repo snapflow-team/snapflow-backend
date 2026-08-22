@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ChatReadState, Message, MessageDelivery } from '@generated/prisma-messenger';
 import { ChatMuteRepository } from '../../../infrastructure/chat-mute.repository';
-import { ChatsRepository } from '../../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../../infrastructure/messages.repository';
 import { PresenceRedisRepository } from '../../../presence/infrastructure/presence-redis.repository';
+import { ChatReadStateRepository } from '../../../read-state/infrastructure/chat-read-state.repository';
 
 export type NewMessageNotificationDecision =
   | { shouldNotify: true; message: Message }
@@ -20,7 +20,7 @@ export class NewMessageNotificationPolicy {
   constructor(
     private readonly messagesRepository: MessagesRepository,
     private readonly presenceRedisRepository: PresenceRedisRepository,
-    private readonly chatsRepository: ChatsRepository,
+    private readonly chatReadStateRepository: ChatReadStateRepository,
     private readonly chatMuteRepository: ChatMuteRepository,
   ) {}
 
@@ -47,7 +47,7 @@ export class NewMessageNotificationPolicy {
       return { shouldNotify: false, reason: 'message_delivered' };
     }
 
-    const readState: ChatReadState | null = await this.chatsRepository.findReadState(
+    const readState: ChatReadState | null = await this.chatReadStateRepository.findReadState(
       input.chatId,
       input.recipientId,
     );

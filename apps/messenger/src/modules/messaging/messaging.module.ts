@@ -16,7 +16,7 @@ import { NewMessageNotificationPolicy } from './notifications/application/servic
 import { GetOrCreateChatUseCase } from './application/usecases/get-or-create-chat.usecase';
 import { DeleteMessageUseCase } from './application/usecases/delete-message.usecase';
 import { EditMessageUseCase } from './application/usecases/edit-message.usecase';
-import { MarkChatReadUseCase } from './application/usecases/mark-chat-read.usecase';
+import { MarkChatReadUseCase } from './read-state/application/usecases/mark-chat-read.usecase';
 import { MarkMessageDeliveredUseCase } from './application/usecases/mark-message-delivered.usecase';
 import { MuteChatUseCase } from './application/usecases/mute-chat.usecase';
 import { SendMessageUseCase } from './application/usecases/send-message.usecase';
@@ -25,6 +25,7 @@ import { ChatMuteRepository } from './infrastructure/chat-mute.repository';
 import { ChatsQueryRepository } from './infrastructure/query/chats.query-repository';
 import { MessagesQueryRepository } from './infrastructure/query/messages.query-repository';
 import { ChatsRepository } from './infrastructure/chats.repository';
+import { ChatReadStateRepository } from './read-state/infrastructure/chat-read-state.repository';
 import { MessagesRepository } from './infrastructure/messages.repository';
 import { PresenceBroadcastHelper } from './presence/application/helpers/presence-broadcast.helper';
 import { GetPresenceQueryHandler } from './presence/application/queries/get-presence.query-handler';
@@ -64,6 +65,7 @@ const queries = [
 ];
 const repositories = [
   ChatsRepository,
+  ChatReadStateRepository,
   ChatsQueryRepository,
   MessagesRepository,
   MessagesQueryRepository,

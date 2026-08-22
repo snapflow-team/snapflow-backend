@@ -14,6 +14,7 @@ import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { EditMessageCommand } from '../commands/edit-message.command';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
+import { ChatReadStateRepository } from '../../read-state/infrastructure/chat-read-state.repository';
 import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 
 @CommandHandler(EditMessageCommand)
@@ -21,6 +22,7 @@ export class EditMessageUseCase implements ICommandHandler<EditMessageCommand, M
   constructor(
     private readonly configService: ConfigService<Configuration, true>,
     private readonly chatsRepository: ChatsRepository,
+    private readonly chatReadStateRepository: ChatReadStateRepository,
     private readonly messagesRepository: MessagesRepository,
     private readonly messengerWebSocketService: MessengerWebSocketService,
   ) {}
@@ -63,7 +65,7 @@ export class EditMessageUseCase implements ICommandHandler<EditMessageCommand, M
 
     const [peerReadState, delivery]: [ChatReadState | null, MessageDelivery | null] =
       await Promise.all([
-        this.chatsRepository.findReadState(message.chatId, peerId),
+        this.chatReadStateRepository.findReadState(message.chatId, peerId),
         this.messagesRepository.findDelivery(dto.messageId, peerId),
       ]);
 

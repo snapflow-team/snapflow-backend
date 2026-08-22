@@ -6,16 +6,17 @@ import {
   MessengerWsEvent,
   UnreadUpdatedPayload,
 } from '@contracts/messenger';
-import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
+import { MessengerResultCode } from '../../../../../common/notification/messenger-result-code';
 import {
   InternalServerException,
   NotFoundException,
-} from '../../../../common/exceptions/domain-exceptions';
+} from '../../../../../common/exceptions/domain-exceptions';
 import { MarkChatReadApplicationDto } from '../dto/mark-chat-read.application-dto';
-import { ChatsRepository } from '../../infrastructure/chats.repository';
-import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
-import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
+import { ChatsRepository } from '../../../infrastructure/chats.repository';
+import { ChatsQueryRepository } from '../../../infrastructure/query/chats.query-repository';
+import { MessagesRepository } from '../../../infrastructure/messages.repository';
+import { ChatReadStateRepository } from '../../infrastructure/chat-read-state.repository';
+import { MessengerWebSocketService } from '../../../realtime/services/messenger-websocket.service';
 
 export class MarkChatReadCommand {
   constructor(public readonly dto: MarkChatReadApplicationDto) {}
@@ -25,6 +26,7 @@ export class MarkChatReadCommand {
 export class MarkChatReadUseCase implements ICommandHandler<MarkChatReadCommand, void> {
   constructor(
     private readonly chatsRepository: ChatsRepository,
+    private readonly chatReadStateRepository: ChatReadStateRepository,
     private readonly chatsQueryRepository: ChatsQueryRepository,
     private readonly messagesRepository: MessagesRepository,
     private readonly messengerWebSocketService: MessengerWebSocketService,
@@ -37,7 +39,7 @@ export class MarkChatReadUseCase implements ICommandHandler<MarkChatReadCommand,
       throw new NotFoundException('Message not found', MessengerResultCode.MessageNotFound);
     }
 
-    const currentReadState: ChatReadState | null = await this.chatsRepository.findReadState(
+    const currentReadState: ChatReadState | null = await this.chatReadStateRepository.findReadState(
       dto.chatId,
       dto.readerId,
     );
@@ -55,7 +57,7 @@ export class MarkChatReadUseCase implements ICommandHandler<MarkChatReadCommand,
     // (getUnreadCount / emit) клиент получит 500, а read state уже в БД; retry с тем же id — no-op без WS.
     // Варианты: conditional upsert (без даунгрейда при параллельных запросах), best-effort emit после
     // успешной записи (204 + log), outbox/retry для message.read и chat.updated.
-    await this.chatsRepository.upsertReadState(
+    await this.chatReadStateRepository.upsertReadState(
       dto.chatId,
       dto.readerId,
       dto.lastReadMessageId,

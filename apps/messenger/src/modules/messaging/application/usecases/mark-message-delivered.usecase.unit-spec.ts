@@ -9,15 +9,15 @@ import {
 import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
+import { ChatReadStateRepository } from '../../read-state/infrastructure/chat-read-state.repository';
 import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 import { MarkMessageDeliveredCommand } from '../commands/mark-message-delivered.command';
 import { MarkMessageDeliveredUseCase } from './mark-message-delivered.usecase';
 
 describe('MarkMessageDeliveredUseCase (unit)', () => {
   let useCase: MarkMessageDeliveredUseCase;
-  let chatsRepositoryMock: jest.Mocked<
-    Pick<ChatsRepository, 'isParticipant' | 'findReadState'>
-  >;
+  let chatsRepositoryMock: jest.Mocked<Pick<ChatsRepository, 'isParticipant'>>;
+  let chatReadStateRepositoryMock: jest.Mocked<Pick<ChatReadStateRepository, 'findReadState'>>;
   let messagesRepositoryMock: jest.Mocked<Pick<MessagesRepository, 'findById' | 'upsertDelivery'>>;
   let messengerWebSocketServiceMock: jest.Mocked<Pick<MessengerWebSocketService, 'emitToUser'>>;
 
@@ -39,6 +39,9 @@ describe('MarkMessageDeliveredUseCase (unit)', () => {
   beforeEach(async () => {
     chatsRepositoryMock = {
       isParticipant: jest.fn().mockResolvedValue(true),
+    };
+
+    chatReadStateRepositoryMock = {
       findReadState: jest.fn().mockResolvedValue(null),
     };
 
@@ -55,6 +58,7 @@ describe('MarkMessageDeliveredUseCase (unit)', () => {
       providers: [
         MarkMessageDeliveredUseCase,
         { provide: ChatsRepository, useValue: chatsRepositoryMock },
+        { provide: ChatReadStateRepository, useValue: chatReadStateRepositoryMock },
         { provide: MessagesRepository, useValue: messagesRepositoryMock },
         { provide: MessengerWebSocketService, useValue: messengerWebSocketServiceMock },
       ],
@@ -78,7 +82,7 @@ describe('MarkMessageDeliveredUseCase (unit)', () => {
     expect(messagesRepositoryMock.findById).toHaveBeenCalledWith(100);
     expect(chatsRepositoryMock.isParticipant).toHaveBeenCalledWith(10, 2);
     expect(messagesRepositoryMock.upsertDelivery).toHaveBeenCalledWith(100, 2);
-    expect(chatsRepositoryMock.findReadState).toHaveBeenCalledWith(10, 2);
+    expect(chatReadStateRepositoryMock.findReadState).toHaveBeenCalledWith(10, 2);
 
     const expectedPayload = MessageViewDto.mapToView(message, 2, {
       viewerId: 1,
@@ -95,7 +99,7 @@ describe('MarkMessageDeliveredUseCase (unit)', () => {
   });
 
   it('должен эмитить status=read, если peer уже прочитал сообщение', async () => {
-    chatsRepositoryMock.findReadState.mockResolvedValue({
+    chatReadStateRepositoryMock.findReadState.mockResolvedValue({
       id: 1,
       chatId: 10,
       userId: 2,
