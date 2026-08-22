@@ -18,8 +18,19 @@ import { MarkAllNotificationsReadUseCase } from './application/use-cases/mark-al
 import { GetNotificationsQueryHandler } from './application/queries/get-notificaitons.query';
 import { GetUnreadNotificationsCountQueryHandler } from './application/queries/get-notifications-count.query';
 import { NotificationsController } from './api/notificaitons.controller';
+import { PushSubscriptionsController } from './api/push-subscriptions.controller';
+import { PushSubscriptionsRepository } from './push/repositories/push-subscriptions.repository';
+import { ConsumedEventsRepository } from './infrastructure/consumed-events.repository';
+import { WebPushSenderService } from './push/services/web-push-sender.service';
+import { SavePushSubscriptionUseCase } from './application/use-cases/save-push-subscription.use-case';
+import { DeletePushSubscriptionUseCase } from './application/use-cases/delete-push-subscription.use-case';
+import { ConsumedEventsCleanupService } from './application/services/consumed-events-cleanup.service';
 
-const useCases = [MarkAllNotificationsReadUseCase];
+const useCases = [
+  MarkAllNotificationsReadUseCase,
+  SavePushSubscriptionUseCase,
+  DeletePushSubscriptionUseCase,
+];
 const queryHandlers = [GetNotificationsQueryHandler, GetUnreadNotificationsCountQueryHandler];
 const services = [
   EmailService,
@@ -27,12 +38,19 @@ const services = [
   WebsocketService,
   WebsocketNotificationService,
   NotificationEventsConsumer,
+  WebPushSenderService,
+  ConsumedEventsCleanupService,
 ];
 const eventHandlers = [
   SendConfirmationEmailWhenUserRegisteredEventHandler,
   SendPasswordRecoveryEmailEventHandler,
 ];
-const repositories = [NotificationsRepository, NotificationsQueryRepository];
+const repositories = [
+  NotificationsRepository,
+  NotificationsQueryRepository,
+  PushSubscriptionsRepository,
+  ConsumedEventsRepository,
+];
 @Module({
   imports: [
     JwtAuthModule,
@@ -58,8 +76,8 @@ const repositories = [NotificationsRepository, NotificationsQueryRepository];
     ...repositories,
     NotificationGateway,
   ],
-  controllers: [NotificationsController],
-  exports: [],
+  controllers: [NotificationsController, PushSubscriptionsController],
+  exports: [WebPushSenderService, ConsumedEventsRepository, PushSubscriptionsRepository],
 })
 export class NotificationModule {
   constructor() {}
