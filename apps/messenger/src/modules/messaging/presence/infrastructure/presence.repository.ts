@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UserPresenceSettings } from '@generated/prisma-messenger';
-import { PrismaService } from '../../database/prisma.service';
+import { PrismaService } from '../../../database/prisma.service';
 
 @Injectable()
 export class PresenceRepository {

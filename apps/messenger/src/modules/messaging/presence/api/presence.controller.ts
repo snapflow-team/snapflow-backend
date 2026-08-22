@@ -13,13 +13,13 @@ import { ApiTags } from '@nestjs/swagger';
 import { ExtractUserFromRequest } from '../../../auth/guards/decorators/extract-user-from-request.decorator';
 import { UserContextDto } from '../../../auth/guards/dto/user-context.dto';
 import { AccessTokenGuard } from '../../../auth/guards/access-token.guard';
-import { UpdateActivityStatusCommand } from '../../application/commands/update-activity-status.command';
-import { GetPresenceQuery } from '../../application/queries/get-presence.query-handler';
-import { GetPresenceQueryParamsDto } from '../../api/input-dto/get-presence.query-params.dto';
-import { UpdateActivityStatusInputDto } from '../../api/input-dto/update-activity-status.input-dto';
-import { GetPresenceSwagger } from '../../api/swagger/get-presence.swagger';
-import { UpdateActivityStatusSwagger } from '../../api/swagger/update-activity-status.swagger';
-import { PresenceViewDto } from '../../api/view-dto/presence.view-dto';
+import { UpdateActivityStatusCommand } from '../application/commands/update-activity-status.command';
+import { GetPresenceQuery } from '../application/queries/get-presence.query-handler';
+import { GetPresenceQueryParamsDto } from './input-dto/get-presence.query-params.dto';
+import { UpdateActivityStatusInputDto } from './input-dto/update-activity-status.input-dto';
+import { GetPresenceSwagger } from './swagger/get-presence.swagger';
+import { UpdateActivityStatusSwagger } from './swagger/update-activity-status.swagger';
+import { PresenceViewDto } from './view-dto/presence.view-dto';
 
 @ApiTags('Messenger')
 @Controller('messenger')

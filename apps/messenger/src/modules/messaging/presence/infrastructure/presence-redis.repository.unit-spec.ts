@@ -1,8 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Redis } from 'ioredis';
-import { REDIS_CLIENT_INJECT_TOKEN } from '../../../core/providers/provide-tokens/redis-client.inject-token';
-import { BusinessRulesSettings } from '../../../setup/configuration/business-rules-settings';
+import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
+import { BusinessRulesSettings } from '../../../../setup/configuration/business-rules-settings';
 import { PresenceRedisRepository } from './presence-redis.repository';
 
 describe('PresenceRedisRepository (unit)', () => {

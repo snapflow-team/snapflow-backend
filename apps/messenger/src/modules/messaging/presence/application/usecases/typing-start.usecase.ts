@@ -5,11 +5,11 @@ import { Chat } from '@generated/prisma-messenger';
 import { Redis } from 'ioredis';
 import type { TypingOutboundPayload } from '@contracts/messenger';
 import { MessengerWsEvent } from '@contracts/messenger';
-import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
-import { Configuration } from '../../../../setup/configuration/configuration';
-import { BusinessRulesSettings } from '../../../../setup/configuration/business-rules-settings';
-import { ChatsRepository } from '../../infrastructure/chats.repository';
-import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
+import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../../core/providers/provide-tokens/redis-client.inject-token';
+import { Configuration } from '../../../../../setup/configuration/configuration';
+import { BusinessRulesSettings } from '../../../../../setup/configuration/business-rules-settings';
+import { ChatsRepository } from '../../../infrastructure/chats.repository';
+import { MessengerWebSocketService } from '../../../websocket/services/messenger-websocket.service';
 import { TypingStartCommand } from '../commands/typing-start.command';
 
 @CommandHandler(TypingStartCommand)

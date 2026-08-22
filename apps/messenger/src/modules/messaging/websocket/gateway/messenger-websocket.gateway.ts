@@ -17,11 +17,11 @@ import { PayloadAccessToken } from '../../../auth/application/types/payload-acce
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
 import { MarkMessageDeliveredCommand } from '../../application/commands/mark-message-delivered.command';
-import { PresenceConnectCommand } from '../../application/commands/presence-connect.command';
-import { PresenceDisconnectCommand } from '../../application/commands/presence-disconnect.command';
-import { PresenceHeartbeatCommand } from '../../application/commands/presence-heartbeat.command';
-import { TypingStartCommand } from '../../application/commands/typing-start.command';
-import { TypingStopCommand } from '../../application/commands/typing-stop.command';
+import { PresenceConnectCommand } from '../../presence/application/commands/presence-connect.command';
+import { PresenceDisconnectCommand } from '../../presence/application/commands/presence-disconnect.command';
+import { PresenceHeartbeatCommand } from '../../presence/application/commands/presence-heartbeat.command';
+import { TypingStartCommand } from '../../presence/application/commands/typing-start.command';
+import { TypingStopCommand } from '../../presence/application/commands/typing-stop.command';
 import { SocketDataType } from '../types/socket-data.type';
 
 @WebSocketGateway({

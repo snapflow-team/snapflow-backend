@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { MessengerWsEvent } from '@contracts/messenger';
 import { PresenceBroadcastHelper } from '../helpers/presence-broadcast.helper';
 import { PresenceRepository } from '../../infrastructure/presence.repository';
-import { ChatsRepository } from '../../infrastructure/chats.repository';
-import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
+import { ChatsRepository } from '../../../infrastructure/chats.repository';
+import { MessengerWebSocketService } from '../../../websocket/services/messenger-websocket.service';
 
 describe('PresenceBroadcastHelper (unit)', () => {
   let helper: PresenceBroadcastHelper;

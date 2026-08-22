@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserPresenceSettings } from '@generated/prisma-messenger';
-import { PrismaService } from '../../database/prisma.service';
+import { PrismaService } from '../../../database/prisma.service';
 import { PresenceRepository } from './presence.repository';
 
 describe('PresenceRepository (unit)', () => {

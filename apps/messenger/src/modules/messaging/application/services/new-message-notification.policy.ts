@@ -3,7 +3,7 @@ import { ChatReadState, Message, MessageDelivery } from '@generated/prisma-messe
 import { ChatMuteRepository } from '../../infrastructure/chat-mute.repository';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { PresenceRedisRepository } from '../../infrastructure/presence-redis.repository';
+import { PresenceRedisRepository } from '../../presence/infrastructure/presence-redis.repository';
 
 export type NewMessageNotificationDecision =
   | { shouldNotify: true; message: Message }
