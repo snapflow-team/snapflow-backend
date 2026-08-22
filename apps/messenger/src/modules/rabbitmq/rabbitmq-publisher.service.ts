@@ -39,7 +39,7 @@ export class RabbitMQPublisherService implements OnModuleInit, OnModuleDestroy {
     this.connection = amqp.connect([rabbitMqUrl]);
 
     this.connection.on('connect', () => {
-      this.logger.trace('Successfully connected to RabbitMQ', this.connect.name);
+      this.logger.log('Successfully connected to RabbitMQ', this.connect.name);
     });
 
     this.connection.on('disconnect', ({ err }) => {
