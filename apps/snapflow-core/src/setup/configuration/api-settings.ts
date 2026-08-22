@@ -103,6 +103,9 @@ export class ApiSettings {
   notificationsEventsQueueName: string;
 
   @IsString()
+  messengerEventsQueueName: string;
+
+  @IsString()
   vapidPublicKey: string;
 
   @IsString()
@@ -158,6 +161,7 @@ export class ApiSettings {
 
     this.paymentsEventsQueueName = environmentVariables.PAYMENTS_EVENTS_QUEUE_NAME;
     this.notificationsEventsQueueName = environmentVariables.NOTIFICATIONS_EVENTS_QUEUE_NAME;
+    this.messengerEventsQueueName = environmentVariables.MESSENGER_EVENTS_QUEUE_NAME;
 
     this.vapidPublicKey = environmentVariables.VAPID_PUBLIC_KEY;
     this.vapidPrivateKey = environmentVariables.VAPID_PRIVATE_KEY;
