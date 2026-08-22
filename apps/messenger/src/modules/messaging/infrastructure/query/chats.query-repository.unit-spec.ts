@@ -255,4 +255,17 @@ describe('ChatsQueryRepository (unit)', () => {
 
     await expect(repository.getUnreadCount(10, 1)).resolves.toBe(0);
   });
+
+  it('getTotalUnreadCount: возвращает суммарное число непрочитанных по всем чатам', async () => {
+    prismaMock.$queryRaw.mockResolvedValue([{ unreadCount: 7 }]);
+
+    await expect(repository.getTotalUnreadCount(1)).resolves.toBe(7);
+    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(1);
+  });
+
+  it('getTotalUnreadCount: возвращает 0, если строк нет', async () => {
+    prismaMock.$queryRaw.mockResolvedValue([]);
+
+    await expect(repository.getTotalUnreadCount(1)).resolves.toBe(0);
+  });
 });
