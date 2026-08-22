@@ -10,8 +10,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import type { MessageDeliveredPayload, TypingInboundPayload, } from '../../../../../../../libs/contracts/messenger';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+import type { MessageDeliveredPayload, TypingInboundPayload, } from '@contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { AuthTokenService } from '../../../auth/application/services/auth-token.service';
 import { PayloadAccessToken } from '../../../auth/application/types/payload-access-token.type';
 import { LoggerFactory } from '../../../logger/logger.factory';

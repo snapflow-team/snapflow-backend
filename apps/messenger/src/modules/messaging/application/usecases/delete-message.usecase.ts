@@ -4,7 +4,7 @@ import { Chat, Message } from '@generated/prisma-messenger';
 import {
   MessageDeletedPayload,
   MessengerWsEvent,
-} from '../../../../../../../libs/contracts/messenger';
+} from '@contracts/messenger';
 import { DeleteMessageScope } from '../../api/input-dto/delete-message.query-dto';
 import {
   ForbiddenException,

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import type { PresenceUpdatedPayload } from '../../../../../../../libs/contracts/messenger';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+import type { PresenceUpdatedPayload } from '@contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { PresenceRepository } from '../../infrastructure/presence.repository';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';

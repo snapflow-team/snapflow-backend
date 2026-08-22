@@ -5,7 +5,7 @@ import {
   ChatUpdatedPayload,
   MessengerWsEvent,
   UnreadUpdatedPayload,
-} from '../../../../../../../libs/contracts/messenger';
+} from '@contracts/messenger';
 import { BadRequestException } from '../../../../common/exceptions/domain-exceptions';
 import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
 import { Configuration } from '../../../../setup/configuration/configuration';

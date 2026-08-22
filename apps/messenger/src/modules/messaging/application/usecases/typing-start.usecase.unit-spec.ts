@@ -2,7 +2,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Chat } from '@generated/prisma-messenger';
 import { Redis } from 'ioredis';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { BusinessRulesSettings } from '../../../../setup/configuration/business-rules-settings';

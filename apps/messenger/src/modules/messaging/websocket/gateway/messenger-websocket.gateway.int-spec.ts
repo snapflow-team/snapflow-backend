@@ -13,8 +13,8 @@ import type {
   PresenceUpdatedPayload,
   TypingOutboundPayload,
   UnreadUpdatedPayload,
-} from '../../../../../../../libs/contracts/messenger';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+} from '@contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { AccessTokenTestHelper } from '../../../../../test/helpers/access-token-test.helper';
 import { AppTestManager } from '../../../../../test/managers/app.test-manager';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';

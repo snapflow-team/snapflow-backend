@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Chat, ChatReadState, Message, MessageDelivery } from '@generated/prisma-messenger';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import {
   ForbiddenException,
   InternalServerException,

@@ -7,8 +7,8 @@ import { GLOBAL_PREFIX } from '../../../../../libs/common/constants/global-prefi
 import type {
   MessageReadPayload,
   TypingOutboundPayload,
-} from '../../../../../libs/contracts/messenger';
-import { MessengerWsEvent } from '../../../../../libs/contracts/messenger';
+} from '@contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { AccessTokenTestHelper } from '../../../test/helpers/access-token-test.helper';
 import { AppTestManager } from '../../../test/managers/app.test-manager';
 import { Configuration } from '../../setup/configuration/configuration';

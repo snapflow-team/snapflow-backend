@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Chat } from '@generated/prisma-messenger';
 import { Redis } from 'ioredis';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';

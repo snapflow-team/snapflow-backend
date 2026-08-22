@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChatReadState, Message, MessageDelivery } from '@generated/prisma-messenger';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
 import {
   ForbiddenException,

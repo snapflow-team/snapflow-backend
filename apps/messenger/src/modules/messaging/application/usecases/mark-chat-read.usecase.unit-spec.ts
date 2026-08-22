@@ -5,7 +5,7 @@ import {
   MessageReadPayload,
   MessengerWsEvent,
   UnreadUpdatedPayload,
-} from '../../../../../../../libs/contracts/messenger';
+} from '@contracts/messenger';
 import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
 import { NotFoundException } from '../../../../common/exceptions/domain-exceptions';
 import { ChatsRepository } from '../../infrastructure/chats.repository';

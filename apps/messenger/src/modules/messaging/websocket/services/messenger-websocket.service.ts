@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
 import { MessageViewDto } from '../../api/view-dto/message.view-dto';

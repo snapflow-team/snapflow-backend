@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { PresenceBroadcastHelper } from '../helpers/presence-broadcast.helper';
 import { PresenceRepository } from '../../infrastructure/presence.repository';
 import { ChatsRepository } from '../../infrastructure/chats.repository';

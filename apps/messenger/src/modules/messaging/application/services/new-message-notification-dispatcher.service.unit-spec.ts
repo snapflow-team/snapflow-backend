@@ -9,7 +9,7 @@ import {
 import {
   MESSENGER_EXCHANGE,
   MessengerNotificationsRoutingKey,
-} from '../../../../../../../libs/contracts/messenger';
+} from '@contracts/messenger';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { OutboxProcessing } from '../../../outbox/constants/outbox.constants';
 import { OutboxRepository } from '../../../outbox/repositories/outbox.repository';

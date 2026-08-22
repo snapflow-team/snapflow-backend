@@ -1,6 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ChatReadState, Message } from '@generated/prisma-messenger';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
 import { ForbiddenException, NotFoundException, } from '../../../../common/exceptions/domain-exceptions';
 import { MessageViewDto } from '../../api/view-dto/message.view-dto';

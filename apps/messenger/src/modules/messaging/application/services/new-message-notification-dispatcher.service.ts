@@ -7,7 +7,7 @@ import {
   MESSENGER_EXCHANGE,
   MessengerNotificationsRoutingKey,
   NewMessageNotificationEvent,
-} from '../../../../../../../libs/contracts/messenger';
+} from '@contracts/messenger';
 import { ContextLogger } from '../../../logger/context-logger';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { OutboxProcessing } from '../../../outbox/constants/outbox.constants';

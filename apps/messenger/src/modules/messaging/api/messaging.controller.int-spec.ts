@@ -4,7 +4,7 @@ import { OutboxEventStatus, OutboxEventType } from '@generated/prisma-messenger'
 import { Redis } from 'ioredis';
 import request from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../../../libs/common/constants/global-prefix.constant';
-import { MessengerWsEvent } from '../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { DeleteMessageScope } from './input-dto/delete-message.query-dto';
 import { AccessTokenTestHelper } from '../../../../test/helpers/access-token-test.helper';
 import { AppTestManager } from '../../../../test/managers/app.test-manager';

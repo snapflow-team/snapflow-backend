@@ -4,7 +4,7 @@ import amqp, { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-man
 import { Configuration } from '../../setup/configuration/configuration';
 import { ApiSettings } from '../../setup/configuration/api-settings';
 import { ConfirmChannel } from 'amqplib';
-import { MESSENGER_EXCHANGE } from '../../../../../libs/contracts/messenger';
+import { MESSENGER_EXCHANGE } from '@contracts/messenger';
 import { AsyncLocalStorageService } from '../../common/async-local-storage/async-local-storage.service';
 import { REQUEST_ID_HEADER, REQUEST_ID_KEY, } from '../../../../../libs/common/constants/request-id.constants';
 import { LoggerFactory } from '../logger/logger.factory';

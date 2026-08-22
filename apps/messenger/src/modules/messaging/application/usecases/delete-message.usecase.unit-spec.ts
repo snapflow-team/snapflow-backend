@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Chat, Message, MessageUserDeletion } from '@generated/prisma-messenger';
-import { MessengerWsEvent } from '../../../../../../../libs/contracts/messenger';
+import { MessengerWsEvent } from '@contracts/messenger';
 import { DeleteMessageScope } from '../../api/input-dto/delete-message.query-dto';
 import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
 import { ForbiddenException, NotFoundException, } from '../../../../common/exceptions/domain-exceptions';
