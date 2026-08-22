@@ -102,6 +102,15 @@ export class ApiSettings {
   @IsString()
   notificationsEventsQueueName: string;
 
+  @IsString()
+  vapidPublicKey: string;
+
+  @IsString()
+  vapidPrivateKey: string;
+
+  @IsString()
+  vapidSubject: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
@@ -149,6 +158,10 @@ export class ApiSettings {
 
     this.paymentsEventsQueueName = environmentVariables.PAYMENTS_EVENTS_QUEUE_NAME;
     this.notificationsEventsQueueName = environmentVariables.NOTIFICATIONS_EVENTS_QUEUE_NAME;
+
+    this.vapidPublicKey = environmentVariables.VAPID_PUBLIC_KEY;
+    this.vapidPrivateKey = environmentVariables.VAPID_PRIVATE_KEY;
+    this.vapidSubject = environmentVariables.VAPID_SUBJECT;
   }
 
   getJwtOptions() {
