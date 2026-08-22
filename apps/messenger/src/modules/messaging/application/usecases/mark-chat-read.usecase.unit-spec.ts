@@ -4,6 +4,7 @@ import {
   ChatUpdatedPayload,
   MessageReadPayload,
   MessengerWsEvent,
+  UnreadUpdatedPayload,
 } from '../../../../../../../libs/contracts/messenger';
 import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
 import { NotFoundException } from '../../../../common/exceptions/domain-exceptions';
@@ -18,7 +19,9 @@ describe('MarkChatReadUseCase (unit)', () => {
   let chatsRepositoryMock: jest.Mocked<
     Pick<ChatsRepository, 'findReadState' | 'upsertReadState' | 'findById' | 'getInterlocutorId'>
   >;
-  let chatsQueryRepositoryMock: jest.Mocked<Pick<ChatsQueryRepository, 'getUnreadCount'>>;
+  let chatsQueryRepositoryMock: jest.Mocked<
+    Pick<ChatsQueryRepository, 'getUnreadCount' | 'getTotalUnreadCount'>
+  >;
   let messagesRepositoryMock: jest.Mocked<Pick<MessagesRepository, 'findById'>>;
   let messengerWebSocketServiceMock: jest.Mocked<Pick<MessengerWebSocketService, 'emitToUser'>>;
 
@@ -63,6 +66,7 @@ describe('MarkChatReadUseCase (unit)', () => {
       getUnreadCount: jest.fn().mockImplementation((_chatId: number, readerId: number) => {
         return Promise.resolve(readerId === 1 ? 0 : 3);
       }),
+      getTotalUnreadCount: jest.fn().mockResolvedValue(0),
     };
 
     messagesRepositoryMock = {
@@ -91,7 +95,7 @@ describe('MarkChatReadUseCase (unit)', () => {
     jest.clearAllMocks();
   });
 
-  it('должен upsert read state и эмитить message.read + chat.updated', async () => {
+  it('должен upsert read state и эмитить message.read + chat.updated + unread.updated', async () => {
     await useCase.execute(
       new MarkChatReadCommand({
         chatId: 10,
@@ -104,6 +108,7 @@ describe('MarkChatReadUseCase (unit)', () => {
     expect(chatsRepositoryMock.findReadState).toHaveBeenCalledWith(10, 1);
     expect(chatsRepositoryMock.upsertReadState).toHaveBeenCalledWith(10, 1, 100, readAt);
     expect(chatsRepositoryMock.getInterlocutorId).toHaveBeenCalledWith(chat, 1);
+    expect(chatsQueryRepositoryMock.getTotalUnreadCount).toHaveBeenCalledWith(1);
 
     const expectedMessageReadPayload: MessageReadPayload = {
       chatId: '10',
@@ -118,6 +123,9 @@ describe('MarkChatReadUseCase (unit)', () => {
     const expectedPeerChatUpdated: ChatUpdatedPayload = {
       chatId: '10',
       unreadCount: 3,
+    };
+    const expectedUnreadUpdated: UnreadUpdatedPayload = {
+      total: 0,
     };
 
     expect(messengerWebSocketServiceMock.emitToUser).toHaveBeenCalledWith(
@@ -134,6 +142,11 @@ describe('MarkChatReadUseCase (unit)', () => {
       2,
       MessengerWsEvent.ChatUpdated,
       expectedPeerChatUpdated,
+    );
+    expect(messengerWebSocketServiceMock.emitToUser).toHaveBeenCalledWith(
+      1,
+      MessengerWsEvent.UnreadUpdated,
+      expectedUnreadUpdated,
     );
   });
 

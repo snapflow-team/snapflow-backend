@@ -4,6 +4,7 @@ import {
   ChatUpdatedPayload,
   MessageReadPayload,
   MessengerWsEvent,
+  UnreadUpdatedPayload,
 } from '../../../../../../../libs/contracts/messenger';
 import { MessengerResultCode } from '../../../../common/notification/messenger-result-code';
 import {
@@ -69,9 +70,10 @@ export class MarkChatReadUseCase implements ICommandHandler<MarkChatReadCommand,
 
     const peerId: number = this.chatsRepository.getInterlocutorId(chat, dto.readerId);
 
-    const [readerUnreadCount, peerUnreadCount] = await Promise.all([
+    const [readerUnreadCount, peerUnreadCount, readerUnreadTotal] = await Promise.all([
       this.chatsQueryRepository.getUnreadCount(dto.chatId, dto.readerId),
       this.chatsQueryRepository.getUnreadCount(dto.chatId, peerId),
+      this.chatsQueryRepository.getTotalUnreadCount(dto.readerId),
     ]);
 
     const messageReadPayload: MessageReadPayload = {
@@ -88,6 +90,9 @@ export class MarkChatReadUseCase implements ICommandHandler<MarkChatReadCommand,
       chatId: String(dto.chatId),
       unreadCount: peerUnreadCount,
     };
+    const unreadUpdatedPayload: UnreadUpdatedPayload = {
+      total: readerUnreadTotal,
+    };
 
     this.messengerWebSocketService.emitToUser(
       peerId,
@@ -103,6 +108,11 @@ export class MarkChatReadUseCase implements ICommandHandler<MarkChatReadCommand,
       peerId,
       MessengerWsEvent.ChatUpdated,
       peerChatUpdatedPayload,
+    );
+    this.messengerWebSocketService.emitToUser(
+      dto.readerId,
+      MessengerWsEvent.UnreadUpdated,
+      unreadUpdatedPayload,
     );
   }
 }
