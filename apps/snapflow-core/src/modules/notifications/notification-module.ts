@@ -9,7 +9,10 @@ import { SendPasswordRecoveryEmailEventHandler } from './emails/event-handlers/s
 import { WebsocketService } from './websocket/services/websocket.service';
 import { NotificationGateway } from './websocket/gateway/notification-websocket.gateway';
 import { NotificationEventsConsumer } from './websocket/services/notifications-events-consumer';
+import { MessengerEventsConsumer } from './websocket/services/messenger-events.consumer';
 import { WebsocketNotificationService } from './websocket/services/websocket-notification.service';
+import { MessengerNotificationService } from './websocket/services/messenger-notification.service';
+import { UserAccountsModule } from '../user-accounts/user-accounts.module';
 import { Configuration } from '../../setup/configuration/configuration';
 import { NotificationsRepository } from './infrastructure/notifications.repository';
 import { JwtAuthModule } from '../user-accounts/auth/jwt-auth.module';
@@ -37,7 +40,9 @@ const services = [
   EmailTemplates,
   WebsocketService,
   WebsocketNotificationService,
+  MessengerNotificationService,
   NotificationEventsConsumer,
+  MessengerEventsConsumer,
   WebPushSenderService,
   ConsumedEventsCleanupService,
 ];
@@ -54,6 +59,7 @@ const repositories = [
 @Module({
   imports: [
     JwtAuthModule,
+    UserAccountsModule,
     MailerModule.forRootAsync({
       inject: [ConfigService],
 
