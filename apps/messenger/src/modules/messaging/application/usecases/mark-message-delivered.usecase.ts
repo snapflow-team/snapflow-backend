@@ -7,7 +7,7 @@ import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { MarkMessageDeliveredCommand } from '../commands/mark-message-delivered.command';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
+import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 
 @CommandHandler(MarkMessageDeliveredCommand)
 export class MarkMessageDeliveredUseCase

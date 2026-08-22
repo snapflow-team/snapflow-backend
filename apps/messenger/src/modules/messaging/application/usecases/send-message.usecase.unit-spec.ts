@@ -15,7 +15,7 @@ import { OutboxRepository } from '../../../outbox/repositories/outbox.repository
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
+import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 import { SendMessageCommand, SendMessageUseCase } from './send-message.usecase';
 
 describe('SendMessageUseCase (unit)', () => {

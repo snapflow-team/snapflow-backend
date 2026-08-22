@@ -11,8 +11,8 @@ import { ChatMembershipGuard } from './sharing/api/guards/chat-membership.guard'
 import { GetChatMessagesQueryHandler } from './application/queries/get-chat-messages.query-handler';
 import { GetUnreadTotalQueryHandler } from './application/queries/get-unread-total.query-handler';
 import { GetUserChatsQueryHandler } from './application/queries/get-user-chats.query-handler';
-import { NewMessageNotificationDispatcherService } from './application/services/new-message-notification-dispatcher.service';
-import { NewMessageNotificationPolicy } from './application/services/new-message-notification.policy';
+import { NewMessageNotificationDispatcherService } from './notifications/application/services/new-message-notification-dispatcher.service';
+import { NewMessageNotificationPolicy } from './notifications/application/services/new-message-notification.policy';
 import { GetOrCreateChatUseCase } from './application/usecases/get-or-create-chat.usecase';
 import { DeleteMessageUseCase } from './application/usecases/delete-message.usecase';
 import { EditMessageUseCase } from './application/usecases/edit-message.usecase';
@@ -36,8 +36,8 @@ import { TypingStopUseCase } from './presence/application/usecases/typing-stop.u
 import { UpdateActivityStatusUseCase } from './presence/application/usecases/update-activity-status.usecase';
 import { PresenceRedisRepository } from './presence/infrastructure/presence-redis.repository';
 import { PresenceRepository } from './presence/infrastructure/presence.repository';
-import { MessengerWebSocketGateway } from './websocket/gateway/messenger-websocket.gateway';
-import { MessengerWebSocketService } from './websocket/services/messenger-websocket.service';
+import { MessengerWebSocketGateway } from './realtime/gateway/messenger-websocket.gateway';
+import { MessengerWebSocketService } from './realtime/services/messenger-websocket.service';
 
 const useCases = [
   SendMessageUseCase,

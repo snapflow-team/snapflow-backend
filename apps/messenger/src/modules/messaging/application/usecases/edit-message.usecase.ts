@@ -14,7 +14,7 @@ import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { EditMessageCommand } from '../commands/edit-message.command';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
+import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 
 @CommandHandler(EditMessageCommand)
 export class EditMessageUseCase implements ICommandHandler<EditMessageCommand, MessageViewDto> {

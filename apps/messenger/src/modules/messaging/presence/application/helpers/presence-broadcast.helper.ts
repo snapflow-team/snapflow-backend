@@ -3,7 +3,7 @@ import type { PresenceUpdatedPayload } from '@contracts/messenger';
 import { MessengerWsEvent } from '@contracts/messenger';
 import { PresenceRepository } from '../../infrastructure/presence.repository';
 import { ChatsRepository } from '../../../infrastructure/chats.repository';
-import { MessengerWebSocketService } from '../../../websocket/services/messenger-websocket.service';
+import { MessengerWebSocketService } from '../../../realtime/services/messenger-websocket.service';
 import { resolvesShowActivityStatus } from './presence-privacy.helper';
 
 @Injectable()

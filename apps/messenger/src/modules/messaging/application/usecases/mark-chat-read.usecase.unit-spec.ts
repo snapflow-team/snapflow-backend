@@ -11,7 +11,7 @@ import { NotFoundException } from '../../../../common/exceptions/domain-exceptio
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
+import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 import { MarkChatReadCommand, MarkChatReadUseCase } from './mark-chat-read.usecase';
 
 describe('MarkChatReadUseCase (unit)', () => {

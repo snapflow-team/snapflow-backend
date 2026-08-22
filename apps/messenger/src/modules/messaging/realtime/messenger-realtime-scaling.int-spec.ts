@@ -3,17 +3,17 @@ import { JwtService } from '@nestjs/jwt';
 import { AddressInfo } from 'node:net';
 import request from 'supertest';
 import { io, Socket } from 'socket.io-client';
-import { GLOBAL_PREFIX } from '../../../../../libs/common/constants/global-prefix.constant';
+import { GLOBAL_PREFIX } from '../../../../../../libs/common/constants/global-prefix.constant';
 import type {
   MessageReadPayload,
   TypingOutboundPayload,
 } from '@contracts/messenger';
 import { MessengerWsEvent } from '@contracts/messenger';
-import { AccessTokenTestHelper } from '../../../test/helpers/access-token-test.helper';
-import { AppTestManager } from '../../../test/managers/app.test-manager';
-import { Configuration } from '../../setup/configuration/configuration';
-import { ApiSettings } from '../../setup/configuration/api-settings';
-import { MessageViewDto } from './sharing/api/view-dto/message.view-dto';
+import { AccessTokenTestHelper } from '../../../../test/helpers/access-token-test.helper';
+import { AppTestManager } from '../../../../test/managers/app.test-manager';
+import { Configuration } from '../../../setup/configuration/configuration';
+import { ApiSettings } from '../../../setup/configuration/api-settings';
+import { MessageViewDto } from '../sharing/api/view-dto/message.view-dto';
 
 describe('Messenger realtime scaling (Integration)', () => {
   let instanceA: AppTestManager;

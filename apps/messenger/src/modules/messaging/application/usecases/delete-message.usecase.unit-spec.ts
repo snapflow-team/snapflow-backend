@@ -10,7 +10,7 @@ import { BusinessRulesSettings } from '../../../../setup/configuration/business-
 import { DeleteMessageCommand } from '../commands/delete-message.command';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
+import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 import { DeleteMessageUseCase } from './delete-message.usecase';
 
 describe('DeleteMessageUseCase (unit)', () => {

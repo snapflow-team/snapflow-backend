@@ -9,7 +9,7 @@ import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../../core/providers/provide
 import { Configuration } from '../../../../../setup/configuration/configuration';
 import { BusinessRulesSettings } from '../../../../../setup/configuration/business-rules-settings';
 import { ChatsRepository } from '../../../infrastructure/chats.repository';
-import { MessengerWebSocketService } from '../../../websocket/services/messenger-websocket.service';
+import { MessengerWebSocketService } from '../../../realtime/services/messenger-websocket.service';
 import { TypingStartCommand } from '../commands/typing-start.command';
 
 @CommandHandler(TypingStartCommand)

@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ChatReadState, Message, MessageDelivery } from '@generated/prisma-messenger';
-import { ChatMuteRepository } from '../../infrastructure/chat-mute.repository';
-import { ChatsRepository } from '../../infrastructure/chats.repository';
-import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { PresenceRedisRepository } from '../../presence/infrastructure/presence-redis.repository';
+import { ChatMuteRepository } from '../../../infrastructure/chat-mute.repository';
+import { ChatsRepository } from '../../../infrastructure/chats.repository';
+import { MessagesRepository } from '../../../infrastructure/messages.repository';
+import { PresenceRedisRepository } from '../../../presence/infrastructure/presence-redis.repository';
 import { NewMessageNotificationPolicy } from './new-message-notification.policy';
 
 describe('NewMessageNotificationPolicy (unit)', () => {

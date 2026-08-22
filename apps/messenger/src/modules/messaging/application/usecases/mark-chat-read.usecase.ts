@@ -15,7 +15,7 @@ import { MarkChatReadApplicationDto } from '../dto/mark-chat-read.application-dt
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { MessengerWebSocketService } from '../../websocket/services/messenger-websocket.service';
+import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 
 export class MarkChatReadCommand {
   constructor(public readonly dto: MarkChatReadApplicationDto) {}

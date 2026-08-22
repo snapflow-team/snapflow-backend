@@ -8,14 +8,14 @@ import {
   MessengerNotificationsRoutingKey,
   NewMessageNotificationEvent,
 } from '@contracts/messenger';
-import { ContextLogger } from '../../../logger/context-logger';
-import { LoggerFactory } from '../../../logger/logger.factory';
-import { OutboxProcessing } from '../../../outbox/constants/outbox.constants';
-import { OutboxRepository } from '../../../outbox/repositories/outbox.repository';
-import { RabbitMQPublisherService } from '../../../rabbitmq/rabbitmq-publisher.service';
-import { BusinessRulesSettings } from '../../../../setup/configuration/business-rules-settings';
-import { Configuration } from '../../../../setup/configuration/configuration';
-import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
+import { ContextLogger } from '../../../../logger/context-logger';
+import { LoggerFactory } from '../../../../logger/logger.factory';
+import { OutboxProcessing } from '../../../../outbox/constants/outbox.constants';
+import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
+import { RabbitMQPublisherService } from '../../../../rabbitmq/rabbitmq-publisher.service';
+import { BusinessRulesSettings } from '../../../../../setup/configuration/business-rules-settings';
+import { Configuration } from '../../../../../setup/configuration/configuration';
+import { ChatsQueryRepository } from '../../../infrastructure/query/chats.query-repository';
 import { NewMessageNotificationDecision, NewMessageNotificationPolicy, } from './new-message-notification.policy';
 
 type NewMessageOutboxPayload = {
