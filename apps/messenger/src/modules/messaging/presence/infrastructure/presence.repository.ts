@@ -29,10 +29,7 @@ export class PresenceRepository {
     return settingsMap;
   }
 
-  async upsertSettings(
-    userId: number,
-    showActivityStatus: boolean,
-  ): Promise<UserPresenceSettings> {
+  async upsertSettings(userId: number, showActivityStatus: boolean): Promise<UserPresenceSettings> {
     return this.prisma.userPresenceSettings.upsert({
       where: { userId },
       create: {
