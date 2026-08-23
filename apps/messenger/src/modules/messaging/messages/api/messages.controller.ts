@@ -20,8 +20,9 @@ import { AccessTokenGuard } from '../../../auth/guards/access-token.guard';
 import { DeleteMessageCommand } from '../application/commands/delete-message.command';
 import { EditMessageCommand } from '../application/commands/edit-message.command';
 import { GetChatMessagesQuery } from '../application/queries/get-chat-messages.query-handler';
-import { SendMessageCommand } from '../application/usecases/send-message.usecase';
-import { ChatMembershipGuard } from '../../sharing/api/guards/chat-membership.guard';
+import { SendMessageCommand } from '../application/commands/send-message.command';
+import { ChatMembershipGuard } from '../../chats/api/guards/chat-membership.guard';
+import { MessageAccessGuard } from './guards/message-access.guard';
 import { DeleteMessageQueryDto } from './input-dto/delete-message.query-dto';
 import { EditMessageInputDto } from './input-dto/edit-message.input-dto';
 import { GetChatMessagesQueryParamsDto } from './input-dto/get-chat-messages.query-params.dto';
@@ -31,9 +32,9 @@ import { EditMessageSwagger } from './swagger/edit-message.swagger';
 import { GetChatMessagesSwagger } from './swagger/get-chat-messages.swagger';
 import { SendMessageSwagger } from './swagger/send-message.swagger';
 import { ChatMessagesPageViewDto } from './view-dto/chat-messages-page.view-dto';
-import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
+import { MessageViewDto } from './view-dto/message.view-dto';
 
-@ApiTags('Messenger')
+@ApiTags('Messenger: messages')
 @Controller('messenger')
 @UseGuards(AccessTokenGuard)
 export class MessagesController {
@@ -74,7 +75,7 @@ export class MessagesController {
 
   @Patch('messages/:messageId')
   @EditMessageSwagger()
-  @UseGuards(ChatMembershipGuard)
+  @UseGuards(MessageAccessGuard)
   async editMessage(
     @Param('messageId', ParseIntPipe) messageId: number,
     @Body() { text }: EditMessageInputDto,
@@ -91,7 +92,7 @@ export class MessagesController {
 
   @Delete('messages/:messageId')
   @DeleteMessageSwagger()
-  @UseGuards(ChatMembershipGuard)
+  @UseGuards(MessageAccessGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteMessage(
     @Param('messageId', ParseIntPipe) messageId: number,

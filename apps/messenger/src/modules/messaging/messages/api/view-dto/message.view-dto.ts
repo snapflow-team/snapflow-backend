@@ -1,10 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ReplyPreviewSource, ReplyPreviewViewDto } from './reply-preview.view-dto';
+import { MessageDeliveryStatus, resolveMessageStatus } from './message-status.resolver';
+
+export type { MessageDeliveryStatus } from './message-status.resolver';
 
 // TODO(refactor-message-view-dto): вынести mapToView, resolveMessageStatus и tombstone-маскировку
 // в отдельный mapper (например message-view.mapper.ts); оставить здесь только Swagger-поля DTO.
-
-export type MessageDeliveryStatus = 'sent' | 'delivered' | 'read';
 
 export type MessageViewSource = {
   id: number;
@@ -135,24 +136,4 @@ export class MessageViewDto {
 
     return dto;
   }
-}
-
-function resolveMessageStatus(
-  messageId: number,
-  senderId: number,
-  context: MessageViewMapContext,
-): MessageDeliveryStatus | null {
-  if (context.viewerId === undefined || context.viewerId !== senderId) {
-    return null;
-  }
-
-  if (context.peerLastReadMessageId != null && context.peerLastReadMessageId >= messageId) {
-    return 'read';
-  }
-
-  if (context.deliveredToPeer) {
-    return 'delivered';
-  }
-
-  return 'sent';
 }

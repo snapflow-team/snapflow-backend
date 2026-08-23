@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ChatReadState, Message, MessageDelivery } from '@generated/prisma-messenger';
-import { ChatMuteRepository } from '../../../chat-settings/infrastructure/chat-mute.repository';
+import { ChatMuteRepository } from '../../../chats/infrastructure/chat-mute.repository';
 import { MessagesRepository } from '../../../messages/infrastructure/messages.repository';
 import { PresenceRedisRepository } from '../../../presence/infrastructure/presence-redis.repository';
-import { ChatReadStateRepository } from '../../../read-state/infrastructure/chat-read-state.repository';
+import { ChatReadStateRepository } from '../../../chats/infrastructure/chat-read-state.repository';
 
 export type NewMessageNotificationDecision =
   | { shouldNotify: true; message: Message }

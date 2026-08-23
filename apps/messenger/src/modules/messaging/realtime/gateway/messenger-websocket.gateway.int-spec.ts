@@ -10,6 +10,7 @@ import type {
   ChatUpdatedPayload,
   MessageDeletedPayload,
   MessageReadPayload,
+  NewMessagePayload,
   PresenceUpdatedPayload,
   TypingOutboundPayload,
   UnreadUpdatedPayload,
@@ -21,7 +22,7 @@ import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-to
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { DeleteMessageScope } from '../../messages/api/input-dto/delete-message.query-dto';
-import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
+import { MessageViewDto } from '../../messages/api/view-dto/message.view-dto';
 import { MessengerWebSocketService } from '../services/messenger-websocket.service';
 
 describe('MessengerWebSocketGateway (Integration)', () => {
@@ -51,9 +52,7 @@ describe('MessengerWebSocketGateway (Integration)', () => {
       await redis.connect();
     }
 
-    const apiSettings = app
-      .get(ConfigService<Configuration, true>)
-      .get<ApiSettings>('apiSettings');
+    const apiSettings = app.get(ConfigService<Configuration, true>).get<ApiSettings>('apiSettings');
     const jwtService = new JwtService({ secret: apiSettings.accessTokenSecret });
 
     accessTokenTestHelper = new AccessTokenTestHelper(jwtService);
@@ -196,13 +195,11 @@ describe('MessengerWebSocketGateway (Integration)', () => {
       socket.on('connect_error', reject);
     });
 
-    const receivedMessage = new Promise<MessageViewDto>((resolve) => {
-      socket.on(MessengerWsEvent.MessageNew, (payload: MessageViewDto) =>
-        resolve(payload),
-      );
+    const receivedMessage = new Promise<NewMessagePayload>((resolve) => {
+      socket.on(MessengerWsEvent.MessageNew, (payload: NewMessagePayload) => resolve(payload));
     });
 
-    const payload: MessageViewDto = {
+    const payload: NewMessagePayload = {
       id: '1',
       chatId: '10',
       senderId: '1',
@@ -238,8 +235,8 @@ describe('MessengerWebSocketGateway (Integration)', () => {
         resolve(payload),
       );
     });
-    const receivedMessageNew = new Promise<MessageViewDto>((resolve) => {
-      socket.on(MessengerWsEvent.MessageNew, (payload: MessageViewDto) => resolve(payload));
+    const receivedMessageNew = new Promise<NewMessagePayload>((resolve) => {
+      socket.on(MessengerWsEvent.MessageNew, (payload: NewMessagePayload) => resolve(payload));
     });
 
     const response = await request(appTestManager.getServer())
@@ -392,7 +389,9 @@ describe('MessengerWebSocketGateway (Integration)', () => {
     await Promise.all([connectSocket(socketA), connectSocket(socketB)]);
 
     const receivedStart = new Promise<TypingOutboundPayload>((resolve) => {
-      socketB.on(MessengerWsEvent.TypingStart, (payload: TypingOutboundPayload) => resolve(payload));
+      socketB.on(MessengerWsEvent.TypingStart, (payload: TypingOutboundPayload) =>
+        resolve(payload),
+      );
     });
 
     socketA.emit(MessengerWsEvent.TypingStart, { chatId });
@@ -506,9 +505,7 @@ describe('MessengerWebSocketGateway (Integration)', () => {
     await connectSocket(peerSocket);
 
     const receivedUpdated = new Promise<MessageViewDto>((resolve) => {
-      peerSocket.on(MessengerWsEvent.MessageUpdated, (payload: MessageViewDto) =>
-        resolve(payload),
-      );
+      peerSocket.on(MessengerWsEvent.MessageUpdated, (payload: MessageViewDto) => resolve(payload));
     });
 
     await request(appTestManager.getServer())
@@ -769,7 +766,8 @@ describe('MessengerWebSocketGateway (Integration)', () => {
 
     const receivedHidden = waitForPresenceUpdated(
       socketB,
-      (payload) => payload.userId === '1' && payload.online === false && payload.lastSeenAt === null,
+      (payload) =>
+        payload.userId === '1' && payload.online === false && payload.lastSeenAt === null,
     );
 
     await request(appTestManager.getServer())

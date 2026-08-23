@@ -4,14 +4,10 @@ import {
   InternalServerException,
 } from '../../../../../common/exceptions/domain-exceptions';
 import { ChatViewDto } from '../../api/view-dto/chat.view-dto';
-import { GetOrCreateChatApplicationDto } from '../dto/get-or-create-chat.application-dto';
+import { GetOrCreateChatCommand } from '../commands/get-or-create-chat.command';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
 import { Chat } from '@generated/prisma-messenger';
-
-export class GetOrCreateChatCommand {
-  constructor(public readonly dto: GetOrCreateChatApplicationDto) {}
-}
 
 @CommandHandler(GetOrCreateChatCommand)
 export class GetOrCreateChatUseCase

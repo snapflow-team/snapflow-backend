@@ -16,7 +16,8 @@ import { ChatsRepository } from '../../../chats/infrastructure/chats.repository'
 import { ChatsQueryRepository } from '../../../chats/infrastructure/query/chats.query-repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
 import { MessengerWebSocketService } from '../../../realtime/services/messenger-websocket.service';
-import { SendMessageCommand, SendMessageUseCase } from './send-message.usecase';
+import { SendMessageCommand } from '../commands/send-message.command';
+import { SendMessageUseCase } from './send-message.usecase';
 
 describe('SendMessageUseCase (unit)', () => {
   let useCase: SendMessageUseCase;

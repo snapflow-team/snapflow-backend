@@ -32,7 +32,7 @@ describe('ChatsController (Integration)', () => {
     await appTestManager.close();
   });
 
-  describe('GET /messenger/unread-count', () => {
+  describe('GET /messenger/chats/unread-count', () => {
     it('должен вернуть суммарный бейдж, согласованный с суммой unreadCount из списка чатов', async () => {
       const chatWithUser2 = await request(appTestManager.getServer())
         .post(`/${GLOBAL_PREFIX}/messenger/chats`)
@@ -101,7 +101,7 @@ describe('ChatsController (Integration)', () => {
       expect(unreadSumFromChats).toBe(3);
 
       const unreadCountResponse = await request(appTestManager.getServer())
-        .get(`/${GLOBAL_PREFIX}/messenger/unread-count`)
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/unread-count`)
         .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(1)}`)
         .expect(200);
 
@@ -111,7 +111,7 @@ describe('ChatsController (Integration)', () => {
 
     it('должен вернуть 401 без authorization header', async () => {
       await request(appTestManager.getServer())
-        .get(`/${GLOBAL_PREFIX}/messenger/unread-count`)
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/unread-count`)
         .expect(401);
     });
   });

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ChatListRow } from '../../infrastructure/types/chat-list-row.type';
-import { MessageViewDto } from '../../../sharing/api/view-dto/message.view-dto';
+import { LastMessagePreviewViewDto } from './last-message-preview.view-dto';
 
 type ChatListRowWithMessage = ChatListRow & {
   messageId: number;
@@ -33,11 +33,11 @@ export class ChatListItemViewDto {
   interlocutorId: string;
 
   @ApiProperty({
-    type: MessageViewDto,
+    type: LastMessagePreviewViewDto,
     nullable: true,
     description: 'Последнее сообщение в чате',
   })
-  lastMessage: MessageViewDto | null;
+  lastMessage: LastMessagePreviewViewDto | null;
 
   @ApiProperty({
     description: 'Количество непрочитанных сообщений',
@@ -75,20 +75,15 @@ export class ChatListItemViewDto {
     dto.createdAt = row.chatCreatedAt.toISOString();
     dto.updatedAt = row.chatUpdatedAt.toISOString();
     dto.lastMessage = isChatListRowWithMessage(row)
-      ? MessageViewDto.mapToView(
+      ? LastMessagePreviewViewDto.mapToView(
           {
             id: row.messageId,
-            chatId: row.messageChatId,
             senderId: row.messageSenderId,
             text: row.messageText,
-            clientMessageId: row.messageClientMessageId,
             createdAt: row.messageCreatedAt,
             editedAt: row.messageEditedAt,
-            deletedAt: row.messageDeletedAt,
             deletedForEveryone: row.messageDeletedForEveryone ?? false,
-            replyToMessageId: row.messageReplyToMessageId,
           },
-          row.messageSenderId === userId ? interlocutorId : userId,
           {
             viewerId: userId,
             peerLastReadMessageId: row.peerLastReadMessageId,

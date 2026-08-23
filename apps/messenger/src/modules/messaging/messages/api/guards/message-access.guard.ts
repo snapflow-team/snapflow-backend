@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Request } from 'express';
+import { Message } from '@generated/prisma-messenger';
 import {
   BadRequestException,
   ForbiddenException,
@@ -7,11 +8,10 @@ import {
 } from '../../../../../common/exceptions/domain-exceptions';
 import { UserContextDto } from '../../../../auth/guards/dto/user-context.dto';
 import { ChatsRepository } from '../../../chats/infrastructure/chats.repository';
-import { MessagesRepository } from '../../../messages/infrastructure/messages.repository';
-import { Message } from '@generated/prisma-messenger';
+import { MessagesRepository } from '../../infrastructure/messages.repository';
 
 @Injectable()
-export class ChatMembershipGuard implements CanActivate {
+export class MessageAccessGuard implements CanActivate {
   constructor(
     private readonly chatsRepository: ChatsRepository,
     private readonly messagesRepository: MessagesRepository,
@@ -38,36 +38,24 @@ export class ChatMembershipGuard implements CanActivate {
   }
 
   private async resolveChatId(params: Record<string, string | undefined>): Promise<number> {
-    const rawChatId: string | null = params.chatId ?? null;
-
-    if (rawChatId) {
-      const chatId: number = Number(rawChatId);
-
-      if (!Number.isInteger(chatId) || chatId <= 0) {
-        throw new BadRequestException('Invalid chatId');
-      }
-
-      return chatId;
-    }
-
     const rawMessageId: string | null = params.messageId ?? null;
 
-    if (rawMessageId) {
-      const messageId: number = Number(rawMessageId);
-
-      if (!Number.isInteger(messageId) || messageId <= 0) {
-        throw new BadRequestException('Invalid messageId');
-      }
-
-      const message: Message | null = await this.messagesRepository.findById(messageId);
-
-      if (!message) {
-        throw new ForbiddenException('Access denied');
-      }
-
-      return message.chatId;
+    if (!rawMessageId) {
+      throw new BadRequestException('Missing messageId');
     }
 
-    throw new BadRequestException('Missing chatId or messageId');
+    const messageId: number = Number(rawMessageId);
+
+    if (!Number.isInteger(messageId) || messageId <= 0) {
+      throw new BadRequestException('Invalid messageId');
+    }
+
+    const message: Message | null = await this.messagesRepository.findById(messageId);
+
+    if (!message) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    return message.chatId;
   }
 }

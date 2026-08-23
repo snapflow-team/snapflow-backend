@@ -1,22 +1,37 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { OutboxEventStatus, OutboxEventType } from '@generated/prisma-messenger';
+import { Redis } from 'ioredis';
 import request from 'supertest';
 import { GLOBAL_PREFIX } from '../../../../../../../libs/common/constants/global-prefix.constant';
 import { AccessTokenTestHelper } from '../../../../../test/helpers/access-token-test.helper';
 import { AppTestManager } from '../../../../../test/managers/app.test-manager';
+import { REDIS_CLIENT_INJECT_TOKEN } from '../../../../core/providers/provide-tokens/redis-client.inject-token';
 import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { NewMessageNotificationDispatcherService } from '../../notifications/application/services/new-message-notification-dispatcher.service';
 import { RabbitMQPublisherService } from '../../../rabbitmq/rabbitmq-publisher.service';
 
-describe('ChatSettingsController (Integration)', () => {
+describe('Chat mute endpoints (Integration)', () => {
   let appTestManager: AppTestManager;
   let accessTokenTestHelper: AccessTokenTestHelper;
+  let redis: Redis;
+
+  async function cleanupPresenceRedis(): Promise<void> {
+    const keys = await redis.keys('presence:*');
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  }
 
   beforeAll(async () => {
     appTestManager = new AppTestManager();
     await appTestManager.init();
+
+    redis = appTestManager.getApp().get(REDIS_CLIENT_INJECT_TOKEN);
+    if (redis.status === 'wait') {
+      await redis.connect();
+    }
 
     const apiSettings = appTestManager
       .getApp()
@@ -29,6 +44,7 @@ describe('ChatSettingsController (Integration)', () => {
 
   beforeEach(async () => {
     await appTestManager.cleanupDb(['_prisma_migrations']);
+    await cleanupPresenceRedis();
   });
 
   afterAll(async () => {
@@ -165,7 +181,7 @@ describe('ChatSettingsController (Integration)', () => {
       );
 
       const unread = await request(appTestManager.getServer())
-        .get(`/${GLOBAL_PREFIX}/messenger/unread-count`)
+        .get(`/${GLOBAL_PREFIX}/messenger/chats/unread-count`)
         .set('Authorization', `Bearer ${accessTokenTestHelper.signAccessToken(2)}`)
         .expect(200);
 

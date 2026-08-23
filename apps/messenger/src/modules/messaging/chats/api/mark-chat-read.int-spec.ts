@@ -9,7 +9,7 @@ import { Configuration } from '../../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../../setup/configuration/api-settings';
 import { MessengerWebSocketService } from '../../realtime/services/messenger-websocket.service';
 
-describe('ReadStateController (Integration)', () => {
+describe('Mark chat as read (Integration)', () => {
   let appTestManager: AppTestManager;
   let accessTokenTestHelper: AccessTokenTestHelper;
 

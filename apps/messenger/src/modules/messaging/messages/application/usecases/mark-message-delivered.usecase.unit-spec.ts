@@ -6,10 +6,10 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '../../../../../common/exceptions/domain-exceptions';
-import { MessageViewDto } from '../../../sharing/api/view-dto/message.view-dto';
+import { MessageViewDto } from '../../api/view-dto/message.view-dto';
 import { ChatsRepository } from '../../../chats/infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { ChatReadStateRepository } from '../../../read-state/infrastructure/chat-read-state.repository';
+import { ChatReadStateRepository } from '../../../chats/infrastructure/chat-read-state.repository';
 import { MessengerWebSocketService } from '../../../realtime/services/messenger-websocket.service';
 import { MarkMessageDeliveredCommand } from '../commands/mark-message-delivered.command';
 import { MarkMessageDeliveredUseCase } from './mark-message-delivered.usecase';

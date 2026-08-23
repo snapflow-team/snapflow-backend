@@ -6,7 +6,8 @@ import {
 } from '../../../../../common/exceptions/domain-exceptions';
 import { ChatsRepository } from '../../infrastructure/chats.repository';
 import { ChatsQueryRepository } from '../../infrastructure/query/chats.query-repository';
-import { GetOrCreateChatCommand, GetOrCreateChatUseCase } from './get-or-create-chat.usecase';
+import { GetOrCreateChatCommand } from '../commands/get-or-create-chat.command';
+import { GetOrCreateChatUseCase } from './get-or-create-chat.usecase';
 
 describe('GetOrCreateChatUseCase (unit)', () => {
   let useCase: GetOrCreateChatUseCase;

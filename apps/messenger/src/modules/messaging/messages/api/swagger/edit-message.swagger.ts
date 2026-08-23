@@ -11,7 +11,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { EditMessageInputDto } from '../input-dto/edit-message.input-dto';
-import { MessageViewDto } from '../../../sharing/api/view-dto/message.view-dto';
+import { MessageViewDto } from '../view-dto/message.view-dto';
 
 export function EditMessageSwagger() {
   return applyDecorators(

@@ -6,6 +6,7 @@ import { io, Socket } from 'socket.io-client';
 import { GLOBAL_PREFIX } from '../../../../../../libs/common/constants/global-prefix.constant';
 import type {
   MessageReadPayload,
+  NewMessagePayload,
   TypingOutboundPayload,
 } from '@contracts/messenger';
 import { MessengerWsEvent } from '@contracts/messenger';
@@ -13,7 +14,7 @@ import { AccessTokenTestHelper } from '../../../../test/helpers/access-token-tes
 import { AppTestManager } from '../../../../test/managers/app.test-manager';
 import { Configuration } from '../../../setup/configuration/configuration';
 import { ApiSettings } from '../../../setup/configuration/api-settings';
-import { MessageViewDto } from '../sharing/api/view-dto/message.view-dto';
+import { MessageViewDto } from '../messages/api/view-dto/message.view-dto';
 
 describe('Messenger realtime scaling (Integration)', () => {
   let instanceA: AppTestManager;
@@ -87,10 +88,10 @@ describe('Messenger realtime scaling (Integration)', () => {
     const receiverSocket = createSocket(portB, 2);
     await connectSocket(receiverSocket);
 
-    const receivedMessage = new Promise<MessageViewDto>((resolve, reject) => {
+    const receivedMessage = new Promise<NewMessagePayload>((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error('message.new timeout')), 10_000);
 
-      receiverSocket.on(MessengerWsEvent.MessageNew, (payload: MessageViewDto) => {
+      receiverSocket.on(MessengerWsEvent.MessageNew, (payload: NewMessagePayload) => {
         clearTimeout(timeout);
         resolve(payload);
       });

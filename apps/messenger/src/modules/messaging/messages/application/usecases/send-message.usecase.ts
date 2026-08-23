@@ -1,29 +1,21 @@
 import { ConfigService } from '@nestjs/config';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Chat, Message, MessageUserDeletion, OutboxEventType } from '@generated/prisma-messenger';
-import {
-  ChatUpdatedPayload,
-  MessengerWsEvent,
-  UnreadUpdatedPayload,
-} from '@contracts/messenger';
+import { ChatUpdatedPayload, MessengerWsEvent, UnreadUpdatedPayload } from '@contracts/messenger';
 import { BadRequestException } from '../../../../../common/exceptions/domain-exceptions';
 import { MessengerResultCode } from '../../../../../common/notification/messenger-result-code';
 import { Configuration } from '../../../../../setup/configuration/configuration';
 import { BusinessRulesSettings } from '../../../../../setup/configuration/business-rules-settings';
 import { PrismaService } from '../../../../database/prisma.service';
 import { OutboxRepository } from '../../../../outbox/repositories/outbox.repository';
-import { MessageViewDto } from '../../../sharing/api/view-dto/message.view-dto';
-import { ReplyPreviewSource } from '../../../sharing/api/view-dto/reply-preview.view-dto';
-import { SendMessageApplicationDto } from '../dto/send-message.application-dto';
+import { MessageViewDto } from '../../api/view-dto/message.view-dto';
+import { ReplyPreviewSource } from '../../api/view-dto/reply-preview.view-dto';
+import { SendMessageCommand } from '../commands/send-message.command';
 import { ChatsRepository } from '../../../chats/infrastructure/chats.repository';
 import { ChatsQueryRepository } from '../../../chats/infrastructure/query/chats.query-repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
 import { CreateMessageResult } from '../../infrastructure/types/create-message-result.type';
 import { MessengerWebSocketService } from '../../../realtime/services/messenger-websocket.service';
-
-export class SendMessageCommand {
-  constructor(public readonly dto: SendMessageApplicationDto) {}
-}
 
 @CommandHandler(SendMessageCommand)
 export class SendMessageUseCase implements ICommandHandler<SendMessageCommand> {

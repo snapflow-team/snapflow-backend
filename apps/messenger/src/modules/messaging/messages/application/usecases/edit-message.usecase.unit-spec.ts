@@ -9,11 +9,11 @@ import {
 } from '../../../../../common/exceptions/domain-exceptions';
 import { Configuration } from '../../../../../setup/configuration/configuration';
 import { BusinessRulesSettings } from '../../../../../setup/configuration/business-rules-settings';
-import { MessageViewDto } from '../../../sharing/api/view-dto/message.view-dto';
+import { MessageViewDto } from '../../api/view-dto/message.view-dto';
 import { EditMessageCommand } from '../commands/edit-message.command';
 import { ChatsRepository } from '../../../chats/infrastructure/chats.repository';
 import { MessagesRepository } from '../../infrastructure/messages.repository';
-import { ChatReadStateRepository } from '../../../read-state/infrastructure/chat-read-state.repository';
+import { ChatReadStateRepository } from '../../../chats/infrastructure/chat-read-state.repository';
 import { MessengerWebSocketService } from '../../../realtime/services/messenger-websocket.service';
 import { EditMessageUseCase } from './edit-message.usecase';
 

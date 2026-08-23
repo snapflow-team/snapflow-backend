@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { MessengerWsEvent } from '@contracts/messenger';
+import { MessengerWsEvent, NewMessagePayload } from '@contracts/messenger';
 import { LoggerFactory } from '../../../logger/logger.factory';
 import { ContextLogger } from '../../../logger/context-logger';
-import { MessageViewDto } from '../../sharing/api/view-dto/message.view-dto';
 import { MessengerWebSocketGateway } from '../gateway/messenger-websocket.gateway';
 
 @Injectable()
@@ -21,7 +20,7 @@ export class MessengerWebSocketService {
     this.logger.log(`Event ${event} emitted via WebSocket to user:${userId}`, this.emitToUser.name);
   }
 
-  sendToUser(userId: number, payload: MessageViewDto): void {
+  sendToUser(userId: number, payload: NewMessagePayload): void {
     this.emitToUser(userId, MessengerWsEvent.MessageNew, payload);
     this.logger.log(
       `Message sent via WebSocket to user:${userId}, messageId=${payload.id}`,

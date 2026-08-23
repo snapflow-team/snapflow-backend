@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MessageViewDto } from '../../../sharing/api/view-dto/message.view-dto';
 import { ChatWithLastMessage } from '../../infrastructure/types/chat-with-last-message.type';
+import { LastMessagePreviewViewDto } from './last-message-preview.view-dto';
 
 export class ChatViewDto {
   @ApiProperty({
@@ -18,11 +18,11 @@ export class ChatViewDto {
   interlocutorId: string;
 
   @ApiProperty({
-    type: MessageViewDto,
+    type: LastMessagePreviewViewDto,
     nullable: true,
     description: 'Последнее сообщение в чате',
   })
-  lastMessage: MessageViewDto | null;
+  lastMessage: LastMessagePreviewViewDto | null;
 
   @ApiProperty({
     description: 'Дата создания чата в формате ISO',
@@ -46,11 +46,7 @@ export class ChatViewDto {
     dto.createdAt = chat.createdAt.toISOString();
     dto.updatedAt = chat.updatedAt.toISOString();
     dto.lastMessage = chat.lastMessage
-      ? MessageViewDto.mapToView(
-          chat.lastMessage,
-          chat.lastMessage.senderId === userId ? interlocutorId : userId,
-          { viewerId: userId },
-        )
+      ? LastMessagePreviewViewDto.mapToView(chat.lastMessage, { viewerId: userId })
       : null;
 
     return dto;
