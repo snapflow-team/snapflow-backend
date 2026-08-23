@@ -8,6 +8,7 @@
   },
   "moduleNameMapper": {
     "^@generated/(.*)$": "<rootDir>/../../generated/$1",
+    "^@contracts/(.*)$": "<rootDir>/../../libs/contracts/$1",
     "^libs/(.*)": "<rootDir>/../../libs/$1"
   }
 }

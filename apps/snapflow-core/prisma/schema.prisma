@@ -45,6 +45,7 @@ enum NotificationType {
   SUBSCRIPTION_EXPIRING_1D
 
   NEXT_PAYMENT_1D
+  NEW_MESSAGE
 }
 
 model OutboxEvent {
@@ -90,8 +91,34 @@ model User {
   comments              Comment[]
   postLikes             PostLike[]
   commentLikes          CommentLike[]
+  pushSubscriptions     PushSubscription[]
 
   @@map("users")
+}
+
+model PushSubscription {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  endpoint   String    @unique @db.Text
+  p256dh     String    @db.Text
+  auth       String    @db.Text
+  userAgent  String?   @map("user_agent") @db.VarChar(500)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  lastUsedAt DateTime? @map("last_used_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+model ConsumedEvent {
+  eventId    String   @id @map("event_id") @db.Uuid
+  source     String   @db.VarChar(50)
+  consumedAt DateTime @default(now()) @map("consumed_at")
+
+  @@index([consumedAt])
+  @@map("consumed_events")
 }
 
 model UserProfile {

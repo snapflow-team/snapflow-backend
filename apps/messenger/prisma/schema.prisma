@@ -7,17 +7,30 @@ datasource db {
   provider = "postgresql"
 }
 
+enum OutboxEventStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  SKIPPED
+  FAILED
+}
+
+enum OutboxEventType {
+  NEW_MESSAGE_NOTIFICATION
+}
+
 model Chat {
-  id             Int       @id @default(autoincrement())
-  participantAId Int       @map("participant_a_id")
-  participantBId Int       @map("participant_b_id")
-  lastMessageId  Int?      @unique @map("last_message_id")
-  lastMessageAt  DateTime? @map("last_message_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  id             Int                @id @default(autoincrement())
+  participantAId Int                @map("participant_a_id")
+  participantBId Int                @map("participant_b_id")
+  lastMessageId  Int?               @unique @map("last_message_id")
+  lastMessageAt  DateTime?          @map("last_message_at")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
   messages       Message[]
-  lastMessage    Message?  @relation("ChatLastMessage", fields: [lastMessageId], references: [id], onDelete: SetNull)
+  lastMessage    Message?           @relation("ChatLastMessage", fields: [lastMessageId], references: [id], onDelete: SetNull)
   readStates     ChatReadState[]
+  muteSettings   ChatMuteSettings[]
 
   @@unique([participantAId, participantBId])
   @@index([participantAId, lastMessageAt])
@@ -91,4 +104,31 @@ model UserPresenceSettings {
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
   @@map("user_presence_settings")
+}
+
+model OutboxEvent {
+  id          String            @id @default(uuid()) @db.Uuid
+  type        OutboxEventType
+  payload     Json              @db.JsonB
+  status      OutboxEventStatus @default(PENDING)
+  availableAt DateTime          @map("available_at")
+  error       String?           @db.Text
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, availableAt])
+  @@map("outbox_events")
+}
+
+model ChatMuteSettings {
+  chatId     Int       @map("chat_id")
+  userId     Int       @map("user_id")
+  mutedUntil DateTime? @map("muted_until")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@id([chatId, userId])
+  @@map("chat_mute_settings")
 }

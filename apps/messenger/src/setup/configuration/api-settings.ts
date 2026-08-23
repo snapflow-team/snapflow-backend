@@ -26,6 +26,12 @@ export class ApiSettings {
   })
   redisUrl: string;
 
+  @IsUrl({
+    protocols: ['amqp', 'amqps'],
+    require_tld: false,
+  })
+  rabbitMqUrl: string;
+
   constructor(private readonly environmentVariables: EnvironmentVariable) {
     this.port = Number(environmentVariables.PORT);
 
@@ -41,6 +47,8 @@ export class ApiSettings {
     this.accessTokenSecret = environmentVariables.JWT_SECRET_AT;
 
     this.redisUrl = environmentVariables.REDIS_URL;
+
+    this.rabbitMqUrl = environmentVariables.RABBITMQ_URL;
   }
 
   get allowedOrigins(): string[] | boolean {
