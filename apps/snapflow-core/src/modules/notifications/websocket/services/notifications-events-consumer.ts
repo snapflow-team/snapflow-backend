@@ -69,11 +69,6 @@ export class NotificationEventsConsumer implements OnModuleInit, OnModuleDestroy
 
           this.dispatchMessageWithRequestContext(channel, msg);
         });
-
-        this.logger.log(
-          `Listening on queue "${notificationsEventsQueueName}" for keys: ${ALL_NOTIFICATIONS_ROUTING_KEYS.join(', ')}`,
-          this.onModuleInit.name,
-        );
       },
     });
     this.channelWrapper.on('error', (err) => {

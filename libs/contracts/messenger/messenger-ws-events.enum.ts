@@ -5,6 +5,7 @@ export enum MessengerWsEvent {
   MessageDelivered = 'message.delivered',
   MessageRead = 'message.read',
   ChatUpdated = 'chat.updated',
+  UnreadUpdated = 'unread.updated',
   TypingStart = 'typing.start',
   TypingStop = 'typing.stop',
   PresenceUpdated = 'presence.updated',

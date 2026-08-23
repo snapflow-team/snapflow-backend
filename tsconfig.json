@@ -25,6 +25,9 @@
       "@generated/*": [
         "generated/*"
       ],
+      "@contracts/*": [
+        "libs/contracts/*"
+      ],
       "@libs/common": [
         "libs/common/src"
       ],

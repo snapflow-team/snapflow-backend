@@ -9,6 +9,28 @@ export type TypingOutboundPayload = {
   userId: string;
 };
 
+export type MessageReplyPreviewPayload = {
+  id: string;
+  senderId: string;
+  text: string | null;
+  deletedForEveryone: boolean;
+};
+
+export type NewMessagePayload = {
+  id: string;
+  chatId: string;
+  senderId: string;
+  receiverId: string;
+  text: string;
+  clientMessageId: string;
+  createdAt: string;
+  status: 'sent' | 'delivered' | 'read' | null;
+  editedAt: string | null;
+  deletedAt: string | null;
+  deletedForEveryone: boolean;
+  replyTo: MessageReplyPreviewPayload | null;
+};
+
 export type MessageDeliveredPayload = {
   messageId: string;
 };
@@ -23,6 +45,10 @@ export type MessageReadPayload = {
 export type ChatUpdatedPayload = {
   chatId: string;
   unreadCount: number;
+};
+
+export type UnreadUpdatedPayload = {
+  total: number;
 };
 
 export type MessageDeletedPayload = {
