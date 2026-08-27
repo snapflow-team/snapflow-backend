@@ -1,0 +1,8 @@
+export enum StorageObjectStatus {
+  UPLOADING = 'UPLOADING',
+  SCANNING = 'SCANNING',
+  PROCESSING = 'PROCESSING',
+  READY = 'READY',
+  FAILED = 'FAILED',
+  INFECTED = 'INFECTED',
+}
