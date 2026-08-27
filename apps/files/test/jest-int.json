@@ -12,6 +12,7 @@
   },
   "moduleNameMapper": {
     "@/dbModule/(.*)$": "<rootDir>/modules/database/$1",
-    "^@generated/(.*)$": "<rootDir>/../../generated/$1"
+    "^@generated/(.*)$": "<rootDir>/../../generated/$1",
+    "^@contracts/(.*)$": "<rootDir>/../../libs/contracts/$1"
   }
 }
