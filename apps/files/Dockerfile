@@ -6,6 +6,9 @@ ARG port
 ENV SERVICE=${service}
 ENV PORT=${port}
 
+# ffmpeg/ffprobe for storage worker video/voice processing
+RUN apk add --no-cache ffmpeg
+
 # 1️⃣ pnpm
 RUN npm install -g pnpm@10
 

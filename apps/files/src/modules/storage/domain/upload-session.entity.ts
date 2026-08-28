@@ -109,6 +109,10 @@ export class UploadSession {
     return this.props.expiresAt;
   }
 
+  get profile(): string {
+    return this.props.profile;
+  }
+
   get snapshot(): UploadSessionProps {
     return { ...this.props };
   }

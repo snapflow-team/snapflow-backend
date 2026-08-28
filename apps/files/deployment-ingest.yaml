@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: DEPLOYMENT_NAME
+  namespace: NAMESPACE
+  labels:
+    app: PROJECT
+spec:
+  selector:
+    matchLabels:
+      project: PROJECT
+  template:
+    metadata:
+      namespace: NAMESPACE
+      labels:
+        project: PROJECT
+    spec:
+      containers:
+        - name: PROJECT
+          image: REGISTRY_HOSTNAME/PROJECT:TAG_VERSION
+          command: ['pnpm', 'run', 'start:prod:files:ingest']
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+          ports:
+            - containerPort: PORT_CONTAINER
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: PORT_CONTAINER
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: PORT_CONTAINER
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: '250m'
+              memory: '512Mi'
+            limits:
+              cpu: '1000m'
+              memory: '1Gi'
