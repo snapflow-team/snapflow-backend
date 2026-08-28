@@ -41,6 +41,33 @@
         "tsConfigPath": "apps/files/tsconfig.app.json"
       }
     },
+    "files-rpc": {
+      "type": "application",
+      "root": "apps/files",
+      "entryFile": "main.rpc",
+      "sourceRoot": "apps/files/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/files/tsconfig.app.json"
+      }
+    },
+    "files-ingest": {
+      "type": "application",
+      "root": "apps/files",
+      "entryFile": "main.ingest",
+      "sourceRoot": "apps/files/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/files/tsconfig.app.json"
+      }
+    },
+    "files-worker": {
+      "type": "application",
+      "root": "apps/files",
+      "entryFile": "main.worker",
+      "sourceRoot": "apps/files/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/files/tsconfig.app.json"
+      }
+    },
     "messenger": {
       "type": "application",
       "root": "apps/messenger",

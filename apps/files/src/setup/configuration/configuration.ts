@@ -7,6 +7,11 @@ import { DatabaseSettings } from './database-settings';
 import { MicroserviceSettings } from './microservice.settings';
 import { S3Settings } from './s3.settings';
 import { LoggerSettings } from './logger-settings';
+import { IngestApiSettings } from './ingest-api-settings';
+import { StorageSettings } from './storage-settings';
+import { StorageQueueSettings } from './storage-queue-settings';
+import { ClamAvSettings } from './clam-av-settings';
+import { MediaProcessingSettings } from './media-processing-settings';
 
 export type EnvironmentVariable = { [key: string]: string };
 
@@ -46,6 +51,21 @@ export class Configuration {
   @ValidateNested()
   loggerSettings: LoggerSettings;
 
+  @ValidateNested()
+  ingestApiSettings: IngestApiSettings;
+
+  @ValidateNested()
+  storageSettings: StorageSettings;
+
+  @ValidateNested()
+  storageQueueSettings: StorageQueueSettings;
+
+  @ValidateNested()
+  clamAvSettings: ClamAvSettings;
+
+  @ValidateNested()
+  mediaProcessingSettings: MediaProcessingSettings;
+
   private constructor(configuration: Configuration) {
     Object.assign(this, configuration);
   }
@@ -57,6 +77,11 @@ export class Configuration {
       microserviceSettings: new MicroserviceSettings(environmentVariables),
       s3Settings: new S3Settings(environmentVariables),
       loggerSettings: new LoggerSettings(environmentVariables),
+      ingestApiSettings: new IngestApiSettings(environmentVariables),
+      storageSettings: new StorageSettings(environmentVariables),
+      storageQueueSettings: new StorageQueueSettings(environmentVariables),
+      clamAvSettings: new ClamAvSettings(environmentVariables),
+      mediaProcessingSettings: new MediaProcessingSettings(environmentVariables),
     });
   }
 }

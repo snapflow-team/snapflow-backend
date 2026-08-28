@@ -39,4 +39,36 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
     },
   },
+  {
+    files: ['apps/files/src/modules/storage/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/modules/media-files/**', '**/media-files/**'],
+              message: 'storage module must not import media-files',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/files/src/modules/media-files/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/modules/storage/**'],
+              message: 'media-files module must not import storage',
+            },
+          ],
+        },
+      ],
+    },
+  },
 );

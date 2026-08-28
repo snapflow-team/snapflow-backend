@@ -1,55 +1,44 @@
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
-import { FilesModule } from './files.module';
+import { FilesRpcModule } from './files-rpc.module';
 import { Configuration } from './setup/configuration/configuration';
 import { MicroserviceSettings } from './setup/configuration/microservice.settings';
-import { IngestApiSettings } from './setup/configuration/ingest-api-settings';
 import { EnvironmentSettings } from './setup/configuration/environment-settings';
-import { applyHttpInitialization } from './setup/app-http-initialization';
 import { applyRpcInitialization } from './setup/app-rpc-initialization';
 import { printFilesStartupBannerToConsole } from './modules/logger/utils/startup-banner.util';
 import { CustomLogger } from './modules/logger/logger.service';
 
 async function bootstrap() {
-  const appContext = await NestFactory.createApplicationContext(FilesModule);
+  const appContext = await NestFactory.createApplicationContext(FilesRpcModule);
   const configService = appContext.get<ConfigService<Configuration, true>>(ConfigService);
 
   const microserviceSettings: MicroserviceSettings =
     configService.get<MicroserviceSettings>('microserviceSettings');
-  const ingestApiSettings: IngestApiSettings =
-    configService.get<IngestApiSettings>('ingestApiSettings');
   const env: string = configService.get<EnvironmentSettings>('environmentSettings').currentEnv;
 
   await appContext.close();
 
-  const app = await NestFactory.create(FilesModule, {
-    bufferLogs: true,
-  });
-
-  app.useLogger(app.get(CustomLogger));
-
-  app.connectMicroservice<MicroserviceOptions>({
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(FilesRpcModule, {
     transport: Transport.TCP,
+    bufferLogs: true,
     options: {
       host: microserviceSettings.host,
       port: microserviceSettings.port,
     },
   });
 
-  applyHttpInitialization(app);
+  app.useLogger(app.get(CustomLogger));
   applyRpcInitialization(app);
 
-  await app.startAllMicroservices();
-  await app.listen(ingestApiSettings.port, () => {
-    const startedAt: string = new Date().toLocaleString();
-    printFilesStartupBannerToConsole({
-      env,
-      mode: 'all-in-one',
-      rpcPort: microserviceSettings.port,
-      httpPort: ingestApiSettings.port,
-      startedAt,
-    });
+  await app.listen();
+
+  const startedAt: string = new Date().toLocaleString();
+  printFilesStartupBannerToConsole({
+    env,
+    mode: 'rpc',
+    rpcPort: microserviceSettings.port,
+    startedAt,
   });
 }
 

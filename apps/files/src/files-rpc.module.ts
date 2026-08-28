@@ -5,7 +5,7 @@ import { CoreModule } from './core/core.module';
 import { PrismaModule } from './database/prisma.module';
 import { LoggerModule } from './modules/logger/logger.module';
 import { MediaModule } from './modules/media-files/media.module';
-import { StorageModule } from './modules/storage/storage.module';
+import { StorageRpcModule } from './modules/storage/storage-rpc.module';
 import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
 
 @Module({
@@ -15,8 +15,8 @@ import { RequestContextInterceptor } from './common/interceptors/request-context
     ScheduleModule.forRoot(),
     PrismaModule,
     MediaModule,
-    StorageModule,
+    StorageRpcModule,
   ],
   providers: [{ provide: APP_INTERCEPTOR, useClass: RequestContextInterceptor }],
 })
-export class FilesModule {}
+export class FilesRpcModule {}

@@ -1,4 +1,4 @@
-import { INestMicroservice } from '@nestjs/common';
+import { INestApplication, INestMicroservice } from '@nestjs/common';
 import { GlobalRpcExceptionFilter } from '../../../../libs/exceptions/rpc/filters/global-rpc-exception.filter';
 import { DomainRpcExceptionsFilter } from '../../../../libs/exceptions/rpc/filters/domain-rpc-exception.filter';
 import { ValidationRpcExceptionFilter } from '../../../../libs/exceptions/rpc/filters/validation-rpc-exception.filter';
@@ -7,7 +7,7 @@ import { SERVICES } from '../../../../libs/contracts/services.tokens';
 import { LoggerFactory } from '../modules/logger/logger.factory';
 
 export function globalExceptionFilterSetup(
-  app: INestMicroservice,
+  app: INestApplication | INestMicroservice,
   environmentSettings: EnvironmentSettings,
 ) {
   const loggerFactory: LoggerFactory = app.get(LoggerFactory);

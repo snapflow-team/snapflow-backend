@@ -1,22 +1,13 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ScheduleModule } from '@nestjs/schedule';
 import { CoreModule } from './core/core.module';
 import { PrismaModule } from './database/prisma.module';
 import { LoggerModule } from './modules/logger/logger.module';
-import { MediaModule } from './modules/media-files/media.module';
-import { StorageModule } from './modules/storage/storage.module';
+import { StorageIngestModule } from './modules/storage/storage-ingest.module';
 import { RequestContextInterceptor } from './common/interceptors/request-context.interceptor';
 
 @Module({
-  imports: [
-    CoreModule,
-    LoggerModule,
-    ScheduleModule.forRoot(),
-    PrismaModule,
-    MediaModule,
-    StorageModule,
-  ],
+  imports: [CoreModule, LoggerModule, PrismaModule, StorageIngestModule],
   providers: [{ provide: APP_INTERCEPTOR, useClass: RequestContextInterceptor }],
 })
-export class FilesModule {}
+export class FilesIngestModule {}
