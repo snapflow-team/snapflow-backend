@@ -1,0 +1,151 @@
+enum StorageObjectStatus {
+  UPLOADING
+  SCANNING
+  PROCESSING
+  READY
+  FAILED
+  INFECTED
+}
+
+enum StorageVariantKind {
+  ORIGINAL
+  THUMB
+  PREVIEW
+  POSTER
+  WAVEFORM
+}
+
+enum UploadSessionStatus {
+  ACTIVE
+  COMPLETED
+  ABORTED
+}
+
+enum StorageReferenceOperationType {
+  ATTACH
+  RELEASE
+}
+
+enum StorageOutboxEventStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+enum StorageOutboxEventType {
+  PROCESS_OBJECT
+  DELETE_OBJECT
+  ABORT_MULTIPART
+}
+
+/// Owner-scoped canonical dedup: uniqueness of READY, not-deleted content by
+/// (owner_user_id, sha256) is enforced by a partial unique index in SQL
+/// (`storage_objects_owner_sha256_canonical_uidx`). Prisma cannot express it.
+model StorageObject {
+  id          String              @id @default(uuid()) @db.Uuid
+  ownerUserId Int                 @map("owner_user_id")
+  profile     String
+  status      StorageObjectStatus @default(UPLOADING)
+
+  sha256       String?
+  byteSize     BigInt? @map("byte_size")
+  mimeType     String? @map("mime_type")
+  originalName String? @map("original_name")
+
+  width      Int?
+  height     Int?
+  durationMs Int?  @map("duration_ms")
+  metadata   Json? @db.JsonB
+
+  scanStatus    String? @map("scan_status")
+  refCount      Int     @default(0) @map("ref_count")
+  failureReason String? @map("failure_reason") @db.Text
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  readyAt   DateTime? @map("ready_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  variants      StorageObjectVariant[]
+  uploadSession UploadSession?
+
+  @@index([ownerUserId, profile])
+  @@index([status, createdAt])
+  @@index([ownerUserId, sha256])
+  @@map("storage_objects")
+}
+
+model StorageObjectVariant {
+  id         String             @id @default(uuid()) @db.Uuid
+  objectId   String             @map("object_id") @db.Uuid
+  kind       StorageVariantKind
+  key        String             @unique
+  mimeType   String             @map("mime_type")
+  byteSize   BigInt             @map("byte_size")
+  width      Int?
+  height     Int?
+  durationMs Int?               @map("duration_ms")
+  createdAt  DateTime           @default(now()) @map("created_at")
+
+  object StorageObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+
+  @@unique([objectId, kind])
+  @@map("storage_object_variants")
+}
+
+model UploadSession {
+  id            String              @id @default(uuid()) @db.Uuid
+  objectId      String              @unique @map("object_id") @db.Uuid
+  ownerUserId   Int                 @map("owner_user_id")
+  profile       String
+  status        UploadSessionStatus @default(ACTIVE)
+  declaredSize  BigInt              @map("declared_size")
+  declaredMime  String              @map("declared_mime")
+  chunkSize     BigInt              @map("chunk_size")
+  storageKey    String              @map("storage_key")
+  multipartId   String?             @map("multipart_id")
+  receivedBytes BigInt              @default(0) @map("received_bytes")
+  parts         Json?               @db.JsonB
+  expiresAt     DateTime            @map("expires_at")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  object StorageObject @relation(fields: [objectId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("upload_sessions")
+}
+
+/// Идемпотентность AttachObjects/ReleaseObjects: повтор с тем же ключом и тем же payloadHash
+/// возвращает сохранённый resultPayload; другой payload при том же ключе — conflict.
+model StorageReferenceOperation {
+  id             String                          @id @default(uuid()) @db.Uuid
+  consumer       String
+  idempotencyKey String                          @map("idempotency_key")
+  operation      StorageReferenceOperationType
+  payloadHash    String                          @map("payload_hash")
+  requestPayload Json                            @map("request_payload") @db.JsonB
+  resultPayload  Json                            @map("result_payload") @db.JsonB
+  createdAt      DateTime                        @default(now()) @map("created_at")
+
+  @@unique([consumer, idempotencyKey, operation], map: "storage_ref_ops_idempotency_uidx")
+  @@map("storage_reference_operations")
+}
+
+model StorageOutboxEvent {
+  id          String                    @id @default(uuid()) @db.Uuid
+  type        StorageOutboxEventType
+  payload     Json                      @db.JsonB
+  status      StorageOutboxEventStatus  @default(PENDING)
+  attempts    Int                       @default(0)
+  error       String?                   @db.Text
+  availableAt DateTime                  @default(now()) @map("available_at")
+  processedAt DateTime?                 @map("processed_at")
+  createdAt   DateTime                  @default(now()) @map("created_at")
+  updatedAt   DateTime                  @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@index([status, availableAt])
+  @@map("storage_outbox_events")
+}
