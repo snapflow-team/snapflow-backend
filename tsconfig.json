@@ -35,5 +35,6 @@
         "libs/common/src/*"
       ]
     }
-  }
+  },
+  "exclude": ["tools"]
 }
